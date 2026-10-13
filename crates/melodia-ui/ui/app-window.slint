@@ -8,6 +8,8 @@
 import "assets/fonts/vazirmatn/Vazirmatn-Regular.ttf";
 import "assets/fonts/vazirmatn/Vazirmatn-Medium.ttf";
 import "assets/fonts/vazirmatn/Vazirmatn-SemiBold.ttf";
+// A dedicated Simplified Chinese face keeps Han text independent of host font fallback.
+import "assets/fonts/NotoSansSC-VF.ttf";
 
 import { Theme } from "theme.slint";
 import { Settings } from "settings.slint";
@@ -162,7 +164,7 @@ export component AppWindow inherits Window {
         root.margin-bottom);
     no-frame: root.frameless;
 
-    default-font-family: "Vazirmatn";
+    default-font-family: Settings.locale-code == "zh_CN" ? "Noto Sans SC" : "Vazirmatn";
     default-font-size: Theme.font-size-md;
 
     function view-title(idx: int) -> string {

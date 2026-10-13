@@ -16,7 +16,7 @@ pub const DEFAULT_LOCALE: &str = "en";
 /// siblings.
 pub const SUPPORTED_LOCALES: &[&str] = &[
     "id", "de", "en", "es", "fr", "it", "hu", "nl", "pl", "pt_BR", "pt", "vi", "tr", "el", "ru",
-    "uk",
+    "uk", "zh_CN",
 ];
 
 #[cfg(test)]

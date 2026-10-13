@@ -80,6 +80,24 @@ name and carry it under upstream's OFL, which is how upstream already ships its
 own Roboto-derived Latin.
 
 
+Noto Sans SC
+---------
+Version 2.004, by Adobe and Google.
+https://github.com/notofonts/noto-cjk
+
+Licensed under the SIL Open Font License, Version 1.1 -- full text in
+NotoSansSC-OFL-1.1.txt.
+
+UNMODIFIED. The Simplified Chinese regional-subset variable TrueType face is
+bundled as a separate family and selected for the zh_CN locale, so Han text is
+available without relying on fonts installed by the host operating system.
+
+Files:
+  crates/melodia-ui/ui/assets/fonts/NotoSansSC-VF.ttf
+
+The upstream font name is retained; its Reserved Font Name is not changed.
+
+
 Material Symbols Rounded
 ------------------------
 Version 2.935, by Google LLC. Outlined (FILL=0) and filled (FILL=1) faces.

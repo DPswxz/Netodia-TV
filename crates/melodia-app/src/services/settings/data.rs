@@ -269,10 +269,20 @@ fn default_locale() -> String {
 }
 
 /// A regional catalogue (`pt_BR`) wins over the bare language, which still serves every other
-/// region of it (`de_AT` → `de`).
+/// region of it (`de_AT` → `de`). Chinese without a Traditional script/region uses the Simplified
+/// Chinese catalog; Traditional Chinese stays on the default until it has its own catalog.
 fn detect_os_locale() -> Option<String> {
     let raw = detect_system_locale_raw()?;
     let lang = parse_language_code(&raw)?;
+    if lang == "zh" {
+        let subtags: Vec<String> = locale_subtags(&raw).map(str::to_ascii_lowercase).collect();
+        let traditional_script = subtags.iter().any(|tag| tag == "hant");
+        let region = subtags.iter().skip(1).find(|tag| is_two_letter(tag));
+        if traditional_script || region.is_some_and(|tag| matches!(tag.as_str(), "tw" | "hk" | "mo")) {
+            return None;
+        }
+        return Some("zh_CN".to_owned());
+    }
     let regional = parse_region_code(&raw).map(|region| format!("{lang}_{region}"));
     regional.into_iter().chain([lang]).find(|code| SUPPORTED_LOCALES.contains(&code.as_str()))
 }

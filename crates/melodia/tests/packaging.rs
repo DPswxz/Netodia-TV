@@ -93,18 +93,18 @@ fn no_thread_name_outgrows_what_the_kernel_keeps() {
 /// `licenses/ATTRIBUTION.txt`, which every pin below reads.
 const ATTRIBUTION: &str = include_str!("../../../licenses/ATTRIBUTION.txt");
 
-/// The floor for the font walk: the five faces that ship today.
+/// The floor for the font walk: the six faces that ship today.
 ///
 /// A floor rather than an exact set, and the asymmetry is the point: it blocks the silent *loss*
 /// the walk can't see while permitting the *addition* the pin exists to catch. Retiring a face
 /// moves this number deliberately; a subdirectory dropping out of the walk does not, and three of
-/// the five sit in one. Tight rather than loose, unlike `melodia_testkit`'s source-tree floors —
-/// five files changing once a release cycle, where catching *most* of a loss buys nothing.
+/// the six sit in one. Tight rather than loose, unlike `melodia_testkit`'s source-tree floors —
+/// six files changing once a release cycle, where catching *most* of a loss buys nothing.
 ///
 /// Beside the pin rather than `FONTS_DIR` because it has one caller and, being tight, asserts
 /// about the corpus rather than guarding the walk against vacuity. Move it the day a second pin
 /// walks the font tree.
-const MIN_FONTS: usize = 5;
+const MIN_FONTS: usize = 6;
 
 /// A face imported by a `.slint` file is `include_bytes!`d into the binary, so it starts being
 /// redistributed by all five package formats the moment that import lands — and by the git tree
@@ -439,7 +439,7 @@ fn the_msi_offers_every_audio_extension() {
     );
 }
 
-/// `licenses/Vazirmatn-OFL-1.1.txt` and the root `LICENSE`, restated as a DEP-5 field body: one
+/// The shipped OFL texts and the root `LICENSE`, restated as a DEP-5 field body: one
 /// leading space per line, trailing whitespace dropped, and a blank line written ` .`.
 ///
 /// The one transformation, so the pin below is its own specification rather than a second opinion.
@@ -465,17 +465,18 @@ fn as_dep5_field_body(text: &str) -> String {
 /// that.
 ///
 /// Debian Policy 12.5 lets a package *reference* `/usr/share/common-licenses` only for the
-/// licences shipped there. Apache-2.0, GPL-3 and MPL-2.0 are; AGPL-3 and OFL-1.1 are not, so those
-/// two are quoted in full — and a quoted licence is a second copy that can drift from the one the
-/// package actually ships. This re-derives both from their sources rather than trusting the copy,
-/// and holds all three references: a deleted one leaves the file silent about terms the binary
-/// carries, which is the same failure as a missing quote and looks like nothing at all.
+/// licences shipped there. Apache-2.0, GPL-3 and MPL-2.0 are; AGPL-3 and OFL-1.1 are not, so the
+/// AGPL text and both shipped OFL source texts are quoted in full — and a quoted licence is a
+/// second copy that can drift from the one the package actually ships. This re-derives each from
+/// its source rather than trusting the copy, and holds all three references: a deleted one leaves
+/// the file silent about terms the binary carries, which is the same failure as a missing quote
+/// and looks like nothing at all.
 ///
 /// Two structural checks ride along, because the file's failures are all of one kind — it keeps
 /// saying something, just not the true thing, so nothing looks broken.
 ///
 /// **`licenses/` may not fall through to `Files: *`.** Those texts are the FSF's, the ASF's,
-/// Mozilla's, SIL's and the Vazirmatn authors', reproduced because their own licences require it;
+/// Mozilla's, SIL's, Vazirmatn authors', and Adobe/Google's, reproduced because their own licences require it;
 /// swept into the catch-all they are declared AGPL by this package's author, which is the Ko-fi
 /// stanza's argument over four more files. Nothing about `GPL-3.0.txt` changes when the package
 /// starts claiming it, so a diff of the texts cannot show this.
@@ -506,7 +507,11 @@ fn the_debian_copyright_quotes_the_licences_it_ships() {
     );
 
     for (source, licence) in
-        [("LICENSE", "AGPL-3.0-or-later"), ("licenses/Vazirmatn-OFL-1.1.txt", "OFL-1.1")]
+        [
+            ("LICENSE", "AGPL-3.0-or-later"),
+            ("licenses/Vazirmatn-OFL-1.1.txt", "OFL-1.1"),
+            ("licenses/NotoSansSC-OFL-1.1.txt", "Noto-OFL-1.1"),
+        ]
     {
         let text = std::fs::read_to_string(root.join(source)).unwrap_or_default();
         assert!(!text.is_empty(), "{source} won't read");
@@ -617,8 +622,9 @@ fn the_bundled_licence_texts_are_the_real_ones() {
     const NOT_A_LICENCE: &str = "ATTRIBUTION.txt";
 
     /// One phrase per shipped text, from deep enough in the body that a header alone will not do.
-    const PHRASES: [(&str, &str); 4] = [
+    const PHRASES: [(&str, &str); 5] = [
         ("Vazirmatn-OFL-1.1.txt", "SIL OPEN FONT LICENSE Version 1.1"),
+        ("NotoSansSC-OFL-1.1.txt", "SIL OPEN FONT LICENSE Version 1.1"),
         ("Apache-2.0.txt", "TERMS AND CONDITIONS FOR USE"),
         ("GPL-3.0.txt", "Automatic Licensing of Downstream Recipients"),
         ("MPL-2.0.txt", "3.3. Distribution of a Larger Work"),

@@ -324,6 +324,7 @@ export global Settings {
     in property <[string]> language-names;
     in property <[string]> language-codes;
     in-out property <int>  language-idx;
+    in property <string> locale-code;
     callback language-changed(int);
 
     // Opens `CARGO_PKG_REPOSITORY` in the system browser. No Slint-side handler.

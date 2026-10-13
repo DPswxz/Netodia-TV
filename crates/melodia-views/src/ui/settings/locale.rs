@@ -44,6 +44,7 @@ const LOCALE_NATIVE_NAMES: &[&str] = &[
     "Ελληνικά",
     "Русский",
     "Українська",
+    "简体中文",
 ];
 
 // A short list hides the last locale from the picker, and nothing at runtime says so.
@@ -86,6 +87,9 @@ pub fn install_locale(ui: &AppWindow, state: &AppState) {
         g.set_language_names(ModelRc::from(Rc::new(VecModel::from(names))));
         g.set_language_codes(ModelRc::from(Rc::new(VecModel::from(codes))));
         g.set_language_idx(i32::try_from(idx).unwrap_or(0));
+        g.set_locale_code(SharedString::from(
+            SUPPORTED_LOCALES.get(idx).copied().unwrap_or(DEFAULT_LOCALE),
+        ));
     }
 
     let shadow: PersistedLocale = Arc::new(parking_lot::Mutex::new(persisted));
@@ -110,6 +114,7 @@ fn wire_language_changed(ui: &AppWindow, state: &AppState, shadow: PersistedLoca
         if let Err(e) = slint::select_bundled_translation(code) {
             log::warn!("select_bundled_translation({code}): {}", describe(&e));
         }
+        ui.global::<Settings>().set_locale_code(code.into());
 
         // The switch above reaches every live `@tr` binding and nothing Rust rendered
         // through a trampoline and stored. The band's chips are the one such surface that

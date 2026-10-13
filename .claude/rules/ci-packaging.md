@@ -275,7 +275,7 @@ walks the directory instead.
   half a deletion *would* break silently is the reference, so both are pinned.
 
 - **`licenses/` may not fall through to `Files: *`.** Those texts are the FSF's, the ASF's,
-  Mozilla's, SIL's and the Vazirmatn authors', reproduced because their own licences require it,
+  Mozilla's, SIL's, the Vazirmatn authors', and Adobe/Google's, reproduced because their own licences require it,
   and the catch-all stanza declares whatever it reaches AGPL by one author. It is the Ko-fi
   stanza's argument over five more files and it looks like nothing in a diff, since no byte of
   `GPL-3.0.txt` changes when the package starts claiming it. One globbed stanza covers them under

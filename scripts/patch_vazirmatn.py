@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Build the bundled Vazirmatn faces: the Greek, Russian, Ukrainian and
 Vietnamese letters it lacks merged in from Roboto, then the line metrics
-rewritten.
+rewritten. Simplified Chinese uses a separate, bundled Noto Sans SC face.
 
 Slint takes one named family, and a character that family lacks is drawn from
 an OS fallback whose taller line box throws off the centring the metric patch
-below exists for. So every language the UI is expected to set has to live
-inside these faces rather than beside them.
+below exists for. So every language using this family has to live inside these
+faces rather than beside them. Simplified Chinese has a separate Noto Sans SC
+family because Roboto does not cover Han characters.
 
 What a language needs is CLDR's answer, not a Unicode block's: its main
 exemplar characters, in both cases, plus the combining marks their decomposed
