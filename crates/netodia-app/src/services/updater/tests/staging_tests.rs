@@ -14,7 +14,7 @@ use super::{
 #[cfg(target_os = "linux")]
 use super::staged_package_path;
 #[cfg(target_os = "windows")]
-use super::{resolve_install_method, staged_msi_path};
+use super::{resolve_install_method, staged_msi_path_in};
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -81,15 +81,16 @@ fn staged_path_preserves_extension_for_windows_exe() {
 #[cfg(target_os = "windows")]
 #[test]
 fn staged_msi_path_preserves_msi_extension_under_cache_dir() -> TestResult {
-    let staged = staged_msi_path("https://example.test/releases/netodia-0.5.0-x86_64.msi")?;
+    let cache = tempdir()?;
+    let staged =
+        staged_msi_path_in("https://example.test/releases/netodia-0.5.0-x86_64.msi", cache.path())?;
     assert_eq!(
         staged.extension().and_then(|s| s.to_str()),
         Some("msi"),
         "msiexec dispatches on .msi extension; staging must preserve it"
     );
     // File should live under <cache>/Netodia/update-staging/.
-    let cache = dirs::cache_dir().ok_or("could not resolve cache dir for assert")?;
-    let staging = cache.join("Netodia").join("update-staging");
+    let staging = cache.path().join("Netodia").join("update-staging");
     assert!(
         staged.starts_with(&staging),
         "staged MSI must live under {} (got {})",
@@ -106,7 +107,9 @@ fn staged_msi_path_preserves_msi_extension_under_cache_dir() -> TestResult {
 #[cfg(target_os = "windows")]
 #[test]
 fn staged_msi_path_falls_back_to_synthetic_name_when_url_lacks_msi_suffix() -> TestResult {
-    let staged = staged_msi_path("https://example.test/some-redirect-without-suffix")?;
+    let cache = tempdir()?;
+    let staged =
+        staged_msi_path_in("https://example.test/some-redirect-without-suffix", cache.path())?;
     assert_eq!(staged.file_name().and_then(|s| s.to_str()), Some("netodia-update.msi"),);
     Ok(())
 }

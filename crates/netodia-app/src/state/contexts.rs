@@ -51,8 +51,8 @@ impl PlaybackContext {
 }
 
 impl AppState {
-    /// Snapshot a [`PlaybackContext`] from the live state. Cheap — six
-    /// `Arc::clone` calls. Build once per UI callback rather than per
+    /// Snapshot a [`PlaybackContext`] from the live state. The shared handles are cheap to clone.
+    /// Build once per UI callback rather than per
     /// `library::playback::*` invocation if you're firing several in a row.
     pub fn playback_ctx(&self) -> PlaybackContext {
         PlaybackContext {

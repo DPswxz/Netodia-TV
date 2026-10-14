@@ -8,13 +8,11 @@ use crate::services::settings::UpdateFlags;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[test]
-fn defaults_are_safe_for_new_install() {
-    // First-launch users land with auto-check on (consumer-music-player
-    // convention) and every counter zeroed. The plan calls these the
-    // "fail-safe defaults" — no skip pinned to a stale version, no
-    // etag pre-seeded so the very first check always fetches a body.
+fn defaults_disable_update_checks_for_new_install() {
+    // Netodia's initial release intentionally leaves the online updater disabled. The remaining
+    // fields start empty so enabling the updater later begins with a clean manifest check.
     let flags = UpdateFlags::default();
-    assert!(flags.auto_check_enabled, "auto_check_enabled should default true");
+    assert!(!flags.auto_check_enabled, "auto_check_enabled should default false");
     assert_eq!(flags.last_check_unix, 0);
     assert_eq!(flags.last_known_release, "");
     assert_eq!(flags.skipped_release, "");

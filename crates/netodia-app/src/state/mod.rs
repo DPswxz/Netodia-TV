@@ -15,6 +15,7 @@ pub use scan::{ScanControl, ScanPhase, ScanProgressTick};
 pub use signal::{SharedFlag, Signal};
 
 use crate::cloud::CloudService;
+use crate::cloud_playback::CloudPlayback;
 use crate::services::search_history::SearchHistoryState;
 use crate::services::settings;
 use netodia_artwork::media::image::artwork::CoverCache;
@@ -42,6 +43,7 @@ pub struct AppState {
     pub runtime: Handle,
     /// Direct `NetEase` API and account session boundary shared by cloud views and playback.
     pub cloud: CloudService,
+    pub cloud_playback: CloudPlayback,
     pub db: DbPool,
     pub cover_cache: CoverCache,
     pub player_state: Arc<PlayerStateHandle>,
@@ -225,11 +227,13 @@ impl AppState {
             http_client.get_or_init(netodia_net::services::net::build_http_client).clone(),
         )
         .await;
+        let cloud_playback = CloudPlayback::new(cloud.clone(), engine.clone());
 
         let state = Self {
             paths: Arc::new(paths),
             runtime,
             cloud,
+            cloud_playback,
             db,
             cover_cache,
             player_state,

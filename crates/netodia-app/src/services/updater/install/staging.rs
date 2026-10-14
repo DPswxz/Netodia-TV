@@ -94,6 +94,12 @@ pub(crate) fn staged_msi_path(asset_url: &str) -> AppResult<PathBuf> {
     let cache = dirs::cache_dir().ok_or_else(|| {
         AppError::Settings("could not resolve user cache dir for update staging".into())
     })?;
+    staged_msi_path_in(asset_url, &cache)
+}
+
+/// Resolve an MSI staging path under an explicit cache root. Keeping the path selection separate
+/// lets tests use an isolated temporary directory instead of touching the user's real cache.
+pub(crate) fn staged_msi_path_in(asset_url: &str, cache: &Path) -> AppResult<PathBuf> {
     let dir = cache.join("Netodia").join("update-staging");
     std::fs::create_dir_all(&dir)?;
     let name = asset_basename(asset_url)

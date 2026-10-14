@@ -101,6 +101,16 @@ pub async fn insert_tagged_track(
     meta: &ExtractedMetadata,
 ) -> Result<i64, AppError> {
     let mut tx = db.write().begin().await?;
+    // Test databases are created from the fresh-install schema, which intentionally has no
+    // library folder yet. The fixture track points at folder 1, so seed that dependency here.
+    let now = netodia_core::utils::now_rfc3339();
+    sqlx::query(
+        "INSERT OR IGNORE INTO folders (id, path, is_enabled, added_at) VALUES (1, ?, 1, ?)",
+    )
+    .bind("/__netodia_test_fixture_folder__")
+    .bind(&now)
+    .execute(&mut *tx)
+    .await?;
     let mut names = queries::scan::NameCache::default();
 
     let artist_name = meta.artist.primary_name();
@@ -133,7 +143,6 @@ pub async fn insert_tagged_track(
         folder_id: 1, // default folder
     };
 
-    let now = netodia_core::utils::now_rfc3339();
     let id =
         queries::scan::insert_track(&mut tx, file_path, file_name, meta, &ids, &now, &mut names)
             .await?;

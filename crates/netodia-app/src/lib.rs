@@ -10,6 +10,7 @@
 //! was one to delete.
 
 pub mod cloud;
+pub mod cloud_playback;
 pub mod library;
 pub mod services;
 pub mod state;

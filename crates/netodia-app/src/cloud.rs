@@ -6,7 +6,7 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use netodia_core::entities::cloud::Account;
+use netodia_core::entities::cloud::{Account, Quality, StreamTicket};
 use netodia_core::error::{AppError, AppResult};
 use netodia_net::netease::Client;
 pub use netodia_net::netease::QrStatus;
@@ -101,6 +101,20 @@ impl CloudService {
     /// beginning of every account transition, before a new session becomes visible.
     pub fn account_tasks_token(&self) -> CancellationToken {
         self.account_tasks.read().clone()
+    }
+
+    /// Resolve a short-lived CDN ticket under the current account task generation. Session changes
+    /// cancel the HTTP future before its result can reach a player.
+    pub async fn stream_ticket(&self, song_id: i64, quality: Quality) -> AppResult<StreamTicket> {
+        if song_id <= 0 {
+            return Err(AppError::Validation("歌曲 ID 无效".to_owned()));
+        }
+        self.ensure_guest().await?;
+        let cancellation = self.account_tasks_token();
+        tokio::select! {
+            () = cancellation.cancelled() => Err(AppError::network_msg("网易云播放请求已取消")),
+            result = self.client.stream(song_id, quality) => result.map_err(Into::into),
+        }
     }
 
     /// Restores a saved cookie once during startup. A rejected cookie is deleted and leaves the
@@ -326,17 +340,24 @@ mod tests {
     const DEVICE_ID: &str = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123";
 
     #[test]
-    fn saved_session_round_trips_without_changing_cookie_pairs() {
+    fn saved_session_round_trips_without_changing_cookie_pairs() -> Result<(), serde_json::Error> {
         let session = StoredSession {
             version: SESSION_VERSION,
             device_id: DEVICE_ID.into(),
             cookie: "MUSIC_U=session-value; __csrf=csrf-value".into(),
         };
-        let encoded = serde_json::to_string(&session).expect("serialize session");
-        let decoded = decode_session(&encoded).expect("valid saved session");
+        let encoded = serde_json::to_string(&session)?;
+        let decoded = decode_session(&encoded);
+        assert!(decoded.is_some(), "the serialized session should be valid");
+        let decoded = decoded.unwrap_or(StoredSession {
+            version: 0,
+            device_id: String::new(),
+            cookie: String::new(),
+        });
         assert_eq!(decoded.version, SESSION_VERSION);
         assert_eq!(decoded.device_id, DEVICE_ID);
         assert_eq!(decoded.cookie, "MUSIC_U=session-value; __csrf=csrf-value");
+        Ok(())
     }
 
     #[test]

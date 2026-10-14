@@ -18,6 +18,7 @@ doctest = false
 # table stay unreachable rather than arriving through here.
 [dependencies]
 netodia-core = { path = "../netodia-core" }
+netodia-audio = { path = "../netodia-audio" }
 netodia-artwork = { path = "../netodia-artwork" }
 netodia-net = { path = "../netodia-net" }
 netodia-platform = { path = "../netodia-platform" }
