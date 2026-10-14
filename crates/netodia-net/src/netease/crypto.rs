@@ -141,6 +141,11 @@ pub fn eapi(path: &str, data: &Value) -> Result<Vec<(String, String)>> {
 }
 
 #[cfg(test)]
+pub(super) fn decrypt_eapi_for_test(input: &[u8]) -> Result<Vec<u8>> {
+    decrypt(input, EAPI_KEY)
+}
+
+#[cfg(test)]
 mod anonymous_tests {
     use super::anonymous_username;
 

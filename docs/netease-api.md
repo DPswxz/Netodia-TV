@@ -5,7 +5,7 @@ The endpoint registry is `netodia-net::netease::endpoints`. YesPlayMusic's wrapp
 
 | Capability | Wire path | Protocol | Result |
 | --- | --- | --- | --- |
-| QR login | `/api/login/qrcode/{unikey,client/login}` | EAPI | key, QR state |
+| QR login | `/api/login/qrcode/{unikey,client/login}` | EAPI | key, QR state; direct desktop EAPI context, without anonymous-device registration |
 | Phone / email | `/api/w/login{,/cellphone}` | WEAPI / EAPI | session, Account |
 | Account | `/api/nuser/account/get` | WEAPI | Account |
 | Discovery / charts | `/api/personalized/playlist`, `/api/toplist` | WEAPI / EAPI | Playlist list |
@@ -24,6 +24,11 @@ then wraps a random AES key with ephemeral X25519 and AES-GCM. Guest sessions
 use `/api/register/anonimous`. Credentials are attached only to NetEase API calls,
 never to a returned CDN address. Safe reads receive at most two attempts; writes
 are never automatically retried. Session generations reject stale responses.
+
+QR login follows the YesPlayMusic/API Enhanced request defaults: it requests a QR key
+directly over EAPI with the desktop cookie profile and iPhone user agent. It must not
+register an anonymous XEAPI session before creating the QR key; that changes the device
+context and can trigger the phone's environment-risk rejection.
 
 `netodia-app::cloud::CloudService` owns login and account transitions. Successful
 sessions store only the NetEase cookie and device identifier in the OS credential
