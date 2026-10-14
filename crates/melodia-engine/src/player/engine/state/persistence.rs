@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use super::{PlayerAction, PlayerState};
+use super::PlayerState;
 use crate::player::engine::queue::current_index_from_i32;
 use crate::player::engine::types::{PersistableQueue, PersistedPlayback};
 use melodia_core::entities::track::TrackSummary;

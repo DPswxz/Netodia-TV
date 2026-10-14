@@ -75,7 +75,7 @@ impl SourceKey {
     /// Whether `id` is the source `held` already names. Asked on every player emit, so it
     /// compares against the borrowed form rather than building a key to compare with: only a
     /// genuine move is worth a `String`.
-    pub(super) fn describes(held: Option<&Self>, id: Option<SourceId<'_>>) -> bool {
+    pub(super) fn describes(held: Option<&Self>, id: Option<SourceId>) -> bool {
         match (held, id) {
             (None, None) => true,
             (Some(Self::Track(held)), Some(SourceId::Track(id))) => *held == id,

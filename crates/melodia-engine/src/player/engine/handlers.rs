@@ -13,7 +13,6 @@ use super::event_sink::PlayerSinks;
 use super::signal_path::{SignalPath, Transport};
 use super::state::{
     PlayerAction, PlayerState, PlayerStateHandle, PositionTick, ReleaseDecision, lock_state,
-    with_state_emit,
 };
 use super::types::{PersistedPlayback, PlaybackStatus};
 use melodia_playback::player::playback::crossfade;

@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::state::{AppState, Signal};
 use melodia_core::entities::{artist, track};
-use melodia_core::error::{AppError, describe};
+use melodia_core::error::AppError;
 use melodia_engine::player::engine::event_sink::PlayerSinks;
 use melodia_engine::player::engine::state::{
     PlayerAction, PlayerStateHandle, lock_state, sync_current_track_if_in, with_state_emit,

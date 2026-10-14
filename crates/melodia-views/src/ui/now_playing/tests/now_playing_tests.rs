@@ -6,7 +6,7 @@ use melodia_ui::MiniLayout;
 
 /// The key the subscriber would have built for `id`, which is what `describes` answers without
 /// building. Spelled here so the tests below assert the equivalence rather than restate the match.
-fn key_for(id: SourceId<'_>) -> SourceKey {
+fn key_for(id: SourceId) -> SourceKey {
     match id {
         SourceId::Track(track_id) => SourceKey::Track(track_id),
     }

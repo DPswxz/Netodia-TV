@@ -11,7 +11,7 @@ use super::state::PlayerViewModelLight;
 
 /// Which source a summary describes, and what tells one instance of it from the next.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SourceId<'a> {
+pub enum SourceId {
     Track(i64),
 }
 
@@ -21,7 +21,7 @@ pub enum SourceId<'a> {
 /// on the questions and only disagree on which to draw.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceSummary<'a> {
-    pub id: SourceId<'a>,
+    pub id: SourceId,
     pub title: &'a str,
     /// Who by, if the track has an artist.
     pub secondary: Option<&'a str>,

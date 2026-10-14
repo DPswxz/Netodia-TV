@@ -88,7 +88,7 @@ pub fn spawn_view_model_subscriber(
                     player.set_vm(new_vm);
                 }
                 if let Some(path) = cover_path {
-                    warm_vm_cover(ui.as_weak(), &runtime, &cover_thumbs, path, VmCoverSlot::Track);
+                    warm_vm_cover(ui.as_weak(), &runtime, &cover_thumbs, path);
                 }
             }
         }
@@ -213,10 +213,6 @@ fn reuse_or_warm(
     (new_image.size().width == 0).then(|| new_path.to_string())
 }
 
-/// The part of `Player.vm` a background cover warm fills.
-#[derive(Clone, Copy)]
-pub enum VmCoverSlot { Track }
-
 /// Decode `path` into the row tier off the event loop, then write it into `Player.vm`.
 ///
 /// [`to_slint_track`]'s other half: it answers cache-only so nothing decodes on the UI thread, and
@@ -229,7 +225,6 @@ pub fn warm_vm_cover(
     runtime: &Handle,
     cover_thumbs: &Arc<CoverThumbs>,
     path: String,
-    slot: VmCoverSlot,
 ) {
     if path.is_empty() {
         return;
