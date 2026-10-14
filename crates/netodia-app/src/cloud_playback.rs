@@ -1,5 +1,6 @@
 //! Joins typed `NetEase` stream tickets to the native decoder and output engine.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -11,14 +12,38 @@ use netodia_core::entities::cloud::{Account, Quality, Song};
 use netodia_core::entities::track::TrackSummary;
 use netodia_core::error::{AppError, AppResult};
 use netodia_engine::player::engine::backend::PlaybackEngine;
-use netodia_engine::player::engine::event_sink::PlayerSinks;
+use netodia_engine::player::engine::event_sink::{ExternalTrackPlayback, PlayerSinks};
 use netodia_engine::player::engine::state::{PlayerStateHandle, lock_state, with_state_emit};
-use netodia_engine::player::engine::types::PlaybackStatus;
+use netodia_engine::player::engine::types::{PlaybackStatus, RepeatMode};
 use netodia_net::services::net::range_reader::RangeReader;
 use netodia_playback::player::playback::replaygain::TrackReplayGain;
 
 use crate::cloud::{CloudService, QrStatus, SessionStatus};
 use tokio::sync::watch;
+
+#[derive(Clone)]
+struct CloudQueuePlan {
+    tracks: Vec<Arc<TrackSummary>>,
+    start_index: usize,
+    shuffle: bool,
+}
+
+enum QueueUpdate {
+    Clear,
+    Preserve,
+    Replace(CloudQueuePlan),
+}
+
+struct ReservedPlayback {
+    song_id: i64,
+    quality: Quality,
+    volume: f64,
+    speed: f64,
+    start_position: Option<Duration>,
+    generation: u64,
+    keep_paused: bool,
+    queue_update: QueueUpdate,
+}
 
 /// Result of resolving and handing a cloud track to the engine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,6 +98,87 @@ impl CloudPlayback {
         self.cloud.subscribe()
     }
 
+    /// Build the cloud queue in the supplied list order and start the selected song. Existing
+    /// repeat and shuffle preferences are retained; `shuffle` forces shuffle on for Shuffle All.
+    pub async fn play_queue(
+        &self,
+        song_ids: &[i64],
+        selected_song_id: i64,
+        shuffle: bool,
+        quality: Quality,
+        volume: f64,
+        speed: f64,
+    ) -> AppResult<CloudPlaybackResult> {
+        if song_ids.is_empty() {
+            return Err(AppError::Queue("云端播放列表没有歌曲".to_owned()));
+        }
+        let generation = self.engine.reserve_playback_request();
+        let songs = self.cloud.songs(song_ids).await?;
+        if !self.engine.is_playback_request_current(generation) {
+            return Ok(CloudPlaybackResult { started: false, trial: false });
+        }
+        // Warm liked membership once so cloud queue/player hearts also reflect the account when
+        // the Favorites page has not been visited in this process. A lookup failure must not make
+        // an otherwise playable playlist fail.
+        if self.cloud.cached_is_liked(selected_song_id).is_none() {
+            let _ = self.cloud.liked_ids().await;
+        }
+        let mut by_id: HashMap<i64, Song> = songs.into_iter().map(|song| (song.id, song)).collect();
+        let tracks: Vec<Arc<TrackSummary>> = song_ids
+            .iter()
+            .filter_map(|id| by_id.remove(id))
+            .map(|song| {
+                let liked = self.cloud.cached_is_liked(song.id).unwrap_or(false);
+                Arc::new(track_summary(song, None, liked))
+            })
+            .collect();
+        let start_index = tracks
+            .iter()
+            .position(|track| track.id == selected_song_id)
+            .ok_or_else(|| AppError::Queue("所选歌曲不在当前播放列表中".to_owned()))?;
+        let (repeat_mode, shuffle_enabled) = {
+            let state = lock_state(&self.player_state);
+            (state.queue.repeat_mode, state.queue.shuffle_enabled)
+        };
+        let candidates =
+            playback_candidates(tracks.len(), start_index, repeat_mode, shuffle || shuffle_enabled);
+        let mut last_error = None;
+        for candidate in candidates {
+            let song_id = tracks[candidate].id;
+            match self
+                .play_reserved(ReservedPlayback {
+                    song_id,
+                    quality,
+                    volume,
+                    speed,
+                    start_position: None,
+                    generation,
+                    keep_paused: false,
+                    queue_update: QueueUpdate::Replace(CloudQueuePlan {
+                        tracks: tracks.clone(),
+                        start_index: candidate,
+                        shuffle,
+                    }),
+                })
+                .await
+            {
+                Ok(result) if result.started => return Ok(result),
+                Ok(result) => return Ok(result), // A newer selection superseded this request.
+                Err(error) => last_error = Some(error),
+            }
+        }
+        Err(last_error
+            .unwrap_or_else(|| AppError::Queue("云端播放列表没有可播放的歌曲".to_owned())))
+    }
+
+    /// Install the app-side resolver used when normal queue behavior selects a cloud track.
+    pub fn external_track_handler(
+        &self,
+        runtime: tokio::runtime::Handle,
+    ) -> Arc<dyn ExternalTrackPlayback> {
+        Arc::new(CloudQueuePlaybackHandler { playback: self.clone(), runtime })
+    }
+
     /// Account changes stop the previous account's audio before the service invalidates its
     /// account-scoped requests and session.
     pub async fn login_phone(
@@ -119,7 +225,17 @@ impl CloudPlayback {
         start_position: Option<Duration>,
     ) -> AppResult<CloudPlaybackResult> {
         let generation = self.engine.reserve_playback_request();
-        self.play_reserved(song_id, quality, volume, speed, start_position, generation, false).await
+        self.play_reserved(ReservedPlayback {
+            song_id,
+            quality,
+            volume,
+            speed,
+            start_position,
+            generation,
+            keep_paused: false,
+            queue_update: QueueUpdate::Clear,
+        })
+        .await
     }
 
     /// Re-open a cloud stream at a new position. Cloud sources cannot use the local-file seek
@@ -154,20 +270,30 @@ impl CloudPlayback {
             let generation = self.engine.reserve_playback_request();
             (generation, volume, speed, was_paused, position)
         };
-        self.play_reserved(song_id, quality, volume, speed, Some(position), generation, was_paused)
-            .await
+        self.play_reserved(ReservedPlayback {
+            song_id,
+            quality,
+            volume,
+            speed,
+            start_position: Some(position),
+            generation,
+            keep_paused: was_paused,
+            queue_update: QueueUpdate::Preserve,
+        })
+        .await
     }
 
-    async fn play_reserved(
-        &self,
-        song_id: i64,
-        quality: Quality,
-        volume: f64,
-        speed: f64,
-        start_position: Option<Duration>,
-        generation: u64,
-        keep_paused: bool,
-    ) -> AppResult<CloudPlaybackResult> {
+    async fn play_reserved(&self, request: ReservedPlayback) -> AppResult<CloudPlaybackResult> {
+        let ReservedPlayback {
+            song_id,
+            quality,
+            volume,
+            speed,
+            start_position,
+            generation,
+            keep_paused,
+            queue_update,
+        } = request;
         let cancellation = self.cloud.account_tasks_token();
         let song_ids = [song_id];
         let (ticket, songs) = tokio::try_join!(
@@ -187,7 +313,8 @@ impl CloudPlayback {
             .find(|song| song.id == song_id)
             .ok_or_else(|| AppError::network_msg("网易云未返回歌曲信息"))?;
         let cover_url = song.album.cover_url.clone();
-        let summary = Arc::new(track_summary(song, cached_artwork));
+        let is_favorite = self.cloud.cached_is_liked(song_id).unwrap_or(false);
+        let summary = Arc::new(track_summary(song, cached_artwork, is_favorite));
         let should_fetch_cover = summary.artwork_path.is_none() && cover_url.is_some();
 
         let trial = ticket.trial;
@@ -230,10 +357,20 @@ impl CloudPlayback {
             let duration_ms = u64::try_from(summary.duration_ms.max(0)).unwrap_or(0);
             let position_ms = u64::try_from(start.as_millis()).unwrap_or(u64::MAX);
             with_state_emit(&self.player_state, &self.sinks, |state| {
-                // Cloud queue entries have no durable local path. Keep the currently playing
-                // identity in `source` for the player bar and OS media metadata, and clear a
-                // previous local queue so Next cannot try to open a local file for this song.
-                state.queue.clear();
+                // A cloud queue replaces the prior queue only once its selected stream is ready,
+                // so an unavailable song cannot destroy a working queue.
+                match queue_update {
+                    QueueUpdate::Clear => state.queue.clear(),
+                    QueueUpdate::Preserve => {}
+                    QueueUpdate::Replace(plan) => {
+                        state.queue.clear();
+                        state.queue.add_tracks(plan.tracks);
+                        let _ = state.queue.skip_to_index(plan.start_index);
+                        if plan.shuffle || state.queue.shuffle_enabled {
+                            state.queue.shuffle_play_order_in_place(&mut rand::rng(), true);
+                        }
+                    }
+                }
                 state.source = Some(summary);
                 state.status =
                     if keep_paused { PlaybackStatus::Paused } else { PlaybackStatus::Playing };
@@ -277,6 +414,135 @@ impl CloudPlayback {
     }
 }
 
+/// Routes normal queue transitions into the app's async cloud resolver. The queue has already
+/// advanced before the engine calls this adapter, so it only needs the selected song identity.
+struct CloudQueuePlaybackHandler {
+    playback: CloudPlayback,
+    runtime: tokio::runtime::Handle,
+}
+
+impl ExternalTrackPlayback for CloudQueuePlaybackHandler {
+    fn play(&self, track: Arc<TrackSummary>) {
+        let song_id = track.id;
+        let (volume, speed, keep_paused) = {
+            let state = lock_state(&self.playback.player_state);
+            (state.effective_volume(), state.playback_speed, state.status == PlaybackStatus::Paused)
+        };
+
+        // Clear the drained/outgoing deck and mark the transition as waiting before any network
+        // work begins. Otherwise the playback monitor can see the old deck at EOS and advance
+        // the cloud queue again while the first ticket is still being resolved.
+        self.playback.engine.stop();
+        with_state_emit(&self.playback.player_state, &self.playback.sinks, |state| {
+            state.status = PlaybackStatus::Stopped;
+        });
+        let generation = self.playback.engine.reserve_playback_request();
+        let playback = self.playback.clone();
+        self.runtime.spawn(async move {
+            if let Err(error) =
+                playback.play_queued_track(song_id, volume, speed, generation, keep_paused).await
+            {
+                log::warn!(
+                    "cloud queue track {song_id}: {}",
+                    netodia_core::error::describe(&error)
+                );
+            }
+        });
+    }
+}
+
+impl CloudPlayback {
+    /// Try each queue entry at most once if a selected stream is unavailable. This shares the
+    /// engine's repeat and shuffle order and stops rather than wrapping forever through a broken
+    /// playlist.
+    async fn play_queued_track(
+        &self,
+        first_song_id: i64,
+        volume: f64,
+        speed: f64,
+        generation: u64,
+        keep_paused: bool,
+    ) -> AppResult<()> {
+        let attempts = lock_state(&self.player_state).queue.len().max(1);
+        let mut song_id = first_song_id;
+        let mut last_error = None;
+        for attempt in 0..attempts {
+            match self
+                .play_reserved(ReservedPlayback {
+                    song_id,
+                    quality: Quality::Exhigh,
+                    volume,
+                    speed,
+                    start_position: None,
+                    generation,
+                    keep_paused,
+                    queue_update: QueueUpdate::Preserve,
+                })
+                .await
+            {
+                Ok(result) if result.started => return Ok(()),
+                Ok(_) => return Ok(()), // A newer selection superseded this request.
+                Err(error) => last_error = Some(error),
+            }
+            if attempt + 1 == attempts {
+                break;
+            }
+            let Some(next_id) = self.advance_cloud_queue_after_failure(song_id, generation) else {
+                break;
+            };
+            song_id = next_id;
+        }
+
+        if !self.engine.is_playback_request_current(generation)
+            || !self.current_cloud_track_is(song_id)
+        {
+            return Ok(());
+        }
+        self.engine.stop();
+        with_state_emit(&self.player_state, &self.sinks, |state| {
+            state.status = PlaybackStatus::Stopped;
+            state.position_ms = 0;
+        });
+        Err(last_error.unwrap_or_else(|| AppError::network_msg("播放列表中没有可播放的歌曲")))
+    }
+
+    fn current_cloud_track_is(&self, song_id: i64) -> bool {
+        lock_state(&self.player_state)
+            .source
+            .as_ref()
+            .is_some_and(|track| track.id == song_id && track.file_path.is_empty())
+    }
+
+    /// Advance after a failure only while the failed song still owns the waiting player state.
+    fn advance_cloud_queue_after_failure(
+        &self,
+        failed_song_id: i64,
+        generation: u64,
+    ) -> Option<i64> {
+        if !self.engine.is_playback_request_current(generation) {
+            return None;
+        }
+        let mut next_id = None;
+        with_state_emit(&self.player_state, &self.sinks, |state| {
+            if state
+                .source
+                .as_ref()
+                .is_none_or(|track| track.id != failed_song_id || !track.file_path.is_empty())
+                || state.status != PlaybackStatus::Stopped
+            {
+                return;
+            }
+            if let Some(track) = state.queue.advance_after_failure().cloned() {
+                next_id = Some(track.id);
+                state.duration_ms = u64::try_from(track.duration_ms.max(0)).unwrap_or(0);
+                state.position_ms = 0;
+                state.source = Some(track);
+            }
+        });
+        next_id
+    }
+}
+
 async fn download_cover(
     http: &reqwest::Client,
     url: &str,
@@ -304,7 +570,37 @@ async fn download_cover(
     .flatten()
 }
 
-fn track_summary(song: Song, artwork_path: Option<String>) -> TrackSummary {
+/// Candidate order for a newly selected cloud queue item. Repeat-off respects the tail the user
+/// selected from; looping modes wrap once. Shuffle anchors the requested item and randomizes the
+/// remaining candidates before any network resolution begins.
+fn playback_candidates(
+    track_count: usize,
+    start_index: usize,
+    repeat_mode: RepeatMode,
+    shuffle: bool,
+) -> Vec<usize> {
+    if start_index >= track_count {
+        return Vec::new();
+    }
+    let mut candidates = vec![start_index];
+    let mut remaining: Vec<usize> = if shuffle {
+        (0..track_count).filter(|&index| index != start_index).collect()
+    } else {
+        let mut after: Vec<_> = (start_index + 1..track_count).collect();
+        if repeat_mode.wraps() {
+            after.extend(0..start_index);
+        }
+        after
+    };
+    if shuffle {
+        use rand::seq::SliceRandom;
+        remaining.shuffle(&mut rand::rng());
+    }
+    candidates.extend(remaining);
+    candidates
+}
+
+fn track_summary(song: Song, artwork_path: Option<String>, is_favorite: bool) -> TrackSummary {
     let artist = song.artist_names();
     TrackSummary {
         id: song.id,
@@ -318,7 +614,7 @@ fn track_summary(song: Song, artwork_path: Option<String>) -> TrackSummary {
         track_number: None,
         disc_number: None,
         last_position: 0,
-        is_favorite: false,
+        is_favorite,
         rating: 0,
         replaygain_track_gain: None,
         replaygain_track_peak: None,
@@ -356,9 +652,10 @@ fn decoder_extension(format: &str) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::{decoder_extension, open_buffered_source, track_summary};
+    use super::{decoder_extension, open_buffered_source, playback_candidates, track_summary};
     use netodia_audio::player::source::audio::AudioSource;
     use netodia_core::entities::cloud::{Album, Artist, Song};
+    use netodia_engine::player::engine::types::RepeatMode;
     use std::io::{Read, Write};
     use std::net::TcpListener;
     use std::thread;
@@ -399,6 +696,23 @@ mod tests {
     }
 
     #[test]
+    fn unavailable_queue_candidates_follow_repeat_and_shuffle_rules() {
+        assert_eq!(
+            playback_candidates(4, 2, RepeatMode::Off, false),
+            vec![2, 3],
+            "repeat-off must not wrap before the selected queue position"
+        );
+        assert_eq!(playback_candidates(4, 2, RepeatMode::All, false), vec![2, 3, 0, 1]);
+        assert_eq!(playback_candidates(4, 2, RepeatMode::One, false), vec![2, 3, 0, 1]);
+
+        let shuffled = playback_candidates(8, 5, RepeatMode::Off, true);
+        assert_eq!(shuffled.first(), Some(&5), "shuffle keeps the requested song first");
+        let mut sorted = shuffled;
+        sorted.sort_unstable();
+        assert_eq!(sorted, (0..8).collect::<Vec<_>>(), "shuffle tries each queue row once");
+    }
+
+    #[test]
     fn cloud_track_summary_keeps_the_metadata_the_player_bar_renders() {
         let summary = track_summary(
             Song {
@@ -414,6 +728,7 @@ mod tests {
                 ..Song::default()
             },
             Some("/cache/cover.jpg".to_owned()),
+            true,
         );
 
         assert_eq!(summary.id, 812);
@@ -423,6 +738,7 @@ mod tests {
         assert_eq!(summary.duration_ms, 181_000);
         assert_eq!(summary.artwork_path.as_deref(), Some("/cache/cover.jpg"));
         assert!(summary.file_path.is_empty());
+        assert!(summary.is_favorite);
     }
 
     #[test]

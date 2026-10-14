@@ -68,8 +68,11 @@ pub async fn refresh_tracks(
     weak: &Weak<AppWindow>,
 ) -> AppResult<()> {
     let account_generation = state.cloud.status().generation;
+    let liked_revision = state.cloud.liked_ids_revision();
     let sort = current_sort(fav_ui);
-    set_cloud_state(weak, true, None, -1);
+    let cached_count =
+        i32::try_from(fav_ui.state().tracks_all.snapshot().total()).unwrap_or(i32::MAX);
+    set_cloud_state(weak, true, None, cached_count);
     let rows = match fetch_cloud_favorites(state).await {
         Ok(rows) => rows,
         Err(error) => {
@@ -78,11 +81,17 @@ pub async fn refresh_tracks(
                 return Ok(());
             }
             fav_ui.mark_songs_dirty();
-            set_cloud_state(weak, false, Some(describe(&error)), 0);
+            let cached_count =
+                i32::try_from(fav_ui.state().tracks_all.snapshot().total()).unwrap_or(i32::MAX);
+            set_cloud_state(weak, false, Some(describe(&error)), cached_count);
             return Err(error);
         }
     };
     if state.cloud.status().generation != account_generation {
+        fav_ui.mark_songs_dirty();
+        return Ok(());
+    }
+    if state.cloud.liked_ids_revision() != liked_revision {
         fav_ui.mark_songs_dirty();
         return Ok(());
     }
@@ -110,6 +119,11 @@ pub async fn refresh_tracks(
         let _ = tokio::task::spawn_blocking(move || thumbs.prewarm(&cover_paths)).await;
     }
 
+    if state.cloud.liked_ids_revision() != liked_revision {
+        fav_ui.mark_songs_dirty();
+        return Ok(());
+    }
+
     // The decode burst is an `.await`, so the guard is asked again — after the slow part, because
     // before it the leave hasn't happened yet.
     if !fav_ui.section_active() {
@@ -122,8 +136,21 @@ pub async fn refresh_tracks(
     // has no business holding a lock the wipe and both sibling fetches queue behind.
     let fold = crate::ui::hero_folds::fold_tracks(&rows);
 
-    super::hero::refresh_from_tracks(state, fav_ui, weak, &rows, account_generation, false).await;
+    super::hero::refresh_from_tracks(
+        state,
+        fav_ui,
+        weak,
+        &rows,
+        account_generation,
+        liked_revision,
+        false,
+    )
+    .await;
     if state.cloud.status().generation != account_generation {
+        fav_ui.mark_songs_dirty();
+        return Ok(());
+    }
+    if state.cloud.liked_ids_revision() != liked_revision {
         fav_ui.mark_songs_dirty();
         return Ok(());
     }

@@ -30,12 +30,13 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
 /// `NetEase` source instead of the local queue API.
 fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
     let s = state.clone();
+    let pu = playlists_ui.clone();
     ui.global::<PlaylistDetail>().on_play_cloud_row(move |remote_id, _index| {
         let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
             log::warn!("playlists::play_cloud_song: invalid NetEase song ID");
             return;
         };
-        play_cloud_song(&s, song_id);
+        play_cloud_song(&s, pu.detail.cache.track_ids(), song_id, false);
     });
 
     let s = state.clone();
@@ -47,11 +48,11 @@ fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Play
             return;
         }
         let id = ids[rand::rng().random_range(..ids.len())];
-        play_cloud_song(&s, id);
+        play_cloud_song(&s, ids, id, true);
     });
 }
 
-fn play_cloud_song(state: &AppState, song_id: i64) {
+fn play_cloud_song(state: &AppState, ids: Vec<i64>, song_id: i64, shuffle: bool) {
     if song_id <= 0 {
         return;
     }
@@ -62,8 +63,10 @@ fn play_cloud_song(state: &AppState, song_id: i64) {
             let player = lock_state(&state.player_state);
             (player.effective_volume(), player.playback_speed)
         };
-        if let Err(error) =
-            state.cloud_playback.play(song_id, Quality::Exhigh, volume, speed, None).await
+        if let Err(error) = state
+            .cloud_playback
+            .play_queue(&ids, song_id, shuffle, Quality::Exhigh, volume, speed)
+            .await
         {
             log::warn!("playlists::play_cloud_song({song_id}): {}", describe(&error));
         }

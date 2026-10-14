@@ -276,6 +276,25 @@ impl QueueState {
         }
     }
 
+    /// Move past an entry that could not be played. Unlike a user-initiated skip, failure
+    /// recovery must not get trapped on the same item when Repeat One is selected. It still
+    /// respects whether the queue wraps, and callers bound attempts to one queue lap.
+    pub fn advance_after_failure(&mut self) -> Option<&Arc<TrackSummary>> {
+        if self.play_order.is_empty() {
+            return None;
+        }
+
+        let next = self.current_index.map_or(0, |index| index + 1);
+        let next = match self.repeat_mode {
+            RepeatMode::All | RepeatMode::One => next % self.len(),
+            RepeatMode::Off if next < self.len() => next,
+            RepeatMode::Off => return None,
+        };
+        self.version += 1;
+        self.current_index = Some(next);
+        self.get_current()
+    }
+
     pub fn previous(&mut self) -> Option<&Arc<TrackSummary>> {
         if self.play_order.is_empty() {
             return None;
@@ -408,7 +427,20 @@ impl QueueState {
     /// Bumps `version` only when at least one entry actually changed, so a
     /// no-op call (empty input or no matches) won't trigger a `ViewModel` re-emit.
     pub fn prune_missing(&mut self, ids_to_remove: &HashSet<i64>) -> PruneOutcome {
-        if ids_to_remove.is_empty() || self.tracks.is_empty() {
+        self.prune_where(|track| ids_to_remove.contains(&track.id))
+    }
+
+    /// Prune missing local-library rows without treating a cloud song with the same numeric ID as
+    /// the same queue entry. Cloud and local IDs belong to separate namespaces.
+    pub fn prune_missing_local(&mut self, ids_to_remove: &HashSet<i64>) -> PruneOutcome {
+        self.prune_where(|track| !track.file_path.is_empty() && ids_to_remove.contains(&track.id))
+    }
+
+    fn prune_where(
+        &mut self,
+        mut should_remove: impl FnMut(&TrackSummary) -> bool,
+    ) -> PruneOutcome {
+        if self.tracks.is_empty() {
             return PruneOutcome::default();
         }
 
@@ -418,7 +450,7 @@ impl QueueState {
         let mut remap: Vec<Option<usize>> = Vec::with_capacity(old_len);
         let mut new_tracks: Vec<Arc<TrackSummary>> = Vec::with_capacity(old_len);
         for t in &self.tracks {
-            if ids_to_remove.contains(&t.id) {
+            if should_remove(t) {
                 keep_mask.push(false);
                 remap.push(None);
             } else {

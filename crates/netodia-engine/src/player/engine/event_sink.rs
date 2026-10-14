@@ -4,6 +4,14 @@ use tokio::sync::watch;
 
 use super::state::{PlayerViewModelLight, QueueViewModel};
 use super::types::{PlaybackStatus, RepeatMode};
+use netodia_core::entities::track::TrackSummary;
+
+/// App-owned playback for sources the engine cannot open as local files, such as cloud streams.
+/// The engine invokes this after the queue state has selected a track; implementations should
+/// resolve and install the source asynchronously.
+pub trait ExternalTrackPlayback: Send + Sync + 'static {
+    fn play(&self, track: Arc<TrackSummary>);
+}
 
 /// Events that come *from* OS media controls (MPRIS, SMTC, `MediaPlayer`) into the player.
 #[derive(Debug, Clone)]
@@ -55,4 +63,18 @@ pub struct PlayerSinks {
     pub view_model: watch::Sender<Option<PlayerViewModelLight>>,
     pub queue: watch::Sender<Option<QueueViewModel>>,
     pub media_controls: Option<Arc<dyn MediaControlsSync>>,
+    pub external_track_playback: std::sync::RwLock<Option<Arc<dyn ExternalTrackPlayback>>>,
+}
+
+impl PlayerSinks {
+    /// Install the app layer's asynchronous handler for cloud-backed queue entries.
+    pub fn set_external_track_playback(&self, playback: Arc<dyn ExternalTrackPlayback>) {
+        if let Ok(mut slot) = self.external_track_playback.write() {
+            *slot = Some(playback);
+        }
+    }
+
+    pub(crate) fn external_track_playback(&self) -> Option<Arc<dyn ExternalTrackPlayback>> {
+        self.external_track_playback.read().ok()?.clone()
+    }
 }

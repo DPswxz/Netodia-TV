@@ -91,7 +91,12 @@ fn seated(
 ) -> (PlayerStateHandle, PlayerSinks, watch::Receiver<Option<PlayerViewModelLight>>) {
     let (view_model, published) = watch::channel(None);
     let (queue, _) = watch::channel(None);
-    let sinks = PlayerSinks { view_model, queue, media_controls: None };
+    let sinks = PlayerSinks {
+        view_model,
+        queue,
+        media_controls: None,
+        external_track_playback: std::sync::RwLock::new(None),
+    };
     let handle = PlayerStateHandle::default();
     crate::player::engine::state::with_state_emit(&handle, &sinks, |live| *live = state);
     (handle, sinks, published)
@@ -214,6 +219,22 @@ fn the_gapless_preload_stages_the_next_track_near_the_end() {
         "within PRELOAD_LEAD_MS of the end, the next track must be staged"
     );
     assert_eq!(fade_ms(t.as_ref()), None, "crossfade is off");
+}
+
+#[test]
+fn cloud_queue_transitions_wait_for_the_external_source_resolver() {
+    let mut state = playing_state();
+    for track in &mut state.queue.tracks {
+        Arc::make_mut(track).file_path.clear();
+    }
+    let mut current = (*track(1, Some("A"))).clone();
+    current.file_path.clear();
+    state.source = Some(Arc::new(current));
+
+    let decision = tick(&mut state, backend(at_remaining(1_000), crossfade_on(3_000)));
+
+    assert_eq!(staged(decision.as_ref()), None, "an empty cloud URL cannot be preloaded as a file");
+    assert_eq!(fade_ms(decision.as_ref()), None, "crossfade waits for an async cloud decoder");
 }
 
 #[test]

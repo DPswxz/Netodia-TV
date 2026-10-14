@@ -173,6 +173,11 @@ pub fn evaluate_playing_tick(
     let tick = PositionTick { position_ms, duration_ms: state.duration_ms };
 
     let next = state.queue.peek_next();
+    // The native engine can stage local decoders directly, while a cloud track needs an async
+    // request before its source can be installed. Let external transitions reach EndOfStream so
+    // the app-owned playback handler can resolve them without preloading an empty path.
+    let external_transition = state.current_track().is_some_and(|track| track.file_path.is_empty())
+        || next.is_some_and(|track| track.file_path.is_empty());
     let same_album = match (state.current_track(), next) {
         (Some(cur), Some(nxt)) => crossfade::same_album(cur, nxt),
         _ => false,
@@ -187,7 +192,7 @@ pub fn evaluate_playing_tick(
     // the transition ends at `EndOfStream` either way.
     let eligible = crossfade::crossfade_eligible(
         xf,
-        state.pause_after_current_track || next_needs_reopen,
+        state.pause_after_current_track || next_needs_reopen || external_transition,
         next.is_some(),
         same_album,
     );
@@ -216,6 +221,7 @@ pub fn evaluate_playing_tick(
     // / queue mutations decide what plays next (an eager preload would lock in a
     // stale choice the moment the current track started).
     let late_preload = if state.gapless_enabled
+        && !external_transition
         && !already_preloaded
         // A crossfade runs the next track on the *other* deck. A gapless source
         // would sit on this one, behind the outgoing track, and inherit its fade
@@ -493,7 +499,10 @@ impl Monitor {
         let snapshot = {
             let state = lock_state(&self.player_state);
             PlaybackSnapshot {
-                track: state.current_track().map(|t| (t.id, state.position_ms)),
+                track: state
+                    .current_track()
+                    .filter(|track| !track.file_path.is_empty())
+                    .map(|track| (track.id, state.position_ms)),
                 playback: state.to_persisted(),
             }
         };

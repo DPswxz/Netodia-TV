@@ -227,6 +227,7 @@ pub fn wire_all(ui: &AppWindow, state: &AppState) {
     wire_seek(ui, state);
     wire_set_volume(&player, state);
     wire_set_playback_speed(&player, state);
+    now_playing::wire_player_favorite(ui, state);
     // Player.toggle-favorite is wired in `wire_now_playing_favorite` (called
     // after every per-view wire fn) so it can fan the change into all three
     // surfaces that hold a per-row `is_favorite` (Tracks, Browse, AlbumDetail).

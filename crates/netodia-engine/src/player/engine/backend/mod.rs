@@ -159,6 +159,11 @@ impl PlaybackEngine {
         self.playback_generation.fetch_add(1, Ordering::AcqRel) + 1
     }
 
+    /// Whether an async source resolution still owns the latest playback request slot.
+    pub fn is_playback_request_current(&self, generation: u64) -> bool {
+        self.playback_generation.load(Ordering::Acquire) == generation
+    }
+
     /// Run `op` after `delay_ms`, unless a newer control op bumped the epoch in
     /// the meantime. Re-checked *under the decks lock* so a concurrent
     /// `play_media` can't be clobbered by a clear that passed a lock-free check.

@@ -25,6 +25,7 @@ pub async fn refresh_from_tracks(
     weak: &Weak<AppWindow>,
     rows: &[TrackListRow],
     generation: u64,
+    liked_revision: u64,
     animate: bool,
 ) {
     let mut artwork_paths = Vec::new();
@@ -53,7 +54,10 @@ pub async fn refresh_from_tracks(
     // in behind a view nobody can see. The leave set `mark_dirty`, so the next enter
     // re-fetches — the guard `refresh_grids` and `refresh_tracks` carry, in the same
     // place, after the slow part.
-    if !fav_ui.section_active() {
+    if !fav_ui.section_active()
+        || state.cloud.status().generation != generation
+        || state.cloud.liked_ids_revision() != liked_revision
+    {
         return;
     }
 
@@ -80,7 +84,10 @@ pub async fn refresh_from_tracks(
     else {
         return;
     };
-    if state.cloud.status().generation != generation || !fav_ui.section_active() {
+    if state.cloud.status().generation != generation
+        || state.cloud.liked_ids_revision() != liked_revision
+        || !fav_ui.section_active()
+    {
         return;
     }
     publish_hero_artwork(fav_ui, weak, pair, animate, paths);

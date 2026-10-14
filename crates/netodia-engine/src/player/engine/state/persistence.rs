@@ -12,7 +12,15 @@ impl PlayerState {
     /// The snapshot `queue.json` holds, for the two save sites to write.
     ///
     pub fn to_persisted(&self) -> PersistedPlayback {
-        PersistedPlayback { queue: self.queue.to_persistable() }
+        // Cloud IDs are not local database row IDs. Persisting them into the local queue would
+        // restore unrelated files when a local track happens to share the same numeric ID.
+        let has_external_track = self.queue.tracks.iter().any(|track| track.file_path.is_empty());
+        let queue = if has_external_track {
+            PersistableQueue { track_ids: Vec::new(), current_index: -1 }
+        } else {
+            self.queue.to_persistable()
+        };
+        PersistedPlayback { queue }
     }
 }
 

@@ -190,7 +190,9 @@ impl FavoritesUi {
         crate::ui::grid_prewarm::shrink_covers();
         {
             let _gate = self.gate();
-            self.inner.tracks_all.clear();
+            // Keep the liked songs as a stale-while-revalidate cache. The Slint model is emptied
+            // on the UI thread, then rebuilt from these rows immediately when Songs is entered;
+            // the lifecycle callback refreshes the account list in the background every time.
             *self.inner.stats.lock() =
                 FavoriteStats { count: 0, total_duration_ms: 0, artwork_paths: Vec::new() };
             self.inner.most_played.lock().clear();
@@ -201,9 +203,8 @@ impl FavoritesUi {
             *self.inner.most_played_totals.lock() = MostPlayedTotals::default();
             self.inner.applied_selection.lock().clear();
         }
-        // Re-armed beside the caches they guard rather than left to the leave's own `mark_dirty`
-        // two files away: all three sets are empty now, so the next tab entered owes a fetch
-        // whatever the flags held on the way out.
+        // Re-arm the remote lists beside their released UI projections. Songs keeps its last
+        // successful rows for immediate paint, but still owes a network refresh on the next entry.
         self.mark_songs_dirty();
         self.mark_grids_dirty();
         netodia_platform::services::platform::allocator::trim();

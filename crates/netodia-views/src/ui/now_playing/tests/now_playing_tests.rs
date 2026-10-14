@@ -1,5 +1,4 @@
 use super::{SourceKey, Surfaces, clear_unshown_slot};
-use netodia_engine::player::engine::fixtures::test_track;
 use netodia_engine::player::engine::now_playing::SourceId;
 use netodia_ui::MiniLayout;
 use std::cell::Cell;

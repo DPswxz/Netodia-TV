@@ -27,6 +27,28 @@ fn make_summary(id: i64, title: &str, duration_ms: i64) -> Arc<TrackSummary> {
     })
 }
 
+fn make_cloud_summary(id: i64, title: &str) -> Arc<TrackSummary> {
+    Arc::new(TrackSummary {
+        id,
+        file_path: String::new(),
+        file_name: format!("{id}.mp3"),
+        title: title.to_owned(),
+        artist: None,
+        album: None,
+        duration_ms: 180_000,
+        artwork_path: None,
+        track_number: None,
+        disc_number: None,
+        last_position: 0,
+        is_favorite: false,
+        rating: 0,
+        replaygain_track_gain: None,
+        replaygain_track_peak: None,
+        replaygain_album_gain: None,
+        replaygain_album_peak: None,
+    })
+}
+
 fn make_queue(count: i64) -> QueueState {
     let mut q = QueueState::default();
     let tracks: Vec<Arc<TrackSummary>> =
@@ -321,6 +343,17 @@ fn advance_skip_off_stops_at_end() {
     assert!(q.advance_skip().is_none());
 }
 
+#[test]
+fn failure_advance_leaves_repeat_one_for_the_next_candidate() {
+    let mut q = make_queue(3);
+    q.repeat_mode = RepeatMode::One;
+    q.current_index = Some(0);
+
+    assert_eq!(q.advance_after_failure().map(|track| track.id), Some(2));
+    assert_eq!(q.advance_after_failure().map(|track| track.id), Some(3));
+    assert_eq!(q.advance_after_failure().map(|track| track.id), Some(1));
+}
+
 // ── set_repeat_mode ─────────────────────────────────────────────────
 
 /// A panel re-sends the mode it already shows, and a bump there re-publishes the whole queue to
@@ -556,6 +589,21 @@ fn prune_missing_no_matches_is_noop() {
     assert_eq!(outcome.removed, 0);
     assert_eq!(q.tracks.len(), 3);
     assert_eq!(q.version, v0);
+}
+
+#[test]
+fn pruning_a_local_row_does_not_remove_a_cloud_track_with_the_same_id() {
+    let mut q = QueueState::default();
+    q.add_tracks(vec![make_summary(7, "Local", 100), make_cloud_summary(7, "Cloud")]);
+    q.current_index = Some(1);
+
+    let outcome = q.prune_missing_local(&HashSet::from([7]));
+
+    assert_eq!(outcome.removed, 1);
+    assert!(!outcome.current_was_removed);
+    assert_eq!(q.tracks.len(), 1);
+    assert!(q.tracks[0].file_path.is_empty());
+    assert_eq!(q.get_current().map(|track| track.title.as_str()), Some("Cloud"));
 }
 
 #[test]

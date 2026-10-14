@@ -66,7 +66,12 @@ async fn reconcile_once(
     // observers should not see a spurious ViewModel re-emit.
     let queued_ids: Vec<i64> = {
         let s = lock_state(player_state);
-        s.queue.tracks.iter().map(|t| t.id).collect()
+        s.queue
+            .tracks
+            .iter()
+            .filter(|track| !track.file_path.is_empty())
+            .map(|track| track.id)
+            .collect()
     };
 
     if queued_ids.is_empty() {
@@ -93,7 +98,7 @@ async fn reconcile_once(
     // light VM on `sinks.view_model`, so the queue sheet's subscriber
     // rebuilds rows automatically.
     emit_and_execute(&**engine, player_state, sinks, |s| {
-        let outcome = s.queue.prune_missing(&to_remove);
+        let outcome = s.queue.prune_missing_local(&to_remove);
         if !outcome.current_was_removed {
             return Vec::new();
         }

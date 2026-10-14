@@ -315,7 +315,21 @@ fn favorites_cloud_fetch_is_armed_beside_its_cache() {
         .unwrap_or_default();
     assert!(
         release.contains("self.mark_songs_dirty();"),
-        "`release_section_state` must re-arm the cloud song cache beside the rows it wipes"
+        "`release_section_state` must re-arm a refresh even while retaining its last successful rows"
+    );
+    assert!(
+        !release.contains("tracks_all.clear();"),
+        "the last liked-song snapshot must remain available for immediate paint on re-entry"
+    );
+    let enter = LIFECYCLE
+        .split_once("g.on_section_active_changed")
+        .and_then(|(_, rest)| rest.split_once("wire_account_updates"))
+        .map(|(body, _)| body)
+        .unwrap_or_default();
+    assert!(
+        enter.contains("apply_filtered_tracks_now(&ui, &fu)")
+            && enter.contains("fu.active_tab() == favorites_ui_mod::FavoritesTab::Songs"),
+        "re-enter must paint cached songs synchronously before starting its refresh"
     );
 
     // Two ways of storing nothing per fetch: a failed query and a leave landing
@@ -343,7 +357,8 @@ fn a_grid_pick_rewinds_the_count_it_could_not_answer() {
         .map(|(body, _)| body)
         .unwrap_or_default();
 
-    let (before_fetch, after_fetch) = pick.split_once("if needs_fetch {").unwrap_or_default();
+    let (before_fetch, after_fetch) =
+        pick.split_once("if needs_fetch || songs {").unwrap_or_default();
     assert!(
         before_fetch.contains("fu.take_songs_dirty()")
             && before_fetch.contains("fu.take_grids_dirty()"),

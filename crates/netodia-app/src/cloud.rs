@@ -3,9 +3,10 @@
 //! This module is the application boundary for login and session lifetime. Views receive typed
 //! account state and never see cookies, device credentials, or raw HTTP responses.
 
+use std::collections::HashSet;
 use std::future::Future;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use netodia_core::entities::cloud::{
     Account, Album, Artist, LikedSong, Lyrics, Playlist, Quality, SearchKind, SearchResult, Song,
@@ -21,6 +22,7 @@ use tokio_util::sync::CancellationToken;
 const KEYRING_SERVICE: &str = "Netodia";
 const KEYRING_USER: &str = "netease-session";
 const SESSION_VERSION: u8 = 1;
+type LikedIdsCache = Arc<parking_lot::RwLock<Option<(i64, u64, HashSet<i64>)>>>;
 
 /// UI-safe account state. The credential and the session cookie intentionally have no public
 /// representation in this type.
@@ -43,6 +45,8 @@ pub struct CloudService {
     transition: Arc<Mutex<()>>,
     account_tasks: Arc<parking_lot::RwLock<CancellationToken>>,
     guest_initialized: Arc<AtomicBool>,
+    liked_ids_cache: LikedIdsCache,
+    liked_ids_revision: Arc<AtomicU64>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -90,6 +94,8 @@ impl CloudService {
             transition: Arc::new(Mutex::new(())),
             account_tasks: Arc::new(parking_lot::RwLock::new(CancellationToken::new())),
             guest_initialized: Arc::new(AtomicBool::new(false)),
+            liked_ids_cache: Arc::new(parking_lot::RwLock::new(None)),
+            liked_ids_revision: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -210,18 +216,74 @@ impl CloudService {
 
     pub async fn liked_ids(&self) -> AppResult<Vec<i64>> {
         let (account, cancellation) = self.account_snapshot()?;
-        self.account_request_in_generation(self.client.liked_ids(account.id), cancellation).await
+        let generation = self.status().generation;
+        let revision = self.liked_ids_revision.load(Ordering::Acquire);
+        let ids = self
+            .account_request_in_generation(self.client.liked_ids(account.id), cancellation)
+            .await?;
+        if self.status().generation == generation
+            && self.liked_ids_revision.load(Ordering::Acquire) == revision
+        {
+            *self.liked_ids_cache.write() =
+                Some((account.id, generation, ids.iter().copied().collect()));
+        }
+        Ok(ids)
     }
 
     /// Load the liked playlist's server order without allowing an account transition during fetch.
     pub async fn liked_songs(&self) -> AppResult<Vec<LikedSong>> {
         let (account, cancellation) = self.account_snapshot()?;
-        self.account_request_in_generation(self.client.liked_songs(account.id), cancellation).await
+        let generation = self.status().generation;
+        let revision = self.liked_ids_revision.load(Ordering::Acquire);
+        let songs = self
+            .account_request_in_generation(self.client.liked_songs(account.id), cancellation)
+            .await?;
+        if self.status().generation == generation
+            && self.liked_ids_revision.load(Ordering::Acquire) == revision
+        {
+            *self.liked_ids_cache.write() =
+                Some((account.id, generation, songs.iter().map(|entry| entry.song.id).collect()));
+        }
+        Ok(songs)
+    }
+
+    /// Cached membership for player controls. `None` means this account's liked set has not yet
+    /// been fetched in this process; callers can still write the toggle and refresh it afterward.
+    pub fn cached_is_liked(&self, song_id: i64) -> Option<bool> {
+        let status = self.status();
+        let account_id = status.account?.id;
+        let cache = self.liked_ids_cache.read();
+        let (cached_account, generation, ids) = cache.as_ref()?;
+        (*cached_account == account_id && *generation == status.generation)
+            .then(|| ids.contains(&song_id))
+    }
+
+    /// Version of the liked-song snapshot. Views use it to discard a read that raced a successful
+    /// like/unlike write, so an older response cannot paint stale membership after the button.
+    pub fn liked_ids_revision(&self) -> u64 {
+        self.liked_ids_revision.load(Ordering::Acquire)
     }
 
     pub async fn like(&self, song_id: i64, liked: bool) -> AppResult<()> {
         validate_id("歌曲", song_id)?;
-        self.private_request(self.client.like(song_id, liked)).await
+        let (account, cancellation) = self.account_snapshot()?;
+        let generation = self.status().generation;
+        self.account_request_in_generation(self.client.like(song_id, liked), cancellation).await?;
+        if self.status().generation == generation {
+            self.liked_ids_revision.fetch_add(1, Ordering::AcqRel);
+            if let Some((cached_account, cached_generation, ids)) =
+                self.liked_ids_cache.write().as_mut()
+                && *cached_account == account.id
+                && *cached_generation == generation
+            {
+                if liked {
+                    ids.insert(song_id);
+                } else {
+                    ids.remove(&song_id);
+                }
+            }
+        }
+        Ok(())
     }
 
     pub async fn saved_albums(&self, offset: u64) -> AppResult<Vec<Album>> {
@@ -434,6 +496,8 @@ impl CloudService {
 
     async fn begin_transition(&self) {
         self.account_tasks.read().cancel();
+        self.liked_ids_revision.fetch_add(1, Ordering::AcqRel);
+        *self.liked_ids_cache.write() = None;
         self.publish(None, None, self.status().remember_available);
         *self.account_tasks.write() = CancellationToken::new();
         self.client.clear_session().await;
@@ -554,6 +618,8 @@ mod tests {
             transition: Arc::new(Mutex::new(())),
             account_tasks: Arc::new(parking_lot::RwLock::new(CancellationToken::new())),
             guest_initialized: Arc::new(AtomicBool::new(false)),
+            liked_ids_cache: Arc::new(parking_lot::RwLock::new(None)),
+            liked_ids_revision: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -602,6 +668,37 @@ mod tests {
 
         assert!(result.is_err());
         assert!(!polled.load(Ordering::Acquire));
+    }
+
+    #[test]
+    fn liked_membership_cache_is_scoped_to_account_and_generation() {
+        let service = service_for_test();
+        service.status.send_replace(SessionStatus {
+            account: Some(Account { id: 42, ..Account::default() }),
+            generation: 7,
+            ..SessionStatus::default()
+        });
+        *service.liked_ids_cache.write() = Some((42, 7, HashSet::from([1001, 1002])));
+
+        assert_eq!(service.cached_is_liked(1001), Some(true));
+        assert_eq!(service.cached_is_liked(1003), Some(false));
+
+        service.status.send_replace(SessionStatus {
+            account: Some(Account { id: 43, ..Account::default() }),
+            generation: 8,
+            ..SessionStatus::default()
+        });
+        assert_eq!(service.cached_is_liked(1001), None);
+    }
+
+    #[tokio::test]
+    async fn an_account_transition_discards_the_previous_liked_snapshot() {
+        let service = service_for_test();
+        *service.liked_ids_cache.write() = Some((42, 0, HashSet::from([1001])));
+
+        service.begin_transition().await;
+
+        assert!(service.liked_ids_cache.read().is_none());
     }
 
     #[test]

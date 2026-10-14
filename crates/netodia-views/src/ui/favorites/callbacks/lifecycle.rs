@@ -68,6 +68,8 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
                 g.set_artist_count(UNFETCHED_COUNT);
                 g.set_cloud_loading(false);
                 g.set_cloud_error(slint::SharedString::default());
+                // The Slint projection is temporary; `FavoritesUi.tracks_all` retains the last
+                // successful cloud snapshot for immediate paint on the next visit.
                 clear_vec_model::<UiTrackListRow>(&g.get_tracks(), "favorites: clear tracks");
                 clear_vec_model::<UiEntityGridRow>(
                     &g.get_most_played_rows(),
@@ -84,9 +86,21 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
             let s = s.clone();
             let weak = weak.clone();
             if active {
+                if fu.active_tab() == favorites_ui_mod::FavoritesTab::Songs
+                    && let Some(ui) = weak.upgrade()
+                {
+                    let g = ui.global::<Favorites>();
+                    favorites_ui_mod::apply_filtered_tracks_now(&ui, &fu);
+                    let count =
+                        i32::try_from(fu.state().tracks_all.snapshot().total()).unwrap_or(i32::MAX);
+                    g.set_track_count(count);
+                    g.set_cloud_loading(true);
+                    g.set_cloud_error(slint::SharedString::default());
+                }
                 let runtime = s.runtime.clone();
                 runtime.spawn(async move {
-                    if fu.take_dirty() {
+                    let dirty = fu.take_dirty();
+                    if dirty || fu.active_tab() == favorites_ui_mod::FavoritesTab::Songs {
                         kick_full_refresh(&s, &fu, &weak).await;
                     }
                 });
@@ -120,18 +134,19 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
     }
 
     wire_account_updates(state, fav_ui, &weak);
+    wire_liked_updates(state, fav_ui, &weak);
 
     // First section enter: kick an initial fetch so the page paints with data rather than empty
-    // models. A session starting elsewhere gets the same fetch from `section-active-changed`
-    // through `take_dirty()`; the mark here is what covers a session starting *on* Favorites,
-    // whose `else` arm above never fires.
+    // models. Re-entering Songs always refreshes behind the cached rows; other tabs use dirty
+    // flags to avoid fetching data the user did not revisit.
     fav_ui.mark_dirty();
     if fav_ui.section_active() {
         let s = state.clone();
         let fu = fav_ui.clone();
         let weak = weak.clone();
         state.runtime.clone().spawn(async move {
-            if fu.take_dirty() {
+            let dirty = fu.take_dirty();
+            if dirty || fu.active_tab() == favorites_ui_mod::FavoritesTab::Songs {
                 kick_full_refresh(&s, &fu, &weak).await;
             }
         });
@@ -163,6 +178,28 @@ fn wire_account_updates(
             }
         }
     }));
+}
+
+/// Keep the liked-song cache current when the player bar changes membership in `NetEase`.
+fn wire_liked_updates(state: &AppState, fav_ui: &Arc<FavoritesUi>, weak: &slint::Weak<AppWindow>) {
+    let state = state.clone();
+    let fav_ui = fav_ui.clone();
+    let weak = weak.clone();
+    let mut changed = state.cloud_liked_changed.subscribe();
+    let runtime = state.runtime.clone();
+    runtime.spawn(async move {
+        while changed.changed().await.is_ok() {
+            fav_ui.mark_songs_dirty();
+            if !fav_ui.section_active()
+                || fav_ui.active_tab() != favorites_ui_mod::FavoritesTab::Songs
+            {
+                continue;
+            }
+            if let Err(error) = favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await {
+                log::warn!("favorites::liked_changed: {}", describe(&error));
+            }
+        }
+    });
 }
 
 /// Remove the previous account's private rows before a new request can publish.

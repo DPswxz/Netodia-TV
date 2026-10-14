@@ -154,7 +154,7 @@ fn wire_tab_changed(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>)
         // stays quiet until the fetch answers. Songs owes no equivalent:
         // `Favorites.track-count` is written by `refresh_hero`, which is
         // never gated, so it is answered on every tab either way.
-        if needs_fetch {
+        if needs_fetch || songs {
             match entering {
                 favorites_ui_mod::FavoritesTab::MostPlayed => {
                     g.set_most_played_count(UNFETCHED_COUNT);

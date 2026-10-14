@@ -68,6 +68,9 @@ pub struct AppState {
     /// (Tracks/Browse refreshers, `queue_prune`, the folder list) stays on
     /// `library_changed` and no longer fires per played song.
     pub stats_changed: Signal,
+    /// Bumped after the cloud liked-song membership changes from a player control, so the
+    /// Favorites view can refresh its cached list without coupling `AppState` to Slint handles.
+    pub cloud_liked_changed: Signal,
     /// Bumped after the UI language changes. A locale switch re-resolves every live `@tr`
     /// binding on its own, so this exists only for the strings Rust renders through a
     /// trampoline and stores in a model, which nothing re-reads. One subscriber: the
@@ -207,6 +210,7 @@ impl AppState {
             view_model: vm_tx,
             queue: q_tx,
             media_controls: Some(media_controls_sync),
+            external_track_playback: std::sync::RwLock::new(None),
         });
 
         let (file_tx, file_rx) = mpsc::channel::<FileEvent>(256);
@@ -224,12 +228,13 @@ impl AppState {
         // Shared lazy client: the TLS stack and connection pool are constructed on first use.
         let http_client = Arc::new(OnceLock::new());
         let http = http_client.get_or_init(netodia_net::services::net::build_http_client).clone();
-        let (cloud, cloud_playback) = CloudPlayback::initialize(
+        let (cloud, cloud_playback) = initialize_cloud_playback(
             http,
             paths.data_dir.join("netease-artwork"),
             engine.clone(),
             player_state.clone(),
             sinks.clone(),
+            runtime.clone(),
         )
         .await;
 
@@ -248,6 +253,7 @@ impl AppState {
             signal_path_tx,
             library_changed: Signal::new(),
             stats_changed: Signal::new(),
+            cloud_liked_changed: Signal::new(),
             locale_changed: Signal::new(),
             rescan_notice: Signal::new(),
             auto_check_changed: Signal::new(),
@@ -303,6 +309,20 @@ impl AppState {
     pub fn http_client(&self) -> &reqwest::Client {
         self.http_client.get_or_init(netodia_net::services::net::build_http_client)
     }
+}
+
+async fn initialize_cloud_playback(
+    http: reqwest::Client,
+    artwork_dir: std::path::PathBuf,
+    engine: Arc<PlaybackEngine>,
+    player_state: Arc<PlayerStateHandle>,
+    sinks: Arc<PlayerSinks>,
+    runtime: Handle,
+) -> (CloudService, CloudPlayback) {
+    let (cloud, cloud_playback) =
+        CloudPlayback::initialize(http, artwork_dir, engine, player_state, sinks.clone()).await;
+    sinks.set_external_track_playback(cloud_playback.external_track_handler(runtime));
+    (cloud, cloud_playback)
 }
 
 /// Open the output the saved choice will play through. Parked under exclusive output, which claims

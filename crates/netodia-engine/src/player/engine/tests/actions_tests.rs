@@ -5,7 +5,7 @@ use tokio::sync::watch;
 
 use crate::player::engine::actions::execute_actions;
 use crate::player::engine::backend::PlayerBackend;
-use crate::player::engine::event_sink::{MediaControlsSync, PlayerSinks};
+use crate::player::engine::event_sink::{ExternalTrackPlayback, MediaControlsSync, PlayerSinks};
 use crate::player::engine::fixtures::test_track;
 use crate::player::engine::state::{
     PlayerAction, PlayerStateHandle, PlayerViewModelLight, lock_state, play_track_inner,
@@ -40,6 +40,14 @@ struct MockBackendInner {
 
 struct MockBackend {
     inner: Mutex<MockBackendInner>,
+}
+
+struct ExternalCapture(Arc<Mutex<Vec<i64>>>);
+
+impl ExternalTrackPlayback for ExternalCapture {
+    fn play(&self, track: Arc<netodia_core::entities::track::TrackSummary>) {
+        self.0.lock().unwrap_or_else(std::sync::PoisonError::into_inner).push(track.id);
+    }
 }
 
 impl MockBackend {
@@ -137,7 +145,12 @@ impl PlayerBackend for MockBackend {
 fn make_test_sinks() -> PlayerSinks {
     let (view_model, _) = watch::channel(None);
     let (queue, _) = watch::channel(None);
-    PlayerSinks { view_model, queue, media_controls: None }
+    PlayerSinks {
+        view_model,
+        queue,
+        media_controls: None,
+        external_track_playback: std::sync::RwLock::new(None),
+    }
 }
 
 /// Bundles every fixture the `execute_actions` tests need. The temp dir is
@@ -185,6 +198,36 @@ async fn execute_play_media_calls_backend() -> Result<(), AppError> {
     assert!((inner.play_media_calls[0].1 - 0.8).abs() < f64::EPSILON);
     assert!((inner.play_media_calls[0].2 - 1.0).abs() < f64::EPSILON);
     assert_eq!(inner.play_media_calls[0].3, Some(5000));
+    Ok(())
+}
+
+#[test]
+fn an_empty_media_path_dispatches_the_selected_cloud_track() -> Result<(), AppError> {
+    let fx = fixture()?;
+    let mock = MockBackend::new();
+    let received = Arc::new(Mutex::new(Vec::new()));
+    fx.sinks.set_external_track_playback(Arc::new(ExternalCapture(received.clone())));
+    let mut cloud = test_track("Cloud", None, None);
+    Arc::make_mut(&mut cloud).id = 814;
+    with_state_emit(&fx.player_state, &fx.sinks, |state| {
+        state.source = Some(cloud);
+    });
+
+    execute_actions(
+        vec![PlayerAction::PlayMedia {
+            file_path: String::new(),
+            volume: 1.0,
+            speed: 1.0,
+            start_position_ms: None,
+            replaygain: TrackReplayGain::default(),
+        }],
+        &mock,
+        &fx.player_state,
+        &fx.sinks,
+    );
+
+    assert_eq!(*received.lock().unwrap_or_else(std::sync::PoisonError::into_inner), vec![814]);
+    assert!(mock.inner().play_media_calls.is_empty());
     Ok(())
 }
 

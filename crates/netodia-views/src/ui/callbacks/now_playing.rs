@@ -16,6 +16,7 @@ use crate::ui::tracks::{self as tracks_ui_mod, TracksUi};
 use netodia_app::library;
 use netodia_app::state::AppState;
 use netodia_core::error::describe;
+use netodia_engine::player::engine::state::{lock_state, with_state_emit};
 use netodia_ui::{AlbumDetail, AppWindow, ArtistDetail, GenreDetail, Player, PlaylistDetail};
 
 /// The view-side surfaces holding a per-row `is_favorite` / `rating`, bundled so the two
@@ -88,6 +89,49 @@ pub struct RowFlagHandles<'a> {
     pub genres: &'a Arc<GenresUi>,
     pub playlists: &'a Arc<PlaylistsUi>,
     pub search: &'a Arc<SearchUi>,
+}
+
+/// Wire the player bar/full-screen heart to the `NetEase` liked-song endpoint for cloud sources and
+/// to the local library for local files. The player model and queued row are patched only after a
+/// successful cloud write, and the Favorites view is notified to refresh its account cache.
+pub(super) fn wire_player_favorite(ui: &AppWindow, state: &AppState) {
+    let state = state.clone();
+    ui.global::<Player>().on_toggle_favorite(move || {
+        let Some(current) = lock_state(&state.player_state).source.clone() else {
+            return;
+        };
+        let song_id = current.id;
+        let liked = !current.is_favorite;
+        let is_cloud = current.file_path.is_empty();
+        let state = state.clone();
+        state.runtime.clone().spawn(async move {
+            if !is_cloud {
+                if let Err(error) = library::favorites::toggle_current_favorite(&state).await {
+                    log::warn!("toggle_favorite: {}", describe(&error));
+                }
+                return;
+            }
+
+            if let Err(error) = state.cloud.like(song_id, liked).await {
+                log::warn!("netease_like({song_id}, {liked}): {}", describe(&error));
+                return;
+            }
+            with_state_emit(&state.player_state, &state.sinks, |player| {
+                if let Some(track) = player.source.as_mut()
+                    && track.id == song_id
+                    && track.file_path.is_empty()
+                {
+                    Arc::make_mut(track).is_favorite = liked;
+                }
+                for track in &mut player.queue.tracks {
+                    if track.id == song_id && track.file_path.is_empty() {
+                        Arc::make_mut(track).is_favorite = liked;
+                    }
+                }
+            });
+            state.cloud_liked_changed.bump();
+        });
+    });
 }
 
 /// Wire `Player.toggle-favorite` (heart in the Now Playing view, the

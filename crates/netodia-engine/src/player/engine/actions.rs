@@ -35,30 +35,46 @@ pub fn execute_actions<B: PlayerBackend>(
         log::debug!("player: {action}");
         match action {
             PlayerAction::PlayMedia { file_path, volume, speed, start_position_ms, replaygain } => {
-                start_or_skip(
-                    &mut pending,
-                    engine,
-                    player_state,
-                    sinks,
-                    &file_path,
-                    StartMode::Fresh,
-                    || engine.play_media(&file_path, volume, speed, start_position_ms, replaygain),
-                );
+                if file_path.is_empty() {
+                    start_external_track(player_state, sinks);
+                } else {
+                    start_or_skip(
+                        &mut pending,
+                        engine,
+                        player_state,
+                        sinks,
+                        &file_path,
+                        StartMode::Fresh,
+                        || {
+                            engine.play_media(
+                                &file_path,
+                                volume,
+                                speed,
+                                start_position_ms,
+                                replaygain,
+                            )
+                        },
+                    );
+                }
             }
             PlayerAction::BeginCrossfade { file_path, replaygain, fade_ms, volume, speed } => {
                 // `build_crossfade_actions` already advanced onto this track, so
                 // the `advance_skip` a failure triggers correctly lands on the one
                 // after it. In `RepeatMode::One` that also steps off the repeated
                 // track — rare enough (the file vanished mid-play) to accept.
-                start_or_skip(
-                    &mut pending,
-                    engine,
-                    player_state,
-                    sinks,
-                    &file_path,
-                    StartMode::Crossfade,
-                    || engine.begin_crossfade(&file_path, replaygain, fade_ms, volume, speed),
-                );
+                if file_path.is_empty() {
+                    start_external_track(player_state, sinks);
+                } else {
+                    start_or_skip(
+                        &mut pending,
+                        engine,
+                        player_state,
+                        sinks,
+                        &file_path,
+                        StartMode::Crossfade,
+                        || engine.begin_crossfade(&file_path, replaygain, fade_ms, volume, speed),
+                    );
+                }
             }
             PlayerAction::Resume => engine.resume(),
             PlayerAction::Pause { fade_ms } => engine.pause_with_fade(fade_ms),
@@ -88,6 +104,26 @@ pub fn execute_actions<B: PlayerBackend>(
                 try_send(PlayCountEvent::Skip(track_id));
             }
         }
+    }
+}
+
+/// Start the queue's selected cloud track through the app-installed network player. The queue
+/// state has already moved to this track, so the callback can load it without a second selection.
+/// A missing app handler is treated as a playback failure rather than opening an empty path.
+fn start_external_track(player_state: &PlayerStateHandle, sinks: &PlayerSinks) {
+    let track = super::state::lock_state(player_state)
+        .source
+        .as_ref()
+        .filter(|track| track.file_path.is_empty())
+        .cloned();
+    let Some(track) = track else {
+        log::warn!("Skipping external playback action without a selected cloud track");
+        return;
+    };
+    if let Some(playback) = sinks.external_track_playback() {
+        playback.play(track);
+    } else {
+        log::warn!("No external playback handler is installed for cloud song {}", track.id);
     }
 }
 
@@ -251,7 +287,7 @@ fn enqueue_auto_skip(
             gave_up = true;
             return stop_end_of_queue(s);
         }
-        match s.queue.advance_skip().cloned() {
+        match s.queue.advance_after_failure().cloned() {
             Some(track) => play_track_inner(s, track, None),
             None => stop_end_of_queue(s),
         }

@@ -42,6 +42,21 @@ fn test_play_track_sets_state() {
 }
 
 #[test]
+fn cloud_queue_ids_are_not_written_as_local_resume_ids() {
+    let mut state = PlayerState::default();
+    let mut cloud = (*make_summary(42, "Cloud song", 180_000)).clone();
+    cloud.file_path.clear();
+    state.queue.add_tracks(vec![Arc::new(cloud.clone())]);
+    state.queue.current_index = Some(0);
+    state.source = Some(Arc::new(cloud));
+
+    let persisted = state.to_persisted();
+
+    assert!(persisted.queue.track_ids.is_empty());
+    assert_eq!(persisted.queue.current_index, -1);
+}
+
+#[test]
 fn test_play_track_with_start_position() {
     let mut state = PlayerState::default();
     let track = make_summary(1, "Song", 180_000);
@@ -929,7 +944,12 @@ fn sync_track_summaries_patches_current_queue_and_republishes() {
     let handle = PlayerStateHandle::default();
     let (vm_tx, _vm_rx) = watch::channel(None);
     let (q_tx, mut q_rx) = watch::channel(None);
-    let sinks = PlayerSinks { view_model: vm_tx, queue: q_tx, media_controls: None };
+    let sinks = PlayerSinks {
+        view_model: vm_tx,
+        queue: q_tx,
+        media_controls: None,
+        external_track_playback: std::sync::RwLock::new(None),
+    };
 
     // Seed a current track + a coherent two-entry queue.
     with_state_emit(&handle, &sinks, |s| {

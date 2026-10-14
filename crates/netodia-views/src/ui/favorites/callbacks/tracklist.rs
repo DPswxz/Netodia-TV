@@ -18,16 +18,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
     let g = ui.global::<Favorites>();
     let weak = ui.as_weak();
 
-    {
-        let state = state.clone();
-        g.on_play_cloud_row(move |remote_id, _index| {
-            let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
-                log::warn!("favorites::play_cloud_song: invalid NetEase song ID");
-                return;
-            };
-            play_favorite_song(&state, song_id);
-        });
-    }
+    wire_playback(ui, state, fav_ui);
 
     {
         let state = state.clone();
@@ -62,27 +53,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
         });
     }
 
-    {
-        let state = state.clone();
-        g.on_play_row(move |track_id, _index| {
-            let song_id = i64::from(track_id);
-            if song_id <= 0 {
-                return;
-            }
-            let state = state.clone();
-            state.runtime.spawn(async move {
-                let (volume, speed) = {
-                    let player = lock_state(&state.player_state);
-                    (player.effective_volume(), player.playback_speed)
-                };
-                if let Err(error) =
-                    state.cloud_playback.play(song_id, Quality::Exhigh, volume, speed, None).await
-                {
-                    log::warn!("favorites::play_cloud_song({song_id}): {}", describe(&error));
-                }
-            });
-        });
-    }
+    // `wire_playback` installs both activation paths through the same queue loader.
 
     {
         let state = state.clone();
@@ -156,15 +127,39 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
     }
 }
 
-fn play_favorite_song(state: &AppState, song_id: i64) {
+fn wire_playback(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
+    let g = ui.global::<Favorites>();
+    let state_for_remote = state.clone();
+    let fav_ui_for_remote = fav_ui.clone();
+    g.on_play_cloud_row(move |remote_id, _index| {
+        let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
+            log::warn!("favorites::play_cloud_song: invalid NetEase song ID");
+            return;
+        };
+        play_favorite_song(&state_for_remote, fav_ui_for_remote.filtered_track_ids(), song_id);
+    });
+
+    let state = state.clone();
+    let fav_ui = fav_ui.clone();
+    g.on_play_row(move |track_id, _index| {
+        let song_id = i64::from(track_id);
+        if song_id > 0 {
+            play_favorite_song(&state, fav_ui.filtered_track_ids(), song_id);
+        }
+    });
+}
+
+fn play_favorite_song(state: &AppState, ids: Vec<i64>, song_id: i64) {
     let state = state.clone();
     state.runtime.spawn(async move {
         let (volume, speed) = {
             let player = lock_state(&state.player_state);
             (player.effective_volume(), player.playback_speed)
         };
-        if let Err(error) =
-            state.cloud_playback.play(song_id, Quality::Exhigh, volume, speed, None).await
+        if let Err(error) = state
+            .cloud_playback
+            .play_queue(&ids, song_id, false, Quality::Exhigh, volume, speed)
+            .await
         {
             log::warn!("favorites::play_cloud_song({song_id}): {}", describe(&error));
         }

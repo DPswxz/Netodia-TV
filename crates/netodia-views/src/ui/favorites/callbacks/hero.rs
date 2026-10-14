@@ -31,8 +31,10 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
                     let player = lock_state(&s.player_state);
                     (player.effective_volume(), player.playback_speed)
                 };
-                if let Err(error) =
-                    s.cloud_playback.play(id, Quality::Exhigh, volume, speed, None).await
+                if let Err(error) = s
+                    .cloud_playback
+                    .play_queue(&ids, id, true, Quality::Exhigh, volume, speed)
+                    .await
                 {
                     log::warn!("favorites::shuffle_cloud_song: {}", describe(&error));
                 }
