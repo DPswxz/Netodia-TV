@@ -69,6 +69,43 @@ impl FileSource {
     }
 }
 
+/// A seekable reader such as the network tier's range reader, with the metadata Symphonia needs.
+struct ReaderSource<R> {
+    inner: R,
+    byte_len: Option<u64>,
+}
+
+impl<R> Read for ReaderSource<R>
+where
+    R: Read + Seek + Send + Sync,
+{
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        self.inner.read(buf)
+    }
+}
+
+impl<R> Seek for ReaderSource<R>
+where
+    R: Read + Seek + Send + Sync,
+{
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        self.inner.seek(pos)
+    }
+}
+
+impl<R> MediaSource for ReaderSource<R>
+where
+    R: Read + Seek + Send + Sync,
+{
+    fn is_seekable(&self) -> bool {
+        true
+    }
+
+    fn byte_len(&self) -> Option<u64> {
+        self.byte_len
+    }
+}
+
 impl Read for FileSource {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.inner.read(buf)
@@ -210,6 +247,37 @@ impl FileDecoder {
         };
         decoded.install_trim(&edits, &discards);
         Ok(decoded)
+    }
+
+    /// Probe and decode a seekable reader, for example a CDN range source.
+    ///
+    /// The reader is consumed by the decoder. Call this on a worker thread: reading another range
+    /// can involve network I/O. Container-specific gapless metadata is applied by [`Self::open`]
+    /// when a local file can be inspected before probing.
+    pub fn open_reader<R>(
+        reader: R,
+        extension: &str,
+        byte_len: Option<u64>,
+    ) -> Result<Self, AppError>
+    where
+        R: Read + Seek + Send + Sync + 'static,
+    {
+        let mut hint = Hint::new();
+        hint.with_extension(extension);
+        let source = ReaderSource { inner: reader, byte_len };
+        let opened = decode::open(Box::new(source), &hint)
+            .map_err(|error| AppError::Player(format!("Network media {error}")))?;
+        Ok(Self {
+            format: opened.format,
+            decoder: opened.decoder,
+            track: opened.track,
+            cursor: opened.cursor,
+            source_format: opened.source_format,
+            time_base: opened.time_base,
+            total_duration: opened.total_duration,
+            trim: None,
+            end: None,
+        })
     }
 
     /// Lines this source's timeline up with the demuxer's, dropping the priming where nothing

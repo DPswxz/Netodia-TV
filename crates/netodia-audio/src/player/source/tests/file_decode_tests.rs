@@ -11,7 +11,7 @@ use std::time::Duration;
 use super::{FileDecoder, probe_duration};
 use crate::player::source::aac_trim;
 use crate::player::source::audio::{AudioSource, SourceFormat};
-use crate::player::source::tests::helpers::asset;
+use crate::player::source::tests::helpers::{asset, shape};
 use netodia_core::error::AppError;
 
 /// The function exists for the containers lofty can't identify, so those are the cases worth
@@ -82,6 +82,24 @@ fn a_decoder_reports_the_format_it_decoded_to() -> Result<(), AppError> {
         assert_eq!(format, expected, "{fixture}");
         assert_eq!(format.fits_sample(), fits, "{fixture}");
     }
+    Ok(())
+}
+
+/// A seekable non-file reader uses the same codec and packet cursor as a local file, with its
+/// length supplied by the reader owner (the CDN range source in production).
+#[test]
+fn a_seekable_reader_opens_decodes_and_seeks() -> Result<(), AppError> {
+    let bytes = std::fs::read(asset("silence.wav"))?;
+    let byte_len = u64::try_from(bytes.len())
+        .map_err(|error| AppError::Player(format!("Fixture length is invalid: {error}")))?;
+    let mut decoder = FileDecoder::open_reader(std::io::Cursor::new(bytes), "wav", Some(byte_len))?;
+
+    assert_eq!(decoder.shape(), shape(1, 44_100));
+    assert_eq!(decoder.total_duration(), Some(Duration::from_secs(1)));
+    decoder
+        .try_seek(Duration::from_millis(500))
+        .map_err(|error| AppError::Player(error.to_string()))?;
+    assert!(decoder.next().is_some());
     Ok(())
 }
 
