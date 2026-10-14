@@ -2050,6 +2050,10 @@ msgstr ""
 msgid "No recently played tracks"
 msgstr ""
 
+#: ui/views/recently-played/songs-tab.slint
+msgid "Loading NetEase history…"
+msgstr ""
+
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Play something and it will show up here."
 msgstr ""

@@ -4,7 +4,7 @@
 //! fixed — the list is mounted non-sortable. Filtering re-walks the cached `tracks_all` entirely
 //! in memory and preserves that order.
 
-use std::path::PathBuf;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use slint::{ComponentHandle, Model, VecModel, Weak};
@@ -13,9 +13,10 @@ use super::state::SongsTotals;
 use super::{RecentlyPlayedTab, RecentlyPlayedUi};
 use crate::ui::row_match::{self, Needle};
 use crate::ui::util::len_as_i32;
-use netodia_app::library;
 use netodia_app::state::AppState;
-use netodia_core::error::AppResult;
+use netodia_core::entities::cloud::RecentSong;
+use netodia_core::entities::track::TrackListRow as RsTrackListRow;
+use netodia_core::error::{AppResult, describe};
 use netodia_ui::{AppWindow, RecentlyPlayed, TrackListRow as UiTrackListRow};
 
 /// Read-and-return the active filter needle, folded by [`set_filter`] and ready to hand to a
@@ -35,29 +36,58 @@ pub fn set_filter(rp_ui: &RecentlyPlayedUi, filter: &str) -> u64 {
     rp_ui.bump_filter_generation()
 }
 
-/// Fetch the 200 most-recently-played tracks, cache them, push the hero stats, then apply the
-/// in-memory filter into the Slint model. Runs on a tokio worker; the model write hops to the UI
-/// thread.
+/// Fetch `NetEase`'s recent-play records, cache them, push the hero stats, then apply the in-memory
+/// filter into the Slint model. Existing rows remain visible while the account-scoped snapshot is
+/// refreshed. Runs on a tokio worker; the model write hops to the UI thread.
 pub async fn refresh_tracks(
     state: &AppState,
     rp_ui: &Arc<RecentlyPlayedUi>,
     weak: &Weak<AppWindow>,
 ) -> AppResult<()> {
-    let rows = library::recently_played::get_recently_played(&state.db).await?;
+    let refresh_generation = rp_ui.begin_tracks_refresh();
+    let account_generation = state.cloud.status().generation;
+    let cached_count = len_as_i32(rp_ui.state().tracks_all.lock().len());
+    set_cloud_state(rp_ui, weak, refresh_generation, true, None, cached_count);
+    let rows = match fetch_cloud_recent_tracks(state).await {
+        Ok(rows) => rows,
+        Err(error) => {
+            if state.cloud.status().generation != account_generation
+                || !rp_ui.tracks_refresh_is_current(refresh_generation)
+            {
+                return Ok(());
+            }
+            if !rp_ui.section_active() {
+                rp_ui.mark_dirty();
+                return Ok(());
+            }
+            set_cloud_state(
+                rp_ui,
+                weak,
+                refresh_generation,
+                false,
+                Some(describe(&error)),
+                len_as_i32(rp_ui.state().tracks_all.lock().len()),
+            );
+            return Err(error);
+        }
+    };
+    if state.cloud.status().generation != account_generation
+        || !rp_ui.tracks_refresh_is_current(refresh_generation)
+    {
+        return Ok(());
+    }
 
-    // A leave that landed while the query was in flight has already cleared `tracks_all` and
-    // emptied the model, so everything below would undo that teardown behind a view nobody can
-    // see. Placement is the rule every `section_active()` bail follows: after the slow part,
-    // because before it the leave hasn't happened yet.
-    if !rp_ui.section_active() {
+    // A leave or account switch can invalidate the request while it is in flight. Don't let an
+    // old account response repopulate the retained list after either transition.
+    if !rp_ui.section_active() || !rp_ui.tracks_refresh_is_current(refresh_generation) {
         return Ok(());
     }
 
     // Prewarm the row covers off-thread before the first model apply — a mounted row resolves its
     // thumbnail through `RowCovers.request` on the UI thread, so a cold cache would pay one
-    // synchronous decode per unique cover at paint time. The rows are already in recency order,
-    // so the prefix surviving the cap is the right one.
-    let cover_paths: Vec<PathBuf> = crate::ui::grid_prewarm::unique_artwork_paths(
+    // synchronous decode per unique cover at paint time. The rows are already in NetEase's server
+    // order, so the prefix surviving the cap is the right one.
+    let cover_paths = crate::ui::grid_prewarm::unique_artwork_paths(
         rows.iter().map(|r| r.artwork_path.as_deref()),
         rp_ui.cover_thumbs.capacity(),
     );
@@ -66,9 +96,8 @@ pub async fn refresh_tracks(
         let _ = tokio::task::spawn_blocking(move || thumbs.prewarm(&cover_paths)).await;
     }
 
-    // The decode burst above is an `.await`, so the guard has to be asked again: a leave landing
-    // inside it has already emptied the models and wiped the cache.
-    if !rp_ui.section_active() {
+    // The cover decode is an `.await`, so recheck the generation before storing this response.
+    if !rp_ui.section_active() || !rp_ui.tracks_refresh_is_current(refresh_generation) {
         return Ok(());
     }
 
@@ -83,10 +112,8 @@ pub async fn refresh_tracks(
     let fold = crate::ui::hero_folds::fold_tracks(&rows);
     let mosaic_paths = super::hero::mosaic_paths_from(&rows, 4);
 
-    // Under the section gate so the stores can't interleave with `release_section_state`'s wipe
-    // and leave half of each on screen. Held across the synchronous stores only, never across an
-    // `.await`, and taken *before* the push below so the band can't publish a fold this hasn't
-    // landed yet.
+    // Store the snapshot and hero values together so they always describe the same server
+    // response. Held across synchronous stores only, never across an `.await`.
     {
         let _gate = rp_ui.gate();
         *rp_ui.state().songs_totals.lock() = totals;
@@ -108,7 +135,140 @@ pub async fn refresh_tracks(
     }
 
     apply_filtered_tracks(rp_ui, weak);
+    set_cloud_state(rp_ui, weak, refresh_generation, false, None, totals.tracks);
     Ok(())
+}
+
+/// Restore the last cloud response before a fresh fetch. The caller is on the UI thread and has
+/// already switched to the Songs tab, so this must apply synchronously before Slint mounts its
+/// list branch.
+pub fn restore_cached_tracks_now(ui: &AppWindow, rp_ui: &RecentlyPlayedUi) {
+    let count = len_as_i32(rp_ui.state().tracks_all.lock().len());
+    let g = ui.global::<RecentlyPlayed>();
+    g.set_track_count(count);
+    g.set_cloud_error(slint::SharedString::default());
+    g.set_cloud_loading(true);
+    apply_filtered_tracks_now(ui, rp_ui);
+    crate::ui::hero_chips::publish_recently_played(ui, rp_ui);
+}
+
+/// Mirror the account's latest liked-song set into the recent-history cache. The player bar can
+/// change a heart while this page is hidden, so the Rust snapshot is updated even when no Slint
+/// row is mounted.
+pub async fn refresh_liked_flags(
+    state: &AppState,
+    rp_ui: &RecentlyPlayedUi,
+    weak: &Weak<AppWindow>,
+) -> AppResult<()> {
+    let account_generation = state.cloud.status().generation;
+    let liked = state.cloud.liked_ids().await?.into_iter().collect::<HashSet<_>>();
+    if state.cloud.status().generation != account_generation {
+        return Ok(());
+    }
+    let changes = {
+        let mut rows = rp_ui.state().tracks_all.lock();
+        rows.iter_mut()
+            .map(|row| {
+                row.is_favorite = liked.contains(&row.id);
+                (row.id, row.is_favorite)
+            })
+            .collect::<Vec<_>>()
+    };
+    if rp_ui.section_active() && rp_ui.active_tab() == RecentlyPlayedTab::Songs {
+        for (id, is_favorite) in changes {
+            apply_row_favorite(weak, id, is_favorite);
+        }
+    }
+    Ok(())
+}
+
+/// Fetch `NetEase`'s recent list and liked membership together. The server order and timestamps are
+/// preserved, while the shared row heart reflects the same account's favorites list.
+async fn fetch_cloud_recent_tracks(state: &AppState) -> AppResult<Vec<RsTrackListRow>> {
+    let (recent, liked_ids) = tokio::join!(state.cloud.recent_songs(), state.cloud.liked_ids());
+    let recent = recent?;
+    let liked_ids = match liked_ids {
+        Ok(ids) => ids.into_iter().collect::<HashSet<_>>(),
+        Err(error) => {
+            log::debug!("recently_played::liked_ids: {}", describe(&error));
+            HashSet::new()
+        }
+    };
+    let songs = recent.iter().map(|entry| entry.song.clone()).collect::<Vec<_>>();
+    let covers = crate::ui::favorites::cache_song_covers(state, &songs).await;
+    Ok(recent
+        .into_iter()
+        .enumerate()
+        .map(|(index, entry)| {
+            let song_id = entry.song.id;
+            let is_favorite = liked_ids.contains(&song_id)
+                || state.cloud.cached_is_liked(song_id).unwrap_or(false);
+            let artwork_path = covers.get(&song_id).cloned();
+            recent_song_row(
+                entry,
+                i32::try_from(index.saturating_add(1)).unwrap_or(i32::MAX),
+                is_favorite,
+                artwork_path,
+            )
+        })
+        .collect())
+}
+
+fn recent_song_row(
+    entry: RecentSong,
+    server_position: i32,
+    is_favorite: bool,
+    artwork_path: Option<String>,
+) -> RsTrackListRow {
+    let RecentSong { song, played_at_ms: _ } = entry;
+    let artist = song.artist_names();
+    let artist_id = song.artists.first().map(|artist| artist.id);
+    RsTrackListRow {
+        id: song.id,
+        file_path: String::new(),
+        file_name: song.name.clone(),
+        title: song.name,
+        artist: (!artist.is_empty()).then_some(artist),
+        album_artist: None,
+        album: (!song.album.name.is_empty()).then_some(song.album.name),
+        genre: None,
+        track_number: Some(server_position),
+        disc_number: Some(1),
+        year: None,
+        duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
+        artwork_path,
+        is_favorite,
+        rating: 0,
+        album_id: (song.album.id > 0).then_some(song.album.id),
+        artist_id,
+        genre_id: None,
+        date_added: String::new(),
+        sort_key: None,
+    }
+}
+
+fn set_cloud_state(
+    rp_ui: &Arc<RecentlyPlayedUi>,
+    weak: &Weak<AppWindow>,
+    refresh_generation: u64,
+    loading: bool,
+    error: Option<String>,
+    count: i32,
+) {
+    let rp_ui = rp_ui.clone();
+    let weak = weak.clone();
+    let _ = slint::invoke_from_event_loop(move || {
+        if !rp_ui.section_active() || !rp_ui.tracks_refresh_is_current(refresh_generation) {
+            return;
+        }
+        let Some(ui) = weak.upgrade() else { return };
+        let g = ui.global::<RecentlyPlayed>();
+        g.set_cloud_loading(loading);
+        g.set_cloud_error(
+            error.map_or_else(slint::SharedString::default, slint::SharedString::from),
+        );
+        g.set_track_count(count);
+    });
 }
 
 /// Re-walk the cached `tracks_all` through the active filter and push the result into
@@ -191,19 +351,6 @@ pub fn apply_row_favorite(weak: &Weak<AppWindow>, id: i64, fav: bool) {
             &ui.global::<RecentlyPlayed>().get_tracks(),
             id,
             |r| r.is_favorite = fav,
-        );
-    });
-}
-
-/// Set `rating` on a single row in the Slint `VecModel` — the star-rating analogue of
-/// [`apply_row_favorite`]. These lists have no rating column and no in-table rating sort, so the
-/// row never moves.
-pub fn apply_row_rating(weak: &Weak<AppWindow>, id: i64, rating: i32) {
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        crate::ui::model_patch::patch_track_row_by_id(
-            &ui.global::<RecentlyPlayed>().get_tracks(),
-            id,
-            |r| r.rating = rating,
         );
     });
 }

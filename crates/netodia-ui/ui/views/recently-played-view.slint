@@ -73,7 +73,9 @@ export component RecentlyPlayedView inherits Rectangle {
             // Only the Songs tab states its emptiness as a sentence — the grid
             // paints a `GridEmptyState`, which says it better.
             show-empty-copy: RecentlyPlayed.tab-idx == RecentlyPlayed.tab-songs
-                && RecentlyPlayed.track-count == 0;
+                && RecentlyPlayed.track-count == 0
+                && !RecentlyPlayed.cloud-loading
+                && RecentlyPlayed.cloud-error == "";
             empty-copy: @tr("No recently played tracks");
 
             // Clamped, unlike every other reader of this count — see the same mount in

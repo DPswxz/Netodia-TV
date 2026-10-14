@@ -4,8 +4,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use netodia_core::entities::cloud::{
-    Account, Album, Artist, LikedSong, Lyrics, Playlist, Quality, SearchKind, SearchResult, Song,
-    StreamTicket,
+    Account, Album, Artist, LikedSong, Lyrics, Playlist, Quality, RecentSong, SearchKind,
+    SearchResult, Song, StreamTicket,
 };
 use reqwest::header::{COOKIE, SET_COOKIE};
 use serde::de::DeserializeOwned;
@@ -574,6 +574,14 @@ impl Client {
         field(self.request(ep::LIKED, json!({"uid":uid})).await?, "ids")
     }
 
+    /// Return the server-ordered recent-song history for the current account. The wrapper route
+    /// `/record/recent/song` maps to `NetEase`'s actual WEAPI endpoint
+    /// `/api/play-record/song/list`.
+    pub async fn recent_songs(&self) -> Result<Vec<RecentSong>> {
+        let body = self.request(ep::RECENT_SONGS, json!({"limit":100})).await?;
+        decode_recent_songs(&body)
+    }
+
     /// Fetch liked songs in the order `NetEase` returns for the account's special liked playlist.
     /// Song details are fetched separately, so explicitly rejoin them by ID without allowing the
     /// detail endpoint's response order to change the server-provided favorite sequence.
@@ -721,6 +729,22 @@ fn assemble_liked_songs(entries: Vec<LikedPlaylistEntry>, songs: Vec<Song>) -> V
             })
         })
         .collect()
+}
+
+fn decode_recent_songs(body: &Value) -> Result<Vec<RecentSong>> {
+    let list = body["data"]["list"].as_array().ok_or(Error::InvalidResponse)?;
+    let mut songs = Vec::with_capacity(list.len());
+    for entry in list {
+        if entry["resourceType"].as_str().is_some_and(|kind| kind != "SONG") {
+            continue;
+        }
+        let Some(played_at_ms) = entry["playTime"].as_i64() else { continue };
+        let song: Song = decode(entry["data"].clone())?;
+        if song.id > 0 {
+            songs.push(RecentSong { song, played_at_ms });
+        }
+    }
+    Ok(songs)
 }
 
 fn field<T: DeserializeOwned>(mut body: Value, name: &str) -> Result<T> {
@@ -922,6 +946,51 @@ mod tests {
         assert_eq!(
             liked.iter().map(|entry| entry.added_at_ms).collect::<Vec<_>>(),
             [Some(1_700_000_000_000), Some(1_600_000_000_000)]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn recent_song_records_keep_netease_order_and_play_timestamps() -> Result<()> {
+        let rows = decode_recent_songs(&json!({
+            "data": {"list": [
+                {
+                    "resourceId": "42",
+                    "playTime": 1_700_000_000_123_i64,
+                    "resourceType": "SONG",
+                    "data": {"id": 42, "name": "First", "ar": [], "al": {"id": 1, "name": "Album"}, "dt": 1000}
+                },
+                {
+                    "resourceId": "7",
+                    "playTime": 1_600_000_000_456_i64,
+                    "resourceType": "SONG",
+                    "data": {"id": 7, "name": "Second", "ar": [], "al": {"id": 2, "name": "Album 2"}, "dt": 2000}
+                },
+                {
+                    "resourceId": "9",
+                    "playTime": 1_500_000_000_000_i64,
+                    "resourceType": "VIDEO",
+                    "data": {"id": 9, "name": "Not a song"}
+                }
+            ]}
+        }))?;
+
+        assert_eq!(rows.iter().map(|entry| entry.song.id).collect::<Vec<_>>(), [42, 7]);
+        assert_eq!(rows[0].played_at_ms, 1_700_000_000_123);
+        assert_eq!(rows[1].played_at_ms, 1_600_000_000_456);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn recent_history_uses_the_native_weapi_route() -> Result<()> {
+        let client = Client::new(reqwest::Client::new());
+        let request = client
+            .prepare_request(ep::RECENT_SONGS, json!({"limit":100}), &BTreeMap::new())
+            .await?;
+
+        assert_eq!(
+            request.build().ok().map(|request| request.url().as_str().to_owned()),
+            Some("https://music.163.com/weapi/play-record/song/list".to_owned())
         );
         Ok(())
     }

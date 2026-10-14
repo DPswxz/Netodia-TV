@@ -45,6 +45,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedU
                 // Land synchronously before the release task is spawned so the
                 // re-enter handler's `take_dirty()` never observes stale data.
                 ru.mark_dirty();
+                ru.begin_tracks_refresh();
             }
             if !active && let Some(ui) = weak.upgrade() {
                 // UI-thread teardown: hand back the banner's cover and blur slots so their
@@ -72,6 +73,8 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedU
                 // hero square reads it to pick its fallback glyph.
                 g.set_track_count(UNFETCHED_COUNT);
                 g.set_most_played_count(UNFETCHED_COUNT);
+                g.set_cloud_loading(false);
+                g.set_cloud_error(slint::SharedString::default());
                 clear_vec_model::<UiTrackListRow>(&g.get_tracks(), "recently_played: clear tracks");
                 clear_vec_model::<UiEntityGridRow>(
                     &g.get_most_played_rows(),
@@ -90,6 +93,11 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedU
             let s = s.clone();
             let weak = weak.clone();
             if active {
+                if ru.active_tab() == RecentlyPlayedTab::Songs
+                    && let Some(ui) = weak.upgrade()
+                {
+                    recently_played_ui_mod::restore_cached_tracks_now(&ui, &ru);
+                }
                 let runtime = s.runtime.clone();
                 runtime.spawn(async move {
                     if ru.take_dirty() {
@@ -103,44 +111,31 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedU
         });
     }
 
-    // --- library_changed + stats_changed subscriber ---------
-    // `library_changed` is bumped by scans / imports / favorite toggles;
-    // `stats_changed` after every play-count flush (which writes both this
-    // view's ordering keys — `last_played` for Songs, `play_count` for Most
-    // Played), so it listens to `stats_changed` as Favorites and Playlists
-    // do. Visible ⇒ refetch grid + tracks in place; hidden ⇒ mark dirty
-    // for the next enter. Its own loop for Favorites' reason: it selects over
-    // both channels, and `ui::signal::on_signal` takes one.
+    // --- local Most Played updates ----------------------------
+    // Songs now comes from NetEase and refreshes on entry. Only the legacy Most Played grid still
+    // depends on local play-count statistics.
     {
         let s = state.clone();
         let ru = rp_ui.clone();
         let weak = weak.clone();
-        let mut library_rx = state.library_changed.subscribe();
         let mut stats_rx = state.stats_changed.subscribe();
         let _ = slint::spawn_local(Compat::new(async move {
-            loop {
-                // Both senders live in `AppState` for the process lifetime, so
-                // an `Err` only happens during teardown — exit the loop.
-                tokio::select! {
-                    changed = library_rx.changed() => {
-                        if changed.is_err() {
-                            break;
-                        }
-                    }
-                    changed = stats_rx.changed() => {
-                        if changed.is_err() {
-                            break;
-                        }
-                    }
-                }
+            while stats_rx.changed().await.is_ok() {
                 if !ru.section_active() {
                     ru.mark_dirty();
                     continue;
                 }
-                kick_full_refresh(&s, &ru, &weak).await;
+                if ru.active_tab() == RecentlyPlayedTab::MostPlayed {
+                    recently_played_ui_mod::refresh_grid(&s, &ru, &weak).await;
+                } else {
+                    ru.mark_grid_dirty();
+                }
             }
         }));
     }
+
+    wire_account_updates(state, rp_ui, &weak);
+    wire_liked_updates(state, rp_ui, &weak);
 
     // First section enter: kick an initial fetch so the page paints with data.
     // If the session starts elsewhere, `section-active-changed` triggers the
@@ -158,42 +153,100 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedU
     }
 }
 
-/// Fetch the recency list, and the Most Played grid only when its tab is the one
-/// mounted. Concurrent when both run — `tokio::join!` runs them in parallel.
-/// `refresh_grid` logs its own error (returns `()`); `refresh_tracks` returns
-/// `AppResult<()>`.
+/// Remove the prior account's private rows and load the newly signed-in account's history.
+fn wire_account_updates(
+    state: &AppState,
+    rp_ui: &Arc<RecentlyPlayedUi>,
+    weak: &slint::Weak<AppWindow>,
+) {
+    let state = state.clone();
+    let rp_ui = rp_ui.clone();
+    let weak = weak.clone();
+    let mut account_rx = state.cloud_playback.subscribe_account();
+    let _ = slint::spawn_local(Compat::new(async move {
+        while account_rx.changed().await.is_ok() {
+            clear_account_data(&rp_ui, &weak);
+            if !rp_ui.section_active() {
+                rp_ui.mark_dirty();
+                continue;
+            }
+            if let Err(error) = recently_played_ui_mod::refresh_tracks(&state, &rp_ui, &weak).await
+            {
+                log::warn!("recently_played::account_changed: {}", describe(&error));
+            }
+        }
+    }));
+}
+
+/// Keep recent-song hearts synchronized with changes from either the player bar or this list.
+fn wire_liked_updates(
+    state: &AppState,
+    rp_ui: &Arc<RecentlyPlayedUi>,
+    weak: &slint::Weak<AppWindow>,
+) {
+    let state = state.clone();
+    let rp_ui = rp_ui.clone();
+    let weak = weak.clone();
+    let mut changed = state.cloud_liked_changed.subscribe();
+    let runtime = state.runtime.clone();
+    runtime.spawn(async move {
+        while changed.changed().await.is_ok() {
+            if rp_ui.state().tracks_all.lock().is_empty() {
+                continue;
+            }
+            if let Err(error) =
+                recently_played_ui_mod::refresh_liked_flags(&state, &rp_ui, &weak).await
+            {
+                log::debug!("recently_played::liked_changed: {}", describe(&error));
+            }
+        }
+    });
+}
+
+fn clear_account_data(rp_ui: &RecentlyPlayedUi, weak: &slint::Weak<AppWindow>) {
+    rp_ui.clear_account_tracks();
+    rp_ui.forget_mosaic();
+    let weak = weak.clone();
+    let _ = weak.upgrade_in_event_loop(|ui| {
+        let g = ui.global::<RecentlyPlayed>();
+        release_hero_slots(&g);
+        release_shared_hero(&ui);
+        g.set_track_count(UNFETCHED_COUNT);
+        g.set_cloud_loading(false);
+        g.set_cloud_error(slint::SharedString::default());
+        clear_vec_model::<UiTrackListRow>(&g.get_tracks(), "recently_played: clear account tracks");
+        clear_vec_model::<i32>(&g.get_selected_ids(), "recently_played: clear account selection");
+        g.set_selection_anchor(-1);
+    });
+}
+
+/// Refresh the `NetEase` history whenever this page is entered, including when the Most Played tab
+/// is mounted because the shared hero still summarizes the history. Refresh the local Most Played
+/// grid only while that tab is visible; when both are needed they run concurrently.
 ///
-/// **The grid's query is the one that has to be asked for.** `get_most_played`
-/// is uncapped and library-wide by design — the tab is a virtualized grid, and a
-/// cap there is a ceiling the user can scroll into — so every call materializes
-/// a row per played track, folds the lot and stores it. This runs on each
-/// `stats_changed` tick, i.e. once per finished track, for the whole time the
-/// page is on screen; on the Songs tab all of it reaches a grid that isn't
-/// mounted. My Library answers this with a `SectionActiveGate` per tab, so the
-/// entering tab's own fetch is what warms it; this page has one gate for both
-/// tabs, so the tick that was skipped is remembered on
-/// [`RecentlyPlayedUi::mark_grid_dirty`] and the pick that mounts the grid
-/// fetches instead.
+/// `get_most_played` remains uncapped because the virtualized grid lets the user scroll the full
+/// local set. The stats subscriber refreshes it while that tab is mounted and marks it dirty while
+/// Songs is visible, so switching tabs fetches the newest local statistics.
 async fn kick_full_refresh(
     state: &AppState,
     rp_ui: &Arc<RecentlyPlayedUi>,
     weak: &slint::Weak<AppWindow>,
 ) {
-    let t = if rp_ui.active_tab() == RecentlyPlayedTab::MostPlayed {
-        // This *is* the fetch the flag schedules, so it settles it here rather than
-        // leaving the next pick to re-query a cache this tick just filled. Seeded
-        // `true`, so without it a boot onto this tab pays for its own fetch twice.
+    if rp_ui.active_tab() == RecentlyPlayedTab::MostPlayed {
+        // This fetch settles the dirty flag for the local grid and refreshes cloud history for the
+        // shared hero without mounting the Songs list.
         rp_ui.take_grid_dirty();
-        let (_grid, t) = tokio::join!(
+        let (_grid, history) = tokio::join!(
             recently_played_ui_mod::refresh_grid(state, rp_ui, weak),
             recently_played_ui_mod::refresh_tracks(state, rp_ui, weak),
         );
-        t
+        if let Err(error) = history {
+            log::warn!("recently_played::refresh_tracks: {}", describe(&error));
+        }
     } else {
         rp_ui.mark_grid_dirty();
-        recently_played_ui_mod::refresh_tracks(state, rp_ui, weak).await
-    };
-    if let Err(e) = t {
-        log::warn!("recently_played::refresh_tracks: {}", describe(&e));
+        if let Err(error) = recently_played_ui_mod::refresh_tracks(state, rp_ui, weak).await {
+            log::warn!("recently_played::refresh_tracks: {}", describe(&error));
+        }
     }
 }

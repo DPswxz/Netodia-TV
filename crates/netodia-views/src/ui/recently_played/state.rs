@@ -43,13 +43,8 @@ pub(crate) struct RecentlyPlayedUiState {
     /// on the UI thread, and a publish that beats a sibling fetch is stale rather
     /// than half-built.
     ///
-    /// All three describe the whole set, not the filtered view: the band names the
-    /// page, and the count that does follow the filter is the one gating the grid's
-    /// empty state. All three are reset by
-    /// `RecentlyPlayedUi::release_section_state` beside the caches they were folded
-    /// from — dropping that reset doesn't leave the band empty, which would be the
-    /// harmless failure, but leaves it stating a spread that no longer matches the
-    /// count beside it.
+    /// These describe the whole account history, not the filtered view. They stay with the
+    /// in-memory snapshot while the page is hidden and reset together when the account changes.
     pub songs_totals: Mutex<SongsTotals>,
     pub songs_fold: Mutex<HeroFold>,
     pub most_played_totals: Mutex<MostPlayedTotals>,

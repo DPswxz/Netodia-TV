@@ -44,8 +44,8 @@ pub(super) use grid::{apply_filtered_grid_now, apply_filtered_grid_settled, refr
 pub(super) use rows::to_slint_most_played_row;
 pub(super) use selection::{clear_selection, handle_select_row, select_all};
 pub(super) use songs::{
-    apply_filtered_tracks, apply_filtered_tracks_now, apply_row_favorite, apply_row_rating,
-    refresh_tracks, set_filter,
+    apply_filtered_tracks, apply_row_favorite, refresh_liked_flags, refresh_tracks,
+    restore_cached_tracks_now, set_filter,
 };
 pub use tabs::RecentlyPlayedTab;
 pub(super) use tabs::{seed_tab, tab_from_index};
@@ -100,6 +100,9 @@ pub struct RecentlyPlayedUi {
     /// can't see it: a stale set has a *different* signature, which is exactly what it reads as
     /// "apply this".
     filter_generation: AtomicU64,
+    /// Monotonic token for cloud-history refreshes. An older response must not overwrite a newer
+    /// visit or account snapshot when requests finish out of order.
+    tracks_refresh_generation: AtomicU64,
 }
 
 impl RecentlyPlayedUi {
@@ -112,6 +115,7 @@ impl RecentlyPlayedUi {
             active_tab: AtomicU8::new(RecentlyPlayedTab::Songs.as_code()),
             grid_dirty: AtomicBool::new(true),
             filter_generation: AtomicU64::new(0),
+            tracks_refresh_generation: AtomicU64::new(0),
         }
     }
 
@@ -146,6 +150,24 @@ impl RecentlyPlayedUi {
         self.filter_generation.load(Ordering::Acquire)
     }
 
+    pub(super) fn begin_tracks_refresh(&self) -> u64 {
+        self.tracks_refresh_generation.fetch_add(1, Ordering::AcqRel).wrapping_add(1)
+    }
+
+    pub(super) fn tracks_refresh_is_current(&self, generation: u64) -> bool {
+        self.tracks_refresh_generation.load(Ordering::Acquire) == generation
+    }
+
+    /// Drop the previous account's recent-history snapshot before its replacement can arrive.
+    pub(super) fn clear_account_tracks(&self) {
+        self.begin_tracks_refresh();
+        let _gate = self.gate();
+        self.inner.tracks_all.lock().clear();
+        *self.inner.songs_totals.lock() = SongsTotals::default();
+        *self.inner.songs_fold.lock() = HeroFold::default();
+        self.inner.applied_selection.lock().clear();
+    }
+
     /// Serialize a bulk-state wipe against a data write. Held only around the write; never across
     /// an `.await`.
     pub(super) fn gate(&self) -> parking_lot::MutexGuard<'_, ()> {
@@ -167,11 +189,9 @@ impl RecentlyPlayedUi {
         self.inner.last_grid_signature.lock().take();
     }
 
-    /// Drop every section-local buffer so a hidden page holds nothing. Runs off the UI thread on
-    /// section leave, which set `mark_dirty()` synchronously. Release order matches
-    /// `FavoritesUi::release_section_state`, gate included, so no fetch can land halfway through
-    /// the wipe — and each fetcher's own `section_active()` bail, plus the one inside each apply's
-    /// closure, is what stops one resolving *after* the leave from repopulating it.
+    /// Drop the large local Most Played grid when this page is hidden, but keep the small cloud
+    /// history snapshot so the Songs tab paints immediately on its next visit. Runs off the UI
+    /// thread after the section leave marks its pending refresh.
     pub fn release_section_state(&self) {
         if self.section_active() {
             return;
@@ -179,18 +199,13 @@ impl RecentlyPlayedUi {
         crate::ui::grid_prewarm::shrink_covers();
         {
             let _gate = self.gate();
-            self.inner.tracks_all.lock().clear();
             self.inner.most_played.lock().clear();
-            // The folds go with the caches they summarise: a derived value outliving its source is
-            // the one thing the band can state that is *wrong* rather than merely absent.
-            *self.inner.songs_totals.lock() = SongsTotals::default();
-            *self.inner.songs_fold.lock() = HeroFold::default();
+            // Keep the small NetEase recent-history snapshot warm between page visits; its next
+            // entry immediately paints this list while a fresh server snapshot is requested.
             *self.inner.most_played_totals.lock() = MostPlayedTotals::default();
             self.inner.applied_selection.lock().clear();
         }
-        // Re-armed where the wipe is rather than left to the caller: this empties the very cache
-        // the flag guards, and relying on the leave's own `mark_dirty` is a coupling two files
-        // apart that a second caller of this function would not know to honour.
+        // Re-arm the local Most Played fetch beside the grid cache it emptied.
         self.mark_grid_dirty();
         netodia_platform::services::platform::allocator::trim();
     }
@@ -233,13 +248,6 @@ impl RecentlyPlayedUi {
     pub fn flip_track_favorite(&self, id: i64, fav: bool) {
         if let Some(r) = self.inner.tracks_all.lock().iter_mut().find(|r| r.id == id) {
             r.is_favorite = fav;
-        }
-    }
-
-    /// [`Self::flip_track_favorite`]'s star-rating twin.
-    pub fn flip_track_rating(&self, id: i64, rating: i32) {
-        if let Some(r) = self.inner.tracks_all.lock().iter_mut().find(|r| r.id == id) {
-            r.rating = rating;
         }
     }
 }

@@ -2032,6 +2032,10 @@ msgstr "筛选最近播放…"
 msgid "No recently played tracks"
 msgstr "没有最近播放的曲目"
 
+#: ui/views/recently-played/songs-tab.slint
+msgid "Loading NetEase history…"
+msgstr "正在加载网易云播放记录…"
+
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Play something and it will show up here."
 msgstr "播放一些音乐，它们就会显示在这里。"

@@ -176,6 +176,9 @@ export global RecentlyPlayed {
     // Over the full recency set, not the filter. The running time isn't here — it reaches the band
     // as a chip, Rust having already formatted the string. `-1` until fetched.
     in-out property <int> track-count: -1;
+    in-out property <bool> cloud-loading: false;
+    in-out property <string> cloud-error;
+    callback retry-cloud();
 
     // The `Favorites` / `Tracks` column shape, hydrated from `views.json` under its own key.
     in-out property <TrackColumns> track-columns;

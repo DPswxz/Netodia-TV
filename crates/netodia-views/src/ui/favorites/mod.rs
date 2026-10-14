@@ -50,7 +50,8 @@ pub const NAV_FAVORITES: i32 = 2;
 pub(super) use grids::{apply_filtered_grids_now, refresh_grids, set_artist_sort};
 pub(super) use rows::{to_slint_fav_artist_row, to_slint_most_played_row};
 pub(super) use songs::{
-    apply_filtered_tracks, apply_filtered_tracks_now, refresh_tracks, set_filter, set_sort,
+    apply_filtered_tracks, apply_filtered_tracks_now, cache_song_covers, refresh_tracks,
+    set_filter, set_sort,
 };
 pub use tabs::FavoritesTab;
 pub(super) use tabs::{seed_tab, tab_from_index};

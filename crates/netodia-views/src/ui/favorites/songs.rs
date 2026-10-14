@@ -232,7 +232,10 @@ fn cloud_song_row(entry: LikedSong, artwork_path: Option<String>) -> RsTrackList
 
 /// Fetch only the first screenful of distinct cover URLs. The rest of a large favourites list
 /// still renders immediately and its rows can request local artwork as they become visible.
-async fn cache_song_covers(state: &AppState, songs: &[Song]) -> HashMap<i64, String> {
+pub(in crate::ui) async fn cache_song_covers(
+    state: &AppState,
+    songs: &[Song],
+) -> HashMap<i64, String> {
     const COVER_LIMIT: usize = 48;
     let mut urls = Vec::new();
     let mut seen = std::collections::HashSet::new();

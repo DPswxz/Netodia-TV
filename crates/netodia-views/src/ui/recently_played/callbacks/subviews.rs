@@ -101,7 +101,21 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedU
             // a header band over nothing.
             recently_played_ui_mod::apply_filtered_grid_now(&ui, &ru);
             if entering == recently_played_ui_mod::RecentlyPlayedTab::Songs {
-                recently_played_ui_mod::apply_filtered_tracks_now(&ui, &ru);
+                recently_played_ui_mod::restore_cached_tracks_now(&ui, &ru);
+                let s_refresh = s.clone();
+                let ru_refresh = ru.clone();
+                let weak_refresh = weak.clone();
+                s.runtime.clone().spawn(async move {
+                    if let Err(error) = recently_played_ui_mod::refresh_tracks(
+                        &s_refresh,
+                        &ru_refresh,
+                        &weak_refresh,
+                    )
+                    .await
+                    {
+                        log::warn!("recently_played::tab_refresh: {}", describe(&error));
+                    }
+                });
             } else {
                 // Leaving empties the model rather than leaving it holding its
                 // last rows — the same trade `write_filtered_grid` makes for the

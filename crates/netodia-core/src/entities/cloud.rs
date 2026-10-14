@@ -56,6 +56,14 @@ pub struct LikedSong {
     pub added_at_ms: Option<i64>,
 }
 
+/// A song in the account's `NetEase` recent-play history. `played_at_ms` and the server's list
+/// position are authoritative; views must preserve the returned order instead of re-sorting it.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct RecentSong {
+    pub song: Song,
+    pub played_at_ms: i64,
+}
+
 impl Song {
     pub fn artist_names(&self) -> String {
         self.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(" / ")

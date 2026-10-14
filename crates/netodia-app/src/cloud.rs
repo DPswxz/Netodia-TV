@@ -9,8 +9,8 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use netodia_core::entities::cloud::{
-    Account, Album, Artist, LikedSong, Lyrics, Playlist, Quality, SearchKind, SearchResult, Song,
-    StreamTicket,
+    Account, Album, Artist, LikedSong, Lyrics, Playlist, Quality, RecentSong, SearchKind,
+    SearchResult, Song, StreamTicket,
 };
 use netodia_core::error::{AppError, AppResult};
 use netodia_net::netease::Client;
@@ -23,6 +23,7 @@ const KEYRING_SERVICE: &str = "Netodia";
 const KEYRING_USER: &str = "netease-session";
 const SESSION_VERSION: u8 = 1;
 type LikedIdsCache = Arc<parking_lot::RwLock<Option<(i64, u64, HashSet<i64>)>>>;
+type RecentSongsCache = Arc<parking_lot::RwLock<Option<(i64, u64, Vec<RecentSong>)>>>;
 
 /// UI-safe account state. The credential and the session cookie intentionally have no public
 /// representation in this type.
@@ -47,6 +48,7 @@ pub struct CloudService {
     guest_initialized: Arc<AtomicBool>,
     liked_ids_cache: LikedIdsCache,
     liked_ids_revision: Arc<AtomicU64>,
+    recent_songs_cache: RecentSongsCache,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -96,6 +98,7 @@ impl CloudService {
             guest_initialized: Arc::new(AtomicBool::new(false)),
             liked_ids_cache: Arc::new(parking_lot::RwLock::new(None)),
             liked_ids_revision: Arc::new(AtomicU64::new(0)),
+            recent_songs_cache: Arc::new(parking_lot::RwLock::new(None)),
         }
     }
 
@@ -245,6 +248,30 @@ impl CloudService {
                 Some((account.id, generation, songs.iter().map(|entry| entry.song.id).collect()));
         }
         Ok(songs)
+    }
+
+    /// Fetch the signed-in account's `NetEase` play history, preserving the order returned by the
+    /// server. The snapshot is retained per account so the page can paint it immediately while a
+    /// fresh request runs each time the user opens the history view.
+    pub async fn recent_songs(&self) -> AppResult<Vec<RecentSong>> {
+        let (account, cancellation) = self.account_snapshot()?;
+        let generation = self.status().generation;
+        let songs =
+            self.account_request_in_generation(self.client.recent_songs(), cancellation).await?;
+        if self.status().generation == generation {
+            *self.recent_songs_cache.write() = Some((account.id, generation, songs.clone()));
+        }
+        Ok(songs)
+    }
+
+    /// A recent-history snapshot for the visible account. It is only an in-process presentation
+    /// cache; opening the page still refreshes it from `NetEase`.
+    pub fn cached_recent_songs(&self) -> Option<Vec<RecentSong>> {
+        let status = self.status();
+        let account_id = status.account?.id;
+        let cache = self.recent_songs_cache.read();
+        let (cached_account, generation, songs) = cache.as_ref()?;
+        (*cached_account == account_id && *generation == status.generation).then(|| songs.clone())
     }
 
     /// Cached membership for player controls. `None` means this account's liked set has not yet
@@ -498,6 +525,7 @@ impl CloudService {
         self.account_tasks.read().cancel();
         self.liked_ids_revision.fetch_add(1, Ordering::AcqRel);
         *self.liked_ids_cache.write() = None;
+        *self.recent_songs_cache.write() = None;
         self.publish(None, None, self.status().remember_available);
         *self.account_tasks.write() = CancellationToken::new();
         self.client.clear_session().await;
@@ -620,6 +648,7 @@ mod tests {
             guest_initialized: Arc::new(AtomicBool::new(false)),
             liked_ids_cache: Arc::new(parking_lot::RwLock::new(None)),
             liked_ids_revision: Arc::new(AtomicU64::new(0)),
+            recent_songs_cache: Arc::new(parking_lot::RwLock::new(None)),
         }
     }
 
@@ -689,6 +718,29 @@ mod tests {
             ..SessionStatus::default()
         });
         assert_eq!(service.cached_is_liked(1001), None);
+    }
+
+    #[test]
+    fn recent_history_cache_is_scoped_to_account_and_generation() {
+        let service = service_for_test();
+        let recent = vec![RecentSong {
+            song: Song { id: 42, name: "Cloud history".into(), ..Song::default() },
+            played_at_ms: 1_700_000_000_000,
+        }];
+        service.status.send_replace(SessionStatus {
+            account: Some(Account { id: 42, ..Account::default() }),
+            generation: 7,
+            ..SessionStatus::default()
+        });
+        *service.recent_songs_cache.write() = Some((42, 7, recent.clone()));
+
+        assert_eq!(service.cached_recent_songs(), Some(recent));
+        service.status.send_replace(SessionStatus {
+            account: Some(Account { id: 43, ..Account::default() }),
+            generation: 8,
+            ..SessionStatus::default()
+        });
+        assert!(service.cached_recent_songs().is_none());
     }
 
     #[tokio::test]

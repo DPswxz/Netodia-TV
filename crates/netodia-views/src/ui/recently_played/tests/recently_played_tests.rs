@@ -185,10 +185,9 @@ fn tab_count_matches_the_tabs_slint_declares() {
 /// bail is what skips the cost; drop it and the tab gate becomes decorative,
 /// with the whole recency list still prepared per keystroke on the UI thread.
 /// `write_filtered_tracks`' is what survives a pick landing mid-post. The
-/// tab-leave **clear** is what empties what the last visit left. And the tab pick
-/// writing through the **non-hopping** `apply_filtered_tracks_now` is what stops
-/// that clear becoming visible: the entering tab mounts on the next frame, and a
-/// posted write that loses the race paints a `TrackList` of headers over nothing.
+/// tab-leave projection clear is what empties the mounted model. The tab pick
+/// synchronously restores the retained `NetEase` rows before the entering tab
+/// mounts, then refreshes the account snapshot in the background.
 #[test]
 fn the_songs_model_is_written_only_while_its_tab_is_mounted() {
     assert!(
@@ -217,8 +216,9 @@ fn the_songs_model_is_written_only_while_its_tab_is_mounted() {
     );
 
     assert!(
-        SUBVIEWS.contains("apply_filtered_tracks_now(&ui, &ru)"),
-        "the tab pick must write the Songs model through the non-hopping `_now` variant"
+        SUBVIEWS.contains("restore_cached_tracks_now(&ui, &ru)")
+            && SONGS.contains("apply_filtered_tracks_now(ui, rp_ui)"),
+        "the tab pick must synchronously restore cached Songs rows before the list mounts"
     );
     assert!(
         SUBVIEWS.contains("clear_vec_model::<UiTrackListRow>("),
@@ -398,12 +398,12 @@ fn a_superseded_filter_build_does_not_reach_the_grid() {
 
     let filter = block_body(TRACKLIST, "fn wire_filter(", "\n}").unwrap_or_default();
     assert!(
-        filter.contains("apply_filtered_grid_settled(&ru, &weak, generation)"),
+        filter.contains("apply_filtered_grid_settled(&rp_ui, &weak, generation)"),
         "the keystroke must defer the Most Played walk — `apply_filtered_grid_now` puts an \
          uncapped library-wide filter pass back on the event loop"
     );
     assert!(
-        filter.contains("s.runtime.spawn("),
+        filter.contains("state.runtime.spawn("),
         "and it must be spawned: calling the deferred form from the UI thread still walks \
          the cache there, which is the whole cost being moved"
     );
