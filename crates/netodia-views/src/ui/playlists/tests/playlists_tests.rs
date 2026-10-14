@@ -132,6 +132,8 @@ fn cloud_playlist_rows_expose_netease_columns_and_position_is_the_default_sort()
     for field in ["position", "title", "album", "favorite", "length"] {
         assert!(CLOUD_TRACKS.contains(&format!("field: \"{field}\";")));
     }
+    assert!(CLOUD_TRACKS.contains("root.play-track(song.remote_id, index)"));
+    assert!(DETAIL_VIEW.contains("PlaylistDetail.play-cloud-row(id, index)"));
 }
 
 #[test]
@@ -140,6 +142,30 @@ fn cloud_playlist_rows_keep_the_full_netease_id_across_the_slint_boundary() {
         to_slint_playlist_row(&playlist(3_000_000_000, "Large ID", 0, "2026-01-01T00:00:00Z"));
     assert_eq!(row.id, i32::MAX, "legacy UI handle remains bounded");
     assert_eq!(row.remote_id.to_string(), "3000000000");
+}
+
+#[test]
+fn cloud_track_rows_keep_distinct_full_width_song_ids_for_playback_and_sorting() {
+    let first = crate::ui::tracks::to_slint_track_list_rows(&[track(
+        2_147_483_648,
+        "First",
+        "Album",
+        false,
+        100,
+    )]);
+    let second = crate::ui::tracks::to_slint_track_list_rows(&[track(
+        3_000_000_000,
+        "Second",
+        "Album",
+        false,
+        200,
+    )]);
+
+    assert_eq!(first[0].id, i32::MAX);
+    assert_eq!(second[0].id, i32::MAX);
+    assert_eq!(first[0].remote_id.to_string(), "2147483648");
+    assert_eq!(second[0].remote_id.to_string(), "3000000000");
+    assert_ne!(crate::ui::tracks::model_key(&first[0]), crate::ui::tracks::model_key(&second[0]));
 }
 
 #[test]

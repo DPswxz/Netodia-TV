@@ -152,6 +152,8 @@ export global PlaylistDetail {
     callback close-detail();
     callback shuffle-all();
     callback play-row(int /*track_id*/, int /*index*/);
+    // Cloud rows carry exact 64-bit NetEase IDs as decimal strings.
+    callback play-cloud-row(string /*song_id*/, int /*index*/);
     callback play-next([int] /*track_ids*/);
     callback add-to-queue([int]);
     callback toggle-row-favorite([int] /*track_ids*/, bool /*new*/);

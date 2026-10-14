@@ -98,6 +98,9 @@ export global Favorites {
 
     // Songs-tab row interactions — same shape as Tracks / AlbumDetail.
     callback play-row(int /*track_id*/, int /*index*/);
+    // Exact NetEase ID path for the 64-bit cloud favorites model.
+    callback play-cloud-row(string /*song_id*/, int /*index*/);
+    callback toggle-cloud-favorite(string /*song_id*/, bool /*new_state*/);
     callback play-next([int] /*track_ids*/);
     callback add-to-queue([int]);
     callback toggle-row-favorite([int] /*track_ids*/, bool /*new*/);

@@ -318,7 +318,11 @@ fn reapply_order(g: &PlaylistDetail<'_>, playlists_ui: &PlaylistsUi, field: &str
             .cache
             .sort_both(|rows| sort_playlist_tracks(rows, &position_order, field, dir))
     };
-    crate::ui::model_diff::permute_rows_by_id(&g.get_tracks(), &order, |r| r.id);
+    crate::ui::model_diff::permute_rows_by_id(
+        &g.get_tracks(),
+        &order,
+        crate::ui::tracks::model_key,
+    );
 }
 
 /// Re-sort the cached detail tracks to the current `PlaylistDetail` sort state,

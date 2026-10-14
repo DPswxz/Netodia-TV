@@ -13,8 +13,8 @@ export component CloudFavoritesSongsTab inherits Rectangle {
     in property <string> error;
 
     callback retry();
-    callback play-track(int, int);
-    callback remove-favorite(int);
+    callback play-track(string, int);
+    callback remove-favorite(string);
     callback request-sort(string);
 
     CloudPlaylistTracks {

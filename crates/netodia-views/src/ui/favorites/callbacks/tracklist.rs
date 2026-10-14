@@ -20,6 +20,50 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
 
     {
         let state = state.clone();
+        g.on_play_cloud_row(move |remote_id, _index| {
+            let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
+                log::warn!("favorites::play_cloud_song: invalid NetEase song ID");
+                return;
+            };
+            play_favorite_song(&state, song_id);
+        });
+    }
+
+    {
+        let state = state.clone();
+        let runtime = state.runtime.clone();
+        let cloud = state.cloud.clone();
+        let fav_ui = fav_ui.clone();
+        let weak = weak.clone();
+        g.on_toggle_cloud_favorite(move |remote_id, liked| {
+            let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
+                log::warn!("favorites::netease_like: invalid NetEase song ID");
+                return;
+            };
+            let state = state.clone();
+            let cloud = cloud.clone();
+            let fav_ui = fav_ui.clone();
+            let weak = weak.clone();
+            runtime.spawn(async move {
+                if let Err(error) = cloud.like(song_id, liked).await {
+                    log::warn!("favorites::netease_like({song_id}): {}", describe(&error));
+                    return;
+                }
+                if fav_ui.section_active() {
+                    if let Err(error) =
+                        favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await
+                    {
+                        log::warn!("favorites::refresh_after_like: {}", describe(&error));
+                    }
+                } else {
+                    fav_ui.mark_songs_dirty();
+                }
+            });
+        });
+    }
+
+    {
+        let state = state.clone();
         g.on_play_row(move |track_id, _index| {
             let song_id = i64::from(track_id);
             if song_id <= 0 {
@@ -110,4 +154,19 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
             persist_view_sort(&state, view_id::FAVORITES, field, direction);
         });
     }
+}
+
+fn play_favorite_song(state: &AppState, song_id: i64) {
+    let state = state.clone();
+    state.runtime.spawn(async move {
+        let (volume, speed) = {
+            let player = lock_state(&state.player_state);
+            (player.effective_volume(), player.playback_speed)
+        };
+        if let Err(error) =
+            state.cloud_playback.play(song_id, Quality::Exhigh, volume, speed, None).await
+        {
+            log::warn!("favorites::play_cloud_song({song_id}): {}", describe(&error));
+        }
+    });
 }

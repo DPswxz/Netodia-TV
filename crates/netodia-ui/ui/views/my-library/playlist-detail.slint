@@ -40,7 +40,7 @@ export component PlaylistDetailBody inherits Rectangle {
             sort-field: PlaylistDetail.sort-field;
             sort-dir: PlaylistDetail.sort-dir;
             request-sort(field) => { PlaylistDetail.request-sort(field); }
-            play-track(id, index) => { PlaylistDetail.play-row(id, index); }
+            play-track(id, index) => { PlaylistDetail.play-cloud-row(id, index); }
         }
 
         tl := DraggableTrackList {

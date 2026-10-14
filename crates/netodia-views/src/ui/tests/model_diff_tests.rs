@@ -1,4 +1,6 @@
 use super::*;
+use netodia_ui::TrackListRow as UiTrackListRow;
+use std::rc::Rc;
 
 /// Row whose `tag` is deliberately outside its `PartialEq`, so a test can
 /// tell "the helper skipped this write" from "the helper wrote a value
@@ -79,4 +81,26 @@ fn an_empty_apply_clears_the_model() {
     apply_rows_keyed(&model, Vec::new(), |r| r.id);
 
     assert_eq!(model.row_count(), 0);
+}
+
+#[test]
+fn cloud_rows_with_the_same_legacy_int_are_keyed_by_the_full_remote_id() {
+    let row = |remote_id: &str, title: &str| UiTrackListRow {
+        id: i32::MAX,
+        remote_id: remote_id.into(),
+        title: title.into(),
+        ..UiTrackListRow::default()
+    };
+    let model =
+        Rc::new(VecModel::from(vec![row("2147483648", "First"), row("3000000000", "Second")]));
+    let model_rc = ModelRc::from(model.clone());
+
+    permute_rows_by_id(
+        &model_rc,
+        &[3_000_000_000_i64, 2_147_483_648_i64],
+        crate::ui::tracks::model_key,
+    );
+
+    assert_eq!(model.row_data(0).map(|row| row.title.to_string()), Some("Second".into()));
+    assert_eq!(model.row_data(1).map(|row| row.title.to_string()), Some("First".into()));
 }

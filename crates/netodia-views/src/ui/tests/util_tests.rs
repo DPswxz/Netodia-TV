@@ -26,6 +26,15 @@ fn clamp_i64_to_i32_passes_through_in_range_and_saturates_outside() {
     assert_eq!(clamp_i64_to_i32(i64::MIN), i32::MIN);
 }
 
+#[test]
+fn cloud_ids_round_trip_above_the_slint_integer_limit() {
+    assert_eq!(parse_cloud_id("3000000000"), Some(3_000_000_000));
+    assert_eq!(parse_cloud_id("9223372036854775807"), Some(i64::MAX));
+    assert_eq!(parse_cloud_id("0"), None);
+    assert_eq!(parse_cloud_id("-1"), None);
+    assert_eq!(parse_cloud_id("not-an-id"), None);
+}
+
 /// How blurred a backdrop *looks* is the sigma relative to the buffer it is applied to, so
 /// retuning one of these without the other changes every backdrop in the app — invisibly in
 /// review, and on both tiers at once.

@@ -13,6 +13,7 @@
 //! false "changed" verdict is the only possible error and it just writes the row.
 
 use std::collections::HashMap;
+use std::hash::Hash;
 
 use slint::{Model, ModelRc, VecModel};
 
@@ -23,10 +24,11 @@ use slint::{Model, ModelRc, VecModel};
 /// Returns whether the model was **reset** — i.e. whether row positions moved. Callers holding
 /// anything keyed on a row index (a shift-range anchor, a drop slot) may keep it on `false`,
 /// where the same ids sit where they did; on `true` those indices name different rows now.
-pub fn apply_rows_keyed<T, F>(vec_model: &VecModel<T>, new_rows: Vec<T>, id_of: F) -> bool
+pub fn apply_rows_keyed<T, K, F>(vec_model: &VecModel<T>, new_rows: Vec<T>, id_of: F) -> bool
 where
     T: Clone + PartialEq + 'static,
-    F: Fn(&T) -> i32,
+    K: Eq,
+    F: Fn(&T) -> K,
 {
     let cur_count = vec_model.row_count();
     if cur_count == new_rows.len() {
@@ -63,10 +65,11 @@ where
 /// no `SharedString` alloc — and each row carries its `selected` flag along, which is why the
 /// four detail views only re-sync selection defensively afterwards. `set_vec` on purpose: a
 /// permutation is structural, so [`apply_rows_keyed`] would fall back to one anyway.
-pub fn permute_rows_by_id<T, F>(model: &ModelRc<T>, order: &[i32], id_of: F)
+pub fn permute_rows_by_id<T, K, F>(model: &ModelRc<T>, order: &[K], id_of: F)
 where
     T: Clone + 'static,
-    F: Fn(&T) -> i32,
+    K: Eq + Hash + Clone,
+    F: Fn(&T) -> K,
 {
     let Some(vec_model) = model.as_any().downcast_ref::<VecModel<T>>() else {
         // The caller has already sorted its Rust caches, and every index-to-track lookup it
@@ -74,7 +77,7 @@ where
         log::warn!("permute_rows_by_id: VecModel downcast failed, rows left in the old order");
         return;
     };
-    let mut by_id: HashMap<i32, T> = HashMap::with_capacity(vec_model.row_count());
+    let mut by_id: HashMap<K, T> = HashMap::with_capacity(vec_model.row_count());
     for i in 0..vec_model.row_count() {
         if let Some(row) = vec_model.row_data(i) {
             by_id.insert(id_of(&row), row);

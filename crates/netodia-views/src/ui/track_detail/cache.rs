@@ -8,7 +8,6 @@ use parking_lot::Mutex;
 use super::{DetailGlobal, selection};
 use crate::ui::row_match::{self, Needle};
 use crate::ui::track_sort::sort_track_list_rows;
-use crate::ui::util::clamp_i64_to_i32;
 use netodia_core::entities::track::TrackListRow as RsTrackListRow;
 
 /// One detail's cached rows, needle and selection shadow.
@@ -90,11 +89,11 @@ impl DetailCache {
 
     /// Sorts the canonical and displayed sets with `sort`, returning the displayed ids in their
     /// new order. Both move together, so a filter widened later still comes back sorted.
-    pub fn sort_both(&self, mut sort: impl FnMut(&mut [RsTrackListRow])) -> Vec<i32> {
+    pub fn sort_both(&self, mut sort: impl FnMut(&mut [RsTrackListRow])) -> Vec<i64> {
         sort(&mut self.all_tracks.lock());
         let mut tracks = self.tracks.lock();
         sort(&mut tracks);
-        tracks.iter().map(|t| clamp_i64_to_i32(t.id)).collect()
+        tracks.iter().map(|t| t.id).collect()
     }
 
     /// Re-sorts to the global's current sort and reorders the model rows to match: no fetch and
@@ -102,7 +101,11 @@ impl DetailCache {
     pub fn resort<G: DetailGlobal>(&self, g: &G) {
         let (field, dir) = g.sort();
         let order = self.sort_both(|rows| sort_track_list_rows(rows, &field, &dir));
-        crate::ui::model_diff::permute_rows_by_id(&g.track_rows(), &order, |r| r.id);
+        crate::ui::model_diff::permute_rows_by_id(
+            &g.track_rows(),
+            &order,
+            crate::ui::tracks::model_key,
+        );
         selection::apply_selection_to_rows(g, self);
     }
 

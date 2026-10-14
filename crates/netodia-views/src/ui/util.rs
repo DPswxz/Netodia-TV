@@ -73,6 +73,12 @@ pub fn clamp_i64_to_i32(v: i64) -> i32 {
     i32::try_from(v).unwrap_or(if v < 0 { i32::MIN } else { i32::MAX })
 }
 
+/// Parse a cloud entity ID carried as decimal text across Slint's 32-bit integer boundary.
+pub fn parse_cloud_id(value: &str) -> Option<i64> {
+    let id = value.parse::<i64>().ok()?;
+    (id > 0).then_some(id)
+}
+
 /// Saturating `usize → i32` for a collection length. A library that overflows an
 /// `i32` has bigger problems than a wrong stats line, so saturate rather than wrap.
 pub fn len_as_i32(len: usize) -> i32 {

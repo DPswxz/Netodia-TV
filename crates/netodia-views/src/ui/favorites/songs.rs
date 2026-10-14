@@ -339,5 +339,5 @@ fn write_filtered_tracks(ui: &AppWindow, fav_ui: &FavoritesUi, mut rendered: Vec
     super::selection::restamp_rows(&g, &mut rendered);
     // A per-row rewrite where the identities align — a library tick — keeps the `ListView`'s
     // delegates instead of tearing them all down; a structural change falls back to `set_vec`.
-    crate::ui::model_diff::apply_rows_keyed(vec, rendered, |r| r.id);
+    crate::ui::model_diff::apply_rows_keyed(vec, rendered, crate::ui::tracks::model_key);
 }

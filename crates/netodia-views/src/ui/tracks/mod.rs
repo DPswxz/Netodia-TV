@@ -133,6 +133,7 @@ fn install_selection_model(ui: &AppWindow) {
 pub fn to_slint_track_list_row(r: &RsTrackListRow, pool: &mut StringPool) -> UiTrackListRow {
     UiTrackListRow {
         id: clamp_i64_to_i32(r.id),
+        remote_id: SharedString::from(r.id.to_string()),
         title: SharedString::from(r.title.as_str()),
         artist: pool.intern(r.artist.as_deref().unwrap_or_default()),
         album: pool.intern(r.album.as_deref().unwrap_or_default()),
@@ -152,6 +153,11 @@ pub fn to_slint_track_list_row(r: &RsTrackListRow, pool: &mut StringPool) -> UiT
         artist_id: r.artist_id.map_or(0, clamp_i64_to_i32),
         genre_id: r.genre_id.map_or(0, clamp_i64_to_i32),
     }
+}
+
+/// Stable model identity for a Slint track row, preserving the full 64-bit cloud ID.
+pub fn model_key(r: &UiTrackListRow) -> i64 {
+    r.remote_id.as_str().parse().unwrap_or_else(|_| i64::from(r.id))
 }
 
 /// [`to_slint_track_list_row`] over a whole list, sharing one pool across it.

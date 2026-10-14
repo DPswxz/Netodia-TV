@@ -45,7 +45,7 @@ pub fn apply_filtered_detail<V: RowSelectionView>(view: &V, cache: &DetailCache)
 pub fn install_tracks<V: RowSelectionView>(view: &V, rows: Vec<UiTrackListRow>) -> bool {
     let model = view.track_rows();
     if let Some(vm) = model.as_any().downcast_ref::<VecModel<UiTrackListRow>>() {
-        crate::ui::model_diff::apply_rows_keyed(vm, rows, |r| r.id)
+        crate::ui::model_diff::apply_rows_keyed(vm, rows, crate::ui::tracks::model_key)
     } else {
         view.replace_track_rows(ModelRc::new(VecModel::from(rows)));
         true

@@ -56,8 +56,8 @@ export component CloudPlaylistTracks inherits Rectangle {
     in property <string> position-field: "position";
     in property <bool> favorite-clickable: false;
     callback request-sort(string);
-    callback play-track(int, int);
-    callback toggle-favorite(int);
+    callback play-track(string, int);
+    callback toggle-favorite(string);
 
     HorizontalLayout {
         x: Theme.pad-md;
@@ -132,7 +132,7 @@ export component CloudPlaylistTracks inherits Rectangle {
 
             row := TouchArea {
                 mouse-cursor: pointer;
-                clicked => { root.play-track(song.id, index); }
+                clicked => { root.play-track(song.remote_id, index); }
             }
 
             HorizontalLayout {
@@ -194,7 +194,7 @@ export component CloudPlaylistTracks inherits Rectangle {
                         enabled: root.favorite-clickable;
                         mouse-cursor: root.favorite-clickable ? pointer : default;
                         clicked => {
-                            if (root.favorite-clickable) { root.toggle-favorite(song.id); }
+                            if (root.favorite-clickable) { root.toggle-favorite(song.remote_id); }
                         }
                     }
                 }

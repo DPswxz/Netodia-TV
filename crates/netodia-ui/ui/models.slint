@@ -20,6 +20,9 @@ export struct TrackSummaryRow {
 // Mirror of `entities::track::TrackListRow`.
 export struct TrackListRow {
     id: int,
+    // Exact decimal identity for cloud rows. Slint's `int` is 32-bit, while NetEase song IDs are
+    // 64-bit; keeping the wire ID as text prevents large IDs from aliasing at i32::MAX.
+    remote_id: string,
     title: string,
     artist: string,
     album: string,

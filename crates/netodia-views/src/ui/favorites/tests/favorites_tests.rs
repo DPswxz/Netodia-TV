@@ -73,6 +73,9 @@ fn the_songs_model_is_written_only_while_its_tab_is_mounted() {
         SUBVIEWS.contains("apply_filtered_tracks_now(&ui, &fu)"),
         "the tab pick must write without hopping the event loop, or the clear above shows as a bare list"
     );
+    assert!(CLOUD_TRACKS.contains("root.play-track(song.remote_id, index)"));
+    assert!(VIEW.contains("Favorites.play-cloud-row(id, index)"));
+    assert!(VIEW.contains("Favorites.toggle-cloud-favorite(id, false)"));
 }
 
 /// The tab count Slint declares today. Kept local so a change to

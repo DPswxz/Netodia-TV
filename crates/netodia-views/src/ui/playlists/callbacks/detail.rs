@@ -30,8 +30,12 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
 /// `NetEase` source instead of the local queue API.
 fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
     let s = state.clone();
-    ui.global::<PlaylistDetail>().on_play_row(move |id, _index| {
-        play_cloud_song(&s, i64::from(id));
+    ui.global::<PlaylistDetail>().on_play_cloud_row(move |remote_id, _index| {
+        let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
+            log::warn!("playlists::play_cloud_song: invalid NetEase song ID");
+            return;
+        };
+        play_cloud_song(&s, song_id);
     });
 
     let s = state.clone();
