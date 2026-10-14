@@ -354,12 +354,12 @@ fn a_drill_a_back_or_a_tab_move_reseats_the_shared_box() {
     // and the one whose absence is hardest to see: a pick clears both sides itself, so only
     // the moves that *aren't* picks — a cross-tab drill, a Mouse-4/5 walk — land on a tab
     // whose own needle nothing touched, under a box that reads whatever the last tab left.
-    const MIRRORS: [(&str, &str); 5] = [
-        ("watched-album-id", "AlbumDetail.album-id"),
-        ("watched-artist-id", "ArtistDetail.artist-id"),
-        ("watched-genre-id", "GenreDetail.genre-id"),
-        ("watched-playlist-id", "PlaylistDetail.playlist-id"),
-        ("watched-tab-idx", "MyLibrary.tab-idx"),
+    const MIRRORS: [(&str, &str, &str); 5] = [
+        ("watched-album-id", "int", "AlbumDetail.album-id"),
+        ("watched-artist-id", "int", "ArtistDetail.artist-id"),
+        ("watched-genre-id", "int", "GenreDetail.genre-id"),
+        ("watched-playlist-id", "string", "PlaylistDetail.playlist.remote_id"),
+        ("watched-tab-idx", "int", "MyLibrary.tab-idx"),
     ];
 
     assert!(
@@ -369,9 +369,9 @@ fn a_drill_a_back_or_a_tab_move_reseats_the_shared_box() {
     );
 
     let view: String = VIEW.split_whitespace().collect::<Vec<_>>().join(" ");
-    for (mirror, id) in MIRRORS {
+    for (mirror, value_type, id) in MIRRORS {
         assert!(
-            view.contains(&format!("property <int> {mirror}: {id};")),
+            view.contains(&format!("property <{value_type}> {mirror}: {id};")),
             "my-library-view.slint must mirror `{id}` as `{mirror}` — `changed` can't watch a \
              global's property directly, and an unmirrored id reseats nothing",
         );

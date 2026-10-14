@@ -71,7 +71,7 @@ export component PlaylistDetailBody inherits Rectangle {
             sort-dir: PlaylistDetail.sort-dir;
             playing-track-id: Player.vm.track.id;
             view-context: "playlist-detail";
-            current-playlist-id: PlaylistDetail.playlist.id;
+            current-playlist-id: PlaylistDetail.cloud-collection ? 0 : PlaylistDetail.playlist.id;
             view-selected-ids: PlaylistDetail.selected-ids;
 
             request-sort(f) => { PlaylistDetail.request-sort(f); }

@@ -2,10 +2,12 @@
 
 use std::sync::Arc;
 
-use slint::ComponentHandle;
+use slint::{ComponentHandle, SharedString};
 
 use crate::ui::callbacks::collect_track_ids;
+use crate::ui::callbacks::{next_sort, persist_view_sort};
 use crate::ui::favorites::{self as favorites_ui_mod, FavoritesUi};
+use crate::ui::track_list_view::view_id;
 use netodia_app::state::AppState;
 use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
@@ -91,6 +93,21 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
         });
     }
 
-    // Sorting controls aren't mounted on this cloud-backed list.
-    g.on_request_sort(|_| {});
+    {
+        let state = state.clone();
+        let fav_ui = fav_ui.clone();
+        let weak = weak.clone();
+        g.on_request_sort(move |field| {
+            let Some(ui) = weak.upgrade() else { return };
+            let g = ui.global::<Favorites>();
+            let (field, direction) =
+                next_sort(g.get_sort_field().as_str(), g.get_sort_dir().as_str(), &field);
+            g.set_sort_field(SharedString::from(field.as_str()));
+            g.set_sort_dir(SharedString::from(direction.as_str()));
+            favorites_ui_mod::set_sort(&fav_ui, field.clone(), direction);
+            fav_ui.state().tracks_all.resort(&field, direction.as_str());
+            favorites_ui_mod::apply_filtered_tracks_now(&ui, &fav_ui);
+            persist_view_sort(&state, view_id::FAVORITES, field, direction);
+        });
+    }
 }

@@ -1,81 +1,33 @@
 import { Theme } from "../../theme.slint";
 import { TrackListRow } from "../../models.slint";
-import { ListView } from "std-widgets.slint";
-import { OverlayScrollbar } from "../../components/overlay-scrollbar.slint";
-import { IconButton } from "../../components/icon-button.slint";
 import { ActionPill, PillButton } from "../../components/action-pill.slint";
+import { CloudPlaylistTracks } from "../my-library/cloud-playlist-tracks.slint";
 
+// The liked-song page uses the same sortable table as playlist details, with the
+// NetEase favorite order exposed as `#` and the heart column wired to unlike.
 export component CloudFavoritesSongsTab inherits Rectangle {
     in property <[TrackListRow]> rows;
+    in property <string> sort-field;
+    in property <string> sort-dir;
     in property <bool> loading;
     in property <string> error;
 
     callback retry();
-    callback play-track(int);
+    callback play-track(int, int);
     callback remove-favorite(int);
+    callback request-sort(string);
 
-    list := ListView {
-        x: Theme.pad-md;
-        y: Theme.pad-md;
-        width: parent.width - 2 * Theme.pad-md - Theme.scrollbar-slot;
-        height: parent.height - 2 * Theme.pad-md;
-        vertical-scrollbar-policy: always-off;
-        horizontal-scrollbar-policy: always-off;
-
-        for song in root.rows: Rectangle {
-            min-height: 68px;
-            max-height: 68px;
-            border-radius: Theme.radius-sm;
-            background: song-row.has-hover ? Theme.surface0 : transparent;
-
-            song-row := TouchArea {
-                clicked => { root.play-track(song.id); }
-            }
-
-            HorizontalLayout {
-                padding-left: Theme.pad-md;
-                padding-right: Theme.pad-sm;
-                spacing: Theme.pad-md;
-
-                IconButton {
-                    icon: "play_arrow";
-                    icon-size: 22px;
-                    idle-fg: Theme.accent;
-                    tooltip-text: @tr("Play");
-                    clicked => { root.play-track(song.id); }
-                }
-                VerticalLayout {
-                    alignment: center;
-                    spacing: 3px;
-                    Text {
-                        text: song.title;
-                        color: Theme.text;
-                        font-size: Theme.font-size-md;
-                        overflow: elide;
-                    }
-                    Text {
-                        text: song.artist + (song.album != "" ? " · " + song.album : "");
-                        color: Theme.subtext0;
-                        font-size: Theme.font-size-sm;
-                        overflow: elide;
-                    }
-                }
-                Text {
-                    text: song.display_duration;
-                    color: Theme.subtext0;
-                    vertical-alignment: center;
-                    font-size: Theme.font-size-sm;
-                }
-                IconButton {
-                    icon: "favorite";
-                    icon-size: 20px;
-                    filled: true;
-                    active: true;
-                    tooltip-text: @tr("Remove from favorites");
-                    clicked => { root.remove-favorite(song.id); }
-                }
-            }
-        }
+    CloudPlaylistTracks {
+        width: 100%;
+        height: 100%;
+        rows: root.rows;
+        sort-field: root.sort-field;
+        sort-dir: root.sort-dir;
+        position-field: "track_number";
+        favorite-clickable: true;
+        request-sort(field) => { root.request-sort(field); }
+        play-track(id, index) => { root.play-track(id, index); }
+        toggle-favorite(id) => { root.remove-favorite(id); }
     }
 
     if root.loading && root.rows.length == 0: Text {
@@ -109,17 +61,5 @@ export component CloudFavoritesSongsTab inherits Rectangle {
         y: Theme.pad-lg;
         text: @tr("No NetEase favorites yet");
         color: Theme.subtext0;
-    }
-
-    OverlayScrollbar {
-        horizontal: false;
-        x: parent.width - self.width;
-        y: Theme.pad-md;
-        width: Theme.scrollbar-slot;
-        height: parent.height - 2 * Theme.pad-md;
-        visible-size: list.visible-height;
-        content-size: list.viewport-height;
-        offset: -list.viewport-y;
-        scroll-to(o) => { list.viewport-y = -o; }
     }
 }

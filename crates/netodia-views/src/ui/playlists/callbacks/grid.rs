@@ -63,7 +63,13 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
         let pu = playlists_ui.clone();
         let weak = weak.clone();
         playlists.on_open_playlist(move |playlist_id| {
-            let id = i64::from(playlist_id);
+            let id = match playlist_id.to_string().parse::<i64>() {
+                Ok(id) if id > 0 => id,
+                _ => {
+                    log::warn!("playlists::open_playlist: invalid NetEase playlist id");
+                    return;
+                }
+            };
 
             let s_fetch = s.clone();
             let pu_fetch = pu.clone();

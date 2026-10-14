@@ -165,14 +165,15 @@ async fn fetch_cloud_favorites(state: &AppState) -> AppResult<Vec<RsTrackListRow
     let covers = cache_song_covers(state, &songs).await;
     Ok(songs
         .into_iter()
-        .map(|song| {
+        .enumerate()
+        .map(|(index, song)| {
             let artwork_path = covers.get(&song.id).cloned();
-            cloud_song_row(song, artwork_path)
+            cloud_song_row(song, artwork_path, index)
         })
         .collect())
 }
 
-fn cloud_song_row(song: Song, artwork_path: Option<String>) -> RsTrackListRow {
+fn cloud_song_row(song: Song, artwork_path: Option<String>, index: usize) -> RsTrackListRow {
     let artist = song.artist_names();
     let artist_id = song.artists.first().map(|artist| artist.id);
     RsTrackListRow {
@@ -184,8 +185,10 @@ fn cloud_song_row(song: Song, artwork_path: Option<String>) -> RsTrackListRow {
         album_artist: None,
         album: (!song.album.name.is_empty()).then_some(song.album.name),
         genre: None,
-        track_number: None,
-        disc_number: None,
+        // The liked-song API returns the account's current favorite order. Treat that
+        // order as the table's `#` column so it is also the initial sort.
+        track_number: Some(i32::try_from(index.saturating_add(1)).unwrap_or(i32::MAX)),
+        disc_number: Some(1),
         year: None,
         duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
         artwork_path,

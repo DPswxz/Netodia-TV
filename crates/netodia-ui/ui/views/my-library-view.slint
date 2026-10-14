@@ -157,7 +157,7 @@ export component MyLibraryView inherits Rectangle {
     changed watched-artist-id => { MyLibrary.detail-scope-changed(); }
     property <int> watched-genre-id: GenreDetail.genre-id;
     changed watched-genre-id => { MyLibrary.detail-scope-changed(); }
-    property <int> watched-playlist-id: PlaylistDetail.playlist-id;
+    property <string> watched-playlist-id: PlaylistDetail.playlist.remote_id;
     changed watched-playlist-id => { MyLibrary.detail-scope-changed(); }
 
     // **A tab move is the other way the surface under the box changes.** A cross-tab drill

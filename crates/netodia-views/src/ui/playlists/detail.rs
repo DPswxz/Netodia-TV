@@ -279,7 +279,7 @@ pub async fn refresh_detail(
             return;
         }
         let g = ui.global::<PlaylistDetail>();
-        if i64::from(g.get_playlist_id()) != playlist_id {
+        if playlists_ui.detail_playlist_id() != playlist_id {
             return;
         }
 

@@ -243,6 +243,7 @@ fn install_models(ui: &AppWindow) {
 pub fn to_slint_playlist_row(p: &PlaylistStats) -> UiPlaylistRow {
     UiPlaylistRow {
         id: clamp_i64_to_i32(p.id),
+        remote_id: SharedString::from(p.id.to_string()),
         name: SharedString::from(p.name.as_str()),
         description: opt_shared(p.description.as_deref()),
         artwork_path: opt_shared(p.thumbnail_path.as_deref()),

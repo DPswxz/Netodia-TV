@@ -154,6 +154,9 @@ export struct GenreGridRow {
 // `queue_music` fallback glyph.
 export struct PlaylistRow {
     id: int,
+    // NetEase entity IDs are 64-bit and can exceed Slint's signed 32-bit `int`.
+    // Keep the exact identity for cloud navigation; `id` remains the bounded legacy UI value.
+    remote_id: string,
     name: string,
     description: string,
     artwork_path: string,

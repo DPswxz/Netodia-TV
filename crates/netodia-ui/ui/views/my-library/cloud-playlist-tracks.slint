@@ -53,8 +53,11 @@ export component CloudPlaylistTracks inherits Rectangle {
     in property <[TrackListRow]> rows;
     in property <string> sort-field;
     in property <string> sort-dir;
+    in property <string> position-field: "position";
+    in property <bool> favorite-clickable: false;
     callback request-sort(string);
     callback play-track(int, int);
+    callback toggle-favorite(int);
 
     HorizontalLayout {
         x: Theme.pad-md;
@@ -66,10 +69,10 @@ export component CloudPlaylistTracks inherits Rectangle {
         CloudSortHeader {
             width: 48px;
             label: "#";
-            field: "position";
+            field: root.position-field;
             active-field: root.sort-field;
             active-dir: root.sort-dir;
-            clicked => { root.request-sort("position"); }
+            clicked => { root.request-sort(root.position-field); }
         }
         CloudSortHeader {
             horizontal-stretch: 2;
@@ -170,14 +173,29 @@ export component CloudPlaylistTracks inherits Rectangle {
                     overflow: elide;
                     vertical-alignment: center;
                 }
-                VerticalLayout {
+                Rectangle {
                     width: 70px;
-                    alignment: center;
-                    MaterialIcon {
-                        name: song.is_favorite ? "favorite" : "favorite_border";
-                        icon-size: 20px;
-                        icon-color: song.is_favorite ? Theme.red : Theme.subtext0;
-                        filled: song.is_favorite;
+                    min-height: 64px;
+                    max-height: 64px;
+                    VerticalLayout {
+                        width: 100%;
+                        height: 100%;
+                        alignment: center;
+                        MaterialIcon {
+                            name: song.is_favorite ? "favorite" : "favorite_border";
+                            icon-size: 20px;
+                            icon-color: song.is_favorite ? Theme.red : Theme.subtext0;
+                            filled: song.is_favorite;
+                        }
+                    }
+                    favorite-touch := TouchArea {
+                        width: 100%;
+                        height: 100%;
+                        enabled: root.favorite-clickable;
+                        mouse-cursor: root.favorite-clickable ? pointer : default;
+                        clicked => {
+                            if (root.favorite-clickable) { root.toggle-favorite(song.id); }
+                        }
                     }
                 }
                 Text {

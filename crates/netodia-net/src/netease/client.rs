@@ -470,7 +470,7 @@ impl Client {
 
     pub async fn playlist(&self, id: i64) -> Result<(Playlist, Vec<Song>)> {
         let body = self.request(ep::PLAYLIST, json!({"id":id,"n":100_000,"s":0})).await?;
-        let playlist: Playlist = field(body.clone(), "playlist")?;
+        let playlist = decode_playlist_header(&body, id)?;
         let ids = body["playlist"]["trackIds"]
             .as_array()
             .ok_or(Error::InvalidResponse)?
@@ -607,6 +607,14 @@ impl Client {
         .await?;
         Ok(())
     }
+}
+
+fn decode_playlist_header(body: &Value, requested_id: i64) -> Result<Playlist> {
+    let playlist: Playlist = decode(body.get("playlist").cloned().ok_or(Error::InvalidResponse)?)?;
+    if playlist.id != requested_id {
+        return Err(Error::InvalidResponse);
+    }
+    Ok(playlist)
 }
 
 fn reorder_songs(ids: &[i64], songs: Vec<Song>) -> Vec<Song> {
@@ -800,5 +808,15 @@ mod tests {
         assert_eq!(playlists.iter().map(|playlist| playlist.id).collect::<Vec<_>>(), [11]);
         assert!(more);
         Ok(())
+    }
+
+    #[test]
+    fn playlist_detail_rejects_a_response_for_another_playlist_id() {
+        let body = json!({"playlist":{"id":28_837_265,"name":"A different playlist"}});
+        assert!(decode_playlist_header(&body, 4_000_000_000).is_err());
+        assert!(
+            decode_playlist_header(&body, 28_837_265)
+                .is_ok_and(|playlist| playlist.name == "A different playlist")
+        );
     }
 }

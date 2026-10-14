@@ -118,6 +118,15 @@ fn length_sorts_by_duration() {
 }
 
 #[test]
+fn favorite_sort_uses_like_state_and_is_stable_by_natural_key() {
+    let mut rows = fixture();
+    rows[0].is_favorite = true;
+    rows[2].is_favorite = true;
+    assert_eq!(perm_ids(&rows, &compute_track_order(&rows, "favorite", "asc")), [2, 4, 1, 3]);
+    assert_eq!(perm_ids(&rows, &compute_track_order(&rows, "favorite", "desc")), [3, 1, 4, 2]);
+}
+
+#[test]
 fn track_number_sorts_disc_then_track_with_null_sentinel() {
     let rows = fixture();
     // disc 1: track 1 (id2), 2 (id1), 5 (id4); disc 2: NULL (id3) last.

@@ -63,7 +63,9 @@ fn my_library_tag(ui: &AppWindow) -> String {
         }
         MyLibraryTab::Playlists => {
             let d = ui.global::<PlaylistDetail>();
-            detail_tag("PlaylistDetail", d.get_playlist_id(), &d.get_playlist().name)
+            let remote_id = d.get_playlist().remote_id.to_string().parse::<i64>().unwrap_or(-1);
+            (remote_id >= 0)
+                .then(|| format!("PlaylistDetail({remote_id} {:?})", d.get_playlist().name))
         }
     };
     format!("MyLibrary/{}", detail.unwrap_or_else(|| format!("{tab:?}")))

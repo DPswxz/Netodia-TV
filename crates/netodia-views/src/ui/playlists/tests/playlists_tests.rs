@@ -21,8 +21,11 @@ const CLOUD_TRACKS: &str =
     include_str!("../../../../../netodia-ui/ui/views/my-library/cloud-playlist-tracks.slint");
 const PLAYLISTS_TAB: &str =
     include_str!("../../../../../netodia-ui/ui/views/my-library/playlists-tab.slint");
+const PLAYLIST_GRID: &str =
+    include_str!("../../../../../netodia-ui/ui/components/grid/playlist-grid.slint");
 const PLAYLIST_DETAIL_GLOBAL: &str =
     include_str!("../../../../../netodia-ui/ui/globals/playlists.slint");
+const GRID_CALLBACKS: &str = include_str!("../callbacks/grid.rs");
 
 /// Minimal `PlaylistStats` builder — only the fields the grid filter / sort
 /// read matter. Regular playlist, so `smart_criteria` never parses.
@@ -122,10 +125,21 @@ fn compute_indices_default_sort_is_most_recently_updated_first() {
 #[test]
 fn cloud_playlist_rows_expose_netease_columns_and_position_is_the_default_sort() {
     assert!(PLAYLISTS_TAB.contains("open-playlist(id) => { Playlists.open-playlist(id); }"));
+    assert!(PLAYLIST_GRID.contains("clicked => { root.open-playlist(playlist.remote_id); }"));
+    assert!(PLAYLIST_DETAIL_GLOBAL.contains("callback open-playlist(string"));
+    assert!(GRID_CALLBACKS.contains("playlist_id.to_string().parse::<i64>()"));
     assert!(PLAYLIST_DETAIL_GLOBAL.contains("in-out property <string> sort-field: \"position\";"));
     for field in ["position", "title", "album", "favorite", "length"] {
         assert!(CLOUD_TRACKS.contains(&format!("field: \"{field}\";")));
     }
+}
+
+#[test]
+fn cloud_playlist_rows_keep_the_full_netease_id_across_the_slint_boundary() {
+    let row =
+        to_slint_playlist_row(&playlist(3_000_000_000, "Large ID", 0, "2026-01-01T00:00:00Z"));
+    assert_eq!(row.id, i32::MAX, "legacy UI handle remains bounded");
+    assert_eq!(row.remote_id.to_string(), "3000000000");
 }
 
 #[test]

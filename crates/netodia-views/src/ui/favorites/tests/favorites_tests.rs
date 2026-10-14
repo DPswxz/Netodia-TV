@@ -18,6 +18,10 @@ const GRID: &str =
 const SONGS: &str = include_str!("../songs.rs");
 const SONGS_TAB: &str =
     include_str!("../../../../../netodia-ui/ui/views/favorites/songs-tab.slint");
+const CLOUD_SONGS_TAB: &str =
+    include_str!("../../../../../netodia-ui/ui/views/favorites/cloud-favorites-songs-tab.slint");
+const CLOUD_TRACKS: &str =
+    include_str!("../../../../../netodia-ui/ui/views/my-library/cloud-playlist-tracks.slint");
 const SUBVIEWS: &str = include_str!("../callbacks/subviews.rs");
 
 /// `Favorites.tracks` feeds one element in the whole tree, under the Songs
@@ -175,13 +179,23 @@ fn a_tab_pick_clears_the_filter_on_both_sides() {
     );
 }
 
-/// The cloud-backed Favorites page has no local artist sort controls.
+/// The cloud-backed Favorites page exposes `NetEase`'s liked order and table sorting.
 #[test]
-fn favorites_view_uses_cloud_rows_without_local_sort_controls() {
+fn favorites_view_uses_cloud_rows_with_sortable_netease_columns() {
     assert!(
-        VIEW.contains("CloudFavoritesSongsTab {") && VIEW.contains("rows: Favorites.tracks;"),
+        VIEW.contains("CloudFavoritesSongsTab {")
+            && VIEW.contains("rows: Favorites.tracks;")
+            && VIEW.contains("sort-field: Favorites.sort-field;")
+            && VIEW.contains("request-sort(field) => { Favorites.request-sort(field); }"),
         "favorites-view.slint must mount the cloud-backed song list"
     );
+    assert!(CLOUD_SONGS_TAB.contains("position-field: \"track_number\";"));
+    assert!(CLOUD_SONGS_TAB.contains("favorite-clickable: true;"));
+    for field in ["position", "title", "album", "favorite", "length"] {
+        assert!(CLOUD_TRACKS.contains(&format!("field: \"{field}\";")));
+    }
+    assert!(GLOBAL.contains("sort-field: \"track_number\";"));
+    assert!(SONGS.contains("track_number: Some(i32::try_from(index.saturating_add(1))"));
     assert_eq!(
         VIEW.matches("if Favorites.tab-idx == Favorites.tab-").count(),
         1,

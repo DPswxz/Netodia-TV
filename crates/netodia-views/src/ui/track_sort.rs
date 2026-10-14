@@ -37,6 +37,7 @@ pub trait TrackSortFields {
     /// `None` sorts first ascending (NULLs-first), matching `SQLite`.
     fn year(&self) -> Option<i32>;
     fn duration_ms(&self) -> i64;
+    fn is_favorite(&self) -> bool;
     /// Natural-order key, raw — the comparator owns the case fold.
     fn sort_key(&self) -> &str;
 }
@@ -74,6 +75,10 @@ impl TrackSortFields for RsTrackListRow {
 
     fn duration_ms(&self) -> i64 {
         self.duration_ms
+    }
+
+    fn is_favorite(&self) -> bool {
+        self.is_favorite
     }
 
     fn sort_key(&self) -> &str {
@@ -150,6 +155,9 @@ fn sort_rows<T, F, R, S>(
         }
         "length" => {
             items.sort_by_cached_key(|t| (row(t).duration_ms(), secondary(t)));
+        }
+        "favorite" => {
+            items.sort_by_cached_key(|t| (row(t).is_favorite(), secondary(t)));
         }
         // "title" and any unrecognised field → natural-order `sort_key`.
         _ if secondary_is_natural_key => {

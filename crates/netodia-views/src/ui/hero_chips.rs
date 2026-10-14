@@ -252,12 +252,19 @@ fn band_owner(ui: &AppWindow) -> Option<ChipOwner> {
         return None;
     }
     let g = ui.global::<MyLibrary>();
+    let playlist_id = ui
+        .global::<PlaylistDetail>()
+        .get_playlist()
+        .remote_id
+        .to_string()
+        .parse::<i64>()
+        .unwrap_or(-1);
     my_library_owner(
         tab_from_index(&g, g.get_tab_idx()),
         ui.global::<AlbumDetail>().get_album_id(),
         ui.global::<ArtistDetail>().get_artist_id(),
         ui.global::<GenreDetail>().get_genre_id(),
-        ui.global::<PlaylistDetail>().get_playlist_id(),
+        playlist_id,
     )
 }
 
@@ -270,16 +277,16 @@ fn my_library_owner(
     album_id: i32,
     artist_id: i32,
     genre_id: i32,
-    playlist_id: i32,
+    playlist_id: i64,
 ) -> Option<ChipOwner> {
-    let (id, wrap): (i32, fn(i64) -> ChipOwner) = match tab {
+    let (id, wrap): (i64, fn(i64) -> ChipOwner) = match tab {
         MyLibraryTab::Songs => return None,
-        MyLibraryTab::Albums => (album_id, ChipOwner::Album),
-        MyLibraryTab::Artists => (artist_id, ChipOwner::Artist),
-        MyLibraryTab::Genres => (genre_id, ChipOwner::Genre),
+        MyLibraryTab::Albums => (i64::from(album_id), ChipOwner::Album),
+        MyLibraryTab::Artists => (i64::from(artist_id), ChipOwner::Artist),
+        MyLibraryTab::Genres => (i64::from(genre_id), ChipOwner::Genre),
         MyLibraryTab::Playlists => (playlist_id, ChipOwner::Playlist),
     };
-    (id >= 0).then(|| wrap(i64::from(id)))
+    (id >= 0).then(|| wrap(id))
 }
 
 /// Whether `owner`'s own detail id is still set. A curated page has no id, so it
@@ -289,7 +296,10 @@ fn is_open(ui: &AppWindow, owner: ChipOwner) -> bool {
         ChipOwner::Album(id) => i64::from(ui.global::<AlbumDetail>().get_album_id()) == id,
         ChipOwner::Artist(id) => i64::from(ui.global::<ArtistDetail>().get_artist_id()) == id,
         ChipOwner::Genre(id) => i64::from(ui.global::<GenreDetail>().get_genre_id()) == id,
-        ChipOwner::Playlist(id) => i64::from(ui.global::<PlaylistDetail>().get_playlist_id()) == id,
+        ChipOwner::Playlist(id) => {
+            ui.global::<PlaylistDetail>().get_playlist().remote_id.to_string().parse::<i64>()
+                == Ok(id)
+        }
         ChipOwner::Favorites | ChipOwner::RecentlyPlayed => false,
     }
 }

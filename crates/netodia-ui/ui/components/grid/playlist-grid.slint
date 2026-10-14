@@ -17,7 +17,7 @@ export component PlaylistGrid inherits Rectangle {
     in property <length> gap: 20px;
     in property <bool> editable: true;
 
-    callback open-playlist(int /*playlist_id*/);
+    callback open-playlist(string /*NetEase playlist_id*/);
     // Fired by the card's hover-revealed icons **and** by its right-click menu; the view routes
     // each one. The two paths are deliberate: the buttons are the discoverable affordance, the
     // menu is the right-click one, and both land on the same handler.
@@ -93,7 +93,7 @@ export component PlaylistGrid inherits Rectangle {
                                 + " · " + Theme.format-duration(playlist.total_duration_ms)
                             : @tr("0 tracks");
                         badge-icon: playlist.is_smart ? "auto_awesome" : "";
-                        clicked => { root.open-playlist(playlist.id); }
+                        clicked => { root.open-playlist(playlist.remote_id); }
 
                         selectable: root.editable;
                         selected: cell.selected;

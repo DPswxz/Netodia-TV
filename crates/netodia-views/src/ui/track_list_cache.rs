@@ -132,6 +132,10 @@ impl TrackSortFields for SortRow<'_> {
         i64::from(self.row.duration_ms)
     }
 
+    fn is_favorite(&self) -> bool {
+        self.row.is_favorite
+    }
+
     fn sort_key(&self) -> &str {
         &self.key.sort_key
     }

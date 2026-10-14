@@ -111,7 +111,13 @@ pub fn detail_id_for(ui: &AppWindow, tab: MyLibraryTab) -> Option<i64> {
         MyLibraryTab::Albums => i64::from(ui.global::<AlbumDetail>().get_album_id()),
         MyLibraryTab::Artists => i64::from(ui.global::<ArtistDetail>().get_artist_id()),
         MyLibraryTab::Genres => i64::from(ui.global::<GenreDetail>().get_genre_id()),
-        MyLibraryTab::Playlists => i64::from(ui.global::<PlaylistDetail>().get_playlist_id()),
+        MyLibraryTab::Playlists => ui
+            .global::<PlaylistDetail>()
+            .get_playlist()
+            .remote_id
+            .to_string()
+            .parse::<i64>()
+            .unwrap_or(-1),
     };
     (id >= 0).then_some(id)
 }

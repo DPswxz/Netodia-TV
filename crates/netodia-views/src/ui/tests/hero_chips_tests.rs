@@ -1067,13 +1067,13 @@ fn only_the_mounted_tabs_own_id_names_the_hero() {
     // coincidence — the shape a `match` arm gets wrong. Boot makes that reachable
     // rather than theoretical: `seed_detail_from_settings` restores one detail per
     // view whichever tab is resumed, so several ids are `>= 0` at once.
-    for (tab, ids, owner) in [
-        (Albums, [7, -1, -1, -1], ChipOwner::Album(7)),
-        (Artists, [-1, 7, -1, -1], ChipOwner::Artist(7)),
-        (Genres, [-1, -1, 7, -1], ChipOwner::Genre(7)),
-        (Playlists, [-1, -1, -1, 7], ChipOwner::Playlist(7)),
+    for (tab, ids, playlist, owner) in [
+        (Albums, [7, -1, -1], -1, ChipOwner::Album(7)),
+        (Artists, [-1, 7, -1], -1, ChipOwner::Artist(7)),
+        (Genres, [-1, -1, 7], -1, ChipOwner::Genre(7)),
+        (Playlists, [-1, -1, -1], 3_000_000_000_i64, ChipOwner::Playlist(3_000_000_000)),
     ] {
-        let [album, artist, genre, playlist] = ids;
+        let [album, artist, genre] = ids;
         assert_eq!(
             super::my_library_owner(tab, album, artist, genre, playlist),
             Some(owner),

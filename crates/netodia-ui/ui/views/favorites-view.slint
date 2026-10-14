@@ -60,11 +60,14 @@ export component FavoritesView inherits Rectangle {
                     width: 100%;
                     height: 100%;
                     rows: Favorites.tracks;
+                    sort-field: Favorites.sort-field;
+                    sort-dir: Favorites.sort-dir;
                     loading: Favorites.cloud-loading;
                     error: Favorites.cloud-error;
                     retry => { Favorites.retry-cloud(); }
                     play-track(id) => { Favorites.play-row(id, 0); }
                     remove-favorite(id) => { Favorites.toggle-row-favorite([id], false); }
+                    request-sort(field) => { Favorites.request-sort(field); }
                 }
             }
         }
