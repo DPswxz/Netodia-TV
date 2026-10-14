@@ -3,7 +3,6 @@
 //! cache instead of re-fetching. What the four details share is [`crate::ui::track_detail`].
 
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use slint::{ComponentHandle, SharedString, Weak};
@@ -18,6 +17,7 @@ use crate::ui::track_sort::sort_track_rows_by;
 use crate::ui::util::{clamp_i64_to_i32, len_as_i32};
 use netodia_app::library;
 use netodia_app::state::AppState;
+use netodia_core::entities::cloud::{Playlist as CloudPlaylist, Song};
 use netodia_core::entities::playlist::PlaylistStats;
 use netodia_core::entities::track::TrackListRow as RsTrackListRow;
 use netodia_core::error::{AppResult, describe};
@@ -66,34 +66,61 @@ async fn fetch_playlist_detail(
     playlists_ui: &PlaylistsUi,
     playlist_id: i64,
 ) -> AppResult<(PlaylistStats, Vec<RsTrackListRow>)> {
-    let mut detail = library::playlists::get_playlist_detail(&state.db, playlist_id).await?;
-    let tracks = if detail.is_smart {
-        // Smart playlists have no `playlist_items` rows — resolve membership live from the stored
-        // criteria, and derive the header stats from the resolved set, the junction-maintained
-        // `track_count`/`total_duration_ms` staying 0 for a virtual playlist.
-        let criteria = netodia_core::entities::smart_criteria::SmartCriteria::from_json_opt(
-            detail.smart_criteria.as_deref(),
-        );
-        let rows = library::smart_playlists::evaluate(&state.db, &criteria).await?;
-        detail.track_count = len_as_i32(rows.len());
-        detail.total_duration_ms = rows.iter().map(|t| t.duration_ms).sum();
-        rows
-    } else {
-        library::playlists::get_playlist_tracks(&state.db, playlist_id).await?
-    };
-
-    let track_covers: Vec<PathBuf> = crate::ui::grid_prewarm::unique_artwork_paths(
-        tracks.iter().map(|t| t.artwork_path.as_deref()),
-        playlists_ui.cover_thumbs.capacity(),
-    );
-    if !track_covers.is_empty() {
-        let row_thumbs = playlists_ui.cover_thumbs.clone();
-        let _ = tokio::task::spawn_blocking(move || {
-            row_thumbs.prewarm(&track_covers);
-        })
-        .await;
-    }
+    let (playlist, songs) = state.cloud.saved_playlist(playlist_id).await?;
+    let thumbnail_path =
+        playlists_ui.grid_stats_by_id(playlist_id).and_then(|stats| stats.thumbnail_path);
+    let detail = cloud_playlist_stats(playlist, thumbnail_path, &songs);
+    let tracks = songs.into_iter().map(cloud_song_row).collect();
     Ok((detail, tracks))
+}
+
+fn cloud_playlist_stats(
+    playlist: CloudPlaylist,
+    thumbnail_path: Option<String>,
+    songs: &[Song],
+) -> PlaylistStats {
+    PlaylistStats {
+        id: playlist.id,
+        name: playlist.name,
+        description: playlist.description,
+        thumbnail_path,
+        is_smart: false,
+        smart_criteria: None,
+        created_at: String::new(),
+        updated_at: String::new(),
+        custom_thumbnail: false,
+        track_count: len_as_i32(songs.len()),
+        total_duration_ms: songs.iter().fold(0_i64, |sum, song| {
+            sum.saturating_add(i64::try_from(song.duration_ms).unwrap_or(i64::MAX))
+        }),
+    }
+}
+
+fn cloud_song_row(song: Song) -> RsTrackListRow {
+    let artist = song.artist_names();
+    let artist_id = song.artists.first().map(|artist| artist.id);
+    RsTrackListRow {
+        id: song.id,
+        file_path: String::new(),
+        file_name: song.name.clone(),
+        title: song.name,
+        artist: (!artist.is_empty()).then_some(artist),
+        album_artist: None,
+        album: (!song.album.name.is_empty()).then_some(song.album.name),
+        genre: None,
+        track_number: None,
+        disc_number: None,
+        year: None,
+        duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
+        artwork_path: None,
+        is_favorite: false,
+        rating: 0,
+        album_id: (song.album.id > 0).then_some(song.album.id),
+        artist_id,
+        genre_id: None,
+        date_added: String::new(),
+        sort_key: None,
+    }
 }
 
 /// Fetch a playlist's header + track list and populate the `PlaylistDetail` global — which flips
@@ -129,6 +156,7 @@ pub async fn open_playlist_with<F>(
 where
     F: FnOnce(&AppWindow) + Send + 'static,
 {
+    let account_generation = state.cloud.status().generation;
     let (detail, mut tracks) = fetch_playlist_detail(state, playlists_ui, playlist_id).await?;
 
     // `fetch_playlist_detail` returns tracks in playlist position order — capture that as the
@@ -144,6 +172,9 @@ where
         detail.thumbnail_path.clone(),
     )
     .await;
+    if state.cloud.status().generation != account_generation {
+        return Err(netodia_core::error::AppError::network_msg("网易云账号已切换，歌单加载已取消"));
+    }
 
     let ui_tracks: Vec<UiTrackListRow> = crate::ui::tracks::to_slint_track_list_rows(&tracks);
 
@@ -165,10 +196,15 @@ where
     let fold = crate::ui::hero_folds::fold_tracks(&tracks);
 
     let playlists_ui = playlists_ui.clone();
+    let cloud = state.cloud.clone();
     let _ = weak.upgrade_in_event_loop(move |ui| {
+        if cloud.status().generation != account_generation {
+            return;
+        }
         let g = ui.global::<PlaylistDetail>();
         let header = to_slint_playlist_row(&detail);
         g.set_playlist(header);
+        g.set_cloud_collection(true);
         filter::install_tracks(&g, ui_tracks);
         selection::reset(&g, &playlists_ui.detail.cache);
         // Fresh open clears the filter so the user lands on the full track set, not a stale needle
@@ -209,6 +245,7 @@ pub async fn refresh_detail(
     weak: Weak<AppWindow>,
     playlist_id: i64,
 ) -> AppResult<()> {
+    let account_generation = state.cloud.status().generation;
     let (detail, mut tracks) = fetch_playlist_detail(state, playlists_ui, playlist_id).await?;
 
     let pair = decode_detail_pair(
@@ -217,6 +254,9 @@ pub async fn refresh_detail(
         detail.thumbnail_path.clone(),
     )
     .await;
+    if state.cloud.status().generation != account_generation {
+        return Ok(());
+    }
 
     // The DB query returns tracks in position order, so capture that before permuting `tracks` to
     // the user's chosen sort.
@@ -225,7 +265,11 @@ pub async fn refresh_detail(
     let fold = crate::ui::hero_folds::fold_tracks(&tracks);
 
     let playlists_ui = playlists_ui.clone();
+    let cloud = state.cloud.clone();
     let _ = weak.upgrade_in_event_loop(move |ui| {
+        if cloud.status().generation != account_generation {
+            return;
+        }
         let g = ui.global::<PlaylistDetail>();
         if i64::from(g.get_playlist_id()) != playlist_id {
             return;

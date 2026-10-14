@@ -66,6 +66,8 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
                 g.set_track_count(UNFETCHED_COUNT);
                 g.set_most_played_count(UNFETCHED_COUNT);
                 g.set_artist_count(UNFETCHED_COUNT);
+                g.set_cloud_loading(false);
+                g.set_cloud_error(slint::SharedString::default());
                 clear_vec_model::<UiTrackListRow>(&g.get_tracks(), "favorites: clear tracks");
                 clear_vec_model::<UiEntityGridRow>(
                     &g.get_most_played_rows(),
@@ -97,41 +99,27 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
         });
     }
 
-    // --- library_changed + stats_changed subscriber ---
-    // `library_changed` is bumped after every favorite toggle and every scan / file-event commit;
-    // `stats_changed` after every play-count flush, which reorders Most Played. Visible, it
-    // refetches in place; hidden, it marks dirty so the next enter triggers `kick_full_refresh`.
-    // Its own loop because it selects over both channels, and `ui::signal::on_signal` takes one.
     {
-        let s = state.clone();
-        let fu = fav_ui.clone();
+        let state = state.clone();
+        let fav_ui = fav_ui.clone();
         let weak = weak.clone();
-        let mut library_rx = state.library_changed.subscribe();
-        let mut stats_rx = state.stats_changed.subscribe();
-        let _ = slint::spawn_local(Compat::new(async move {
-            loop {
-                // Both senders live in `AppState` for the process lifetime, so an `Err` only
-                // happens during teardown — exit the loop.
-                tokio::select! {
-                    changed = library_rx.changed() => {
-                        if changed.is_err() {
-                            break;
-                        }
-                    }
-                    changed = stats_rx.changed() => {
-                        if changed.is_err() {
-                            break;
-                        }
-                    }
-                }
-                if !fu.section_active() {
-                    fu.mark_dirty();
-                    continue;
-                }
-                kick_full_refresh(&s, &fu, &weak).await;
+        g.on_retry_cloud(move || {
+            if !fav_ui.section_active() {
+                return;
             }
-        }));
+            let state = state.clone();
+            let fav_ui = fav_ui.clone();
+            let weak = weak.clone();
+            let runtime = state.runtime.clone();
+            runtime.spawn(async move {
+                if let Err(error) = favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await {
+                    log::warn!("favorites::retry: {}", describe(&error));
+                }
+            });
+        });
     }
+
+    wire_account_updates(state, fav_ui, &weak);
 
     // First section enter: kick an initial fetch so the page paints with data rather than empty
     // models. A session starting elsewhere gets the same fetch from `section-active-changed`
@@ -150,46 +138,69 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
     }
 }
 
-/// Fetch the hero stats plus **whichever tab is mounted**, concurrently.
-///
-/// `refresh_hero` always runs: it answers the count, running time and mosaic the band states on
-/// all three tabs, and it is self-contained. The other two are gated, the three tabs being
-/// mutually exclusive `if`s that everything downstream already knows about —
-/// `build_filtered_tracks` returns `None` off Songs and `build_filtered_grids` materialises only
-/// the mounted tab.
-///
-/// **The fetching branch consumes its flag**, which is what stops a boot onto a tab fetching
-/// twice; the branch that skips *sets* the other, so the pick that mounts it knows a tick went by.
-/// `refresh_grids` is one fetch for two tabs, hence two flags rather than three.
-///
-/// `refresh_grids` logs its own per-tab errors and returns `()`; the other two return
-/// `AppResult<()>` and are logged here.
+/// Clear and reload private data whenever the signed-in `NetEase` account changes.
+fn wire_account_updates(
+    state: &AppState,
+    fav_ui: &Arc<FavoritesUi>,
+    weak: &slint::Weak<AppWindow>,
+) {
+    let state = state.clone();
+    let fav_ui = fav_ui.clone();
+    let weak = weak.clone();
+    let mut account_rx = state.cloud_playback.subscribe_account();
+    let _ = slint::spawn_local(Compat::new(async move {
+        loop {
+            if account_rx.changed().await.is_err() {
+                break;
+            }
+            clear_account_data(&fav_ui, &weak);
+            if !fav_ui.section_active() {
+                fav_ui.mark_dirty();
+                continue;
+            }
+            if let Err(error) = favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await {
+                log::warn!("favorites::account_changed: {}", describe(&error));
+            }
+        }
+    }));
+}
+
+/// Remove the previous account's private rows before a new request can publish.
+fn clear_account_data(fav_ui: &FavoritesUi, weak: &slint::Weak<AppWindow>) {
+    {
+        let _gate = fav_ui.gate();
+        fav_ui.state().tracks_all.clear();
+        *fav_ui.state().songs_fold.lock() = crate::ui::hero_folds::HeroFold::default();
+        *fav_ui.state().stats.lock() = netodia_core::entities::track::FavoriteStats {
+            count: 0,
+            total_duration_ms: 0,
+            artwork_paths: Vec::new(),
+        };
+        fav_ui.state().applied_selection.lock().clear();
+    }
+    fav_ui.forget_mosaic();
+    let weak = weak.clone();
+    let _ = weak.upgrade_in_event_loop(|ui| {
+        let g = ui.global::<Favorites>();
+        release_hero_slots(&g);
+        release_shared_hero(&ui);
+        g.set_track_count(UNFETCHED_COUNT);
+        g.set_cloud_loading(false);
+        g.set_cloud_error(slint::SharedString::default());
+        clear_vec_model::<UiTrackListRow>(&g.get_tracks(), "favorites: clear account tracks");
+        clear_vec_model::<i32>(&g.get_selected_ids(), "favorites: clear account selection");
+        g.set_selection_anchor(-1);
+    });
+}
+
+/// Refresh the mounted cloud Favorites list and its hero state.
 async fn kick_full_refresh(
     state: &AppState,
     fav_ui: &Arc<FavoritesUi>,
     weak: &slint::Weak<AppWindow>,
 ) {
-    let hero = favorites_ui_mod::refresh_hero(state, fav_ui, weak, /* animate */ true);
-
-    let tracks = if fav_ui.active_tab() == favorites_ui_mod::FavoritesTab::Songs {
-        fav_ui.take_songs_dirty();
-        fav_ui.mark_grids_dirty();
-        let (h, t) = tokio::join!(hero, favorites_ui_mod::refresh_tracks(state, fav_ui, weak));
-        if let Err(e) = h {
-            log::warn!("favorites::refresh_hero: {}", describe(&e));
-        }
-        t
-    } else {
-        fav_ui.take_grids_dirty();
-        fav_ui.mark_songs_dirty();
-        let (h, ()) = tokio::join!(hero, favorites_ui_mod::refresh_grids(state, fav_ui, weak));
-        if let Err(e) = h {
-            log::warn!("favorites::refresh_hero: {}", describe(&e));
-        }
-        Ok(())
-    };
-
-    if let Err(e) = tracks {
-        log::warn!("favorites::refresh_tracks: {}", describe(&e));
+    fav_ui.take_songs_dirty();
+    if let Err(error) = favorites_ui_mod::refresh_tracks(state, fav_ui, weak).await {
+        log::warn!("favorites::refresh_tracks: {}", describe(&error));
     }
 }

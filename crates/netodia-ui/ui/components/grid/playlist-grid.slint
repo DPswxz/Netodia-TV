@@ -15,6 +15,7 @@ export component PlaylistGrid inherits Rectangle {
     in property <length> card-height: 226px;
     in property <length> row-height: 246px;
     in property <length> gap: 20px;
+    in property <bool> editable: true;
 
     callback open-playlist(int /*playlist_id*/);
     // Fired by the card's hover-revealed icons **and** by its right-click menu; the view routes
@@ -94,7 +95,7 @@ export component PlaylistGrid inherits Rectangle {
                         badge-icon: playlist.is_smart ? "auto_awesome" : "";
                         clicked => { root.open-playlist(playlist.id); }
 
-                        selectable: true;
+                        selectable: root.editable;
                         selected: cell.selected;
                         selection-live: cell.selection-live;
                         select-clicked(shift, ctrl) => { cell.pick(shift, ctrl); }
@@ -102,7 +103,9 @@ export component PlaylistGrid inherits Rectangle {
                         // `parent` is the card, not the square the overlay slot draws in, and
                         // `crates/netodia/tests/entity_card_overlay.rs` bans the word here
                         // outright rather than trying to tell a position from a write.
-                        context-requested(x, y) => { cell.open-menu(x, y); }
+                        context-requested(x, y) => {
+                            if (root.editable) { cell.open-menu(x, y); }
+                        }
 
                         // The hover-revealed CRUD trio. **The card's slot rather than the card
                         // itself**: it lived in `EntityCard` once, where every other host raising
@@ -112,7 +115,7 @@ export component PlaylistGrid inherits Rectangle {
                         // card's overlay square, but a `@children` element resolves names where it
                         // is *written*, so `parent` here is the `EntityCard` — its full height,
                         // not the square — and the source reads correctly either way.
-                        show-overlay-actions: true;
+                        show-overlay-actions: root.editable;
                         overlay-hovered: delete_btn.has-hover
                             || artwork_btn.has-hover
                             || name_btn.has-hover;

@@ -11,16 +11,59 @@ use crate::ui::callbacks::{DialogClaim, collect_track_ids};
 use crate::ui::playlists::{self as playlists_ui_mod, PlaylistsUi};
 use netodia_app::library;
 use netodia_app::state::AppState;
+use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
+use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, PlaylistDetail};
 
 /// Wire the `PlaylistDetail` callbacks. See [`super::wire`].
 pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
     track_detail::wire(&ui.global::<PlaylistDetail>().as_weak(), state, playlists_ui);
+    wire_cloud_playback(ui, state, playlists_ui);
     wire_close(ui, state, playlists_ui);
     wire_reorder(ui, state, playlists_ui);
     wire_edit_artwork(ui, state, playlists_ui);
     wire_remove_track(ui, state, playlists_ui);
+}
+
+/// Cloud playlist rows do not exist in SQLite, so activation and shuffle use the buffered
+/// `NetEase` source instead of the local queue API.
+fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
+    let s = state.clone();
+    ui.global::<PlaylistDetail>().on_play_row(move |id, _index| {
+        play_cloud_song(&s, i64::from(id));
+    });
+
+    let s = state.clone();
+    let pu = playlists_ui.clone();
+    ui.global::<PlaylistDetail>().on_shuffle_all(move || {
+        use rand::RngExt;
+        let ids = pu.detail.cache.track_ids();
+        if ids.is_empty() {
+            return;
+        }
+        let id = ids[rand::rng().random_range(..ids.len())];
+        play_cloud_song(&s, id);
+    });
+}
+
+fn play_cloud_song(state: &AppState, song_id: i64) {
+    if song_id <= 0 {
+        return;
+    }
+    let state = state.clone();
+    let runtime = state.runtime.clone();
+    runtime.spawn(async move {
+        let (volume, speed) = {
+            let player = lock_state(&state.player_state);
+            (player.effective_volume(), player.playback_speed)
+        };
+        if let Err(error) =
+            state.cloud_playback.play(song_id, Quality::Exhigh, volume, speed, None).await
+        {
+            log::warn!("playlists::play_cloud_song({song_id}): {}", describe(&error));
+        }
+    });
 }
 
 /// The header's back button.
@@ -34,6 +77,7 @@ fn wire_close(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>)
     let weak = ui.as_weak();
     ui.global::<PlaylistDetail>().on_close_detail(move || {
         let Some(ui) = weak.upgrade() else { return };
+        ui.global::<PlaylistDetail>().set_cloud_collection(false);
         track_detail::forget_closed(&ui, &s, &*pu, &ui.global::<PlaylistDetail>());
 
         let pu = pu.clone();

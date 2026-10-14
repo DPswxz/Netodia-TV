@@ -32,6 +32,8 @@ slint.workspace = true
 qrcode = { workspace = true, features = ["svg"] }
 tokio.workspace = true
 tokio-util.workspace = true
+reqwest.workspace = true
+futures-util.workspace = true
 async-compat.workspace = true
 parking_lot.workspace = true
 # Shuffle-all picks its starting row here.

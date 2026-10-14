@@ -149,6 +149,13 @@ impl CloudService {
         self.public_request(self.client.playlist(id)).await
     }
 
+    /// Load a signed-in user's saved playlist and its tracks under one account generation.
+    pub async fn saved_playlist(&self, id: i64) -> AppResult<(Playlist, Vec<Song>)> {
+        validate_id("歌单", id)?;
+        let (_account, cancellation) = self.account_snapshot()?;
+        self.account_request_in_generation(self.client.playlist(id), cancellation).await
+    }
+
     pub async fn album(&self, id: i64) -> AppResult<(Album, Vec<Song>)> {
         validate_id("专辑", id)?;
         self.public_request(self.client.album(id)).await
@@ -186,9 +193,35 @@ impl CloudService {
         .await
     }
 
+    /// Playlists the signed-in user has collected, excluding playlists they created.
+    pub async fn saved_playlists(&self, offset: u64) -> AppResult<Vec<Playlist>> {
+        self.user_playlists(offset).await
+    }
+
+    pub async fn saved_playlists_page(&self, offset: u64) -> AppResult<(Vec<Playlist>, bool)> {
+        let (account, cancellation) = self.account_snapshot()?;
+        self.account_request_in_generation(
+            self.client.user_playlists_page(account.id, offset),
+            cancellation,
+        )
+        .await
+    }
+
     pub async fn liked_ids(&self) -> AppResult<Vec<i64>> {
         let (account, cancellation) = self.account_snapshot()?;
         self.account_request_in_generation(self.client.liked_ids(account.id), cancellation).await
+    }
+
+    /// Load liked songs without allowing an account transition between the IDs and metadata fetch.
+    pub async fn liked_songs(&self) -> AppResult<Vec<Song>> {
+        let (account, cancellation) = self.account_snapshot()?;
+        let ids = self
+            .account_request_in_generation(self.client.liked_ids(account.id), cancellation.clone())
+            .await?;
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        self.account_request_in_generation(self.client.songs(&ids), cancellation).await
     }
 
     pub async fn like(&self, song_id: i64, liked: bool) -> AppResult<()> {

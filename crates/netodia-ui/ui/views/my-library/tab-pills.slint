@@ -138,19 +138,19 @@ export component MyLibraryTabPills inherits Rectangle {
                 text: @tr("Shuffle");
                 clicked => { PlaylistDetail.shuffle-all(); }
             }
-            PillDivider { }
+            if !PlaylistDetail.cloud-collection: PillDivider { }
             // Rust-side because the picker needs the playlist's track artworks first. It
             // fills Dialog from a fresh event-loop tick, so the property-recursion guard
             // doesn't trip.
-            PillButton {
+            if !PlaylistDetail.cloud-collection: PillButton {
                 icon: "image";
                 tooltip-text: @tr("Edit artwork");
                 clicked => { PlaylistDetail.request-edit-artwork(); }
             }
-            PillDivider { }
+            if !PlaylistDetail.cloud-collection: PillDivider { }
             // Rename / Delete fill Dialog inline — everything they need is already on
             // `PlaylistDetail`, so no Rust hop and no recursion risk.
-            PillButton {
+            if !PlaylistDetail.cloud-collection: PillButton {
                 icon: "edit";
                 tooltip-text: @tr("Rename");
                 clicked => {
@@ -163,14 +163,14 @@ export component MyLibraryTabPills inherits Rectangle {
             }
             // Chrome inline so `@tr` applies; Rust loads the criteria and opens the editor
             // from a fresh tick.
-            if PlaylistDetail.playlist.is_smart: PillDivider { }
-            if PlaylistDetail.playlist.is_smart: PillButton {
+            if !PlaylistDetail.cloud-collection && PlaylistDetail.playlist.is_smart: PillDivider { }
+            if !PlaylistDetail.cloud-collection && PlaylistDetail.playlist.is_smart: PillButton {
                 icon: "tune";
                 tooltip-text: @tr("Edit rules");
                 clicked => { Dialog.open-edit-smart-rules(PlaylistDetail.playlist-id); }
             }
-            PillDivider { }
-            PillButton {
+            if !PlaylistDetail.cloud-collection: PillDivider { }
+            if !PlaylistDetail.cloud-collection: PillButton {
                 icon: "delete";
                 danger: true;
                 tooltip-text: @tr("Delete playlist");
@@ -178,7 +178,7 @@ export component MyLibraryTabPills inherits Rectangle {
                     Dialog.open-delete-playlist(PlaylistDetail.playlist-id);
                 }
             }
-            PillDivider { }
+            if !PlaylistDetail.cloud-collection: PillDivider { }
             ColumnTogglePopup {
                 columns <=> PlaylistDetail.track-columns;
                 toggled(id) => { PlaylistDetail.toggle-column(id); }

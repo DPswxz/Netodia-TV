@@ -1,16 +1,15 @@
-//! The hero's shuffle pills. See [`super::wire`].
-//!
-//! The pill is per-tab, so each one shuffles what its own tab is showing —
-//! and both id lists are filter-aware, so the queue can't disagree with what
-//! is on screen.
+//! Shuffle actions for the Favorites hero.
 
 use std::sync::Arc;
 
+use rand::RngExt;
 use slint::ComponentHandle;
 
-use crate::ui::callbacks::spawn_play_then_shuffle;
 use crate::ui::favorites::FavoritesUi;
 use netodia_app::state::AppState;
+use netodia_core::entities::cloud::Quality;
+use netodia_core::error::describe;
+use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, Favorites};
 
 /// Wire the two hero shuffle callbacks.
@@ -21,19 +20,27 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
         let s = state.clone();
         let fu = fav_ui.clone();
         g.on_shuffle_all(move || {
-            spawn_play_then_shuffle(&s, "favorites::shuffle_all", fu.filtered_track_ids());
+            let ids = fu.filtered_track_ids();
+            if ids.is_empty() {
+                return;
+            }
+            let id = ids[rand::rng().random_range(..ids.len())];
+            let s = s.clone();
+            s.runtime.spawn(async move {
+                let (volume, speed) = {
+                    let player = lock_state(&s.player_state);
+                    (player.effective_volume(), player.playback_speed)
+                };
+                if let Err(error) =
+                    s.cloud_playback.play(id, Quality::Exhigh, volume, speed, None).await
+                {
+                    log::warn!("favorites::shuffle_cloud_song: {}", describe(&error));
+                }
+            });
         });
     }
 
     {
-        let s = state.clone();
-        let fu = fav_ui.clone();
-        g.on_shuffle_most_played(move || {
-            spawn_play_then_shuffle(
-                &s,
-                "favorites::shuffle_most_played",
-                fu.most_played_track_ids(),
-            );
-        });
+        g.on_shuffle_most_played(|| {});
     }
 }

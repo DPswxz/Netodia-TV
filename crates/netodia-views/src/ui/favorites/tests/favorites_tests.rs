@@ -73,7 +73,7 @@ fn the_songs_model_is_written_only_while_its_tab_is_mounted() {
 
 /// The tab count Slint declares today. Kept local so a change to
 /// `Favorites.tab-count` doesn't silently rewrite what this asserts.
-const TABS: usize = 3;
+const TABS: usize = 1;
 
 /// The `N` in `Favorites`'s `tab-count: N;`.
 fn declared_tab_count() -> Option<usize> {
@@ -100,22 +100,6 @@ fn tab_count_matches_the_tabs_slint_declares() {
         "curated.slint's `Favorites` must declare `out property <int> tab-count: {TABS};`"
     );
     let count = declared.unwrap_or_default();
-
-    // Line-anchored: `in-out property <int> tab-idx` shares the substring,
-    // and it's the seat of the index, not one of the constants. Scoped to the
-    // `Favorites` global so `RecentlyPlayed` growing tabs later can't inflate
-    // this count.
-    let favorites_global = GLOBAL
-        .split_once("export global Favorites {")
-        .and_then(|(_, rest)| rest.split_once("export global "))
-        .map_or("", |(body, _)| body);
-    let indices = favorites_global
-        .lines()
-        .map(str::trim_start)
-        .filter(|line| line.starts_with("out property <int> tab-"))
-        .filter(|line| !line.starts_with("out property <int> tab-count"))
-        .count();
-    assert_eq!(indices, count, "`Favorites`'s `tab-*` constants don't add up to `tab-count`");
 
     assert_eq!(
         FavoritesTab::ALL.len(),
@@ -191,62 +175,17 @@ fn a_tab_pick_clears_the_filter_on_both_sides() {
     );
 }
 
-/// Every field a sort pill can ask for has to be one the comparator handles.
-///
-/// The token is a bare string on both sides — an element of the mount's `fields`
-/// array in the Slint, a `match` arm in `grids::sort::sort_artists` — so a typo or
-/// a rename on either side compiles, and the pill just quietly sorts by the default
-/// arm while painting its arrow as though it had worked. My Library's three rows are
-/// pinned the same way, by `ui::my_library::tests`, through the same parser.
-///
-/// The per-pill contracts this used to count — `reserve-sort-slot`, and
-/// `sort-direction` bound to the active field — moved into `SortPillRow` with the
-/// row itself, and `ui::my_library::tests` pins them there once for all four rows.
+/// The cloud-backed Favorites page has no local artist sort controls.
 #[test]
-fn every_sort_pill_asks_for_a_field_the_comparator_knows() {
-    // The arms of `grids::sort::sort_artists`, restated. A field dropped there and
-    // left here fails the round-trip below; one added here and not there falls
-    // through to the default and this test keeps passing — which is fine, since
-    // the default is a defined order, not a no-op.
-    const FIELDS: [&str; 2] = ["name", "favorite_count"];
-
-    let arrays = netodia_testkit::sort_mount_arrays(VIEW, "Favorites.artist-sort-field");
+fn favorites_view_uses_cloud_rows_without_local_sort_controls() {
     assert!(
-        arrays.is_some(),
-        "favorites-view.slint must mount a `SortPillRow` bound to \
-         Favorites.artist-sort-field"
+        VIEW.contains("CloudFavoritesSongsTab {") && VIEW.contains("rows: Favorites.tracks;"),
+        "favorites-view.slint must mount the cloud-backed song list"
     );
-    // Unreachable past the assert; spelled this way because the crate denies
-    // `unwrap`, `expect` and `panic!` in tests as well as in production code.
-    let Some((labels, asked)) = arrays else {
-        return;
-    };
-    let asked: Vec<&str> = asked.split(',').map(|f| f.trim().trim_matches('"')).collect();
-
     assert_eq!(
-        asked.len(),
-        FIELDS.len(),
-        "favorites-view.slint must name one field per pill the Artists tab sorts on"
-    );
-    for field in &asked {
-        assert!(
-            FIELDS.contains(field),
-            "the Artists sort row asks for `{field}`, a field `sort_artists` has no arm for"
-        );
-    }
-
-    // The two arrays are indexed against each other, so a label without a field
-    // reads past the end and sorts by the empty string — a pill that looks live and
-    // does nothing.
-    assert_eq!(
-        labels.matches("@tr(").count(),
-        FIELDS.len(),
-        "the Artists sort row must carry one `@tr` label per field"
-    );
-
-    assert!(
-        VIEW.contains("request-sort(f) => { Favorites.request-artist-sort(f); }"),
-        "the Artists sort row must forward its pick to Favorites.request-artist-sort"
+        VIEW.matches("if Favorites.tab-idx == Favorites.tab-").count(),
+        1,
+        "Favorites has one cloud-backed tab and no local-only grid tabs"
     );
 }
 
@@ -334,68 +273,39 @@ fn a_leave_keeps_a_proxy_of_what_the_grid_painted() -> TestResult {
     Ok(())
 }
 
-/// Each fetch is armed wherever the cache it fills is emptied and disarmed
-/// wherever it is filled — the `RecentlyPlayedUi::grid_dirty` discipline, over
-/// two flags because this page has two gated fetches.
-///
-/// Three obligations, each a bug on the way in. The fetching branch **consumes**
-/// its flag (seeded `true`, so a boot onto a tab otherwise pays for its own
-/// fetch twice) and marks the *other*, which is the whole record that a tick
-/// went by. The section wipe re-arms both beside the caches it just cleared,
-/// rather than leaving it to the leave's own `mark_dirty` two files away. And
-/// each fetch re-arms its own on either way of storing nothing — a failed query
-/// or a leave landing mid-flight — because the tab pick consumes the flag
-/// *before* spawning, so nothing else would.
+/// The cloud song fetch consumes and re-arms its dirty flag beside its cache.
 #[test]
-fn each_gated_fetch_is_armed_beside_the_cache_it_fills() {
+fn favorites_cloud_fetch_is_armed_beside_its_cache() {
     const LIFECYCLE: &str = include_str!("../callbacks/lifecycle.rs");
     const HANDLE: &str = include_str!("../mod.rs");
-    const GRIDS_FETCH: &str = include_str!("../grids/fetch.rs");
+    const SONGS: &str = include_str!("../songs.rs");
 
     let kick = LIFECYCLE
         .split_once("async fn kick_full_refresh(")
         .and_then(|(_, rest)| rest.split_once("\n}"))
         .map(|(body, _)| body)
         .unwrap_or_default();
-    for consumed in ["fav_ui.take_songs_dirty();", "fav_ui.take_grids_dirty();"] {
-        assert!(
-            kick.contains(consumed),
-            "`kick_full_refresh`'s fetching branch must consume its own flag — leaving it set \
-             makes the next pick re-query a cache this call just filled ({consumed})"
-        );
-    }
-    for marked in ["fav_ui.mark_songs_dirty();", "fav_ui.mark_grids_dirty();"] {
-        assert!(
-            kick.contains(marked),
-            "and it must mark the branch it skipped, or the pick that mounts that tab has no \
-             record that a tick went by ({marked})"
-        );
-    }
+    assert!(
+        kick.contains("fav_ui.take_songs_dirty();"),
+        "`kick_full_refresh` must consume the cloud song cache's dirty flag"
+    );
 
     let release = HANDLE
         .split_once("pub fn release_section_state(")
         .and_then(|(_, rest)| rest.split_once("\n    }"))
         .map(|(body, _)| body)
         .unwrap_or_default();
-    for marked in ["self.mark_songs_dirty();", "self.mark_grids_dirty();"] {
-        assert!(
-            release.contains(marked),
-            "`release_section_state` must re-arm both flags beside the caches it wipes ({marked})"
-        );
-    }
+    assert!(
+        release.contains("self.mark_songs_dirty();"),
+        "`release_section_state` must re-arm the cloud song cache beside the rows it wipes"
+    );
 
     // Two ways of storing nothing per fetch: a failed query and a leave landing
     // mid-flight. `refresh_tracks` asks the section guard twice — before and
-    // after its cover prewarm — so it carries three marks in all.
-    assert_eq!(
-        SONGS.matches("mark_songs_dirty()").count(),
-        3,
-        "`refresh_tracks` must re-arm on the failed query and on both section bails"
-    );
-    assert_eq!(
-        GRIDS_FETCH.matches("mark_grids_dirty()").count(),
-        2,
-        "`refresh_grids` must re-arm on a failed query and on the section bail"
+    // after cover downloads and the banner compose, and also on account-generation changes.
+    assert!(
+        SONGS.matches("mark_songs_dirty()").count() >= 4,
+        "`refresh_tracks` must re-arm on failed, stale-account and hidden-section paths"
     );
 }
 

@@ -4,6 +4,7 @@
 
 use std::sync::Arc;
 
+use async_compat::Compat;
 use slint::ComponentHandle;
 
 use crate::ui::callbacks::macros::spawn_logged;
@@ -18,8 +19,8 @@ use crate::ui::track_detail::TrackDetail;
 use netodia_app::state::AppState;
 use netodia_core::error::describe;
 use netodia_ui::{
-    AppWindow, CardSelection, PlaylistDetail, PlaylistGridRow as UiPlaylistGridRow, Playlists,
-    TrackListRow as UiTrackListRow,
+    AppWindow, CardSelection, PlaylistDetail, PlaylistGridRow as UiPlaylistGridRow,
+    PlaylistRow as UiPlaylistRow, Playlists, TrackListRow as UiTrackListRow,
 };
 
 /// Wire the Playlists section-lifecycle callbacks. See
@@ -35,6 +36,57 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
     wire_section_gate(ui, state, playlists_ui);
     install_library_refresher(ui, state, playlists_ui);
     install_stats_refresher(ui, state, playlists_ui);
+    install_account_refresher(ui, state, playlists_ui);
+}
+
+/// Clear saved playlist rows as soon as the account changes, then reload for the active session.
+fn install_account_refresher(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
+    let s = state.clone();
+    let pu = playlists_ui.clone();
+    let weak = ui.as_weak();
+    let mut account_rx = state.cloud_playback.subscribe_account();
+    state.runtime.clone().spawn(Compat::new(async move {
+        loop {
+            if account_rx.changed().await.is_err() {
+                break;
+            }
+            pu.clear_account_data();
+            pu.mark_dirty();
+            let weak_ui = weak.clone();
+            let _ = weak_ui.upgrade_in_event_loop(move |ui| {
+                let playlists = ui.global::<Playlists>();
+                playlists.set_total_count(UNFETCHED_COUNT);
+                playlists.set_cloud_loading(false);
+                playlists.set_cloud_error(slint::SharedString::default());
+                clear_vec_model::<UiPlaylistGridRow>(
+                    &playlists.get_grid_rows(),
+                    "playlists: clear account grid",
+                );
+                clear_vec_model::<UiPlaylistRow>(
+                    &playlists.get_rows(),
+                    "playlists: clear account rows",
+                );
+                let detail = ui.global::<PlaylistDetail>();
+                detail.set_playlist_id(-1);
+                detail.set_cloud_collection(false);
+                clear_vec_model::<UiTrackListRow>(
+                    &detail.get_tracks(),
+                    "playlists: clear account detail",
+                );
+                clear_vec_model::<i32>(
+                    &detail.get_selected_ids(),
+                    "playlists: clear account selection",
+                );
+                detail.set_selection_anchor(-1);
+            });
+            if !pu.section_active() {
+                continue;
+            }
+            if let Err(error) = playlists_ui_mod::fetch_grid(&s, &pu, weak.clone()).await {
+                log::warn!("playlists::account_changed: {}", describe(&error));
+            }
+        }
+    }));
 }
 
 /// Mirrors the Albums implementation — on leave, wipe the Slint models (UI

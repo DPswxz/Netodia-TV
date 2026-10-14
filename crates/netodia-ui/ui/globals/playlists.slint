@@ -10,6 +10,8 @@ export global Playlists {
     in-out property <[PlaylistRow]> rows;
     // `-1` until fetched; see `Albums.total-count`.
     in-out property <int> total-count: -1;      // pre-filter playlist count
+    in-out property <bool> cloud-loading: false;
+    in-out property <string> cloud-error;
     in-out property <int> columns: 4;           // view-computed; always >= 1
     in-out property <string> filter;
     in-out property <string> sort-field: "updated"; // "name" | "track_count" | "updated"
@@ -17,6 +19,7 @@ export global Playlists {
 
     callback columns-changed(int);
     callback apply-filter(string);
+    callback retry-cloud();
     callback open-playlist(int /*playlist_id*/);
     // Lazy per-card lookup against the shared grid tier, the `Albums.request-cover`
     // contract — only on-screen cards resolve, and a miss schedules rather than decoding.
@@ -114,6 +117,7 @@ export global PlaylistDetail {
     in-out property <bool> restoring: false;
     in-out property <PlaylistRow> playlist;
     in-out property <[TrackListRow]> tracks;
+    in-out property <bool> cloud-collection: false;
 
     // What the band's search box means while this detail is open; drag-reorder is disabled while
     // one is active. Cleared on a fresh open, preserved across a library-changed refresh so a

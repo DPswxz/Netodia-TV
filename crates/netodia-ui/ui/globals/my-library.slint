@@ -6,11 +6,12 @@
 export global MyLibrary {
     // **`tab-count` is the sole definition of how many there are** — Rust clamps the persisted
     // index against it, so a build with fewer tabs can't restore onto an unmounted branch.
-    out property <int> tab-songs: 0;
-    out property <int> tab-albums: 1;
-    out property <int> tab-artists: 2;
-    out property <int> tab-genres: 3;
-    out property <int> tab-playlists: 4;
+    // Start My Library on the account's collected playlists.
+    out property <int> tab-playlists: 0;
+    out property <int> tab-songs: 1;
+    out property <int> tab-albums: 2;
+    out property <int> tab-artists: 3;
+    out property <int> tab-genres: 4;
     out property <int> tab-count: 5;
 
     in-out property <int> tab-idx: 0;

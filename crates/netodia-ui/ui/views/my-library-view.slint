@@ -233,8 +233,8 @@ export component MyLibraryView inherits Rectangle {
         band := LibraryTabBand {
             // Inline literals: `@tr` folds msgids at codegen, so a Rust-seeded `[string]`
             // renders untranslated. Order matches `MyLibrary.tab-*`.
-            tab-labels: [@tr("Songs"), @tr("Albums"), @tr("Artists"), @tr("Genres"), @tr("Playlists")];
-            tab-icons: ["music_note", "album", "person", "theater_comedy", "playlist_play"];
+            tab-labels: [@tr("Playlists"), @tr("Songs"), @tr("Albums"), @tr("Artists"), @tr("Genres")];
+            tab-icons: ["playlist_play", "music_note", "album", "person", "theater_comedy"];
             tab-idx <=> MyLibrary.tab-idx;
             // The bodies read the direction off `band.tab-enter-from`, never through
             // `Nav.pending-enter-from` — that global belongs to the sidebar's own

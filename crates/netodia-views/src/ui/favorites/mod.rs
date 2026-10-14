@@ -48,12 +48,9 @@ pub const NAV_FAVORITES: i32 = 2;
 // `pub(super)` is `pub(in crate::ui)` here, exactly the reach these need: this slice's own
 // `callbacks/`, plus `ui::hero_chips`.
 pub(super) use grids::{apply_filtered_grids_now, refresh_grids, set_artist_sort};
-pub(super) use hero::refresh_hero;
 pub(super) use rows::{to_slint_fav_artist_row, to_slint_most_played_row};
-pub(super) use selection::{clear_selection, handle_select_row, select_all};
 pub(super) use songs::{
-    apply_filtered_tracks, apply_filtered_tracks_now, apply_row_rating, refresh_tracks,
-    resort_and_apply, set_filter, set_sort,
+    apply_filtered_tracks, apply_filtered_tracks_now, refresh_tracks, set_filter, set_sort,
 };
 pub use tabs::FavoritesTab;
 pub(super) use tabs::{seed_tab, tab_from_index};
@@ -102,8 +99,7 @@ pub struct FavoritesUi {
     /// `refresh_grids` feeds both grid tabs.
     ///
     /// Gating is safe here only because `hero_chips::favorites_chips` is a per-tab match and
-    /// `refresh_hero` — which answers the count, running time and mosaic on every tab — is never
-    /// gated. Both seeded `true`, so the first pick onto a tab always fetches.
+    /// Both seeded `true`, so the first pick onto a tab always fetches.
     songs_dirty: AtomicBool,
     grids_dirty: AtomicBool,
 }

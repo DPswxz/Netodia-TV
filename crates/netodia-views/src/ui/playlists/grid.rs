@@ -1,7 +1,8 @@
 //! Playlists grid: DB fetch + filter / sort / chunk / prewarm logic. Mirrors
 //! `albums::grid`.
 
-use std::path::PathBuf;
+use std::collections::{HashMap, HashSet};
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use slint::{ComponentHandle, Model, ModelRc, VecModel, Weak};
@@ -12,25 +13,13 @@ use crate::ui::grid_prewarm;
 use crate::ui::grid_rows::chunk_rows;
 use crate::ui::row_match;
 use crate::ui::util::len_as_i32;
-use netodia_app::library;
 use netodia_app::state::AppState;
-use netodia_core::error::AppResult;
+use netodia_core::entities::cloud::Playlist as CloudPlaylist;
+use netodia_core::entities::playlist::PlaylistStats;
+use netodia_core::error::{AppResult, describe};
 use netodia_ui::{
     AppWindow, PlaylistGridRow as UiPlaylistGridRow, PlaylistRow as UiPlaylistRow, Playlists,
 };
-
-/// How much smart-playlist counting a grid refresh pays for.
-#[derive(Clone, Copy)]
-enum RefreshKind {
-    /// Recount every smart playlist — structure may have changed (scan,
-    /// watcher, CRUD, criteria edit).
-    Full,
-    /// A play-count-flush-driven refresh: recount only smart playlists whose
-    /// criteria depend on play stats; carry the rest forward from the previous
-    /// grid data (a criteria edit bumps `library_changed`, forcing a `Full`
-    /// refresh, so the prior stat-dependence flags stay valid here).
-    StatsOnly,
-}
 
 /// Fetch the playlist list from the DB, prewarm cover thumbnails, then
 /// rebuild the grid model on the UI thread. The flat `Playlists.rows`
@@ -41,7 +30,7 @@ pub async fn fetch_grid(
     playlists_ui: &Arc<PlaylistsUi>,
     weak: Weak<AppWindow>,
 ) -> AppResult<()> {
-    fetch_grid_inner(state, playlists_ui, weak, RefreshKind::Full).await
+    fetch_grid_inner(state, playlists_ui, weak).await
 }
 
 /// `stats_changed`-driven grid refresh: recount only the stat-dependent smart
@@ -52,54 +41,49 @@ pub async fn fetch_grid_stats(
     playlists_ui: &Arc<PlaylistsUi>,
     weak: Weak<AppWindow>,
 ) -> AppResult<()> {
-    fetch_grid_inner(state, playlists_ui, weak, RefreshKind::StatsOnly).await
+    fetch_grid_inner(state, playlists_ui, weak).await
 }
 
 async fn fetch_grid_inner(
     state: &AppState,
     playlists_ui: &Arc<PlaylistsUi>,
     weak: Weak<AppWindow>,
-    kind: RefreshKind,
 ) -> AppResult<()> {
-    let mut playlists = library::playlists::get_playlists(&state.db).await?;
-
-    // On a `StatsOnly` refresh only the stat-dependent smart rows can have moved, so the rest
-    // carry their previous counts forward from the prior grid data (one `Arc` clone up front).
-    //
-    // Transient-staleness note: `prev` is snapshotted and the counts computed
-    // before `section.gate()` is acquired, so the gate serializes only the final
-    // write (against the wipe and sibling writes), not the snapshot→compute→write
-    // as a whole — the final write is therefore last-writer-wins. If a
-    // `library_changed`-driven `Full` refresh (e.g. a scan that changed a
-    // stat-*independent* smart playlist's membership) commits while this
-    // `StatsOnly` pass is mid-flight, the count carried forward for that row can
-    // be briefly stale. Display-only, and it self-heals on the next `Full`
-    // refresh (next `library_changed` / section re-enter).
-    let prev = playlists_ui.grid.data.lock().clone();
-    let mut to_count: Vec<usize> = Vec::new();
-    for (i, p) in playlists.iter_mut().enumerate() {
-        if !p.is_smart {
-            continue;
-        }
-        let recount = match kind {
-            RefreshKind::Full => true,
-            RefreshKind::StatsOnly => match prev.row_stats_by_id(p.id) {
-                Some((count, duration, stat_dependent)) if !stat_dependent => {
-                    // A play stat change can't move this row — carry forward.
-                    p.track_count = count;
-                    p.total_duration_ms = duration;
-                    false
-                }
-                // Stat-dependent, or absent from the previous data → recount.
-                _ => true,
-            },
-        };
-        if recount {
-            to_count.push(i);
-        }
+    let account_generation = state.cloud.status().generation;
+    let empty = Arc::new(GridData::new(Vec::new()));
+    {
+        let _gate = playlists_ui.section.gate();
+        *playlists_ui.grid.data.lock() = empty;
+        *playlists_ui.grid.index_cache.lock() = None;
     }
+    let playlists_ui_for_clear = playlists_ui.clone();
+    let _ = weak.upgrade_in_event_loop(move |ui| {
+        rebuild_grid(&ui, &playlists_ui_for_clear);
+        update_flat_rows(&ui, &playlists_ui_for_clear);
+        set_cloud_state(&ui, true, None, -1);
+    });
 
-    library::smart_playlists::recount(&state.db, &mut playlists, &to_count).await;
+    let playlists = match fetch_saved_playlists(state).await {
+        Ok(playlists) => playlists,
+        Err(error) => {
+            if state.cloud.status().generation != account_generation {
+                playlists_ui.mark_dirty();
+                return Ok(());
+            }
+            let playlists_ui = playlists_ui.clone();
+            let message = describe(&error);
+            let _ = weak.upgrade_in_event_loop(move |ui| {
+                rebuild_grid(&ui, &playlists_ui);
+                update_flat_rows(&ui, &playlists_ui);
+                set_cloud_state(&ui, false, Some(message), 0);
+            });
+            return Err(error);
+        }
+    };
+    if state.cloud.status().generation != account_generation {
+        playlists_ui.mark_dirty();
+        return Ok(());
+    }
 
     let data = Arc::new(GridData::new(playlists));
     {
@@ -109,13 +93,122 @@ async fn fetch_grid_inner(
     }
 
     grid_prewarm::prewarm_off_thread(playlists_ui, PlaylistsUi::prewarm_visible_covers).await;
+    if state.cloud.status().generation != account_generation {
+        playlists_ui.mark_dirty();
+        return Ok(());
+    }
 
     let playlists_ui = playlists_ui.clone();
     let _ = weak.upgrade_in_event_loop(move |ui| {
         rebuild_grid(&ui, &playlists_ui);
         update_flat_rows(&ui, &playlists_ui);
+        let count = ui.global::<Playlists>().get_total_count();
+        set_cloud_state(&ui, false, None, count);
     });
     Ok(())
+}
+
+async fn fetch_saved_playlists(state: &AppState) -> AppResult<Vec<PlaylistStats>> {
+    const PAGE_SIZE: u64 = 30;
+    const MAX_OFFSET: u64 = 100_000;
+    let mut offset = 0_u64;
+    let mut playlists = Vec::new();
+    loop {
+        let (page, more) = state.cloud.saved_playlists_page(offset).await?;
+        playlists.extend(page);
+        if !more || offset >= MAX_OFFSET {
+            break;
+        }
+        offset = offset.saturating_add(PAGE_SIZE);
+    }
+
+    let covers = cache_playlist_covers(state, &playlists).await;
+    Ok(playlists
+        .into_iter()
+        .map(|playlist| {
+            let cover = covers.get(&playlist.id).cloned();
+            cloud_playlist_stats(playlist, cover)
+        })
+        .collect())
+}
+
+fn cloud_playlist_stats(playlist: CloudPlaylist, thumbnail_path: Option<String>) -> PlaylistStats {
+    PlaylistStats {
+        id: playlist.id,
+        name: playlist.name,
+        description: playlist.description,
+        thumbnail_path,
+        is_smart: false,
+        smart_criteria: None,
+        created_at: String::new(),
+        updated_at: String::new(),
+        custom_thumbnail: false,
+        track_count: i32::try_from(playlist.track_count).unwrap_or(i32::MAX),
+        total_duration_ms: 0,
+    }
+}
+
+async fn cache_playlist_covers(
+    state: &AppState,
+    playlists: &[CloudPlaylist],
+) -> HashMap<i64, String> {
+    const COVER_LIMIT: usize = 60;
+    let mut urls = Vec::new();
+    let mut seen = HashSet::new();
+    for playlist in playlists {
+        if let Some(url) = playlist.cover_url.as_deref()
+            && seen.insert(url.to_owned())
+        {
+            urls.push(url.to_owned());
+            if urls.len() == COVER_LIMIT {
+                break;
+            }
+        }
+    }
+    let client = state.http_client().clone();
+    let dir = state.paths.data_dir.join("netease-artwork");
+    let cached = futures_util::future::join_all(urls.into_iter().map(|url| {
+        let client = client.clone();
+        let dir = dir.clone();
+        async move { (url.clone(), download_cover(&client, &url, &dir).await) }
+    }))
+    .await;
+    let by_url: HashMap<String, String> =
+        cached.into_iter().filter_map(|(url, path)| path.map(|path| (url, path))).collect();
+    playlists
+        .iter()
+        .filter_map(|playlist| {
+            let url = playlist.cover_url.as_ref()?;
+            Some((playlist.id, by_url.get(url)?.clone()))
+        })
+        .collect()
+}
+
+async fn download_cover(client: &reqwest::Client, url: &str, dir: &Path) -> Option<String> {
+    const MAX_BYTES: u64 = 1_048_576;
+    let response = client.get(url).send().await.ok()?.error_for_status().ok()?;
+    if response.content_length().is_some_and(|length| length > MAX_BYTES) {
+        return None;
+    }
+    let bytes = response.bytes().await.ok()?;
+    if u64::try_from(bytes.len()).ok()? > MAX_BYTES {
+        return None;
+    }
+    let bytes = bytes.to_vec();
+    let dir = dir.to_path_buf();
+    tokio::task::spawn_blocking(move || {
+        netodia_artwork::media::image::artwork::store_image(&bytes, "jpg", &dir)
+    })
+    .await
+    .ok()
+    .flatten()
+}
+
+fn set_cloud_state(ui: &AppWindow, loading: bool, error: Option<String>, count: i32) {
+    let g = ui.global::<Playlists>();
+    g.set_cloud_loading(loading);
+    g.set_cloud_error(error.map_or_else(slint::SharedString::default, slint::SharedString::from));
+    g.set_total_count(count);
 }
 
 /// Rebuild the grid model from the cached grid data — no DB hit. Same

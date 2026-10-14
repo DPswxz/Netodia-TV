@@ -4,18 +4,20 @@
 //! with both the per-keystroke filter walk and the per-header-click re-sort running in memory off
 //! [`crate::ui::track_list_cache`].
 
-use std::path::PathBuf;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use slint::{ComponentHandle, Model, VecModel, Weak};
+use slint::{ComponentHandle, Model, SharedString, VecModel, Weak};
 
 use super::{FavoritesTab, FavoritesUi};
 use crate::ui::row_match::{self, Needle};
 use crate::ui::track_sort;
-use netodia_app::library;
 use netodia_app::services::settings::{SortDir, ViewSort};
 use netodia_app::state::AppState;
-use netodia_core::error::AppResult;
+use netodia_core::entities::cloud::Song;
+use netodia_core::entities::track::TrackListRow as RsTrackListRow;
+use netodia_core::error::{AppResult, describe};
 use netodia_ui::{AppWindow, Favorites, TrackListRow as UiTrackListRow};
 
 /// The active sort. Slint mirrors it in `Favorites.sort-*`, but this cache is the source of truth
@@ -50,15 +52,6 @@ fn sort_changed(a: &ViewSort, b: &ViewSort) -> bool {
     a.field != b.field || dir_token(a.dir) != dir_token(b.dir)
 }
 
-/// Re-sort the Songs tab after a header click, entirely in memory: the set is already resident and
-/// already covered, and only the display permutation moves, so re-issuing the query would be an
-/// unbounded `SELECT` plus a full cover prewarm for nothing.
-pub fn resort_and_apply(fav_ui: &Arc<FavoritesUi>, weak: &Weak<AppWindow>) {
-    let sort = current_sort(fav_ui);
-    fav_ui.state().tracks_all.resort(&sort.field, dir_token(sort.dir));
-    apply_filtered_tracks(fav_ui, weak);
-}
-
 /// Update the cached filter needle, so the live-refresh subscriber can re-walk on a background
 /// thread without reading the Slint global. Folded on the way in, so all four readers share one.
 pub fn set_filter(fav_ui: &FavoritesUi, filter: &str) {
@@ -74,17 +67,25 @@ pub async fn refresh_tracks(
     fav_ui: &Arc<FavoritesUi>,
     weak: &Weak<AppWindow>,
 ) -> AppResult<()> {
+    let account_generation = state.cloud.status().generation;
     let sort = current_sort(fav_ui);
-
-    // Fetched in the query's fixed `sort_key` order; display order is derived in memory below, so
-    // a cold fetch and a header click share one code path.
-    //
-    // Both ways of storing nothing re-arm the flag, the tab pick having *consumed* it before
-    // spawning this: without the re-arm a failed query leaves the sentinel with no answer coming,
-    // and the pick that would have re-asked believes the cache is current.
-    let rows = library::favorites::get_favorite_tracks(&state.db)
-        .await
-        .inspect_err(|_| fav_ui.mark_songs_dirty())?;
+    set_cloud_state(weak, true, None, -1);
+    let rows = match fetch_cloud_favorites(state).await {
+        Ok(rows) => rows,
+        Err(error) => {
+            if state.cloud.status().generation != account_generation {
+                fav_ui.mark_songs_dirty();
+                return Ok(());
+            }
+            fav_ui.mark_songs_dirty();
+            set_cloud_state(weak, false, Some(describe(&error)), 0);
+            return Err(error);
+        }
+    };
+    if state.cloud.status().generation != account_generation {
+        fav_ui.mark_songs_dirty();
+        return Ok(());
+    }
 
     // A leave landing while the query was in flight has already wiped `tracks_all` and emptied the
     // model, so everything below would undo that teardown behind a view nobody can see.
@@ -121,6 +122,12 @@ pub async fn refresh_tracks(
     // has no business holding a lock the wipe and both sibling fetches queue behind.
     let fold = crate::ui::hero_folds::fold_tracks(&rows);
 
+    super::hero::refresh_from_tracks(state, fav_ui, weak, &rows, account_generation, false).await;
+    if state.cloud.status().generation != account_generation {
+        fav_ui.mark_songs_dirty();
+        return Ok(());
+    }
+
     // A header click landing mid-fetch re-sorts the cache it finds and returns, with no second
     // query behind it to correct the order — so this store would overwrite it with the permutation
     // computed before the click. Asked twice because `store_in_order` converts every favourite: a
@@ -141,12 +148,124 @@ pub async fn refresh_tracks(
     if sort_changed(&sort_now, &sort_used) {
         fav_ui.state().tracks_all.resort(&sort_now.field, dir_token(sort_now.dir));
     }
-    // `kick_full_refresh` runs this concurrently with the hero and grid fetches, so whichever of
-    // those published did it against the previous fold.
+    // Refresh the band after the new fold has landed; the earlier hero update only had the
+    // previous fold available while the cloud rows were being prepared.
     super::hero::republish_chips(fav_ui, weak);
-
     apply_filtered_tracks(fav_ui, weak);
+    let count = fav_ui.state().tracks_all.snapshot().total();
+    set_cloud_state(weak, false, None, count);
     Ok(())
+}
+
+/// Fetch the signed-in account's liked songs from `NetEase` and adapt their identities to the
+/// shared track-list model. The local file path stays empty: cloud identities are never treated
+/// as files in the local library.
+async fn fetch_cloud_favorites(state: &AppState) -> AppResult<Vec<RsTrackListRow>> {
+    let songs = state.cloud.liked_songs().await?;
+    let covers = cache_song_covers(state, &songs).await;
+    Ok(songs
+        .into_iter()
+        .map(|song| {
+            let artwork_path = covers.get(&song.id).cloned();
+            cloud_song_row(song, artwork_path)
+        })
+        .collect())
+}
+
+fn cloud_song_row(song: Song, artwork_path: Option<String>) -> RsTrackListRow {
+    let artist = song.artist_names();
+    let artist_id = song.artists.first().map(|artist| artist.id);
+    RsTrackListRow {
+        id: song.id,
+        file_path: String::new(),
+        file_name: song.name.clone(),
+        title: song.name,
+        artist: (!artist.is_empty()).then_some(artist),
+        album_artist: None,
+        album: (!song.album.name.is_empty()).then_some(song.album.name),
+        genre: None,
+        track_number: None,
+        disc_number: None,
+        year: None,
+        duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
+        artwork_path,
+        is_favorite: true,
+        rating: 0,
+        album_id: (song.album.id > 0).then_some(song.album.id),
+        artist_id,
+        genre_id: None,
+        date_added: String::new(),
+        sort_key: None,
+    }
+}
+
+/// Fetch only the first screenful of distinct cover URLs. The rest of a large favourites list
+/// still renders immediately and its rows can request local artwork as they become visible.
+async fn cache_song_covers(state: &AppState, songs: &[Song]) -> HashMap<i64, String> {
+    const COVER_LIMIT: usize = 48;
+    let mut urls = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for song in songs {
+        let Some(url) = song.album.cover_url.as_deref() else { continue };
+        if seen.insert(url.to_owned()) {
+            urls.push(url.to_owned());
+            if urls.len() == COVER_LIMIT {
+                break;
+            }
+        }
+    }
+    if urls.is_empty() {
+        return HashMap::new();
+    }
+
+    let client = state.http_client().clone();
+    let dir = state.paths.data_dir.join("netease-artwork");
+    let stored = futures_util::future::join_all(urls.into_iter().map(|url| {
+        let client = client.clone();
+        let dir = dir.clone();
+        async move { (url.clone(), download_cover(&client, &url, &dir).await) }
+    }))
+    .await;
+    let by_url: HashMap<String, String> =
+        stored.into_iter().filter_map(|(url, path)| path.map(|path| (url, path))).collect();
+    songs
+        .iter()
+        .filter_map(|song| {
+            let url = song.album.cover_url.as_ref()?;
+            Some((song.id, by_url.get(url)?.clone()))
+        })
+        .collect()
+}
+
+async fn download_cover(client: &reqwest::Client, url: &str, dir: &Path) -> Option<String> {
+    const MAX_BYTES: u64 = 1_048_576;
+    let response = client.get(url).send().await.ok()?.error_for_status().ok()?;
+    if response.content_length().is_some_and(|length| length > MAX_BYTES) {
+        return None;
+    }
+    let bytes = response.bytes().await.ok()?;
+    if u64::try_from(bytes.len()).ok()? > MAX_BYTES {
+        return None;
+    }
+    let bytes = bytes.to_vec();
+    let dir = dir.to_path_buf();
+    tokio::task::spawn_blocking(move || {
+        netodia_artwork::media::image::artwork::store_image(&bytes, "jpg", &dir)
+    })
+    .await
+    .ok()
+    .flatten()
+}
+
+fn set_cloud_state(weak: &Weak<AppWindow>, loading: bool, error: Option<String>, count: i32) {
+    let weak = weak.clone();
+    let _ = slint::invoke_from_event_loop(move || {
+        let Some(ui) = weak.upgrade() else { return };
+        let g = ui.global::<Favorites>();
+        g.set_cloud_loading(loading);
+        g.set_cloud_error(error.map_or_else(SharedString::default, SharedString::from));
+        g.set_track_count(count);
+    });
 }
 
 /// Re-walk the cached `tracks_all` through the active filter and push the result into
@@ -218,17 +337,4 @@ fn write_filtered_tracks(ui: &AppWindow, fav_ui: &FavoritesUi, mut rendered: Vec
     // A per-row rewrite where the identities align — a library tick — keeps the `ListView`'s
     // delegates instead of tearing them all down; a structural change falls back to `set_vec`.
     crate::ui::model_diff::apply_rows_keyed(vec, rendered, |r| r.id);
-}
-
-/// Set `rating` on one Songs-tab row. Rating affects neither membership nor
-/// order, so the row stays put and is patched in place rather than the whole
-/// filtered list rebuilt. Mirrors [`crate::ui::tracks::apply_row_rating`].
-pub fn apply_row_rating(weak: &Weak<AppWindow>, id: i64, rating: i32) {
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        crate::ui::model_patch::patch_track_row_by_id(
-            &ui.global::<Favorites>().get_tracks(),
-            id,
-            |r| r.rating = rating,
-        );
-    });
 }

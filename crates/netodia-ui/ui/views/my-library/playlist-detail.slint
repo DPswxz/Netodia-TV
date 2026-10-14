@@ -6,6 +6,7 @@ import { DraggableTrackList } from "../../components/track-list/draggable-track-
 import { GridEmptyState } from "../../components/grid/grid-empty-state.slint";
 import { TrackListScrollbars } from "../../components/track-list-scrollbars.slint";
 import { MaterialIcon } from "../../components/material-icon.slint";
+import { CloudPlaylistTracks } from "./cloud-playlist-tracks.slint";
 
 // `AlbumDetailBody`'s shape over `DraggableTrackList` — the shared `TrackList` stays
 // drag-free for Tracks / Browse / the other three details — plus the empty state and the
@@ -31,9 +32,18 @@ export component PlaylistDetailBody inherits Rectangle {
         width: 100%;
         height: 100%;
 
+        if PlaylistDetail.cloud-collection: CloudPlaylistTracks {
+            width: 100%;
+            height: 100%;
+            visible: PlaylistDetail.cloud-collection;
+            rows: PlaylistDetail.tracks;
+            play-track(id) => { PlaylistDetail.play-row(id, 0); }
+        }
+
         tl := DraggableTrackList {
             width: 100%;
             height: 100%;
+            visible: !PlaylistDetail.cloud-collection;
 
             rows: PlaylistDetail.tracks;
             // Reorder only in insertion order: any other sort makes it ambiguous, a
@@ -79,7 +89,7 @@ export component PlaylistDetailBody inherits Rectangle {
             go-to-genre(gid) => { PlaylistDetail.go-to-genre(gid); }
         }
 
-        if PlaylistDetail.playlist.track_count == 0: GridEmptyState {
+        if PlaylistDetail.playlist.track_count == 0 && !PlaylistDetail.cloud-collection: GridEmptyState {
             icon: "music_note";
             title: PlaylistDetail.playlist.is_smart
                 ? @tr("No matching tracks")
@@ -89,9 +99,15 @@ export component PlaylistDetailBody inherits Rectangle {
                 : @tr("Drag music files here, or add tracks via any track's overflow menu.");
         }
 
+        if PlaylistDetail.playlist.track_count == 0 && PlaylistDetail.cloud-collection: GridEmptyState {
+            icon: "music_note";
+            title: @tr("No tracks yet");
+            body: @tr("This NetEase playlist has no available tracks.");
+        }
+
         // OS file-hover banner — routed here when the queue sheet is closed and this
         // detail is open. Stacks above the empty state.
-        if PlaylistDetail.is-drop-hovered && PlaylistDetail.playlist-id >= 0
+        if !PlaylistDetail.cloud-collection && PlaylistDetail.is-drop-hovered && PlaylistDetail.playlist-id >= 0
             && !PlaylistDetail.playlist.is_smart: Rectangle {
             background: Theme.accent.with-alpha(0.16);
             border-radius: Theme.radius-md;
@@ -124,6 +140,7 @@ export component PlaylistDetailBody inherits Rectangle {
 
     TrackListScrollbars {
         x: 0; y: 0; width: 100%; height: 100%;
+        visible: !PlaylistDetail.cloud-collection;
         list-y: tl.absolute-position.y - root.absolute-position.y;
         body-y: tl.body-y;
         body-height: tl.body-height;

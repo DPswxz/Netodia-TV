@@ -2993,3 +2993,35 @@ msgstr ""
 #: ui/views/settings/netease-account-section.slint
 msgid "Refresh code"
 msgstr ""
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+msgid "Remove from favorites"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+msgid "Loading favorites…"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+msgid "No NetEase favorites yet"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint ui/views/my-library/playlists-tab.slint
+msgid "Retry"
+msgstr ""
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "Loading collected playlists…"
+msgstr ""
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "No collected playlists yet"
+msgstr ""
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "Playlists you collect on NetEase will appear here."
+msgstr ""
+
+#: ui/views/my-library/playlist-detail.slint
+msgid "This NetEase playlist has no available tracks."
+msgstr ""

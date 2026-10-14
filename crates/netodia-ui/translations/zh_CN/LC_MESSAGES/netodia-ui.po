@@ -2975,3 +2975,35 @@ msgstr "无法发起扫码登录。"
 #: ui/views/settings/netease-account-section.slint
 msgid "Refresh code"
 msgstr "刷新二维码"
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+msgid "Remove from favorites"
+msgstr "取消喜欢"
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+msgid "Loading favorites…"
+msgstr "正在加载喜欢的歌曲…"
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+msgid "No NetEase favorites yet"
+msgstr "网易云暂时没有喜欢的歌曲"
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint ui/views/my-library/playlists-tab.slint
+msgid "Retry"
+msgstr "重试"
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "Loading collected playlists…"
+msgstr "正在加载收藏的歌单…"
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "No collected playlists yet"
+msgstr "还没有收藏歌单"
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "Playlists you collect on NetEase will appear here."
+msgstr "在网易云收藏的歌单会显示在这里。"
+
+#: ui/views/my-library/playlist-detail.slint
+msgid "This NetEase playlist has no available tracks."
+msgstr "这个网易云歌单暂时没有可播放的歌曲。"

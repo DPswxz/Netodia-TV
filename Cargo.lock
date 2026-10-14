@@ -4237,6 +4237,7 @@ version = "0.1.0"
 dependencies = [
  "async-compat",
  "chrono",
+ "futures-util",
  "image",
  "log",
  "lru",
@@ -4253,6 +4254,7 @@ dependencies = [
  "parking_lot",
  "qrcode",
  "rand 0.10.2",
+ "reqwest",
  "rfd",
  "slint",
  "tempfile",

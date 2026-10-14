@@ -1,151 +1,96 @@
-//! `Favorites.*` Songs-tab callbacks: row actions (play, queue, favorite
-//! toggle), the filter pass, sort, column visibility, and modifier-aware
-//! row selection. See [`super::wire`].
+//! Actions for the `NetEase` liked-songs list.
 
 use std::sync::Arc;
 
-use slint::{ComponentHandle, Global as _, SharedString};
+use slint::ComponentHandle;
 
-use crate::ui::callbacks::macros::wire_row_flag;
-use crate::ui::callbacks::track_list::{play_displayed, wire_queue_actions, wire_toggle_column};
-use crate::ui::callbacks::{collect_track_ids, next_sort, persist_view_sort};
+use crate::ui::callbacks::collect_track_ids;
 use crate::ui::favorites::{self as favorites_ui_mod, FavoritesUi};
-use crate::ui::track_list_view::view_id;
-use netodia_app::library;
 use netodia_app::state::AppState;
+use netodia_core::entities::cloud::Quality;
+use netodia_core::error::describe;
+use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, Favorites};
 
-/// Wire the Songs tab's row / filter / sort / selection callbacks.
 pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
     let g = ui.global::<Favorites>();
-    wire_play_row(&g, state, fav_ui);
-    wire_queue_actions(&g, state, collect_track_ids);
-    wire_row_flags(ui, state, fav_ui);
-    wire_filter(ui, fav_ui);
-    wire_sort(ui, state, fav_ui);
-    wire_toggle_column(&g.as_weak(), state);
-    wire_selection(ui, fav_ui);
-}
-
-/// Loads the filtered list into the queue and starts on the clicked track;
-/// the hero's Shuffle is the same call at index 0, plus a shuffle flip.
-fn wire_play_row(g: &Favorites<'_>, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
-    let s = state.clone();
-    let fu = fav_ui.clone();
-    g.on_play_row(move |track_id, idx| {
-        play_displayed(&s, view_id::FAVORITES, fu.filtered_track_ids(), track_id, idx);
-    });
-}
-
-fn wire_row_flags(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
-    let g = ui.global::<Favorites>();
     let weak = ui.as_weak();
-    // toggle-row-favorite: optimistic local removal (favourite ⇒ not-
-    // favourite drops the row from the filtered view). `set_favorite`
-    // bumps `library_changed`, which the lifecycle subscriber picks
-    // up and re-fetches the list — covers the un-toggle-then-toggle race
-    // where the user undoes the change quickly. Multi-select arrives
-    // as `[int]`; single-row mode sends a 1-element array.
+
     {
-        let fu = fav_ui.clone();
-        wire_row_flag!(g, on_toggle_row_favorite, state, "favorites::set_favorite",
-        library::favorites::set_favorite, collect_track_ids,
-        captures: [weak, fu],
-        after: |id_vec, fav| {
-            for id in &id_vec {
-                fu.flip_or_remove_track(*id, fav);
+        let state = state.clone();
+        g.on_play_row(move |track_id, _index| {
+            let song_id = i64::from(track_id);
+            if song_id <= 0 {
+                return;
             }
-            favorites_ui_mod::apply_filtered_tracks(&fu, &weak);
+            let state = state.clone();
+            state.runtime.spawn(async move {
+                let (volume, speed) = {
+                    let player = lock_state(&state.player_state);
+                    (player.effective_volume(), player.playback_speed)
+                };
+                if let Err(error) =
+                    state.cloud_playback.play(song_id, Quality::Exhigh, volume, speed, None).await
+                {
+                    log::warn!("favorites::play_cloud_song({song_id}): {}", describe(&error));
+                }
+            });
         });
     }
 
-    // set-row-rating: rating is independent of favorite membership, so the
-    // row stays put — patch the cached rows and the one visible row in place
-    // (no full filtered-list rebuild).
     {
-        let fu = fav_ui.clone();
-        wire_row_flag!(g, on_set_row_rating, state, "favorites::set_rating",
-        library::ratings::set_rating, collect_track_ids,
-        captures: [weak, fu],
-        after: |id_vec, rating| {
-            // Rating never removes the row (unlike the favorite toggle) and
-            // there's no in-table rating sort, so patch each row in place
-            // instead of rebuilding the whole filtered list.
-            for id in &id_vec {
-                fu.flip_track_rating(*id, rating);
-                favorites_ui_mod::apply_row_rating(&weak, *id, rating);
+        let state = state.clone();
+        let runtime = state.runtime.clone();
+        let cloud = state.cloud.clone();
+        let fav_ui = fav_ui.clone();
+        let weak = weak.clone();
+        g.on_toggle_row_favorite(move |ids, liked| {
+            let ids = collect_track_ids(&ids);
+            if ids.is_empty() {
+                return;
             }
+            let state = state.clone();
+            let cloud = cloud.clone();
+            let fav_ui = fav_ui.clone();
+            let weak = weak.clone();
+            runtime.spawn(async move {
+                // A failed write stops the batch. Likes are writes and must not be retried
+                // automatically because the server may already have accepted one.
+                for id in ids {
+                    if let Err(error) = cloud.like(id, liked).await {
+                        log::warn!("favorites::netease_like({id}): {}", describe(&error));
+                        return;
+                    }
+                }
+                if fav_ui.section_active() {
+                    if let Err(error) =
+                        favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await
+                    {
+                        log::warn!("favorites::refresh_after_like: {}", describe(&error));
+                    }
+                } else {
+                    fav_ui.mark_songs_dirty();
+                }
+            });
         });
     }
-}
 
-/// The filter is shared across the tabs, so a keystroke re-walks the
-/// Songs cache (title+artist+album) and whichever grid is mounted —
-/// Most Played (title+artist) or Favorite Artists (name). Each
-/// re-renders from its cached Rust Vec, so the keystroke cost is
-/// `O(rows)` in-memory work — no DB round-trip.
-fn wire_filter(ui: &AppWindow, fav_ui: &Arc<FavoritesUi>) {
-    let fu = fav_ui.clone();
-    let weak = ui.as_weak();
-    ui.global::<Favorites>().on_filter_changed(move |text| {
-        let Some(ui) = weak.upgrade() else { return };
-        favorites_ui_mod::set_filter(&fu, &text);
-        favorites_ui_mod::apply_filtered_tracks(&fu, &weak);
-        favorites_ui_mod::apply_filtered_grids_now(&ui, &fu);
-    });
-}
+    // The cloud list has no local rating or local playback queue to mutate.
+    g.on_set_row_rating(|_, _| {});
+    g.on_play_next(|_| {});
+    g.on_add_to_queue(|_| {});
 
-fn wire_sort(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
-    let s = state.clone();
-    let fu = fav_ui.clone();
-    let weak = ui.as_weak();
-    ui.global::<Favorites>().on_request_sort(move |field| {
-        let Some(ui) = weak.upgrade() else { return };
-        let g = ui.global::<Favorites>();
-        let (new_field, new_dir) =
-            next_sort(g.get_sort_field().as_str(), g.get_sort_dir().as_str(), &field);
-        g.set_sort_field(SharedString::from(new_field.as_str()));
-        g.set_sort_dir(SharedString::from(new_dir.as_str()));
-        favorites_ui_mod::set_sort(&fu, new_field.clone(), new_dir);
-        persist_view_sort(&s, view_id::FAVORITES, new_field, new_dir);
-
-        // In memory, like the Tracks view's header clicks: the rows are
-        // already resident and their covers already warm, so only the
-        // display permutation moves. This used to re-issue an unbounded
-        // `SELECT` plus a full cover prewarm per click.
-        favorites_ui_mod::resort_and_apply(&fu, &weak);
-    });
-}
-
-/// Modifier-aware selection with
-/// per-row `selected` flag re-stamping so the row checkbox + accent
-/// highlight reflect each click. Mirrors `tracks::handle_select_row`
-/// exactly so range-select (Shift), toggle (Ctrl), and the
-/// single-row default all behave the same as in the Tracks view.
-fn wire_selection(ui: &AppWindow, fav_ui: &Arc<FavoritesUi>) {
-    let g = ui.global::<Favorites>();
     {
-        let weak = ui.as_weak();
-        let fu = fav_ui.clone();
-        g.on_select_row(move |idx, id, shift, ctrl| {
+        let fav_ui = fav_ui.clone();
+        let weak = weak.clone();
+        g.on_filter_changed(move |text| {
             let Some(ui) = weak.upgrade() else { return };
-            favorites_ui_mod::handle_select_row(&ui, &fu, idx, id, shift, ctrl);
+            favorites_ui_mod::set_filter(&fav_ui, &text);
+            favorites_ui_mod::apply_filtered_tracks(&fav_ui, &weak);
+            favorites_ui_mod::apply_filtered_grids_now(&ui, &fav_ui);
         });
     }
-    {
-        let weak = ui.as_weak();
-        let fu = fav_ui.clone();
-        g.on_select_all(move || {
-            let Some(ui) = weak.upgrade() else { return };
-            favorites_ui_mod::select_all(&ui, &fu);
-        });
-    }
-    {
-        let weak = ui.as_weak();
-        let fu = fav_ui.clone();
-        g.on_clear_selection(move || {
-            let Some(ui) = weak.upgrade() else { return };
-            favorites_ui_mod::clear_selection(&ui, &fu);
-        });
-    }
+
+    // Sorting controls aren't mounted on this cloud-backed list.
+    g.on_request_sort(|_| {});
 }

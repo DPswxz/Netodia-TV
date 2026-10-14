@@ -116,6 +116,17 @@ impl PlaylistsUi {
         }
     }
 
+    /// Drop the account-scoped grid and detail rows before another session is published.
+    pub(crate) fn clear_account_data(&self) {
+        crate::ui::window_chrome::set_current_playlist_id(-1);
+        self.detail_artwork.clear();
+        let _gate = self.section.gate();
+        *self.grid.data.lock() = Arc::new(GridData::new(Vec::new()));
+        *self.grid.index_cache.lock() = None;
+        self.detail.cache.clear();
+        self.detail.position_order.lock().clear();
+    }
+
     /// Drop everything resident in the Playlists section — grid covers,
     /// detail artwork pair, canonical grid data, memoized indices,
     /// cached detail tracks, applied-selection shadow — then return the

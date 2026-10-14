@@ -5,17 +5,15 @@ import { TrackListRow, TrackColumns, EntityStripRow, EntityGridRow } from "../mo
 // answers with a trait over the generated globals (`ui::detail_view::HeroSlots`); what the pages
 // genuinely share is in the component.
 
-// Three mutually exclusive sub-views: Songs (a sortable, filterable `TrackList`), Most Played and
-// Favorite Artists (both virtualized `EntityCardGrid`s). No Favorite Albums tab by design — albums
-// are reachable through the Albums tab. **The filter is shared across all three; sort is per-tab**,
-// and only Songs and Favorite Artists have one, Most Played being ranked by play count.
+// Favorites currently exposes one NetEase-backed song list. The older local-curation state remains
+// in the shared global while the neighboring Recently Played page still uses the same models.
 export global Favorites {
     // **`tab-count` is the sole definition of how many there are** — Rust clamps the persisted
     // index against it, so a build with fewer tabs can't restore onto an unmounted branch.
     out property <int> tab-songs: 0;
     out property <int> tab-most-played: 1;
     out property <int> tab-artists: 2;
-    out property <int> tab-count: 3;
+    out property <int> tab-count: 1;
 
     in-out property <int> tab-idx: 0;
     // **Fires after the bar has already moved `tab-idx`.** Rust persists the pick and builds
@@ -36,6 +34,9 @@ export global Favorites {
     // source and suppresses an empty state; resetting to `0` asserts "No favorites yet" for the
     // length of the fetch. Neither `== 0` nor `> 0` matches, so every gate below reads as written.
     in-out property <int>      track-count: -1;
+    in-out property <bool> cloud-loading: false;
+    in-out property <string> cloud-error;
+    callback retry-cloud();
 
     // Two slots, never cleared, so the outgoing one stays painted through the fade and
     // a mosaic switch never flashes. `has-blur` gates the gradient-floor fallback.

@@ -553,14 +553,21 @@ impl Client {
         Ok(())
     }
     pub async fn user_playlists(&self, uid: i64, offset: u64) -> Result<Vec<Playlist>> {
-        field(
-            self.request(
+        self.user_playlists_page(uid, offset).await.map(|(playlists, _)| playlists)
+    }
+
+    pub async fn user_playlists_page(
+        &self,
+        uid: i64,
+        offset: u64,
+    ) -> Result<(Vec<Playlist>, bool)> {
+        let body = self
+            .request(
                 ep::USER_PLAYLISTS,
                 json!({"uid":uid,"offset":offset,"limit":30,"includeVideo":false}),
             )
-            .await?,
-            "playlist",
-        )
+            .await?;
+        decode_saved_playlists(&body, uid)
     }
     pub async fn liked_ids(&self, uid: i64) -> Result<Vec<i64>> {
         field(self.request(ep::LIKED, json!({"uid":uid})).await?, "ids")
@@ -616,6 +623,24 @@ fn chrono_millis() -> u128 {
 fn decode<T: DeserializeOwned>(body: Value) -> Result<T> {
     serde_json::from_value(body).map_err(|_| Error::InvalidResponse)
 }
+
+fn decode_saved_playlists(body: &Value, uid: i64) -> Result<(Vec<Playlist>, bool)> {
+    let raw = body["playlist"].as_array().ok_or(Error::InvalidResponse)?;
+    let page_len = raw.len();
+    let collected = raw
+        .iter()
+        .filter(|playlist| {
+            // `/user/playlist` returns both the user's own playlists and subscriptions.
+            // The application library represents saved playlists, so omit the former.
+            playlist["creator"]["userId"].as_i64().is_none_or(|owner| owner != uid)
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    let playlists = decode(Value::Array(collected))?;
+    let more = body["more"].as_bool().unwrap_or(page_len >= 30);
+    Ok((playlists, more))
+}
+
 fn field<T: DeserializeOwned>(mut body: Value, name: &str) -> Result<T> {
     decode(body.get_mut(name).ok_or(Error::InvalidResponse)?.take())
 }
@@ -757,5 +782,23 @@ mod tests {
         assert_eq!(result.iter().map(|song| song.id).collect::<Vec<_>>(), [9, 4, 9]);
         assert_eq!(result[0].name, "nine");
         assert_eq!(result[2].name, "nine");
+    }
+
+    #[test]
+    fn saved_playlist_page_omits_playlists_created_by_the_account() -> Result<()> {
+        let (playlists, more) = decode_saved_playlists(
+            &json!({
+                "more": true,
+                "playlist": [
+                    {"id": 10, "name": "Created", "creator": {"userId": 55}},
+                    {"id": 11, "name": "Collected", "creator": {"userId": 77}}
+                ]
+            }),
+            55,
+        )?;
+
+        assert_eq!(playlists.iter().map(|playlist| playlist.id).collect::<Vec<_>>(), [11]);
+        assert!(more);
+        Ok(())
     }
 }

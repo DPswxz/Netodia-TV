@@ -1,10 +1,7 @@
 //! Hero stats + the banner artwork refresh.
 //!
-//! On every `library_changed` tick the Favorites view is visible for, this re-fetches
-//! `library::favorites::get_favorite_stats` and composes the top-4 most-played covers into
-//! one collage through [`crate::ui::mosaic_hero`]. Past that the banner is an ordinary
-//! single-artwork hero: `apply_detail_artwork` writes the cover slot directly and the blur
-//! through `write_crossfade_slot`, so switching collages fades rather than flashing.
+//! The Favorites view derives its count and artwork from fetched `NetEase` songs and composes their
+//! first four distinct covers into one collage through [`crate::ui::mosaic_hero`].
 
 use std::sync::Arc;
 
@@ -12,29 +9,44 @@ use slint::{ComponentHandle, Weak};
 
 use super::FavoritesUi;
 use crate::ui::detail_view::impl_curated_hero_helpers;
-use netodia_app::library;
 use netodia_app::state::AppState;
 use netodia_core::entities::track::FavoriteStats;
-use netodia_core::error::AppResult;
+use netodia_core::entities::track::TrackListRow;
 use netodia_ui::{AppWindow, Favorites};
 
 impl_curated_hero_helpers!(Favorites, FavoritesUi, crate::ui::hero_chips::publish_favorites);
 
-/// Fetch fresh stats, push the count and the band's chips with it, then kick a blocking
-/// compose whose result lands on the UI thread via `invoke_from_event_loop`. `animate`
-/// fades the cross-fade between the old banner blur and the new.
-///
-/// The running time reaches the band as a chip rather than as a property: the
-/// millisecond total is already on the stats struct, so routing a formatted
-/// string through Slint only to read it back would be a round trip for
-/// something this crate had in hand.
-pub async fn refresh_hero(
+/// Derive the banner's count, running time and artwork from the `NetEase` rows already fetched for
+/// the Songs tab. `generation` prevents a slow collage from an old account being published after
+/// an account transition.
+pub async fn refresh_from_tracks(
     state: &AppState,
     fav_ui: &Arc<FavoritesUi>,
     weak: &Weak<AppWindow>,
+    rows: &[TrackListRow],
+    generation: u64,
     animate: bool,
-) -> AppResult<()> {
-    let stats = library::favorites::get_favorite_stats(&state.db).await?;
+) {
+    let mut artwork_paths = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let mut total_duration_ms = 0_i64;
+    for row in rows {
+        total_duration_ms = total_duration_ms.saturating_add(row.duration_ms.max(0));
+        if let Some(path) = row.artwork_path.as_deref()
+            && !path.is_empty()
+            && seen.insert(path.to_owned())
+        {
+            artwork_paths.push(path.to_owned());
+            if artwork_paths.len() == 4 {
+                break;
+            }
+        }
+    }
+    let stats = FavoriteStats {
+        count: i64::try_from(rows.len()).unwrap_or(i64::MAX),
+        total_duration_ms,
+        artwork_paths,
+    };
 
     // A leave that landed while the query was in flight has already wiped `stats` and
     // forgotten the collage guard, so the store and the push below would fill both back
@@ -42,7 +54,7 @@ pub async fn refresh_hero(
     // re-fetches — the guard `refresh_grids` and `refresh_tracks` carry, in the same
     // place, after the slow part.
     if !fav_ui.section_active() {
-        return Ok(());
+        return;
     }
 
     {
@@ -60,16 +72,18 @@ pub async fn refresh_hero(
     // correct. The matching *claim* is in `publish_hero_artwork`, for `MosaicGuard`'s
     // reason.
     if !fav_ui.state().last_mosaic_paths.is_stale(&paths) {
-        return Ok(());
+        return;
     }
 
     let Some(pair) =
         crate::ui::mosaic_hero::compose_off_thread(state, paths.clone(), fav_ui.hero_blur).await
     else {
-        return Ok(());
+        return;
     };
+    if state.cloud.status().generation != generation || !fav_ui.section_active() {
+        return;
+    }
     publish_hero_artwork(fav_ui, weak, pair, animate, paths);
-    Ok(())
 }
 
 fn push_stats_to_slint(stats: &FavoriteStats, fav_ui: &Arc<FavoritesUi>, weak: &Weak<AppWindow>) {

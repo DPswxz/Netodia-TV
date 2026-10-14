@@ -24,6 +24,23 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
         .on_request_cover(|path, _generation| crate::ui::grid_prewarm::grid_cover(path.as_str()));
 
     {
+        let state = state.clone();
+        let pu = playlists_ui.clone();
+        let weak = weak.clone();
+        playlists.on_retry_cloud(move || {
+            let state = state.clone();
+            let pu = pu.clone();
+            let weak = weak.clone();
+            let runtime = state.runtime.clone();
+            runtime.spawn(async move {
+                if let Err(error) = playlists_ui_mod::fetch_grid(&state, &pu, weak).await {
+                    log::warn!("playlists::retry_cloud: {}", describe(&error));
+                }
+            });
+        });
+    }
+
+    {
         let pu = playlists_ui.clone();
         let weak = weak.clone();
         playlists.on_columns_changed(move |_cols| {

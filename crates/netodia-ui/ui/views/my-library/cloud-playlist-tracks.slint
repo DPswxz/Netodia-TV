@@ -1,0 +1,78 @@
+import { Theme } from "../../theme.slint";
+import { TrackListRow } from "../../models.slint";
+import { ListView } from "std-widgets.slint";
+import { OverlayScrollbar } from "../../components/overlay-scrollbar.slint";
+import { IconButton } from "../../components/icon-button.slint";
+
+export component CloudPlaylistTracks inherits Rectangle {
+    in property <[TrackListRow]> rows;
+    callback play-track(int);
+
+    list := ListView {
+        x: Theme.pad-md;
+        y: Theme.pad-md;
+        width: parent.width - 2 * Theme.pad-md - Theme.scrollbar-slot;
+        height: parent.height - 2 * Theme.pad-md;
+        vertical-scrollbar-policy: always-off;
+        horizontal-scrollbar-policy: always-off;
+
+        for song in root.rows: Rectangle {
+            min-height: 68px;
+            max-height: 68px;
+            border-radius: Theme.radius-sm;
+            background: row.has-hover ? Theme.surface0 : transparent;
+
+            row := TouchArea {
+                clicked => { root.play-track(song.id); }
+            }
+
+            HorizontalLayout {
+                padding-left: Theme.pad-md;
+                padding-right: Theme.pad-sm;
+                spacing: Theme.pad-md;
+
+                IconButton {
+                    icon: "play_arrow";
+                    icon-size: 22px;
+                    idle-fg: Theme.accent;
+                    tooltip-text: @tr("Play");
+                    clicked => { root.play-track(song.id); }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 3px;
+                    Text {
+                        text: song.title;
+                        color: Theme.text;
+                        font-size: Theme.font-size-md;
+                        overflow: elide;
+                    }
+                    Text {
+                        text: song.artist + (song.album != "" ? " · " + song.album : "");
+                        color: Theme.subtext0;
+                        font-size: Theme.font-size-sm;
+                        overflow: elide;
+                    }
+                }
+                Text {
+                    text: song.display_duration;
+                    color: Theme.subtext0;
+                    vertical-alignment: center;
+                    font-size: Theme.font-size-sm;
+                }
+            }
+        }
+    }
+
+    OverlayScrollbar {
+        horizontal: false;
+        x: parent.width - self.width;
+        y: Theme.pad-md;
+        width: Theme.scrollbar-slot;
+        height: parent.height - 2 * Theme.pad-md;
+        visible-size: list.visible-height;
+        content-size: list.viewport-height;
+        offset: -list.viewport-y;
+        scroll-to(o) => { list.viewport-y = -o; }
+    }
+}
