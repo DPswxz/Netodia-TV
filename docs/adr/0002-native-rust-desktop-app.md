@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-05-25
 
-The previous Melodia was Tauri and SolidJS. It shipped an embedded WebKitGTK browser engine, and the
+The previous Netodia was Tauri and SolidJS. It shipped an embedded WebKitGTK browser engine, and the
 combined real-world footprint of the two processes ran to roughly 900 MB. The number was not the
 worst of it: memory drifted upward over a session in ways that were hard to attribute from the Rust
 side, because the leak could be in the web engine, in the view layer, or in the bridge between them,

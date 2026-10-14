@@ -1,9 +1,9 @@
-# Melodia
+# Netodia
 
 **A fast, lightweight cross-platform desktop music player built with [Slint](https://slint.dev/) and pure Rust.**
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/KenanSalar/Melodia?label=version&color=blueviolet)](https://github.com/KenanSalar/Melodia/releases)
+[![Version](https://img.shields.io/github/v/release/KenanSalar/Netodia?label=version&color=blueviolet)](https://github.com/HELPMEEADICE/Netodia/releases)
 [![Platforms](https://img.shields.io/badge/platforms-Linux%20%C2%B7%20Windows-success.svg)](#installation)
 [![Built with Rust](https://img.shields.io/badge/built%20with-Rust%20%2B%20Slint-orange.svg)](https://www.rust-lang.org/)
 
@@ -47,7 +47,7 @@ Six theme families, light and dark variants, configurable accents, and Material 
 
 ### Mini-player
 
-Shrink the window past a threshold and the full UI collapses into a compact mini-player. It grows with the window rather than switching between layouts: a one-line strip, then a card with the controls sliding under the title beside larger artwork and the window buttons opening above, then a column with Up Next or lyrics below. Close Melodia from it and it opens as the mini-player next time, with its restore button still returning to the full-size window you had.
+Shrink the window past a threshold and the full UI collapses into a compact mini-player. It grows with the window rather than switching between layouts: a one-line strip, then a card with the controls sliding under the title beside larger artwork and the window buttons opening above, then a column with Up Next or lyrics below. Close Netodia from it and it opens as the mini-player next time, with its restore button still returning to the full-size window you had.
 
 <table>
   <tr>
@@ -92,14 +92,14 @@ Shrink the window past a threshold and the full UI collapses into a compact mini
 - Responsive mini-player: shrink the window and the UI collapses to a strip, a card or a column with Up Next or lyrics, one layout that rearranges as you resize instead of jumping between them
 
 ### Bit-perfect output
-- **Exclusive output** on Linux and Windows, off until you choose it under Settings ▸ Playback ▸ Output. Melodia takes the audio device for itself and hands it the decoder's samples at each file's own sample rate and bit depth, with no system mixer in between: an ALSA `hw:` device on Linux, asked of the sound server so it is handed back cleanly, and WASAPI exclusive mode on Windows
+- **Exclusive output** on Linux and Windows, off until you choose it under Settings ▸ Playback ▸ Output. Netodia takes the audio device for itself and hands it the decoder's samples at each file's own sample rate and bit depth, with no system mixer in between: an ALSA `hw:` device on Linux, asked of the sound server so it is handed back cleanly, and WASAPI exclusive mode on Windows
 - A **Signal Path** panel follows the playing track from the file to the device, grades every stage that can change it (the decoded format, EQ and ReplayGain, speed, volume, a crossfade, the sample rate, the channel layout and the output itself), and sums it up as Bit-perfect, Enhanced (only effects you chose), Converted, Lossy (a compressed file, whatever else the path does), or Fallback (a refused claim, which outranks the rest). **Make Bit-Perfect** switches off whatever you chose that changes the sound, and from shared output asks to switch to exclusive
 - A quality chip in the player bar carries that verdict and the device's rate, and opens the panel in one click. It shows only under exclusive output, and moves into the overflow menu if you'd rather
 - **Output Device** (**Exclusive Device** on Linux) picks the sound card exclusive output claims. On Windows it routes shared output too, and its System Default entry follows whichever device Windows makes the default. A chosen device you unplug hands playback to the default and is taken back as soon as it returns. On Linux the sound server routes shared output, and remembers where you moved it in its own mixer
 - A device that refuses the claim never costs you the music: playback carries on shared (on Windows, through that same device), a notification names the device, and the panel says why
 - **Unsupported Sample Rates** can keep the claim for a file at a rate the device lacks, resampling it to one the device has rather than handing it to the system mixer, and an album mixing such rates stays gapless wherever the device's own rate doesn't change
-- Dither wherever samples Melodia changed are narrowed to 16 or 24 bits, so a quiet fade ends in a soft hiss rather than distortion, while untouched samples still pass bit-exact
-- **Hardware Volume** turns the device's own volume control instead of scaling the samples, so the slider keeps the sound bit-perfect, and the system's own volume keys move Melodia's slider with it
+- Dither wherever samples Netodia changed are narrowed to 16 or 24 bits, so a quiet fade ends in a soft hiss rather than distortion, while untouched samples still pass bit-exact
+- **Hardware Volume** turns the device's own volume control instead of scaling the samples, so the slider keeps the sound bit-perfect, and the system's own volume keys move Netodia's slider with it
 - **Give the Device Back When Paused** hands the device to other apps after five minutes paused; pressing play takes it again and carries on where it stopped
 - A buffer period to choose, a short silence for the DACs that mute while they switch sample rates, and on Windows a polling mode for USB devices that stutter under exclusive output
 - In shared mode on Linux, **Match the File's Sample Rate** reopens the device at each track's own rate wherever the sound server allows it
@@ -118,7 +118,7 @@ Shrink the window past a threshold and the full UI collapses into a compact mini
 Six families, each with light and dark variants and configurable accents: **Catppuccin** (Latte, Frappé, Macchiato, Mocha), **Material 3**, **GNOME Adwaita**, **KDE Breeze**, **Windows Fluent**, and **macOS**. System dark/light is followed automatically, KDE color schemes are read from `kdeglobals`, and Material You derives a palette from the current artwork in seven color styles. Headers paint an aurora of the album's own colors by default, or a blurred cover instead. The titlebar is custom and transparent, with native decorations available, and KDE opens on its native one. A first launch picks the desktop's own theme too: Windows Fluent, KDE Breeze and GNOME Adwaita follow the system's light or dark mode, and any other desktop starts on Catppuccin Mocha.
 
 ### Formats and languages
-MP3, FLAC, M4A/M4B (AAC and ALAC), raw AAC (`.aac`), Ogg Vorbis (`.ogg`, `.oga`), Opus (`.opus`, up to 7.1), WAV (PCM and ADPCM), AIFF/AIFF-C, Matroska (`.mka`), and CAF. Matroska and CAF carry no tags Melodia can read, so those tracks list under their filename, as does anything whose tags are too damaged to parse.
+MP3, FLAC, M4A/M4B (AAC and ALAC), raw AAC (`.aac`), Ogg Vorbis (`.ogg`, `.oga`), Opus (`.opus`, up to 7.1), WAV (PCM and ADPCM), AIFF/AIFF-C, Matroska (`.mka`), and CAF. Matroska and CAF carry no tags Netodia can read, so those tracks list under their filename, as does anything whose tags are too damaged to parse.
 
 Seventeen locales (English, German, French, Spanish, Turkish, Greek, Italian, Brazilian Portuguese, European Portuguese, Dutch, Polish, Indonesian, Russian, Ukrainian, Hungarian, Vietnamese, Simplified Chinese), switchable at runtime with no restart.
 
@@ -126,14 +126,14 @@ Seventeen locales (English, German, French, Spanish, Turkish, Greek, Italian, Br
 - OS media controls (MPRIS2 on Linux, SMTC on Windows) and media keys
 - A system-tray icon with playback controls, on by default, and an optional close-to-tray; both under Settings ▸ Interface
 - A daily update check, named on first run and switchable under Settings ▸ Updates. It asks GitHub for a signed manifest and nothing else; package-managed installs skip it entirely
-- Set Melodia as your default player and double-click a track; it runs as a single instance, so files open in the window you already have
+- Set Netodia as your default player and double-click a track; it runs as a single instance, so files open in the window you already have
 - Always-on-top on Windows, on any X11 desktop, and on Wayland under KDE, or GNOME with the Window Calls extension
 - On Linux, a self-deploying desktop entry and AppStream metadata for KDE Discover and GNOME Software
 - Window, queue, and navigation state persisted across sessions
 
 ## Footprint
 
-Release builds against the same 512-track library on one dual-boot PC, a Ryzen 7 9800X3D (8 cores, 16 threads) with an RTX 3080 and the window on a 144 Hz display. On both platforms Melodia opened on the same playlist, its detail view showing the hero banner, and the visualizer ran in the Mirrored style. After 30 s to settle, each scenario is sampled every second for 60 s: memory is the median sample, CPU and GPU the total over that minute. Each platform's table uses what its own kernel accounts for, so the columns differ between the two.
+Release builds against the same 512-track library on one dual-boot PC, a Ryzen 7 9800X3D (8 cores, 16 threads) with an RTX 3080 and the window on a 144 Hz display. On both platforms Netodia opened on the same playlist, its detail view showing the hero banner, and the visualizer ran in the Mirrored style. After 30 s to settle, each scenario is sampled every second for 60 s: memory is the median sample, CPU and GPU the total over that minute. Each platform's table uses what its own kernel accounts for, so the columns differ between the two.
 
 ### Linux (Fedora)
 
@@ -155,7 +155,7 @@ Measured with [`scripts/measure-linux-footprint.sh`](scripts/measure-linux-footp
 | Playing, list view | 33 MiB | 90 MiB | 84 MiB | 156 MiB | 24 MiB | 0.57% | 0.04% | 0.00% |
 | Playing, visualizer live | 33 MiB | 91 MiB | 86 MiB | 157 MiB | 29 MiB | 3.92% | 0.24% | 0.78% |
 
-Linux keeps no commit charge per process, so **Anonymous** is the figure to compare: the memory Melodia allocated itself, in RAM or in swap, which nothing another process does can move. It is also the number that stays flat, since grids and track lists are virtualized and the cover caches are capped against the display, so a larger library barely moves it. **PSS** is KDE System Monitor's Memory column. It adds a share of the file-backed pages, mostly the binary and the shared graphics stack rather than anything Melodia allocated, and that share shrinks whenever another program maps the same libraries. **USS** is the part no other process maps, what closing Melodia gives back, and System Monitor's Private column. **RSS** counts every shared page in full. **GPU memory** is the video memory the NVIDIA driver charges to Melodia, where FemtoVG keeps its textures and framebuffers, counted apart from the rest. **CPU (1 core)** counts one full core as 100%, and **CPU (all cores)** spreads that across all 16 threads, as System Monitor's CPU column does. **GPU** is the utilization the NVIDIA driver reports for Melodia, in whole percents each second.
+Linux keeps no commit charge per process, so **Anonymous** is the figure to compare: the memory Netodia allocated itself, in RAM or in swap, which nothing another process does can move. It is also the number that stays flat, since grids and track lists are virtualized and the cover caches are capped against the display, so a larger library barely moves it. **PSS** is KDE System Monitor's Memory column. It adds a share of the file-backed pages, mostly the binary and the shared graphics stack rather than anything Netodia allocated, and that share shrinks whenever another program maps the same libraries. **USS** is the part no other process maps, what closing Netodia gives back, and System Monitor's Private column. **RSS** counts every shared page in full. **GPU memory** is the video memory the NVIDIA driver charges to Netodia, where FemtoVG keeps its textures and framebuffers, counted apart from the rest. **CPU (1 core)** counts one full core as 100%, and **CPU (all cores)** spreads that across all 16 threads, as System Monitor's CPU column does. **GPU** is the utilization the NVIDIA driver reports for Netodia, in whole percents each second.
 
 ### Windows
 
@@ -177,7 +177,7 @@ Measured with [`scripts/measure-windows-footprint.ps1`](scripts/measure-windows-
 | Playing, list view | 103 MiB | 59 MiB | 118 MiB | 24 MiB | 13 MiB | 0.89% | 0.06% | 0.10% |
 | Playing, visualizer live | 115 MiB | 67 MiB | 126 MiB | 27 MiB | 19 MiB | 9.06% | 0.57% | 2.17% |
 
-Windows keeps no PSS, so **Commit** is the figure to compare: the private memory Windows has set aside for Melodia, in RAM or paged out, which doesn't fall when Windows trims the process. **Private WS** is Task Manager's Memory column, the private memory in RAM at that moment. **Working set** adds the pages Melodia shares with other processes, mostly system DLLs. **GPU dedicated** and **GPU shared** are the video memory Task Manager lists per process, where FemtoVG keeps its textures and framebuffers, counted apart from commit. **CPU (1 core)** counts one full core as 100%, and **CPU (all cores)** spreads that across all 16 threads, as Task Manager's Details tab does. **GPU** is the busiest GPU engine, Task Manager's per-process figure.
+Windows keeps no PSS, so **Commit** is the figure to compare: the private memory Windows has set aside for Netodia, in RAM or paged out, which doesn't fall when Windows trims the process. **Private WS** is Task Manager's Memory column, the private memory in RAM at that moment. **Working set** adds the pages Netodia shares with other processes, mostly system DLLs. **GPU dedicated** and **GPU shared** are the video memory Task Manager lists per process, where FemtoVG keeps its textures and framebuffers, counted apart from commit. **CPU (1 core)** counts one full core as 100%, and **CPU (all cores)** spreads that across all 16 threads, as Task Manager's Details tab does. **GPU** is the busiest GPU engine, Task Manager's per-process figure.
 
 ## Keyboard Shortcuts
 
@@ -209,21 +209,21 @@ OS media keys (play/pause, next, previous, stop) are also handled. Stop takes th
 ## Installation
 
 Linux (X11 and Wayland) and Windows, on both `x86_64` and `aarch64`. Take the latest build from the
-[Releases page](https://github.com/KenanSalar/Melodia/releases).
+[Releases page](https://github.com/HELPMEEADICE/Netodia/releases).
 
 | Format | Install |
 |--------|---------|
-| `.rpm` (Fedora/RHEL) | `sudo dnf install ./melodia-*.rpm` |
-| `.deb` (Debian/Ubuntu) | `sudo apt install ./melodia-*.deb` |
-| AppImage | `chmod +x melodia-*.AppImage && ./melodia-*.AppImage` |
-| Tarball | Extract, then `./install-linux.sh`, which installs into `~/.local/share/Melodia` with no `sudo`, so the in-app updater needs no polkit prompt |
+| `.rpm` (Fedora/RHEL) | `sudo dnf install ./netodia-*.rpm` |
+| `.deb` (Debian/Ubuntu) | `sudo apt install ./netodia-*.deb` |
+| AppImage | `chmod +x netodia-*.AppImage && ./netodia-*.AppImage` |
+| Tarball | Extract, then `./install-linux.sh`, which installs into `~/.local/share/Netodia` with no `sudo`, so the in-app updater needs no polkit prompt |
 | Windows | Run the installer, or use the portable binary |
 
-Melodia updates itself in place, minisign-signed. Release artifacts also carry
+Netodia updates itself in place, minisign-signed. Release artifacts also carry
 build-provenance attestations, verifiable with:
 
 ```bash
-gh attestation verify <file> --repo KenanSalar/Melodia
+gh attestation verify <file> --repo KenanSalar/Netodia
 ```
 
 ## Building from Source
@@ -243,18 +243,18 @@ sudo dnf install fontconfig-devel freetype-devel alsa-lib-devel \
 ```
 
 ```bash
-git clone https://github.com/KenanSalar/Melodia.git
-cd Melodia
+git clone https://github.com/HELPMEEADICE/Netodia.git
+cd Netodia
 
-cargo run -p melodia                                     # debug build, runs the app
-cargo build --release -p melodia                         # release → target/release/Melodia
+cargo run -p netodia                                     # debug build, runs the app
+cargo build --release -p netodia                         # release → target/release/Netodia
 cargo clippy --all-targets --workspace -- -D warnings    # lint
 cargo test --workspace                                   # tests
 ```
 
-A source build keeps its own library under `Melodia-dev`, beside an installed copy's folder rather
-than inside it, so a schema migration still on a branch can't leave an installed Melodia unable to
-open its database, and the two can run at once. `MELODIA_DATA_DIR` points either build at a
+A source build keeps its own library under `Netodia-dev`, beside an installed copy's folder rather
+than inside it, so a schema migration still on a branch can't leave an installed Netodia unable to
+open its database, and the two can run at once. `NETODIA_DATA_DIR` points either build at a
 directory of your choosing.
 
 `winit/` is a checked-in copy of winit 0.30.13 plus an unmerged Wayland file drag-and-drop fix
@@ -281,33 +281,33 @@ piece was chosen over the alternatives.
 
 ## Data and Logs
 
-Everything lives under the OS application-data directory, `~/.local/share/Melodia` on Linux and
-`%APPDATA%\Melodia` on Windows:
+Everything lives under the OS application-data directory, `~/.local/share/Netodia` on Linux and
+`%APPDATA%\Netodia` on Windows:
 
 | File / folder | Purpose |
 |---------------|---------|
-| `melodia.db` | The music library (SQLite, WAL + FTS5) |
+| `netodia.db` | The music library (SQLite, WAL + FTS5) |
 | `settings.json`, `views.json`, `queue.json` | Preferences, per-view UI state, and the track queue |
 | `artwork/`, `artists/` | Cached album and artist images. A deleted cover is put back from your music files on the next scan |
 | `lyrics/` | Sheets the online lookup found, and a marker for the tracks it found none for |
 | `backups/` | Database copies taken before each schema migration |
 | `logs/` | Rolling logs and crash reports |
 
-`MELODIA_DATA_DIR` moves the whole folder somewhere else.
+`NETODIA_DATA_DIR` moves the whole folder somewhere else.
 
-Melodia writes a log on every run, with no environment variable and no terminal needed, and leaves a
-crash report beside it if it ever panics. The current log is `melodia_rCURRENT.log`; it rotates at
+Netodia writes a log on every run, with no environment variable and no terminal needed, and leaves a
+crash report beside it if it ever panics. The current log is `netodia_rCURRENT.log`; it rotates at
 2 MiB and keeps the 7 most recent, so `logs/` stays under about 16 MiB.
 
-**Settings → About → Diagnostics** opens that folder, saves a single `melodia-diagnostics-*.txt` to
+**Settings → About → Diagnostics** opens that folder, saves a single `netodia-diagnostics-*.txt` to
 attach to a bug report, and toggles verbose logging. The report carries your version, OS, desktop
 session and install method, your library's size, a short fixed list of settings, recent crash
 reports, and the tail of the logs. Home directory paths are shortened to `~`, and **no credentials,
 tokens or session keys are ever included**; those live in a separate file the report doesn't read.
 
-If Melodia won't start at all, `melodia --logs` prints the log directory and exits. That covers Linux
-and macOS: a Windows build runs with no console attached, so use `%APPDATA%\Melodia\logs\` directly.
-For finer control than the verbose switch, `RUST_LOG=debug melodia` overrides the filter for both the
+If Netodia won't start at all, `netodia --logs` prints the log directory and exits. That covers Linux
+and macOS: a Windows build runs with no console attached, so use `%APPDATA%\Netodia\logs\` directly.
+For finer control than the verbose switch, `RUST_LOG=debug netodia` overrides the filter for both the
 log file and the terminal.
 
 ## Contributing and Support
@@ -315,17 +315,17 @@ log file and the terminal.
 Contributions are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) has the setup, the checks to run
 before pushing, and how pull requests are handled.
 
-Melodia is free, open source, and built in my spare time, with nothing gated behind payment. If it's
+Netodia is free, open source, and built in my spare time, with nothing gated behind payment. If it's
 useful to you, you can support me at [ko-fi.com/kenansalar](https://ko-fi.com/kenansalar), the same
 link the app carries at **Settings → About**.
 
 ## License
 
-Copyright (C) 2026 Kenan Salar. Melodia is free software under the
+Copyright (C) 2026 Kenan Salar. Netodia is free software under the
 [GNU Affero General Public License](LICENSE), version 3 or, at your option, any later version, and is
 distributed without any warranty.
 
-The AGPL covers Melodia itself. Two fonts, a patched winit fork and several crates on copyleft terms
+The AGPL covers Netodia itself. Two fonts, a patched winit fork and several crates on copyleft terms
 (the UI toolkit, the audio decoders and the Japanese romanization engine) are compiled into the
 binary under their own terms; every one of those licenses ships in [`licenses/`](licenses/), which
 every package carries alongside this file.
@@ -342,7 +342,7 @@ listed in `Cargo.toml`. The lyrics directory is [LRCLIB](https://lrclib.net) (no
 Romanization is [uroman-rs](https://github.com/stellanomia/uroman-rs) for most scripts and
 [kakasi](https://github.com/Theta-Dev/kakasi) for Japanese.
 
-Melodia's interface is set in [Vazirmatn](https://github.com/rastikerdar/vazirmatn) (SIL Open Font
+Netodia's interface is set in [Vazirmatn](https://github.com/rastikerdar/vazirmatn) (SIL Open Font
 License 1.1), with its Greek, Russian, Ukrainian and Vietnamese letters taken from
 [Roboto](https://github.com/googlefonts/roboto-3-classic) (Apache License 2.0). Simplified Chinese
 uses [Noto Sans SC](https://github.com/notofonts/noto-cjk) (SIL Open Font License 1.1); the icons

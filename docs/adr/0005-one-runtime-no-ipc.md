@@ -11,7 +11,7 @@ Decision: exactly one multi-threaded tokio runtime, created in `main` and shared
 `Arc<Runtime>`. Slint's event loop owns the main thread and is never blocked. UI callbacks spawn
 onto the runtime; results come back over `tokio::sync::watch` and `mpsc` and are written to Slint
 properties by UI-thread tasks. Calls between layers are ordinary function calls. The only IPC in the
-process is between two Melodias, over the single-instance socket.
+process is between two Netodias, over the single-instance socket.
 
 Alternatives: a second runtime for audio or for the network, an actor or message-bus layer inside
 the process, and keeping a request/response protocol as a discipline even with nothing forcing it.

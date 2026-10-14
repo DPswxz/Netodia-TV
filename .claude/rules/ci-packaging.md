@@ -3,14 +3,14 @@ paths:
   - .github/**
   - packaging/**
   - licenses/**
-  - crates/melodia/wix/main.wxs
+  - crates/netodia/wix/main.wxs
   - scripts/build-rpm.sh
   - scripts/build-appimage.sh
   - scripts/build-tarball.sh
   - scripts/install-linux.sh
   - scripts/build-latest-json.py
   - Cargo.toml
-  - crates/melodia/Cargo.toml
+  - crates/netodia/Cargo.toml
   - rust-toolchain.toml
   - clippy.toml
   - .cargo/audit.toml
@@ -43,7 +43,7 @@ coverage on this path.
   two, a `results=( … )` bash array restating `needs:`, and a job in only the first was silently
   unenforced. What `toJSON` cannot see is a job that never reached `needs:` at all — the aggregate
   then doesn't wait on it and reports green while it is still running — so
-  `crates/melodia/tests/packaging.rs`'s `the_aggregate_waits_on_every_job_in_the_gate_workflow` walks the file for that.
+  `crates/netodia/tests/packaging.rs`'s `the_aggregate_waits_on_every_job_in_the_gate_workflow` walks the file for that.
 
 - **The advisory scan is one policy with two callers.** `.github/actions/cargo-audit` (composite)
   holds the `taiki-e/install-action` pin and `cargo audit --deny unsound --deny unmaintained`;
@@ -76,7 +76,7 @@ coverage on this path.
   a change to the clippy invocation or the job list merge without the jobs it governs ever running.
   Anything new under `.github/` runs everything by default — an exclusion is earned.
 
-- **Headless audio** — `test` runs `crates/melodia/tests/headless.rs` and `AppState::init` opens cpal's default
+- **Headless audio** — `test` runs `crates/netodia/tests/headless.rs` and `AppState::init` opens cpal's default
   device, which no runner has. `.github/actions/headless-audio` is the whole shim and argues
   itself. It works because the shim is an *ALSA* one and `output::device` opens whatever
   `pcm.!default` names, then walks every config the device reports rather than giving up on the
@@ -129,7 +129,7 @@ coverage on this path.
 
 - **`CARGO_BUILD_JOBS: 4` on `test` and `test-windows` is a memory cap, not a CPU match — don't
   raise it to `.cargo/config.toml`'s dev-machine jobs=8.** The peak is a single `rustc` on
-  **`melodia-ui`**, and the count scales *one* process's peak because its LLVM codegen threads draw
+  **`netodia-ui`**, and the count scales *one* process's peak because its LLVM codegen threads draw
   jobserver tokens: 13.30 / 10.71 / 8.83 GiB at jobs=8/4/2 against a 16 GB runner. Over the ceiling
   nothing fails — it **swaps**, and a 14-minute job runs for most of an hour looking like a hang.
   jobs=4 leaves ~4 GB headroom; jobs=2 buys 1.9 GB more for +300 s. The Windows runner is the same
@@ -138,7 +138,7 @@ coverage on this path.
   job and sets nothing: it never codegens, so it doesn't reach that peak. **`RUST_TEST_THREADS` is
   deliberately not capped alongside it** — `.cargo/config.toml`'s 8 stands, oversubscribing a
   4-core runner 2:1, because the cap answers a memory ceiling and most harness threads are waiting
-  rather than running. `crates/melodia/tests/crossfade.rs` is the exception, its thirteen tests each turning the
+  rather than running. `crates/netodia/tests/crossfade.rs` is the exception, its thirteen tests each turning the
   mixer from a spin loop, and what that reached was a wait budgeted in frames rather than in wall
   clock: the budget then measures the puller's throughput, not the thing it waits for.
   `CONTROL_OP_BUDGET` is what replaced it, and `taskset -c 0` against a couple of dozen spinners
@@ -168,21 +168,21 @@ coverage on this path.
   `--lib`-then-everything split; 10.71 GiB now fits in one command with margin. Cheap levers were
   measured **for memory** and none move it: `split-debuginfo=unpacked`, `debug=0` and dropping
   coverage instrumentation are ~0.5 GiB each, `codegen-units` does nothing across 16..4096 (worse
-  at 1), cutting test binaries does nothing. The floor is `melodia-ui` itself (7.59 of the 10.71)
+  at 1), cutting test binaries does nothing. The floor is `netodia-ui` itself (7.59 of the 10.71)
   — the next lever is a smaller generated unit, not another scheduling trick.
 
 - **Coverage → Pages** — **off the PR path**: the instrumented build is the most expensive thing in
   this repo's CI and has OOM-killed the runner (143). `deploy-coverage.yml` runs `cargo llvm-cov`
   on **`workflow_dispatch` only**, then deploys the HTML to **GitHub Pages**
-  (`https://kenansalar.github.io/Melodia/`) from a second job in the *same* run — no cross-workflow
+  (`https://kenansalar.github.io/Netodia/`) from a second job in the *same* run — no cross-workflow
   artifact fetch. **`CARGO_PROFILE_{DEV,TEST}_DEBUG: "0"`** there, not `line-tables-only`: LLVM
   source-based coverage carries its own file/region table in `__llvm_covmap` and reads nothing from
   DWARF, and nothing reads a backtrace out of that job (the gate's two `test` jobs keep
   `line-tables-only` for the opposite reason, and
-  `crates/melodia/tests/packaging.rs`'s `the_two_workflows_disagree_about_debug_info_on_purpose` holds the pair apart,
+  `crates/netodia/tests/packaging.rs`'s `the_two_workflows_disagree_about_debug_info_on_purpose` holds the pair apart,
   tidying them into agreement reddening nothing and silently costing the gate its `file:line`).
   Both `report` calls pass **`--ignore-filename-regex`** scoped to
-  `melodia-ui`'s `OUT_DIR` — cargo-llvm-cov's built-in excludes reach the sysroot and registry but
+  `netodia-ui`'s `OUT_DIR` — cargo-llvm-cov's built-in excludes reach the sysroot and registry but
   not a workspace member's generated code, and `app-window.rs` would swamp the denominator. **The
   dispatch takes a ref**, so the dropdown picks what gets measured and runs that branch's copy; the
   button exists only because the workflow sits on `main`. Two one-time settings: **Pages enabled**
@@ -199,11 +199,11 @@ coverage on this path.
 
 ## File associations — five Linux spellings and one Windows one, all pinned
 
-The `MimeType=` list makes Melodia *offerable*; the `Exec=` field code is what makes the handoff
+The `MimeType=` list makes Netodia *offerable*; the `Exec=` field code is what makes the handoff
 work, and the two shipped apart for a whole release.
 
-- **All four `.desktop` sources end `Exec=` with ` %F`** (`scripts/Melodia.desktop`, the two build
-  heredocs, `assets/desktop/Melodia.desktop.tmpl`). Not `%U`, a list of *URLs* the spec lets arrive
+- **All four `.desktop` sources end `Exec=` with ` %F`** (`scripts/Netodia.desktop`, the two build
+  heredocs, `assets/desktop/Netodia.desktop.tmpl`). Not `%U`, a list of *URLs* the spec lets arrive
   as `file://` and so obliges percent-decoding; not `%f`, one process per selected file.
   `all_desktop_sources_agree_on_mime_and_wmclass` matches **extracted lines**, every one of them —
   two sources are whole shell scripts, where a comment about the line reads exactly like the line,
@@ -219,7 +219,7 @@ work, and the two shipped apart for a whole release.
   unescaping layers. Deliberate; a `$` or a backtick in `$HOME` doesn't earn shell-quoting
   gymnastics in an installer.
 
-- **Windows is `crates/melodia/wix/main.wxs`'s `FileAssociations` component, plain `RegistryValue` rows.** WiX's
+- **Windows is `crates/netodia/wix/main.wxs`'s `FileAssociations` component, plain `RegistryValue` rows.** WiX's
   `ProgId`/`Extension`/`Verb` predate Vista: no `Capabilities` + `RegisteredApplications` (what
   Win10/11 reads for Default apps), and `Extension` claims `HKCR\.mp3`'s default outright.
   **`ApplicationDescription` is required** — without it the app is absent from that list and every
@@ -232,7 +232,7 @@ work, and the two shipped apart for a whole release.
 Why every artifact owes the text, and why five formats exist to owe it, are both in
 `docs/adr/`. What lives here is the consequence: a format that quietly stops shipping it fails nowhere until a
 packager files it, so the pins are named rather than reviewed.
-**`crates/melodia/tests/packaging.rs`'s `every_package_format_ships_the_licenses_dir` holds a named list**
+**`crates/netodia/tests/packaging.rs`'s `every_package_format_ships_the_licenses_dir` holds a named list**
 (`build-rpm.sh`'s `%license`, the binary manifest's asset glob, `build-tarball.sh`'s `cp`,
 `build-appimage.sh`'s `cp`, `main.wxs`'s `File` set), each needle the *mechanism* rather than
 the word. Named because the set of formats is closed; the *font* set is open, so its sibling pin
@@ -271,7 +271,7 @@ walks the directory instead.
   so the only way to silence the tag is a `Files:` stanza pointing at source that does not exist,
   which is a lie in the one file whose whole job is not telling them. Nothing in this repo runs
   lintian, so the tag is a downstream packager's view rather than a gate; if it ever becomes one,
-  the answer is a `usr/share/lintian/overrides/melodia` asset, never deleting the paragraphs. The
+  the answer is a `usr/share/lintian/overrides/netodia` asset, never deleting the paragraphs. The
   half a deletion *would* break silently is the reference, so both are pinned.
 
 - **`licenses/` may not fall through to `Files: *`.** Those texts are the FSF's, the ASF's,
@@ -286,28 +286,28 @@ walks the directory instead.
 
 - **`LICENSE` is an input to those tests** — hence its absence from the skip denylist above:
   compiling nothing is not the same as being unexercised. The other four needles live in
-  `scripts/`, `crates/melodia/Cargo.toml` and `crates/melodia/wix/`, which the denylist never
+  `scripts/`, `crates/netodia/Cargo.toml` and `crates/netodia/wix/`, which the denylist never
   reaches.
 
-- **A face added under `crates/melodia-ui/ui/assets/fonts/` owes an entry in
+- **A face added under `crates/netodia-ui/ui/assets/fonts/` owes an entry in
   `licenses/ATTRIBUTION.txt`** — `every_bundled_font_is_named_in_the_attribution` walks the
   directory rather than listing the faces, keying on each face's repo-relative path, the family
   name not being derivable from the file.
 
 ## The workspace split, as the release workflow sees it
 
-**Before adding a member, grep the `release*.yml` and the packaging scripts for `melodia`.**
-The split to `melodia` + `melodia-ui` broke that workflow twice, both times on something
+**Before adding a member, grep the `release*.yml` and the packaging scripts for `netodia`.**
+The split to `netodia` + `netodia-ui` broke that workflow twice, both times on something
 identifying a thing by *name* that was unambiguous with one member, and both deep in a matrix slot:
 
 - `cargo wix` picks a package for you only when the workspace has exactly *one*, so the MSI step
-  names `--package melodia`. It selects the *manifest*, and cargo-wix then reads `wix/main.wxs`
-  relative to that, which is why the wxs sits under `crates/melodia/` rather than at the repo root
+  names `--package netodia`. It selects the *manifest*, and cargo-wix then reads `wix/main.wxs`
+  relative to that, which is why the wxs sits under `crates/netodia/` rather than at the repo root
   behind an `-I`: that flag's resolution base is undocumented and nothing short of a tagged Windows
   release would exercise it.
 
-- The artifact upload's `path:` was a bare **`melodia-*`**, a prefix glob matching what was then a
-  `melodia-ui/` **directory** at the repo root — all ten slots uploaded the Slint source tree and
+- The artifact upload's `path:` was a bare **`netodia-*`**, a prefix glob matching what was then a
+  `netodia-ui/` **directory** at the repo root — all ten slots uploaded the Slint source tree and
   `gh release upload artifacts/*` died on "is a directory". Now extension-qualified like the attest
   and sign steps, **the third spelling of one list**. C13 moved that directory under `crates/`, so
   the collision is gone and the qualifier is what keeps the next one from landing.

@@ -1,4 +1,4 @@
--- Melodia database schema — squashed pre-release baseline.
+-- Netodia database schema — squashed pre-release baseline.
 -- Audio-only music player, INTEGER primary keys, no video support.
 -- PRAGMAs are configured via SqliteConnectOptions, not here.
 --

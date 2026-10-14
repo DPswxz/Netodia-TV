@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-08-15
 
-Two copies of Melodia running against one data directory is two writers on one database and one set
+Two copies of Netodia running against one data directory is two writers on one database and one set
 of JSON state files. It is also the ordinary result of double-clicking an audio file while the app
 is already open, which is a thing people do without thinking about it.
 

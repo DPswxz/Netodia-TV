@@ -83,7 +83,7 @@ self-update = ["dep:minisign-verify"]
 ## Dependency change
 
 `minisign-verify` is used **only** by the `minisign` submodule of the updater
-(confirmed: every referencing file is under `crates/melodia-app/src/services/updater/`). Make it
+(confirmed: every referencing file is under `crates/netodia-app/src/services/updater/`). Make it
 optional so it disappears from feature-off builds — fewer crates for distro
 auditors:
 
@@ -93,19 +93,19 @@ minisign-verify = { version = "0.2.5", optional = true }
 ```
 
 `reqwest` stays unconditional — it is **shared** with
-`crates/melodia-net/src/media/fetch/deezer.rs` and
-`crates/melodia-app/src/services/artist_images.rs`, so it can't be made update-only. (All the
+`crates/netodia-net/src/media/fetch/deezer.rs` and
+`crates/netodia-app/src/services/artist_images.rs`, so it can't be made update-only. (All the
 *update-side* reqwest usage lives in the gated submodules, so the feature-off
 build still won't perform any update network I/O.)
 
 ## Module split — the crux
 
-Split `crates/melodia-app/src/services/updater/` into "detection/metadata" (always compiled, cheap,
+Split `crates/netodia-app/src/services/updater/` into "detection/metadata" (always compiled, cheap,
 no heavy deps, referenced by non-updater code) vs "active behavior" (network +
 crypto + binary swap, gated). This is what lets `minisign-verify` become
 optional.
 
-**Verified dependency boundary** (`crates/melodia-app/src/services/updater/`):
+**Verified dependency boundary** (`crates/netodia-app/src/services/updater/`):
 - `system_install.rs` imports `super::install_target`, `super::linux_pkg`,
   `super::probe::dir_is_writable`, `super::target::current_target_key` — all
   ungated. It references `super::install::download_and_install` **only in a doc
@@ -116,7 +116,7 @@ optional.
   siblings.
 - `event.rs` / `state.rs` import **nothing** — pure data enums.
 
-`crates/melodia-app/src/services/updater/mod.rs` submodule decls:
+`crates/netodia-app/src/services/updater/mod.rs` submodule decls:
 
 | Submodule | Gate | Why |
 |---|---|---|
@@ -126,7 +126,7 @@ optional.
 
 *(A `test_support` submodule used to sit in this table. It held the env-var mutex the
 ungated detection tests take, and the row said to keep it `#[cfg(test)]`-only rather than
-feature-gate it. It has since moved to the `melodia-testkit` crate — the lock had to cover
+feature-gate it. It has since moved to the `netodia-testkit` crate — the lock had to cover
 `settings_tests` too, and then every member's suite — so the question no longer arises here: a
 dev-dependency is outside the `self-update` gate by construction. Nothing to do,
 but don't re-add the submodule when working through this plan.)*
@@ -144,12 +144,12 @@ but don't re-add the submodule when working through this plan.)*
   `run::{Finding, PanelPaint, run_check}`, `event::{FailureKind, UpdaterEvent}`,
   `install::{download_and_install, prune_stale_staging}`.
 
-`pub mod updater;` in `crates/melodia-app/src/services/mod.rs` stays — only its active submodules
+`pub mod updater;` in `crates/netodia-app/src/services/mod.rs` stays — only its active submodules
 are gated internally.
 
 ## Rust touch points
 
-`crates/melodia/src/main.rs`
+`crates/netodia/src/main.rs`
 - **Keep ungated:** the `--version` literal-first branch (forward-compat
   contract; it only prints, never calls into the gated install path).
 - **[fix] Gate the `.old` reaper** in `prepare_process()` — it calls
@@ -157,7 +157,7 @@ are gated internally.
   `#[cfg(all(target_os = "linux", feature = "self-update"))]`. (A feature-off
   build never produces a `.old`, so reaping it is moot anyway.)
 
-`crates/melodia/src/boot/ui_setup/install.rs`
+`crates/netodia/src/boot/ui_setup/install.rs`
 - **Gate** (`#[cfg(feature = "self-update")]`) the updater sites, which are not one block:
   - in `install_updater_and_onboarding`, the `updater_event_tx/rx` channel,
     `ui::settings::updater_settings::install_event_subscriber(...)` and
@@ -167,18 +167,18 @@ are gated internally.
     `if`/`else` alone, plus the `deferred_spawner` and `updater_event_tx` captures only it uses.
   - the `prune_stale_staging()` boot task in `install_platform_hooks`
 
-`crates/melodia-app/src/tasks/mod.rs`
+`crates/netodia-app/src/tasks/mod.rs`
 - Gate `pub mod updater_daily;`.
 
-`crates/melodia-views/src/ui/callbacks/mod.rs`
+`crates/netodia-views/src/ui/callbacks/mod.rs`
 - Gate `mod updater;` and `pub use updater::{check_painter, wire as wire_updater};`. The
-  `crates/melodia-views/src/ui/callbacks/updater/` dir (`check.rs`, `install.rs`, `paint.rs`,
+  `crates/netodia-views/src/ui/callbacks/updater/` dir (`check.rs`, `install.rs`, `paint.rs`,
   `mod.rs`) is reached only through those two names: `wire_updater` and the `check_painter`
   handed to `updater_daily::spawn`, both among the `install.rs` sites gated above, so gating the
   whole dir is clean.
 
-`crates/melodia-views/src/ui/settings/updater_settings.rs`
-- **`install()` stays ungated** — it seeds `MelodiaUpdater.current-version`
+`crates/netodia-views/src/ui/settings/updater_settings.rs`
+- **`install()` stays ungated** — it seeds `NetodiaUpdater.current-version`
   (also read by `about-section.slint` for the About version row),
   `system-managed` (via the ungated `is_system_install`), and `platform-kind`.
   Gating it would blank the About version. **[fix]** It also already seeds
@@ -197,9 +197,9 @@ are gated internally.
 ## Slint touch points
 
 **[fix] Nothing to add — the property already exists.**
-`crates/melodia-ui/ui/globals/updater.slint` carries
+`crates/netodia-ui/ui/globals/updater.slint` carries
 `in property <bool> updates-supported: true;`, and
-`crates/melodia-ui/ui/views/settings/update-section.slint` already ANDs it into
+`crates/netodia-ui/ui/views/settings/update-section.slint` already ANDs it into
 `has-matches`, which takes the card and its settings-search hits together (every
 row lives inside `if has-matches: SectionCard`, so no per-row AND is needed).
 Seed it as above and the feature-off build gets the same collapse the source-build
@@ -208,7 +208,7 @@ the feature off the Rust side simply never wires or invokes them (unwired Slint
 callbacks are no-ops).
 
 > **Slint pitfall — do NOT wrap the mount in `if`.** In
-> `crates/melodia-ui/ui/views/settings/pages/about-page.slint:27` the section is
+> `crates/netodia-ui/ui/views/settings/pages/about-page.slint:27` the section is
 > `updates := UpdateSection { … }`, and the page's `has-matches` references it by
 > id (`updates.has-matches`, line 14), which the tab-level no-results predicate in
 > `settings-tabs.slint` then reads. Wrapping `updates` in an `if` would put the id
@@ -216,7 +216,7 @@ callbacks are no-ops).
 > `vertical-stretch` collapse math). Keep the component mounted; gate its content
 > + `has-matches` internally instead.
 
-`crates/melodia-ui/ui/views/settings/about-section.slint` — unchanged (reads `current-version`,
+`crates/netodia-ui/ui/views/settings/about-section.slint` — unchanged (reads `current-version`,
 still seeded by the ungated `install()`).
 
 ## Doc-comment cleanup (avoids `cargo doc --no-default-features` warnings)
@@ -226,12 +226,12 @@ still seeded by the ungated `install()`).
 intra-doc-link warnings. These do **not** fail the clippy/build gate below
 (rustdoc lints fire only under `cargo doc`), but per house style fix them by
 converting the `[path]` links to plain backticked text:
-- `crates/melodia-platform/src/services/platform/install_kind/system_install.rs:~13` and
+- `crates/netodia-platform/src/services/platform/install_kind/system_install.rs:~13` and
   `.../linux_pkg.rs:~14` → `super::install::download_and_install`. **Both moved out of the
-  updater and into `melodia-platform`**, which is a different question from a longer path: the
+  updater and into `netodia-platform`**, which is a different question from a longer path: the
   link's target is in another crate now, so `super::` no longer names it and the gate that would
   hide it is not this crate's.
-- `crates/melodia-views/src/ui/settings/updater_settings.rs:~3, ~12` → `UpdaterEvent`
+- `crates/netodia-views/src/ui/settings/updater_settings.rs:~3, ~12` → `UpdaterEvent`
 
 (`event.rs:75`'s link to `install` is fine — `event` is gated, so it only
 compiles when `install` also exists.)
@@ -263,7 +263,7 @@ its parent module automatically — no separate gating step:
 - Ungated detection tests stay compiled: `version_tests`, `linux_pkg_tests`,
   `probe_tests`, `target_tests`, `system_install_tests` (declared from their
   ungated source files). Three of them take the shared env helpers, which now
-  live in the `melodia-testkit` crate — outside the `self-update` gate by
+  live in the `netodia-testkit` crate — outside the `self-update` gate by
   construction, so nothing here has to keep them out of it (see the note where
   the split table's `test_support` row used to be).
 - `check`/`github`/`event`/`state`/`asset_cache` declare no test module today.

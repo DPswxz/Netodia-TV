@@ -1,13 +1,13 @@
 ---
 paths:
-  - crates/melodia-audio/src/player/source/**/*.rs
-  - crates/melodia/tests/**/*.rs
+  - crates/netodia-audio/src/player/source/**/*.rs
+  - crates/netodia/tests/**/*.rs
 ---
 
 # Symphonia Best Practices
 
 Decoding only. The layer under it — the device stream, the two decks, the rate conversion and the
-clock — is `crates/melodia-playback/src/player/playback/output/`, which is a directory with its
+clock — is `crates/netodia-playback/src/player/playback/output/`, which is a directory with its
 own anchor files and argues itself
 there; `.claude/rules/audio-stack.md` holds what spans it and the DSP chain above it.
 

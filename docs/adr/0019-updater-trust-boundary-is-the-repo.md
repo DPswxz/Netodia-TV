@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-05-25
 
-Melodia replaces its own binary on machines it has no other relationship with. That makes the
+Netodia replaces its own binary on machines it has no other relationship with. That makes the
 updater the most dangerous code in the tree by a wide margin: everything else can corrupt a library,
 and this can install anything, anywhere, on every install at once. So the question that has to be
 answered first is not how to make it safe but what exactly is being trusted, because a threat model
@@ -28,7 +28,7 @@ compromised the attacker signs whatever those checks demand. So they buy nothing
 complexity in the one code path that has to stay readable enough to audit. The line is drawn where
 it actually holds.
 
-What this costs, and it is not small: everyone who installs Melodia is trusting one key and the
+What this costs, and it is not small: everyone who installs Netodia is trusting one key and the
 account security behind it. There is no second signer, no threshold, no transparency log the client
 consults, and no way for a user to notice a manifest served only to them. Build provenance is
 attested through Sigstore and can be verified out of band, which is the closest thing to an

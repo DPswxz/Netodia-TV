@@ -1,18 +1,18 @@
 ---
 paths:
-  - crates/melodia-app/src/library/**/*.rs
-  - crates/melodia-store/src/database/**/*.rs
-  - crates/melodia-core/src/entities/**/*.rs
-  - crates/melodia-store/src/media/ingest/**/*.rs
-  - crates/melodia-artwork/src/media/image/**/*.rs
-  - crates/melodia-app/src/tasks/**/*.rs
-  - crates/melodia-core/src/utils/audio_ext.rs
-  - crates/melodia-core/src/utils/self_writes.rs
-  - crates/melodia-views/src/ui/playlists/callbacks/**/*.rs
+  - crates/netodia-app/src/library/**/*.rs
+  - crates/netodia-store/src/database/**/*.rs
+  - crates/netodia-core/src/entities/**/*.rs
+  - crates/netodia-store/src/media/ingest/**/*.rs
+  - crates/netodia-artwork/src/media/image/**/*.rs
+  - crates/netodia-app/src/tasks/**/*.rs
+  - crates/netodia-core/src/utils/audio_ext.rs
+  - crates/netodia-core/src/utils/self_writes.rs
+  - crates/netodia-views/src/ui/playlists/callbacks/**/*.rs
   - migrations/**/*.sql
-  - crates/melodia-ui/ui/components/dialog/smart-playlist-editor-body.slint
-  - crates/melodia-ui/ui/components/dialog/tag-editor-body.slint
-  - crates/melodia-ui/ui/components/star-rating.slint
+  - crates/netodia-ui/ui/components/dialog/smart-playlist-editor-body.slint
+  - crates/netodia-ui/ui/components/dialog/tag-editor-body.slint
+  - crates/netodia-ui/ui/components/star-rating.slint
 ---
 
 # The library — scan, projections, and the write-through paths
@@ -123,7 +123,7 @@ shape, `lofty.md` for tag access, `blake3.md` for hashing, `rayon.md` for the pa
 
 ## Query shape
 
-- **`melodia_store::database::placeholders(n)` for IN-clause lists.** Single-pass,
+- **`netodia_store::database::placeholders(n)` for IN-clause lists.** Single-pass,
   capacity-preallocated; don't re-roll `repeat_n("?", n)…join`. Pair with `chunked_in_query`.
   Tuple-row CTE UPDATEs follow the `batch_update_hashes` / `flush_artwork_backfill` shape — one
   chunked UPDATE per N rows, not N UPDATEs. Runtime-built SQL `String`s (placeholder lists, column
@@ -173,8 +173,8 @@ shape, `lofty.md` for tag access, `blake3.md` for hashing, `rayon.md` for the pa
     plays in one order from the page and another from the card beside it, which is what shipped:
     `sort_key` where Artist and Genre Detail default to `"album"`, and bare nullable columns where
     `ui::track_sort` maps an untagged track to `i32::MAX` and SQLite sorts NULL first. **Neither
-    crate can check it**, `melodia-store` being unable to name `melodia-views` and the comparator
-    being Rust against SQL, so the pin is `crates/melodia/tests/cross_tier.rs`'s
+    crate can check it**, `netodia-store` being unable to name `netodia-views` and the comparator
+    being Rust against SQL, so the pin is `crates/netodia/tests/cross_tier.rs`'s
     `a_card_queues_its_{artist,genre,album}_in_the_order_the_page_shows_it`: it asks both sides over
     a library built out of the partitions they answer differently, a tidy fixture agreeing by
     accident. A new batch-action query states which arm it reproduces and joins that walk. **The
@@ -186,7 +186,7 @@ shape, `lofty.md` for tag access, `blake3.md` for hashing, `rayon.md` for the pa
   The **newest** migration to have rebuilt it carries the column list, the tokenizer and the bm25
   weights with the argument for each, which is `20260910000000` and was `20260802000001` before it
   — a rebuild moves that text rather than amending it, so read the latest one;
-  `crates/melodia-store/src/database/queries/search.rs` carries the query shape and the folding
+  `crates/netodia-store/src/database/queries/search.rs` carries the query shape and the folding
   asymmetry. Two things neither of them can tell you: **a ninth column is two edits**, since the
   per-view filter boxes never touch this index and walk in-memory caches through
   `ui::row_match::search_fields`, which mirrors the column list by hand
@@ -198,7 +198,7 @@ shape, `lofty.md` for tag access, `blake3.md` for hashing, `rayon.md` for the pa
 ## Ratings
 
 - **Star ratings mirror the favorite path.** Inert `tracks.rating` (0–5) surfaced via a
-  **hover-revealed** `StarRating` (`crates/melodia-ui/ui/components/star-rating.slint`) inside the
+  **hover-revealed** `StarRating` (`crates/netodia-ui/ui/components/star-rating.slint`) inside the
   track-row Title cell — no rating column, no in-table sort. Rides on `TrackListRow` +
   `TrackSummary`. Writes via `library::ratings::{set_rating, set_current_rating}` (clamped 0–5),
   mirroring `favorites::{set_favorite, toggle_current_favorite}` down to the `sync_current_track_*`
@@ -212,7 +212,7 @@ shape, `lofty.md` for tag access, `blake3.md` for hashing, `rayon.md` for the pa
 ## Write-through to files
 
 - **Tag editing = "Edit Track Information", write-through the scan pipeline**
-  (`crates/melodia-app/src/library/tags.rs::apply_tag_edit`, `crates/melodia-store/src/media/ingest/tag_writer.rs`). Right-click rows → **Edit
+  (`crates/netodia-app/src/library/tags.rs::apply_tag_edit`, `crates/netodia-store/src/media/ingest/tag_writer.rs`). Right-click rows → **Edit
   Tags…** (`DialogKind.edit-tags`); **batch is the point** — **touched-tracking is a
   Rust-side diff against a populate-time snapshot** (Keep/Clear/Set), so only changed fields write.
   **Lyrics live in the file, not the DB** (single-track tab only), though the tab is no longer their
@@ -240,24 +240,24 @@ shape, `lofty.md` for tag access, `blake3.md` for hashing, `rayon.md` for the pa
   subset of a release is not durable**: the untouched files still carry the old value, and the next
   re-ingest of any of them puts it back. Select the whole release, or expect it back.
 
-- **Playlist import/export = Extended M3U8** (`crates/melodia-app/src/library/playlist_files.rs` + the pure `m3u`
+- **Playlist import/export = Extended M3U8** (`crates/netodia-app/src/library/playlist_files.rs` + the pure `m3u`
   submodule, hand-rolled writer/parser, and the `archive` submodule, the one place the `zip` crate
   is named; the module doc argues the one-file-per-playlist shape). Writer emits
-  `#EXTM3U`/`#PLAYLIST:`/`#EXTINF:` + a custom `#MELODIA-HASH:<blake3>` line + an absolute native
+  `#EXTM3U`/`#PLAYLIST:`/`#EXTINF:` + a custom `#NETODIA-HASH:<blake3>` line + an absolute native
   path, parser tolerantly ignores unknown `#` comments and a leading BOM. Import is
   **skip-and-report**: re-match each entry by `file_path` then BLAKE3 `file_hash`, always **create
   a new playlist** (the name isn't unique), count misses; never auto-imports on-disk files. UI is
   the Import / Export pills in the My Library band's Playlists-tab row
-  (`crates/melodia-ui/ui/views/my-library/tab-pills.slint`), callbacks in
-  `crates/melodia-views/src/ui/playlists/callbacks/files/`. A **tag edit rewrites the file and changes its
-  `file_hash`**, so a previously exported `#MELODIA-HASH` line goes stale — the `file_path`-first
+  (`crates/netodia-ui/ui/views/my-library/tab-pills.slint`), callbacks in
+  `crates/netodia-views/src/ui/playlists/callbacks/files/`. A **tag edit rewrites the file and changes its
+  `file_hash`**, so a previously exported `#NETODIA-HASH` line goes stale — the `file_path`-first
   re-match degrades gracefully, but re-export after retagging if hash portability matters.
 
 ## Smart playlists
 
 - **Smart / dynamic playlists = virtual, criteria-derived membership**
-  (`crates/melodia-core/src/entities/smart_criteria.rs`, `crates/melodia-store/src/database/queries/smart_playlist.rs`,
-  `crates/melodia-app/src/library/smart_playlists.rs`). `playlists.is_smart` + `smart_criteria TEXT` store a JSON
+  (`crates/netodia-core/src/entities/smart_criteria.rs`, `crates/netodia-store/src/database/queries/smart_playlist.rs`,
+  `crates/netodia-app/src/library/smart_playlists.rs`). `playlists.is_smart` + `smart_criteria TEXT` store a JSON
   `SmartCriteria` rule set instead of `playlist_items` — **resolved at read time**, never
   materialized (updates live). `#[serde(default)]` + a `version` field keep it forward-compatible.
   The evaluator builds WHERE via `sqlx::QueryBuilder` — **only** enum-derived

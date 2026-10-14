@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-r"""Builds a synthetic music library for Melodia's scan and footprint tests.
+r"""Builds a synthetic music library for Netodia's scan and footprint tests.
 
 Every track is a short tune composed from its own seed, tagged with colour and material
 names and a real genre. An album's tracks share one flat cover, in a colour no other
@@ -11,7 +11,7 @@ Needs ffmpeg on PATH and three Python packages:
     pip install numpy Pillow mutagen
 
 It asks for a folder and builds the library in a folder of its own inside it, named after
-the catalogue: melodia-test-library-50500 by default. --out answers that up front, and
+the catalogue: netodia-test-library-50500 by default. --out answers that up front, and
 pointing it at the library's own folder resumes a run there:
 
     python3 scripts/generate-test-library.py
@@ -1159,7 +1159,7 @@ def ask_for_folder(library_name: str) -> Path:
 
 def library_folder_name(total: int, seed: int) -> str:
     """Names the folder after what builds the catalogue, so two catalogues never share one."""
-    name = f"melodia-test-library-{total}"
+    name = f"netodia-test-library-{total}"
     return name if seed == DEFAULT_SEED else f"{name}-seed-{seed}"
 
 

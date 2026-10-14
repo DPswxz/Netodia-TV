@@ -1,12 +1,12 @@
 ---
 paths:
-  - crates/melodia-store/src/media/ingest/**/*.rs
-  - crates/melodia-artwork/src/media/image/**/*.rs
-  - crates/melodia-app/src/tasks/**/*.rs
-  - crates/melodia-app/src/library/playlist_files.rs
-  - crates/melodia-app/src/library/playlist_files/**/*.rs
-  - crates/melodia-store/src/database/queries/**/*.rs
-  - crates/melodia-platform/src/services/platform/desktop_integration.rs
+  - crates/netodia-store/src/media/ingest/**/*.rs
+  - crates/netodia-artwork/src/media/image/**/*.rs
+  - crates/netodia-app/src/tasks/**/*.rs
+  - crates/netodia-app/src/library/playlist_files.rs
+  - crates/netodia-app/src/library/playlist_files/**/*.rs
+  - crates/netodia-store/src/database/queries/**/*.rs
+  - crates/netodia-platform/src/services/platform/desktop_integration.rs
 ---
 
 # BLAKE3 Best Practices

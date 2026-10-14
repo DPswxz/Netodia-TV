@@ -1,15 +1,15 @@
 ---
 paths:
-  - crates/melodia-ui/ui/**/*.slint
-  - crates/melodia-views/src/ui/**/*.rs
-  - crates/melodia/src/boot/**/*.rs
-  - crates/melodia-core/src/themes/**/*.rs
-  - crates/melodia-ui/build.rs
+  - crates/netodia-ui/ui/**/*.slint
+  - crates/netodia-views/src/ui/**/*.rs
+  - crates/netodia/src/boot/**/*.rs
+  - crates/netodia-core/src/themes/**/*.rs
+  - crates/netodia-ui/build.rs
 ---
 
 # Slint Pitfalls (battle-tested)
 
-Melodia-specific, each paid for once already. General Slint patterns are in `slint.md`;
+Netodia-specific, each paid for once already. General Slint patterns are in `slint.md`;
 this file is what builds, looks right, and is wrong.
 
 - **`visible: false` doesn't remove from layout.** Hidden child still claims stretch.
@@ -58,7 +58,7 @@ this file is what builds, looks right, and is wrong.
   an easing problem and is not one. `entity-card.slint` carries both halves: its selection ring
   is a plain `border-width` and its tint is an `if root.selected` fill with no `animate` at all,
   `selection-pill.slint`'s shape, which is why a track row's pick never had it. Pinned by
-  `crates/melodia/tests/card_selection.rs`'s `the_card_selection_ring_and_tint_never_animate`,
+  `crates/netodia/tests/card_selection.rs`'s `the_card_selection_ring_and_tint_never_animate`,
   which reads the tint's own braces: an `animate` elsewhere in that file is ordinary.
 
 - **A `for` over a `pure callback`'s model rebuilds every instance whenever one of the call's
@@ -123,7 +123,7 @@ this file is what builds, looks right, and is wrong.
   Cure: **the container publishes its own metric and the host frames against that**
   (`out property <length> tile-size` on `EntityCard`, `card-body.tile-size - self.width - …`),
   never `parent`. Verify in the generated tree — the binding names the property it actually read.
-  Pinned by `crates/melodia/tests/entity_card_overlay.rs`'s
+  Pinned by `crates/netodia/tests/entity_card_overlay.rs`'s
   `no_overlay_host_positions_against_parent`, which finds the
   hosts by the flag that opens the slot and reads **the mount's own braces**: a host is free to
   spell `parent` elsewhere in its file, `x: parent.width - self.width` being the canonical
@@ -191,7 +191,7 @@ this file is what builds, looks right, and is wrong.
   their own `ScrollView`. Material is the one that doesn't, which is what the Slint docs mean by
   "defaults to `true` for the Material style and `false` for all other styles".
   `ListView inherits ScrollView`, so it takes the same answer, and the tree declares no bare
-  `Flickable` at all. Melodia sets no style and `i-slint-compiler`'s `typeloader.rs` resolves it to
+  `Flickable` at all. Netodia sets no style and `i-slint-compiler`'s `typeloader.rs` resolves it to
   **fluent**, so the live default here is *off* and every scroller binding nothing already
   compiles to `false`. What the opt-outs buy is therefore a pin rather than an override: no
   click-to-act list depends on which style compiled. **Verify in the generated file, never in the
@@ -209,7 +209,7 @@ this file is what builds, looks right, and is wrong.
   Both draggable lists opt out outright, `draggable-track-list.slint`'s `inner-list` and
   `queue-sheet.slint`'s, pinned by
   `ui::playlists::tests::every_draggable_list_opts_out_of_drag_panning`, since it only misbehaves
-  under a pointer; the click-to-act grids and lists are pinned by `crates/melodia/tests/scrollbars.rs`.
+  under a pointer; the click-to-act grids and lists are pinned by `crates/netodia/tests/scrollbars.rs`.
   **`!reorder-enabled` is what that binding used to say, and is the trap worth keeping**: it reads
   as leaving a `true` default alone and instead *enables* the pan on every sort that retires the
   drag. `!interactive` still forwards wheel events, so only drag-to-pan goes.
@@ -384,7 +384,7 @@ this file is what builds, looks right, and is wrong.
 - **Reusable filter SearchBar pattern.** (1) `text <=> SomeGlobal.filter`,
   `blur-trigger: SomeGlobal.blur-search-tick`; (2) backdrop
   `TouchArea { clicked => { SomeGlobal.blur-search-tick += 1; } }` at view root before content;
-  (3) clear filter + bump blur tick on nav-away. Match in Rust through `crates/melodia-views/src/ui/row_match.rs`,
+  (3) clear filter + bump blur tick on nav-away. Match in Rust through `crates/netodia-views/src/ui/row_match.rs`,
   never a hand-rolled `to_lowercase().contains(…)`; Settings routes there via
   `pure callback SettingsPage.matches(...)`.
   **A page whose box describes more than one surface takes the same three steps against one global
@@ -454,7 +454,7 @@ this file is what builds, looks right, and is wrong.
   trigger; a transparent full-popup `TouchArea` **declared first** closes on stray clicks.
 
 - **Sleep timer = a session-only cancel-and-replace tokio countdown + a `PlayerState`
-  end-of-track flag.** In `crates/melodia-views/src/ui/sleep_timer.rs` — a **UI-layer** module, because `tasks/` may
+  end-of-track flag.** In `crates/netodia-views/src/ui/sleep_timer.rs` — a **UI-layer** module, because `tasks/` may
   not import `ui::*` and the countdown writes a Slint property. **Duration is
   playback-linked**: each 1 s tick decrements only while `status_atomic == Playing` (lock-free),
   so pausing holds the timer and it never expires on a paused player. Never persisted; bounds

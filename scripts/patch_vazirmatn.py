@@ -56,7 +56,7 @@ lifts text up, raising it drops text down -- a ~150-unit step is roughly
 half a pixel at the app's UI font sizes (`dShift = fontSize / (2 * UPM)
 * dTypoAsc`).
 
-Output layout (all paths under crates/melodia-ui/ui/assets/fonts/):
+Output layout (all paths under crates/netodia-ui/ui/assets/fonts/):
   originals/Vazirmatn-*.ttf             `fonts/ttf/` of upstream's vazirmatn-v33.003.zip
   originals/Roboto[ital,wdth,wght].ttf  `unhinted/` of upstream's Roboto_v3.004.zip
   vazirmatn/Vazirmatn-*.ttf             merged and patched, imported directly by the tree's app-window.slint
@@ -93,7 +93,7 @@ LANGUAGE_LETTERS = {
 ROBOTO_VERSION = "Version 3.004"
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-FONT_DIR = REPO_ROOT / "crates" / "melodia-ui" / "ui" / "assets" / "fonts"
+FONT_DIR = REPO_ROOT / "crates" / "netodia-ui" / "ui" / "assets" / "fonts"
 ORIG_DIR = FONT_DIR / "originals"
 OUT_DIR = FONT_DIR / "vazirmatn"
 ROBOTO_SOURCE = ORIG_DIR / "Roboto[ital,wdth,wght].ttf"

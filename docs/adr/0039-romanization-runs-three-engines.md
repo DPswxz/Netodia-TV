@@ -36,7 +36,7 @@ rather than merely convenient. It is not the first copyleft dependency here: Sli
 and an AGPL project takes its GPL-3.0 arm, and Symphonia is MPL-2.0. It is the first whose only
 offer is copyleft, with no permissive arm to fall back on, and that is what turned
 [ADR 6](0006-agpl-and-what-artifacts-owe.md)'s obligation half into work. `licenses/` now carries
-the GPL-3.0 text, in all five package formats, and `crates/melodia/tests/packaging.rs` is what keeps
+the GPL-3.0 text, in all five package formats, and `crates/netodia/tests/packaging.rs` is what keeps
 it there.
 
 The cost that shows up at runtime is memory rather than time. The general engine pages in a

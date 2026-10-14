@@ -1,16 +1,16 @@
 #Requires -Version 7.4
 <#
 .SYNOPSIS
-Measures Melodia's memory, CPU and GPU footprint on Windows the same way every run.
+Measures Netodia's memory, CPU and GPU footprint on Windows the same way every run.
 
 .DESCRIPTION
-Launches Melodia (or attaches to a running one), lets it settle, then samples one window per
+Launches Netodia (or attaches to a running one), lets it settle, then samples one window per
 scenario while you switch between scenarios by hand. Every sample goes to samples.csv and the
 per-scenario figures to summary.md.
 
 Commit is the headline figure: the private memory Windows has promised the process, whether it
 sits in RAM or in the page file. It doesn't fall when the memory manager trims the working set
-under pressure, so it tracks what Melodia allocated rather than what Windows left resident.
+under pressure, so it tracks what Netodia allocated rather than what Windows left resident.
 Task Manager calls it "Commit size", and it is the field Chromium reports as its private
 footprint on Windows.
 
@@ -35,13 +35,13 @@ Handles, threads, GDI and USER objects should hold flat from one scenario to the
 is a leak.
 
 .PARAMETER Exe
-Binary to launch. Defaults to the release build: cargo build --release -p melodia
+Binary to launch. Defaults to the release build: cargo build --release -p netodia
 
 .PARAMETER DataDir
-Data root to launch against, passed as MELODIA_DATA_DIR, so every run sees the same library.
+Data root to launch against, passed as NETODIA_DATA_DIR, so every run sees the same library.
 
 .PARAMETER ProcessId
-Measure an already running Melodia instead of launching one.
+Measure an already running Netodia instead of launching one.
 
 .PARAMETER Scenarios
 One measurement window per name, in order. You are prompted before each.
@@ -66,12 +66,12 @@ Where samples.csv and summary.md go. Defaults to a timestamped folder under targ
 ./scripts/measure-windows-footprint.ps1
 
 .EXAMPLE
-./scripts/measure-windows-footprint.ps1 -DataDir D:\melodia-bench -Scenarios 'Idle', 'Playing, list view'
+./scripts/measure-windows-footprint.ps1 -DataDir D:\netodia-bench -Scenarios 'Idle', 'Playing, list view'
 #>
 [CmdletBinding(DefaultParameterSetName = 'Launch')]
 param(
     [Parameter(ParameterSetName = 'Launch')]
-    [string] $Exe = (Join-Path $PSScriptRoot '..' 'target' 'release' 'Melodia.exe'),
+    [string] $Exe = (Join-Path $PSScriptRoot '..' 'target' 'release' 'Netodia.exe'),
 
     [Parameter(ParameterSetName = 'Launch')]
     [string] $DataDir,
@@ -107,8 +107,8 @@ $ProgressStepSeconds = 0.25
 function Measure-Footprint($Process, [string] $Origin) {
     # Holding the handle keeps ExitCode readable once the process is gone.
     $null = $Process.Handle
-    Write-Host "Measuring Melodia (pid $($Process.Id)), $Origin."
-    Wait-Countdown $Process 'Waiting for Melodia to settle' $SettleSeconds
+    Write-Host "Measuring Netodia (pid $($Process.Id)), $Origin."
+    Wait-Countdown $Process 'Waiting for Netodia to settle' $SettleSeconds
 
     $measurements = for ($index = 0; $index -lt $Scenarios.Count; $index++) {
         $title = "Scenario $($index + 1)/$($Scenarios.Count): $($Scenarios[$index])"
@@ -121,30 +121,30 @@ function Measure-Footprint($Process, [string] $Origin) {
     }
 
     Save-Report $Process $Origin $measurements
-    Write-Host "Melodia (pid $($Process.Id)) is still running. Close it before the next run."
+    Write-Host "Netodia (pid $($Process.Id)) is still running. Close it before the next run."
 }
 
-function Start-Melodia([string] $Path, [string] $DataRoot) {
+function Start-Netodia([string] $Path, [string] $DataRoot) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "No Melodia binary at $Path. Build one with: cargo build --release -p melodia"
+        throw "No Netodia binary at $Path. Build one with: cargo build --release -p netodia"
     }
 
-    $inheritedDataDir = $env:MELODIA_DATA_DIR
+    $inheritedDataDir = $env:NETODIA_DATA_DIR
     if ($DataRoot) {
-        $env:MELODIA_DATA_DIR = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DataRoot)
+        $env:NETODIA_DATA_DIR = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DataRoot)
     }
     try {
         Start-Process -FilePath $Path -PassThru
     }
     finally {
-        $env:MELODIA_DATA_DIR = $inheritedDataDir
+        $env:NETODIA_DATA_DIR = $inheritedDataDir
     }
 }
 
 function Assert-Running($Process) {
     if (-not $Process.HasExited) { return }
 
-    throw ("Melodia exited with code $($Process.ExitCode). Straight after a launch that means another " +
+    throw ("Netodia exited with code $($Process.ExitCode). Straight after a launch that means another " +
         'instance holds this data root and the launch was forwarded to it: close that one, or measure it with -ProcessId.')
 }
 
@@ -157,7 +157,7 @@ function Wait-Countdown($Process, [string] $Activity, [double] $Seconds) {
 function Read-Confirmation([string] $Title) {
     Write-Host ''
     Write-Host $Title -ForegroundColor Cyan
-    Write-Host '  Set Melodia up for it, keep its window visible and unminimized, then press Enter.'
+    Write-Host '  Set Netodia up for it, keep its window visible and unminimized, then press Enter.'
     # A host with no stdin reads end-of-input at once, which would sample a scenario nobody set up.
     if ($null -eq [Console]::ReadLine()) {
         throw 'No console input to confirm the scenario with. Run the script from an interactive terminal.'
@@ -193,7 +193,7 @@ function New-Countdown([string] $Activity, [double] $Seconds) {
     }
 }
 
-# Sleeps in short slices so the bar keeps moving and an exited Melodia is noticed promptly.
+# Sleeps in short slices so the bar keeps moving and an exited Netodia is noticed promptly.
 function Wait-Until($Process, $Countdown, [double] $Seconds) {
     while ($true) {
         Assert-Running $Process
@@ -223,7 +223,7 @@ function Write-ScenarioResult($Summary) {
 
 function Read-Sample($Process, [string] $Scenario, [double] $Seconds) {
     $Process.Refresh()
-    $memory = [MelodiaFootprint.Native]::ReadMemory($Process.Handle)
+    $memory = [NetodiaFootprint.Native]::ReadMemory($Process.Handle)
     $gpuMemory = [Diagnostics.PerformanceCounterCategory]::new('GPU Process Memory').ReadCategory()
 
     [pscustomobject]@{
@@ -238,8 +238,8 @@ function Read-Sample($Process, [string] $Scenario, [double] $Seconds) {
         cpu_seconds         = $Process.TotalProcessorTime.TotalSeconds
         handles             = $Process.HandleCount
         threads             = $Process.Threads.Count
-        gdi_objects         = [MelodiaFootprint.Native]::GdiObjects($Process.Handle)
-        user_objects        = [MelodiaFootprint.Native]::UserObjects($Process.Handle)
+        gdi_objects         = [NetodiaFootprint.Native]::GdiObjects($Process.Handle)
+        user_objects        = [NetodiaFootprint.Native]::UserObjects($Process.Handle)
     }
 }
 
@@ -321,7 +321,7 @@ function Save-Report($Process, [string] $Origin, $Measurements) {
 function Format-Report($Process, [string] $Origin, $Summaries) {
     $binary = Get-Item -LiteralPath $Process.Path
     $lines = [Collections.Generic.List[string]]::new()
-    $lines.Add("# Melodia footprint, $(Get-Date -Format 'yyyy-MM-dd HH:mm')")
+    $lines.Add("# Netodia footprint, $(Get-Date -Format 'yyyy-MM-dd HH:mm')")
     $lines.Add('')
     $lines.Add("- Binary: $($binary.FullName), version $($binary.VersionInfo.ProductVersion), built $($binary.LastWriteTime.ToString('yyyy-MM-dd HH:mm'))")
     $lines.Add("- Process: $Origin")
@@ -365,7 +365,7 @@ function Get-WindowDisplay($Process) {
         return 'unknown, the window was hidden'
     }
 
-    $mode = [MelodiaFootprint.Native]::DisplayOf($Process.MainWindowHandle)
+    $mode = [NetodiaFootprint.Native]::DisplayOf($Process.MainWindowHandle)
     "$($mode.Width)x$($mode.Height) at $($mode.RefreshRate) Hz, the screen the window was on"
 }
 
@@ -382,7 +382,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace MelodiaFootprint
+namespace NetodiaFootprint
 {
     public sealed class MemoryCounters
     {
@@ -539,14 +539,14 @@ $sessionCulture = [cultureinfo]::CurrentCulture
 [cultureinfo]::CurrentCulture = [cultureinfo]::InvariantCulture
 try {
     if ($PSCmdlet.ParameterSetName -eq 'Attach') {
-        $melodia = Get-Process -Id $ProcessId
+        $netodia = Get-Process -Id $ProcessId
         $origin = "attached to pid $ProcessId"
     }
     else {
-        $melodia = Start-Melodia $Exe $DataDir
-        $origin = if ($DataDir) { "launched with MELODIA_DATA_DIR=$DataDir" } else { 'launched against its default data root' }
+        $netodia = Start-Netodia $Exe $DataDir
+        $origin = if ($DataDir) { "launched with NETODIA_DATA_DIR=$DataDir" } else { 'launched against its default data root' }
     }
-    Measure-Footprint $melodia $origin
+    Measure-Footprint $netodia $origin
 }
 finally {
     [cultureinfo]::CurrentCulture = $sessionCulture

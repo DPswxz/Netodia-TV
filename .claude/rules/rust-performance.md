@@ -79,7 +79,7 @@ strip = "debuginfo"   # Drop DWARF but keep symbols — end-user panic backtrace
 
 - Prefer `to_owned()` over `to_string()` when converting `&str` — avoids `Display` trait overhead
 - Use `std::mem::take()` or `std::mem::replace()` instead of clone-then-clear patterns
-- Global-allocator swaps (`mimalloc`/`jemalloc`) trade RSS for speed — measure peak RSS before adopting. **Melodia caveat:** mimalloc's per-thread segments across the app's many long-lived threads caused a large idle-RSS regression and was reverted; don't propose allocator swaps here
+- Global-allocator swaps (`mimalloc`/`jemalloc`) trade RSS for speed — measure peak RSS before adopting. **Netodia caveat:** mimalloc's per-thread segments across the app's many long-lived threads caused a large idle-RSS regression and was reverted; don't propose allocator swaps here
 - Avoid unnecessary `Arc` — single-threaded code doesn't need atomic reference counting
 - Use `#[inline]` sparingly — the compiler usually makes good inlining decisions; only hint for small hot functions crossing crate boundaries
 - `core::hint::cold_path()` (1.95) marks a branch as unlikely — use in hot loops where the error/edge arm is rare

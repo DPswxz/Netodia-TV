@@ -36,7 +36,7 @@ the hot path.
 
 That invariant only holds while both ramps advance together, and they advance as their own decks are
 pulled, so a fade armed between two whole-block renders leaves the outgoing deck at full gain for a
-block. `output::mixer::LOCKSTEP_FRAMES` is what bounds that, and `crates/melodia/tests/crossfade.rs`
+block. `output::mixer::LOCKSTEP_FRAMES` is what bounds that, and `crates/netodia/tests/crossfade.rs`
 derives its tolerance from the constant under a compile-time assertion rather than guessing one.
 
 This decision was made against a playback layer that has since been replaced

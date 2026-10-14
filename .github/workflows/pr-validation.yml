@@ -39,7 +39,7 @@ jobs:
       # `predicate-quantifier: every` is what makes the `!` lines do anything,
       # the default `some` plus `**` matching every file and never skipping.
       # `assets/` and `.github/` are excluded per file, both holding real inputs
-      # (`melodia.ico`, three `include_*!`d payloads); the rule file says which.
+      # (`netodia.ico`, three `include_*!`d payloads); the rule file says which.
       - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         id: paths
         if: github.event_name == 'pull_request'
@@ -109,7 +109,7 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --all-targets --locked --workspace -- -D warnings
 
-  # The full suite, `crates/melodia/tests/headless.rs` included, and plain `cargo test`: nobody
+  # The full suite, `crates/netodia/tests/headless.rs` included, and plain `cargo test`: nobody
   # reads a coverage delta to decide a merge, so deploy-coverage.yml runs the
   # instrumented build on demand. The `CARGO_BUILD_JOBS: 4` memory cap overrides
   # .cargo/config.toml's jobs=8: past the ceiling nothing fails, it swaps, and
@@ -199,7 +199,7 @@ jobs:
     steps:
       # Derived from `needs:` above rather than restating it, so adding a job is
       # one edit. `toJSON` can't see a job that never reached `needs:`; that half
-      # is pinned by `crates/melodia/tests/packaging.rs`'s
+      # is pinned by `crates/netodia/tests/packaging.rs`'s
       # `the_aggregate_waits_on_every_job_in_the_gate_workflow`. Through `env:`
       # rather than `${{ }}` in the script, interpolating into bash being the
       # shape that goes wrong.

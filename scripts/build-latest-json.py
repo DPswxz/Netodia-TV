@@ -8,9 +8,9 @@ and emits `latest.json` to `--out`.
 
 `linux-x86_64-rpm` and `linux-x86_64-deb` entries are surfaced so the
 in-app updater can drive `pkexec dnf install` / `pkexec apt install`
-on systems where `/usr/bin/melodia` is owned by `rpm` or `dpkg`
+on systems where `/usr/bin/netodia` is owned by `rpm` or `dpkg`
 respectively. Client-side detection lives in
-`crates/melodia-platform/src/services/platform/install_kind/linux_pkg.rs`.
+`crates/netodia-platform/src/services/platform/install_kind/linux_pkg.rs`.
 
 Usage (from the release workflow):
     python3 scripts/build-latest-json.py \\
@@ -37,12 +37,12 @@ from pathlib import Path
 # Every pattern carries an explicit arch token, so the two groups are
 # disjoint and the grouping below is readability, not disambiguation.
 # That was NOT true while the deb was matched on cargo-deb's native
-# `melodia_<ver>_amd64.deb`, whose `_amd64`/`_arm64` fragments have no
+# `netodia_<ver>_amd64.deb`, whose `_amd64`/`_arm64` fragments have no
 # leading arch token — which is what the aarch64-first ordering existed
 # for.
 #
-# `release-build.yml` renames the deb to the same `melodia-<tag>-<arch>.deb`
-# scheme every other slot produces (its `melodia-*.deb` globs in the
+# `release-build.yml` renames the deb to the same `netodia-<tag>-<arch>.deb`
+# scheme every other slot produces (its `netodia-*.deb` globs in the
 # attest/sign/upload steps depend on that), and this table was left on
 # the old name. Nothing complained: `classify` returned None, the loop
 # below skipped it, and v0.8.0 shipped a manifest with no deb entry at
@@ -62,7 +62,7 @@ PLATFORM_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     # x86_64.
     (re.compile(r"-x86_64\.AppImage$"), "linux-x86_64-appimage"),
     (re.compile(r"-x86_64-linux\.tar\.gz$"), "linux-x86_64-tarball"),
-    # build-rpm.sh emits melodia-<ver>-1.fc<rel>.x86_64.rpm; the suffix
+    # build-rpm.sh emits netodia-<ver>-1.fc<rel>.x86_64.rpm; the suffix
     # is invariant across Fedora releases.
     (re.compile(r"\.x86_64\.rpm$"), "linux-x86_64-rpm"),
     (re.compile(r"-x86_64\.deb$"), "linux-x86_64-deb"),
@@ -261,7 +261,7 @@ def build_manifest(
         # time via the `/latest/download/` redirect. Embedding the
         # filename keeps the manifest stable across release tag bumps.
         url = (
-            "https://github.com/KenanSalar/Melodia/releases/latest/download/"
+            "https://github.com/HELPMEEADICE/Netodia/releases/latest/download/"
             f"{path.name}"
         )
         platforms[key] = {

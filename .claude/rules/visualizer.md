@@ -1,24 +1,24 @@
 ---
 paths:
-  - crates/melodia-views/src/ui/visualizer/**/*.rs
-  - crates/melodia-ui/ui/views/now-playing-view.slint
-  - crates/melodia-ui/ui/views/settings/playback-section.slint
-  - crates/melodia-ui/ui/components/now-playing/visualizer-strip.slint
-  - crates/melodia-ui/ui/components/now-playing/visualizer-flyout.slint
-  - crates/melodia-ui/ui/components/now-playing/spectrum-bars.slint
-  - crates/melodia-ui/ui/components/now-playing/waveform-trace.slint
-  - crates/melodia-ui/ui/components/now-playing/visualizer-picker.slint
-  - crates/melodia-ui/ui/components/now-playing/overflow-menu.slint
-  - crates/melodia-ui/ui/components/now-playing/menu-surface.slint
-  - crates/melodia-ui/ui/components/now-playing/flyout-presets.slint
+  - crates/netodia-views/src/ui/visualizer/**/*.rs
+  - crates/netodia-ui/ui/views/now-playing-view.slint
+  - crates/netodia-ui/ui/views/settings/playback-section.slint
+  - crates/netodia-ui/ui/components/now-playing/visualizer-strip.slint
+  - crates/netodia-ui/ui/components/now-playing/visualizer-flyout.slint
+  - crates/netodia-ui/ui/components/now-playing/spectrum-bars.slint
+  - crates/netodia-ui/ui/components/now-playing/waveform-trace.slint
+  - crates/netodia-ui/ui/components/now-playing/visualizer-picker.slint
+  - crates/netodia-ui/ui/components/now-playing/overflow-menu.slint
+  - crates/netodia-ui/ui/components/now-playing/menu-surface.slint
+  - crates/netodia-ui/ui/components/now-playing/flyout-presets.slint
 ---
 
 # The Now-Playing visualizer — UI half
 
 Wiring, the per-frame tick, and the gates that decide when any of it runs — the half no `//!` doc
-can hold, the subject spanning `crates/melodia-views/src/ui/visualizer/`, the `.slint` under
-`crates/melodia-ui/ui/` and the tap below both. The DSP is
-`crates/melodia-playback/src/player/playback/{visualizer,spectrum,waveform}.rs` under
+can hold, the subject spanning `crates/netodia-views/src/ui/visualizer/`, the `.slint` under
+`crates/netodia-ui/ui/` and the tap below both. The DSP is
+`crates/netodia-playback/src/player/playback/{visualizer,spectrum,waveform}.rs` under
 `.claude/rules/audio-stack.md`; `mod.rs` argues arming and off-screen windows and `pulse.rs` the frame
 counter, both worth reading before changing a gate.
 
@@ -33,7 +33,7 @@ counter, both worth reading before changing a gate.
   `wire_now_playing_open`). So `hydrate_audio_dsp` **skips** the visualizer
   (`VisualizerShared::new(false)` is the correct boot state) and
   `library::settings::set_visualizer_enabled` has **no `library::playback` runtime half** —
-  `crates/melodia-views/src/ui/visualizer/` is the sole writer of the arm state.
+  `crates/netodia-views/src/ui/visualizer/` is the sole writer of the arm state.
 
 - **Re-arming drops the rings' history** — the newest samples down there may predate the close —
   and `snapshot` front-pads with silence, so the first frame back reads a touch low rather than

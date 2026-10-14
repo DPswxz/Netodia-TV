@@ -1,22 +1,22 @@
 ---
 paths:
-  - crates/melodia-platform/src/services/platform/logging.rs
-  - crates/melodia-platform/src/services/platform/crash_report.rs
-  - crates/melodia-app/src/services/diagnostics.rs
-  - crates/melodia-core/src/utils/redact.rs
-  - crates/melodia-views/src/ui/settings/diagnostics.rs
-  - crates/melodia/src/main.rs
+  - crates/netodia-platform/src/services/platform/logging.rs
+  - crates/netodia-platform/src/services/platform/crash_report.rs
+  - crates/netodia-app/src/services/diagnostics.rs
+  - crates/netodia-core/src/utils/redact.rs
+  - crates/netodia-views/src/ui/settings/diagnostics.rs
+  - crates/netodia/src/main.rs
 ---
 
 # The diagnostics trio — logging, crash reports, the bug-report bundle
 
 Three files answer to a bug report rather than to a subsystem, and they are read together.
 
-- **`logging.rs`** — the `flexi_logger` sink: `logs/melodia_rCURRENT.log` every run with no env var
+- **`logging.rs`** — the `flexi_logger` sink: `logs/netodia_rCURRENT.log` every run with no env var
   set, 2 MiB × 7 rotated files, counted rather than dated so an occasional user's history isn't
   swept at startup, and `.append()`, the one call whose absence silently erases the run that
   crashed. `RUST_LOG` overrides the scoped default — a `warn` floor, our two targets
-  `melodia`/`Melodia` at `info`, plus a per-module `error` mute for
+  `netodia`/`Netodia` at `info`, plus a per-module `error` mute for
   `symphonia_bundle_mp3::layer3`'s per-frame bit-reservoir underflow and `sctk_adwaita::buttons`
   misparsing a GNOME portal key. **Mutes are scoped by module, never by crate** — a crate-wide
   directive takes unrelated warnings with it; `SPEC_TAIL` argues each. **The spec is *built*, not
@@ -53,12 +53,12 @@ inside a file users attach to public GitHub issues; its settings block is a hand
 `scrobble_credentials.json` is never read by that module.
 
 **The sweep deletes only names that parse back into its own scheme** (root `CLAUDE.md`):
-`crash_report::prune` gates on `timestamp_of`, `flexi_logger`'s own cleanup on its `melodia`
+`crash_report::prune` gates on `timestamp_of`, `flexi_logger`'s own cleanup on its `netodia`
 basename and `log` suffix — two independent gates, so a third file in `logs/` has to fall outside
 both.
 
 **`--logs` is the branch that answers what this feature can't** — everything above sits behind
-Settings → About → Diagnostics, unreachable when the thing being reported is that Melodia won't
+Settings → About → Diagnostics, unreachable when the thing being reported is that Netodia won't
 open. It is a Linux/macOS route: under `windows_subsystem = "windows"` a release build has no
 console, so `GetStdHandle` hands back nothing and the `writeln!` is swallowed (`--version` escapes
 only because the updater spawns it with `Stdio::piped()`). Attaching the parent console was

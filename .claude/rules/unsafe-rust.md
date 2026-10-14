@@ -35,14 +35,14 @@ because `dwm_titlebar.rs`'s first `#[allow]` sits on a function holding two of t
 
 | site | what |
 |---|---|
-| `crates/melodia/src/main.rs` | `env::set_var` for `PIPEWIRE_ALSA` |
-| `crates/melodia-platform/…/allocator.rs` | `libc::mallopt` ×3 (the glibc arena / mmap / trim knobs), `libc::malloc_trim` |
-| `crates/melodia-platform/…/dwm_titlebar.rs` | `DwmSetWindowAttribute` ×3 |
-| `crates/melodia-platform/…/registry.rs` | `RegGetValueW` (the DWM accent a window border takes, and the Windows app mode) |
-| `crates/melodia-app/…/settings/data.rs` | `GetUserDefaultLocaleName` |
-| `crates/melodia-app/…/updater/install/swap.rs` | `MoveFileExW` |
-| `crates/melodia-playback/…/output/mmcss.rs` | `AvSetMmThreadCharacteristicsW` and `AvRevertMmThreadCharacteristics` (the exclusive writer's MMCSS registration, reverted on the same thread) |
-| `crates/melodia-playback/…/output/endpoint_volume.rs` | `CoCreateInstance`, `IMMDeviceEnumerator::GetDevice` and `IMMDevice::Activate` (reaching the endpoint volume `wasapi` doesn't wrap), `Get`/`SetMasterVolumeLevelScalar` (the claimed device's own volume control, on the exclusive writer's thread) |
+| `crates/netodia/src/main.rs` | `env::set_var` for `PIPEWIRE_ALSA` |
+| `crates/netodia-platform/…/allocator.rs` | `libc::mallopt` ×3 (the glibc arena / mmap / trim knobs), `libc::malloc_trim` |
+| `crates/netodia-platform/…/dwm_titlebar.rs` | `DwmSetWindowAttribute` ×3 |
+| `crates/netodia-platform/…/registry.rs` | `RegGetValueW` (the DWM accent a window border takes, and the Windows app mode) |
+| `crates/netodia-app/…/settings/data.rs` | `GetUserDefaultLocaleName` |
+| `crates/netodia-app/…/updater/install/swap.rs` | `MoveFileExW` |
+| `crates/netodia-playback/…/output/mmcss.rs` | `AvSetMmThreadCharacteristicsW` and `AvRevertMmThreadCharacteristics` (the exclusive writer's MMCSS registration, reverted on the same thread) |
+| `crates/netodia-playback/…/output/endpoint_volume.rs` | `CoCreateInstance`, `IMMDeviceEnumerator::GetDevice` and `IMMDevice::Activate` (reaching the endpoint volume `wasapi` doesn't wrap), `Get`/`SetMasterVolumeLevelScalar` (the claimed device's own volume control, on the exclusive writer's thread) |
 
 A new site outside that shape is a different *kind* of thing rather than one more of the
 same, and owes a justification somewhere a reviewer will read — not only in the
@@ -87,8 +87,8 @@ process state, and `cargo test` runs in parallel by default. There is one shape:
 
 **lock → snapshot → clear → set → `catch_unwind(body)` → restore → `resume_unwind`**
 
-and it is written once, in **`melodia_testkit::with_env_set`**
-(`crates/melodia-testkit/src/lib.rs`).
+and it is written once, in **`netodia_testkit::with_env_set`**
+(`crates/netodia-testkit/src/lib.rs`).
 Call it. Don't re-roll it — each of those seven steps has been missing from a hand-rolled
 copy at some point, and the restore is the one that goes first.
 
@@ -121,7 +121,7 @@ copy at some point, and the restore is the one that goes first.
   is safe beside one and can still read the value it set: four tests in `settings_tests.rs`
   built a `SettingsData::default()`, which reaches `XDG_CURRENT_DESKTOP` and all four locale
   variables through its serde defaults, beside the tests mutating both.
-  **`melodia_testkit::reading_env(body)`** takes the same lock without touching a variable
+  **`netodia_testkit::reading_env(body)`** takes the same lock without touching a variable
   and is how such a test opts in. Nothing enforces it, so an unwrapped reader whose
   assertion turns on what it read is a flaky test, not a style nit.
 - **It is not reentrant, and that is the cost of one lock.** A helper called from inside
@@ -138,7 +138,7 @@ none left anywhere, because the mutation moved behind the safe helpers.
 next, and one sat in `library/settings/tests/folders_tests.rs` over a file with no
 `unsafe` in it at all. Routing a file through the shared helper is exactly the edit that
 strands one, and it has retired four (`target_tests.rs`, `system_install_tests.rs`,
-`linux_pkg_tests.rs`, `settings_tests.rs`). `crates/melodia/tests/headless.rs` is the fifth and got there
+`linux_pkg_tests.rs`, `settings_tests.rs`). `crates/netodia/tests/headless.rs` is the fifth and got there
 the other way — `Paths::rooted_at` left it no reason to touch the environment at all. The
 one that remains is on `with_env_set` itself — on the function, not the file, per the
 narrowest-item rule above.

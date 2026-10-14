@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-06-16
 
-The graphic equalizer was the first thing Melodia wanted that no playback library was going to
+The graphic equalizer was the first thing Netodia wanted that no playback library was going to
 provide: the ones available ship low-pass and high-pass filters and no peaking filter at all, so a
 graphic EQ cannot be built from their primitives. That made the question bigger than the EQ. Once
 the chain is ours, its shape decides what every later stage costs, and the audio callback is pulling

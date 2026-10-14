@@ -48,7 +48,7 @@ jobs:
       - uses: ./.github/actions/headless-audio
 
       # One instrumented run feeds both outputs; the report phases re-run nothing.
-      # The regex drops `melodia-ui`'s generated `app-window.rs`, big enough to
+      # The regex drops `netodia-ui`'s generated `app-window.rs`, big enough to
       # swamp the denominator alone and missed by cargo-llvm-cov's built-in
       # excludes, which reach the sysroot and registry but not a member's
       # OUT_DIR. Scoped to that crate, so a build script that one day generates
@@ -56,7 +56,7 @@ jobs:
       # failing `report` and publishes an empty summary.
       - name: Run tests with coverage
         env:
-          IGNORE_GENERATED: '.*/build/melodia-ui-[^/]*/out/.*'
+          IGNORE_GENERATED: '.*/build/netodia-ui-[^/]*/out/.*'
         run: |
           set -o pipefail
           cargo llvm-cov --locked --workspace --no-report

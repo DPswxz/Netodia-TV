@@ -19,7 +19,7 @@ exclude = ["winit"]
 # `build-{rpm,appimage,tarball}.sh`) anchor on this table by name and take the
 # first `version = ` inside it, so that entry stays first.
 [workspace.package]
-version = "0.18.0"
+version = "0.1.0"
 edition = "2024"
 license = "AGPL-3.0-or-later"
 # Lockstep with `rust-toolchain.toml` and `clippy.toml`'s `msrv`.
@@ -27,8 +27,8 @@ rust-version = "1.97"
 # Here rather than on `[package]` because `ui::settings::about` reads
 # `CARGO_PKG_REPOSITORY`, and a member that inherits nothing gets an empty string
 # and only *logs* about it.
-repository = "https://github.com/KenanSalar/Melodia"
-homepage = "https://github.com/KenanSalar/Melodia"
+repository = "https://github.com/HELPMEEADICE/Netodia"
+homepage = "https://github.com/HELPMEEADICE/Netodia"
 
 # Every dependency is declared here rather than in the member that uses it, and the
 # reason is the one `slint` taught: a drifted version resolves two copies of a crate
@@ -271,7 +271,7 @@ libc = "0.2.189"
 
 # Windows
 # `MoveFileExW(MOVEFILE_DELAY_UNTIL_REBOOT)` in `updater/install/swap.rs`, for when
-# `Melodia.exe.old` is still loaded, `GetUserDefaultLocaleName`, the DWM accent
+# `Netodia.exe.old` is still loaded, `GetUserDefaultLocaleName`, the DWM accent
 # values `window_border` reads out of the registry, and the exclusive output's
 # WASAPI error codes and MMCSS registration. Declarations from here rather than a
 # hand-rolled `extern` block only review can keep true.
@@ -289,7 +289,7 @@ windows-sys = { version = "0.61.2", features = [
 # Browse rows out as disk-only. Reached through `utils::canonicalize_path`.
 dunce = "1.0.5"
 # Embeds the `ICON` resource so the taskbar and Explorer entries aren't the generic
-# placeholder. `wix/main.wxs` reads the same `assets/melodia.ico`.
+# placeholder. `wix/main.wxs` reads the same `assets/netodia.ico`.
 winresource = "0.1.31"
 
 # Windows and macOS
@@ -374,10 +374,10 @@ strip = "debuginfo"
 #
 # The cost to re-check if this ever moves is frame time, not throughput: some of what this
 # sizes down is property-binding evaluation, which runs per frame rather than at mount.
-[profile.release.package.melodia-ui]
+[profile.release.package.netodia-ui]
 opt-level = "s"
 
-# The `"*"` glob excludes workspace members, so this never reaches `melodia-ui`,
+# The `"*"` glob excludes workspace members, so this never reaches `netodia-ui`,
 # which is also the build-memory peak the CI `CARGO_BUILD_JOBS` cap holds down.
 [profile.dev.package."*"]
 opt-level = 3

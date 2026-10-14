@@ -12,7 +12,7 @@ Decision: the UI stays one crate, the library command layer stays inside the app
 per-feature vertical crates, and the workspace has zero Cargo features.
 
 Alternatives, in the order they come up: cutting the UI into per-view crates; `library/` as its own
-crate; `melodia-podcast` and `melodia-radio` as vertical slices; a `self-update` feature gate.
+crate; `netodia-podcast` and `netodia-radio` as vertical slices; a `self-update` feature gate.
 
 Trade: the UI is twenty view slices in a dense mesh with a shared component library importing
 fourteen of them, so cutting it needs a view registry, and inventing an abstraction whose only

@@ -1,27 +1,27 @@
 ---
 paths:
-  - crates/melodia-views/src/ui/window_chrome/**/*.rs
-  - crates/melodia-views/src/ui/shell/tray_bridge.rs
-  - crates/melodia-views/src/ui/shell/event_sink.rs
-  - crates/melodia-platform/src/services/platform/tray/**/*.rs
-  - crates/melodia-integrations/src/services/integrations/media_controls/**/*.rs
-  - crates/melodia-platform/src/services/platform/always_on_top/**/*.rs
-  - crates/melodia-platform/src/services/platform/dwm_titlebar.rs
-  - crates/melodia-views/src/ui/appearance/theme_apply.rs
-  - crates/melodia/src/main.rs
-  - crates/melodia/src/shutdown.rs
-  - crates/melodia/src/boot/**/*.rs
-  - crates/melodia-ui/ui/app-window.slint
-  - crates/melodia-ui/ui/components/custom-titlebar.slint
-  - crates/melodia-ui/ui/components/caption-buttons.slint
-  - crates/melodia-ui/ui/components/macos-titlebar-cluster.slint
-  - crates/melodia-ui/ui/components/macos-traffic-light.slint
-  - crates/melodia-ui/ui/layout/resize-ring.slint
-  - crates/melodia-ui/ui/views/settings/window-chrome-section.slint
-  - crates/melodia-ui/ui/views/settings/mini-player-section.slint
-  - crates/melodia-ui/ui/views/mini-player.slint
-  - crates/melodia-ui/ui/components/mini-player/*.slint
-  - crates/melodia-views/src/ui/appearance/window_settings.rs
+  - crates/netodia-views/src/ui/window_chrome/**/*.rs
+  - crates/netodia-views/src/ui/shell/tray_bridge.rs
+  - crates/netodia-views/src/ui/shell/event_sink.rs
+  - crates/netodia-platform/src/services/platform/tray/**/*.rs
+  - crates/netodia-integrations/src/services/integrations/media_controls/**/*.rs
+  - crates/netodia-platform/src/services/platform/always_on_top/**/*.rs
+  - crates/netodia-platform/src/services/platform/dwm_titlebar.rs
+  - crates/netodia-views/src/ui/appearance/theme_apply.rs
+  - crates/netodia/src/main.rs
+  - crates/netodia/src/shutdown.rs
+  - crates/netodia/src/boot/**/*.rs
+  - crates/netodia-ui/ui/app-window.slint
+  - crates/netodia-ui/ui/components/custom-titlebar.slint
+  - crates/netodia-ui/ui/components/caption-buttons.slint
+  - crates/netodia-ui/ui/components/macos-titlebar-cluster.slint
+  - crates/netodia-ui/ui/components/macos-traffic-light.slint
+  - crates/netodia-ui/ui/layout/resize-ring.slint
+  - crates/netodia-ui/ui/views/settings/window-chrome-section.slint
+  - crates/netodia-ui/ui/views/settings/mini-player-section.slint
+  - crates/netodia-ui/ui/views/mini-player.slint
+  - crates/netodia-ui/ui/components/mini-player/*.slint
+  - crates/netodia-views/src/ui/appearance/window_settings.rs
 ---
 
 # The desktop shell — window chrome, tray, media keys
@@ -198,9 +198,9 @@ the OS owns has to be attached late or not at all on at least one platform.
   or ride the attributes hook, as maximized does.
   **On KWin the pin is read back as well as written**, because the window manager's own keep-above
   titlebar button moves it without telling the client. `always_on_top::kwin::watch_keep_above`
-  leaves a script loaded for the session that calls `Changed(b)` on Melodia's connection, and
+  leaves a script loaded for the session that calls `Changed(b)` on Netodia's connection, and
   `window_chrome::follow_reported_pin` mirrors each report into `WindowChrome.always-on-top-active`
-  and `library::window::record_always_on_top`. A report matching the button is Melodia's own
+  and `library::window::record_always_on_top`. A report matching the button is Netodia's own
   toggle coming back and writes nothing. Three things hold it together, each argued at its
   definition: the receiver is sequential (`spawn = false`), the script tracks windows added later
   under both Plasma signal names, and it is named per data root so a relaunch replaces its
@@ -235,7 +235,7 @@ The other way paths arrive from outside, and the one that can arrive before ther
 - **A warm one raises through `tray_bridge::raise_window`**, the only thing that knows whether the
   window is hidden (tray or minimize → `show_window` + `SAVED_WINDOW_GEOM`) or merely buried (→
   winit `focus_window`, a documented no-op on Wayland). Raised either way — an empty forward is
-  someone launching Melodia to get at the window.
+  someone launching Netodia to get at the window.
 
 - **"The name is taken" has two spellings and `interprocess` normalises neither.** Unix `bind`
   says `EADDRINUSE`; a Windows named pipe is created under `FILE_FLAG_FIRST_PIPE_INSTANCE`, whose
@@ -282,7 +282,7 @@ The other way paths arrive from outside, and the one that can arrive before ther
   `with_state_emit` to flush playback. Linux MPRIS / macOS MediaPlayer attach eagerly; `event_tx`
   retained Windows-only for the late rewire.
 
-- **System tray** — `crates/melodia-platform/src/services/platform/tray/` cfg-split (Linux `ksni`, Win/mac `tray-icon 0.24`) behind
+- **System tray** — `crates/netodia-platform/src/services/platform/tray/` cfg-split (Linux `ksni`, Win/mac `tray-icon 0.24`) behind
   a `mod.rs` façade (`TrayAction`, `TraySnapshot`, embedded `tray.png`, `init_tray`).
   `ui/shell/tray_bridge.rs` runs one task off a bounded `mpsc<TrayAction>`: playback reuses the
   media controls' `EventSink`, `ShowHideWindow`/`Quit` hop to the UI via `invoke_from_event_loop`,

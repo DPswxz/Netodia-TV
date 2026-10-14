@@ -55,9 +55,9 @@ jobs:
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SHARED_SECRET: ${{ secrets.LASTFM_SHARED_SECRET }}
       # Read by `build.rs` on the same terms: absent means no source, not failure.
-      MELODIA_RADIO_BLOCKLIST: ${{ secrets.RADIO_BLOCKLIST }}
+      NETODIA_RADIO_BLOCKLIST: ${{ secrets.RADIO_BLOCKLIST }}
       # `--target <triple>` moves the binary off the path the packaging scripts assume.
-      BINARY: target/${{ inputs.target }}/release/Melodia
+      BINARY: target/${{ inputs.target }}/release/Netodia
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -77,24 +77,24 @@ jobs:
 
       # `--locked` is honest on every platform: the winit fork is vendored at
       # `winit/` and `[patch.crates-io]` points there, so checkout brings it along.
-      # No RUSTFLAGS stack workaround on Windows: `crates/melodia-ui/build.rs` runs the
+      # No RUSTFLAGS stack workaround on Windows: `crates/netodia-ui/build.rs` runs the
       # Slint compile on a 16 MiB thread. (The binary's build.rs does no Slint work.)
       #
-      # `-p melodia` because the root is virtual: with nothing to select, cargo selects
+      # `-p netodia` because the root is virtual: with nothing to select, cargo selects
       # every member, and this slot wants the binary and what it pulls in.
       - name: cargo build --release
-        run: cargo build --release -p melodia --target ${{ inputs.target }} --locked
+        run: cargo build --release -p netodia --target ${{ inputs.target }} --locked
 
       - name: Package tarball
         if: inputs.kind == 'linux-tarball'
         shell: bash
-        run: bash scripts/build-tarball.sh "melodia-${TAG}-${ARCH}-linux.tar.gz"
+        run: bash scripts/build-tarball.sh "netodia-${TAG}-${ARCH}-linux.tar.gz"
 
       # ARCH also selects the linuxdeploy build, SHA256-pinned in the script.
       - name: Package AppImage
         if: inputs.kind == 'linux-appimage'
         shell: bash
-        run: bash scripts/build-appimage.sh "melodia-${TAG}-${ARCH}.AppImage"
+        run: bash scripts/build-appimage.sh "netodia-${TAG}-${ARCH}.AppImage"
 
       # ARCH drives `rpmbuild --target` and ExclusiveArch, which is what puts
       # the output under ~/rpmbuild/RPMS/$ARCH/.
@@ -103,7 +103,7 @@ jobs:
         shell: bash
         run: |
           bash scripts/build-rpm.sh
-          cp ~/rpmbuild/RPMS/${ARCH}/melodia-*.rpm .
+          cp ~/rpmbuild/RPMS/${ARCH}/netodia-*.rpm .
 
       # Compiled from source rather than taiki-e/install-action, whose manifest
       # stopped covering cargo-deb for aarch64_linux. The pin is not just
@@ -118,15 +118,15 @@ jobs:
         if: inputs.kind == 'linux-deb'
         run: cargo install --locked --version 3.7.0 cargo-deb
 
-      # Renamed off cargo-deb's `melodia_<version>_<debarch>.deb` onto the
-      # hyphenated scheme, so the `melodia-*.deb` globs downstream match.
+      # Renamed off cargo-deb's `netodia_<version>_<debarch>.deb` onto the
+      # hyphenated scheme, so the `netodia-*.deb` globs downstream match.
       - name: Package deb
         if: inputs.kind == 'linux-deb'
         shell: bash
         run: |
-          cargo deb -p melodia --target ${{ inputs.target }} --no-build
+          cargo deb -p netodia --target ${{ inputs.target }} --no-build
           src="$(ls target/${{ inputs.target }}/debian/*.deb)"
-          cp "$src" "melodia-${TAG}-${ARCH}.deb"
+          cp "$src" "netodia-${TAG}-${ARCH}.deb"
 
       - uses: ./.github/actions/setup-wix
         if: inputs.kind == 'windows-msi'
@@ -139,16 +139,16 @@ jobs:
           # UpgradeCode, and the committed one is what makes in-place MSI upgrades
           # work. `--package` is required rather than redundant, cargo-wix
           # auto-selecting only in a single-member workspace and otherwise
-          # refusing outright, so splitting out `melodia-ui` made it mandatory.
+          # refusing outright, so splitting out `netodia-ui` made it mandatory.
           # It selects the manifest, and cargo-wix reads `wix/main.wxs` relative
-          # to that — which is why the wxs sits under `crates/melodia/` rather
+          # to that — which is why the wxs sits under `crates/netodia/` rather
           # than at the repo root behind an `-I`.
           # `--toolset modern` too: the default Legacy path finds the preinstalled
           # WiX 3.14 on x64 and chokes on the v4 schema, and finds no candle.exe
           # at all on arm64. `-arch` needs no flag, cargo-wix deriving it.
-          cargo wix --toolset modern --package melodia --target ${{ inputs.target }} --no-build --nocapture
+          cargo wix --toolset modern --package netodia --target ${{ inputs.target }} --no-build --nocapture
           Get-ChildItem -Path "target/wix/" -Filter "*.msi" -Recurse |
-            ForEach-Object { Copy-Item $_.FullName -Destination "melodia-${env:TAG}-${env:ARCH}.msi" }
+            ForEach-Object { Copy-Item $_.FullName -Destination "netodia-${env:TAG}-${env:ARCH}.msi" }
 
       # A different question than the minisign signing below: not "the key holder
       # signed these bytes" but "these bytes came out of this run at this commit",
@@ -158,11 +158,11 @@ jobs:
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: |
-            melodia-*.tar.gz
-            melodia-*.AppImage
-            melodia-*.rpm
-            melodia-*.deb
-            melodia-*.msi
+            netodia-*.tar.gz
+            netodia-*.AppImage
+            netodia-*.rpm
+            netodia-*.deb
+            netodia-*.msi
 
       - uses: ./.github/actions/install-minisign
 
@@ -170,25 +170,25 @@ jobs:
         with:
           key: ${{ secrets.MINISIGN_SECRET_KEY }}
           password: ${{ secrets.MINISIGN_PASSWORD }}
-          files: melodia-*.tar.gz melodia-*.AppImage melodia-*.rpm melodia-*.deb melodia-*.msi
+          files: netodia-*.tar.gz netodia-*.AppImage netodia-*.rpm netodia-*.deb netodia-*.msi
           trusted-comment: version=${{ inputs.version }} target=${{ inputs.kind }} file={file}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           # arch in the name because upload-artifact requires unique names across
           # a job's slots; the publish job flattens them with `merge-multiple`.
-          # Keep every glob extension-qualified: a bare `melodia-*` also matches
-          # DIRECTORIES, so the `melodia-ui/` that sat at the repo root rode along
+          # Keep every glob extension-qualified: a bare `netodia-*` also matches
+          # DIRECTORIES, so the `netodia-ui/` that sat at the repo root rode along
           # on every slot and the publish job's `gh release upload artifacts/*`
           # died on "is a directory". It lives under `crates/` now; the qualifier
           # is what stops the next one repeating it.
           name: ${{ inputs.kind }}-${{ inputs.arch }}
           path: |
-            melodia-*.tar.gz
-            melodia-*.AppImage
-            melodia-*.rpm
-            melodia-*.deb
-            melodia-*.msi
-            melodia-*.minisig
+            netodia-*.tar.gz
+            netodia-*.AppImage
+            netodia-*.rpm
+            netodia-*.deb
+            netodia-*.msi
+            netodia-*.minisig
           retention-days: 7
           if-no-files-found: error

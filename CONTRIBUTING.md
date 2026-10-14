@@ -10,8 +10,8 @@ build. The toolchain is pinned by `rust-toolchain.toml`, so cargo picks the righ
 on its own.
 
 A build from this repository keeps its library, settings and database in a separate
-`Melodia-dev` data directory, so you can break things without touching an installed
-copy. Set `MELODIA_DATA_DIR` if you want a scratch directory of your own.
+`Netodia-dev` data directory, so you can break things without touching an installed
+copy. Set `NETODIA_DATA_DIR` if you want a scratch directory of your own.
 
 Run this once per clone, so the tree-wide formatting commits stay out of `git blame`:
 
@@ -40,14 +40,14 @@ when it is missing or out of step. The second is GNU gettext:
 
 ## Reporting a bug
 
-Open an issue with the bug report template. `Melodia --logs` prints the log directory
-on Linux and macOS; on Windows it is `%APPDATA%\Melodia\logs\`. Attaching the tail of
+Open an issue with the bug report template. `Netodia --logs` prints the log directory
+on Linux and macOS; on Windows it is `%APPDATA%\Netodia\logs\`. Attaching the tail of
 the log helps a lot, and it holds no credentials by design.
 
 ## Before you build something big
 
 For a fix or a small improvement, just open a PR. For anything with real scope, open
-an issue first so we can agree on the shape. Melodia is opinionated about where things
+an issue first so we can agree on the shape. Netodia is opinionated about where things
 live, and a conversation up front is cheaper than a rewrite after review.
 
 Before proposing a different library, a different threading shape or a different boundary
@@ -82,7 +82,7 @@ for `let ... else`.
 
 If you add, change or remove a user-facing string, wrap it in `@tr(...)` and run
 `scripts/update-translations.sh`. It rebuilds the template,
-`crates/melodia-ui/translations/melodia-ui.pot`, which nobody edits by hand. In every
+`crates/netodia-ui/translations/netodia-ui.pot`, which nobody edits by hand. In every
 catalogue beside it, each new or changed string comes back as an empty `msgstr`, or as a
 `#, fuzzy` guess where gettext found a near match, for you to finish. A note for
 translators goes in the `.slint` file as one `// Translators: …` line directly above the line
@@ -104,7 +104,7 @@ the usual cause is a path: build them with `Path::join` or `MAIN_SEPARATOR_STR` 
 than spelling a separator, in fixtures as much as in code.
 
 Coverage is a separate manual run (**Actions → Deploy Coverage → Run workflow**),
-published to [kenansalar.github.io/Melodia](https://kenansalar.github.io/Melodia/).
+published to [kenansalar.github.io/Netodia](https://kenansalar.github.io/Netodia/).
 
 ## On AI
 

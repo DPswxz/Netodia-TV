@@ -1,6 +1,6 @@
 # Slint Native-Feature Adoption Tracker
 
-Melodia carries hand-rolled workarounds for gaps in Slint ≤ 1.16. Slint 1.17 (2026-06-24) and
+Netodia carries hand-rolled workarounds for gaps in Slint ≤ 1.16. Slint 1.17 (2026-06-24) and
 1.18 (2026-09-16) shipped native replacements for several of them, or the foundations for one.
 This doc holds the migration plan from 1.16.1 to 1.18.0 and one section per workaround we can
 retire once there.
@@ -59,7 +59,7 @@ real check.
 - [ ] **Lockfile trap: also run `cargo update -p const-field-offset`** (to 0.2.1). 1.18.0's
       generated code calls `sp::compose_field_offsets`, which only exists from
       `const-field-offset` 0.2.1, while `slint` still declares `0.2.0`. A plain
-      `cargo update -p slint -p slint-build` keeps 0.2.0, and `melodia-ui` then fails with 7,876
+      `cargo update -p slint -p slint-build` keeps 0.2.0, and `netodia-ui` then fails with 7,876
       `E0425`s. A fresh resolve would pick 0.2.1; a targeted update doesn't. Worth reporting
       upstream as a missing version floor.
 - [ ] `window_chrome/winit_filter.rs:415`: `try_dispatch_event` → `dispatch_event_with_result`,
@@ -73,11 +73,11 @@ real check.
       `<=>`-on-`viewport-y` entries in `.claude/rules/slint-pitfalls.md`, and the
       `now_playing/lyrics/follow.rs` module doc. `v-viewport-height` / `v-visible-height` are our
       own properties and stay.
-- [ ] Re-apply the blocker-1 fix in `crates/melodia-ui/ui/components/view-transition.slint`:
+- [ ] Re-apply the blocker-1 fix in `crates/netodia-ui/ui/components/view-transition.slint`:
       read the animated properties once in `init`. The file is still the plain 1ms-Timer form.
 - [ ] Optional: `slint-build = { version = "1.18.0", default-features = false, features = ["compat-1-18"] }`.
       `renderer-software` became a default feature that only feeds software-renderer resource
-      embedding, which `crates/melodia-ui/build.rs` doesn't use.
+      embedding, which `crates/netodia-ui/build.rs` doesn't use.
 - [ ] "Slint 1.16" in CLAUDE.md's opening line and README's stack line. The in-tree "Slint 1.16
       has no …" notes go with the code that phase 3 retires, not in this pass.
 
@@ -181,7 +181,7 @@ foundation only, watch but not yet usable.
   Every item is measured for real, so no estimate and no ruler.
 - **Migration:** each surface becomes a `FlexboxLayout` over a flat model.
   - `ui/chips.rs` and `ui/tests/chips_tests.rs` are deleted, along with the
-    `ui::chips::install` call in `crates/melodia/src/boot/ui_setup/views.rs`.
+    `ui::chips::install` call in `crates/netodia/src/boot/ui_setup/views.rs`.
   - `globals/wrap.slint` is deleted. `ColorDotGrid` still needs to know whether a dot is on the
     first row, for its tooltip side (`tip-side: r == 0 ? above : below`). The dots are fixed
     width, so that's `i < per-row` over the same arithmetic, moved into the component as a
@@ -291,7 +291,7 @@ foundation only, watch but not yet usable.
 ## 🟢 Two-way model row bindings → slim the model-patch walkers
 
 - **Today:** optimistic favorite/rating flips walk the `VecModel` from Rust via
-  `crates/melodia-views/src/ui/model_patch.rs::patch_track_row_by_id` (+ per-view `apply_*` one-liners, `wire_row_flag!`
+  `crates/netodia-views/src/ui/model_patch.rs::patch_track_row_by_id` (+ per-view `apply_*` one-liners, `wire_row_flag!`
   macro); queue-sheet selection mirrors through `ShadowEntry` snapshots.
 - **Upstream in 1.17:** two-way bindings to model row data — a row's control can write back
   into the model directly.
@@ -379,9 +379,9 @@ foundation only, watch but not yet usable.
 
 ## 🟡 `SystemTrayIcon` element → retire the dual tray stack
 
-- **Today:** `crates/melodia-platform/src/services/platform/tray/` cfg-split (Linux `ksni` with the
+- **Today:** `crates/netodia-platform/src/services/platform/tray/` cfg-split (Linux `ksni` with the
   zbus-feature footgun; Win/mac `tray-icon` with deferred init + pre-exit drop),
-  `crates/melodia-views/src/ui/shell/tray_bridge.rs`, embedded `tray.png`,
+  `crates/netodia-views/src/ui/shell/tray_bridge.rs`, embedded `tray.png`,
   restart-gated enable toggle, close-to-tray geometry-restore timer dance.
 - **Upstream:** declarative `SystemTrayIcon` element (1.17). As of 1.18 it carries `icon`,
   `tooltip`, `visible`, `title`, a `clicked` callback and a `Menu` child. 1.18 also fixed
@@ -398,7 +398,7 @@ foundation only, watch but not yet usable.
 
 ## 🟡 Built-in `Tooltip` element → retire our tooltip component
 
-- **Today:** `crates/melodia-ui/ui/components/tooltip.slint`, whose name shadows the built-in. It
+- **Today:** `crates/netodia-ui/ui/components/tooltip.slint`, whose name shadows the built-in. It
   compiles silently on 1.18 (trial) but is confusing long-term. Seventeen mounts:
   - **Nine anchored in-tree:** `action-pill.slint:146`, `icon-button.slint:137`,
     `macos-traffic-light.slint:73`, `caption-buttons.slint:133`,
@@ -438,7 +438,7 @@ foundation only, watch but not yet usable.
   functions on `Window`. 1.18 makes `close()` return whether the close was accepted and deprecates
   setting `Window.x`/`y`; the root sets neither. Nothing in 1.18 addresses the Wayland cache.
 - **Trigger:** verified-on-Wayland behavior (KDE + GNOME) of the new properties — test in a
-  scratch app first, not in Melodia.
+  scratch app first, not in Netodia.
 - **Risk:** high regression surface (custom titlebar, maximize seed, resize ring gating,
   `RESPAWN_AFTER_EXIT`). The winit path works; migrate only if it meaningfully simplifies
   `window_chrome/`. Low priority.
@@ -468,8 +468,8 @@ foundation only, watch but not yet usable.
   the 2026-06-29 one quoted below; its newest activity is a user use-case comment (2026-09-13).
   1.18's experimental Vello renderer doesn't change the FemtoVG caveat.
 - **Wanted for:** frosted-glass fills on the Now-Playing metadata chips (`MetaChip`,
-  `crates/melodia-ui/ui/views/now-playing-view.slint`) and the Up Next row hover slab
-  (`crates/melodia-ui/ui/components/now-playing/up-next-list.slint`). Both currently fake depth with a flat
+  `crates/netodia-ui/ui/views/now-playing-view.slint`) and the Up Next row hover slab
+  (`crates/netodia-ui/ui/components/now-playing/up-next-list.slint`). Both currently fake depth with a flat
   `Player.np-accent-bright.with-alpha(0.16)` tint over the blurred-artwork backdrop.
 - **Status: absent upstream, and not on the roadmap.** Verified in source, not docs:
   `i-slint-compiler`'s `typeregister.rs` registers exactly two blur-typed properties in the
@@ -505,7 +505,7 @@ foundation only, watch but not yet usable.
   Next" heading against a blurred rather than tinted ground. Measure — a per-element backdrop
   read-back every frame is exactly what Memory Discipline exists for.
 - **Meanwhile:** the only in-engine approximation is the pre-blurred-`Image` trick already
-  used for the NP backdrop (`crates/melodia-views/src/ui/now_playing_artwork.rs`), and it degrades badly for these
+  used for the NP backdrop (`crates/netodia-views/src/ui/now_playing_artwork.rs`), and it degrades badly for these
   two surfaces — chips reflow across rows on resize, the hover slab moves per row and scrolls,
   so each would need its own correctly-offset crop recomputed on every layout change. The flat
   tint is the right stand-in until upstream lands.

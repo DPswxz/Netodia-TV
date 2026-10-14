@@ -39,7 +39,7 @@ The online half ships off. The guard is a single early return in the facade rath
 the UI, which is [ADR 15](0015-radio-ships-off-guarded-at-the-facade.md)'s shape and is taken for
 ADR 15's reason: two shipped product descriptions promise that every online feature is off until you
 turn it on, and a lookup that shipped on would make both of them false.
-`crates/melodia/tests/lyrics_switch.rs` holds it in two halves, an equality on the single reading of
+`crates/netodia/tests/lyrics_switch.rs` holds it in two halves, an equality on the single reading of
 the flag inside the facade and a walk over every crate for a mention of the directory client outside
 it.
 

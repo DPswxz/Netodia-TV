@@ -1,7 +1,7 @@
 ---
 paths:
   - crates/**/*.rs
-  - crates/melodia-ui/ui/**/*.slint
+  - crates/netodia-ui/ui/**/*.slint
   - migrations/**/*.sql
   - scripts/*.py
   - scripts/*.sh

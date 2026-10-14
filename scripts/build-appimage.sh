@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Build a relocatable AppImage from the existing `target/release/Melodia`
+# Build a relocatable AppImage from the existing `target/release/Netodia`
 # binary using upstream `linuxdeploy` + `linuxdeploy-plugin-appimage`.
 #
 # Usage:
-#   ./scripts/build-appimage.sh                       # x86_64, Melodia-<ver>-x86_64.AppImage
+#   ./scripts/build-appimage.sh                       # x86_64, Netodia-<ver>-x86_64.AppImage
 #   ./scripts/build-appimage.sh /tmp/Custom.AppImage  # x86_64, specific output path
-#   ARCH=aarch64 ./scripts/build-appimage.sh          # aarch64, Melodia-<ver>-aarch64.AppImage
+#   ARCH=aarch64 ./scripts/build-appimage.sh          # aarch64, Netodia-<ver>-aarch64.AppImage
 #
 # Arch defaults to the runner's `uname -m`, so a developer on ARM64 Linux
 # builds natively without ceremony; CI sets it per matrix slot.
@@ -20,8 +20,8 @@ set -euo pipefail
 REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
-BINARY="${BINARY:-$REPO_ROOT/target/release/Melodia}"
-[[ -f "$BINARY" ]] || { echo "ERROR: $BINARY not found. Run 'cargo build --release -p melodia' first."; exit 1; }
+BINARY="${BINARY:-$REPO_ROOT/target/release/Netodia}"
+[[ -f "$BINARY" ]] || { echo "ERROR: $BINARY not found. Run 'cargo build --release -p netodia' first."; exit 1; }
 
 # Every member inherits the version from `[workspace.package]`, so `[package]`
 # reads `version.workspace = true` and carries no literal. Anchor on the table
@@ -36,7 +36,7 @@ case "$ARCH" in
   x86_64|aarch64) ;;
   *) echo "ERROR: unsupported ARCH=$ARCH (expected x86_64 or aarch64)"; exit 1 ;;
 esac
-OUTPUT="${1:-Melodia-${VERSION}-${ARCH}.AppImage}"
+OUTPUT="${1:-Netodia-${VERSION}-${ARCH}.AppImage}"
 
 # Fetch linuxdeploy + the AppImage plugin if not cached.
 #
@@ -95,12 +95,12 @@ if ! verify_or_clear "$PLUGIN" "$PLUGIN_SHA256"; then
 fi
 
 # Stage AppDir.
-APPDIR="$(mktemp -d)/Melodia.AppDir"
+APPDIR="$(mktemp -d)/Netodia.AppDir"
 trap 'rm -rf "$(dirname "$APPDIR")"' EXIT
 mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 
-cp "$BINARY" "$APPDIR/usr/bin/Melodia"
-chmod +x "$APPDIR/usr/bin/Melodia"
+cp "$BINARY" "$APPDIR/usr/bin/Netodia"
+chmod +x "$APPDIR/usr/bin/Netodia"
 
 # Icon — linuxdeploy uses the basename to derive `Icon=` in the desktop
 # file, so the SVG filename must match the .desktop's Icon= field. Use
@@ -108,32 +108,32 @@ chmod +x "$APPDIR/usr/bin/Melodia"
 # alt-tab thumbnail icon where there's no app chrome behind the glyph.
 # The without-background variant is reserved for the in-app custom
 # titlebar where the window mantle already provides the disc.
-cp "$REPO_ROOT/assets/icons/logo-with-background.svg" "$APPDIR/melodia.svg"
+cp "$REPO_ROOT/assets/icons/logo-with-background.svg" "$APPDIR/netodia.svg"
 
 # Body kept in lockstep with `scripts/build-rpm.sh` + `Cargo.toml`'s
-# DEB asset `scripts/Melodia.desktop` + `assets/desktop/Melodia.desktop.tmpl`.
+# DEB asset `scripts/Netodia.desktop` + `assets/desktop/Netodia.desktop.tmpl`.
 # Drift here means AppImage users can't open audio files via "Open with…"
 # and KDE shows two taskbar entries (no StartupWMClass to merge them).
 # The MIME drift-guard test in
-# `crates/melodia-platform/src/services/platform/tests/desktop_integration_tests.rs`
+# `crates/netodia-platform/src/services/platform/tests/desktop_integration_tests.rs`
 # covers the four sources — keep this body byte-identical bar the `Exec=`
-# command: AppImage binaries sit at the AppDir root so `Melodia` is the relative
-# name, RPM/DEB resolve `melodia` via PATH. The ` %F` is not optional; without it
+# command: AppImage binaries sit at the AppDir root so `Netodia` is the relative
+# name, RPM/DEB resolve `netodia` via PATH. The ` %F` is not optional; without it
 # the MimeType list above is unusable.
 # Desktop file named after the reverse-DNS app id so its desktop-id
-# matches the AppStream component id `com.github.kenansalar.melodia`.
-cat > "$APPDIR/com.github.kenansalar.melodia.desktop" <<'EOF'
+# matches the AppStream component id `com.github.helpmeeadice.netodia`.
+cat > "$APPDIR/com.github.helpmeeadice.netodia.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=Melodia
+Name=Netodia
 GenericName=Music Player
 Comment=Cross-platform desktop music player
-Exec=Melodia %F
-Icon=melodia
+Exec=Netodia %F
+Icon=netodia
 Categories=AudioVideo;Audio;Player;Music;
 Keywords=music;audio;player;library;sound;songs;tracks;mp3;flac;ogg;
 Terminal=false
-StartupWMClass=Melodia
+StartupWMClass=Netodia
 MimeType=audio/mpeg;audio/flac;audio/x-flac;audio/mp4;audio/x-m4a;audio/x-m4b;audio/ogg;audio/x-vorbis+ogg;audio/x-flac+ogg;audio/x-opus+ogg;audio/wav;audio/x-wav;audio/aac;audio/x-aac;audio/aiff;audio/x-aiff;audio/x-aifc;audio/x-matroska;
 EOF
 
@@ -142,8 +142,8 @@ EOF
 # validates it automatically when appstreamcli is on $PATH. Shipped
 # verbatim, identical to the RPM/DEB/tarball copies.
 mkdir -p "$APPDIR/usr/share/metainfo"
-cp "$REPO_ROOT/packaging/com.github.kenansalar.melodia.metainfo.xml" \
-   "$APPDIR/usr/share/metainfo/com.github.kenansalar.melodia.metainfo.xml"
+cp "$REPO_ROOT/packaging/com.github.helpmeeadice.netodia.metainfo.xml" \
+   "$APPDIR/usr/share/metainfo/com.github.helpmeeadice.netodia.metainfo.xml"
 
 # Licences. The AppImage is self-contained — nothing resolves the MetaInfo's
 # `<project_license>` back to a text — so it needs the AGPL itself, and the
@@ -151,9 +151,9 @@ cp "$REPO_ROOT/packaging/com.github.kenansalar.melodia.metainfo.xml" \
 # all compiled into the binary, which puts their licence text here under
 # Apache-2.0 §4(a), GPLv3 §4 and MPL-2.0 §3.2 rather than as a courtesy. Same
 # destination the DEB uses. See licenses/ATTRIBUTION.txt.
-mkdir -p "$APPDIR/usr/share/doc/melodia"
-cp "$REPO_ROOT/LICENSE" "$APPDIR/usr/share/doc/melodia/LICENSE"
-cp -r "$REPO_ROOT/licenses" "$APPDIR/usr/share/doc/melodia/licenses"
+mkdir -p "$APPDIR/usr/share/doc/netodia"
+cp "$REPO_ROOT/LICENSE" "$APPDIR/usr/share/doc/netodia/LICENSE"
+cp -r "$REPO_ROOT/licenses" "$APPDIR/usr/share/doc/netodia/licenses"
 
 # Run linuxdeploy. `--output appimage` invokes the plugin to produce
 # the final AppImage; without it we'd only get a populated AppDir.
@@ -163,9 +163,9 @@ LINUXDEPLOY_OUTPUT_VERSION="$VERSION" \
 OUTPUT="$OUTPUT" \
 "$LINUXDEPLOY" \
   --appdir "$APPDIR" \
-  --desktop-file "$APPDIR/com.github.kenansalar.melodia.desktop" \
-  --icon-file "$APPDIR/melodia.svg" \
-  --executable "$APPDIR/usr/bin/Melodia" \
+  --desktop-file "$APPDIR/com.github.helpmeeadice.netodia.desktop" \
+  --icon-file "$APPDIR/netodia.svg" \
+  --executable "$APPDIR/usr/bin/Netodia" \
   --output appimage
 
 echo "==> wrote $OUTPUT"

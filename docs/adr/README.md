@@ -1,6 +1,6 @@
 # Architecture decisions
 
-Why Melodia is built the way it is. One decision per file, numbered, and the title states what
+Why Netodia is built the way it is. One decision per file, numbered, and the title states what
 was decided rather than what it is about, so this index reads without opening anything.
 
 These are for people. `CLAUDE.md` and the files under `.claude/rules/` are written for an agent,
@@ -85,7 +85,7 @@ chronological and the groups are not, so a low number can sit anywhere.
 
 | ADR | Status |
 | --- | --- |
-| [31. Melodia ships its own packages, in five formats](0031-five-package-formats.md) | Accepted, 2026-08-12 |
+| [31. Netodia ships its own packages, in five formats](0031-five-package-formats.md) | Accepted, 2026-08-12 |
 | [32. A release is a pushed tag, not a merge](0032-release-from-a-pushed-tag.md) | Accepted, 2026-08-28 |
 
 ## The shape

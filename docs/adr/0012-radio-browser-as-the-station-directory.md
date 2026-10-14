@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-08-20
 
-Internet radio only means something if a user can find a station. Melodia has no server, no account
+Internet radio only means something if a user can find a station. Netodia has no server, no account
 system and no editorial staff, so where the station list comes from decides whether the feature is
 useful or a URL box with a nice frame around it.
 

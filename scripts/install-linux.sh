@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Per-user install script for the Melodia tarball release.
+# Per-user install script for the Netodia tarball release.
 #
 # Run this from inside the unpacked tarball directory:
-#   tar -xzf melodia-v0.1.0-x86_64-linux.tar.gz
-#   cd melodia
+#   tar -xzf netodia-v0.1.0-x86_64-linux.tar.gz
+#   cd netodia
 #   ./install-linux.sh
 #
 # What this does:
-#   1. Copies the `Melodia` binary to ~/.local/share/Melodia/Melodia
+#   1. Copies the `Netodia` binary to ~/.local/share/Netodia/Netodia
 #   2. Drops the .desktop file at
-#      ~/.local/share/applications/com.github.kenansalar.melodia.desktop
+#      ~/.local/share/applications/com.github.helpmeeadice.netodia.desktop
 #   3. Drops the SVG icon at
-#      ~/.local/share/icons/hicolor/scalable/apps/melodia.svg
+#      ~/.local/share/icons/hicolor/scalable/apps/netodia.svg
 #   4. Best-effort desktop + icon cache refresh
 #
 # Both names match the RPM/DEB destinations — the desktop one so software
@@ -25,14 +25,14 @@
 #   ./uninstall-linux.sh
 #
 # Environment overrides:
-#   MELODIA_INSTALL_DIR   — install dir (default: ~/.local/share/Melodia)
+#   NETODIA_INSTALL_DIR   — install dir (default: ~/.local/share/Netodia)
 #   XDG_DATA_HOME         — base for ~/.local/share
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-INSTALL_DIR="${MELODIA_INSTALL_DIR:-$DATA_HOME/Melodia}"
+INSTALL_DIR="${NETODIA_INSTALL_DIR:-$DATA_HOME/Netodia}"
 APPS_DIR="$DATA_HOME/applications"
 ICONS_DIR="$DATA_HOME/icons/hicolor/scalable/apps"
 
@@ -40,23 +40,23 @@ ICONS_DIR="$DATA_HOME/icons/hicolor/scalable/apps"
 need() {
   [[ -f "$SCRIPT_DIR/$1" ]] || { echo "ERROR: $1 missing — extracted tarball is incomplete." >&2; exit 1; }
 }
-need Melodia
-need com.github.kenansalar.melodia.desktop
-need melodia.svg
+need Netodia
+need com.github.helpmeeadice.netodia.desktop
+need netodia.svg
 
-echo "==> installing Melodia to $INSTALL_DIR"
+echo "==> installing Netodia to $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR" "$APPS_DIR" "$ICONS_DIR"
 
-DESKTOP_FILE="com.github.kenansalar.melodia.desktop"
-install -m 0755 "$SCRIPT_DIR/Melodia"           "$INSTALL_DIR/Melodia"
+DESKTOP_FILE="com.github.helpmeeadice.netodia.desktop"
+install -m 0755 "$SCRIPT_DIR/Netodia"           "$INSTALL_DIR/Netodia"
 install -m 0644 "$SCRIPT_DIR/$DESKTOP_FILE"     "$APPS_DIR/$DESKTOP_FILE"
-install -m 0644 "$SCRIPT_DIR/melodia.svg"       "$ICONS_DIR/melodia.svg"
+install -m 0644 "$SCRIPT_DIR/netodia.svg"       "$ICONS_DIR/netodia.svg"
 
 # Earlier per-user installs used these names; a leftover shows as a duplicate
 # launcher for the same binary. Mirrored in uninstall-linux.sh.
-rm -f "$APPS_DIR/Melodia.desktop" "$APPS_DIR/melodia.desktop"
+rm -f "$APPS_DIR/Netodia.desktop" "$APPS_DIR/netodia.desktop"
 
-# The AppStream MetaInfo isn't installed here — Melodia self-deploys it to
+# The AppStream MetaInfo isn't installed here — Netodia self-deploys it to
 # ~/.local/share/metainfo/ on first launch (see desktop_integration.rs).
 
 # LICENSE is informational. `licenses/` is not: the bundled fonts and the
@@ -83,8 +83,8 @@ LICENSE_FILES=("$SCRIPT_DIR"/licenses/*)
 # needs quotes or the launcher splits it into two arguments. Only when
 # needed, an unquoted command being what every other source ships.
 case "$INSTALL_DIR" in
-  *\ *) EXEC_COMMAND="\"$INSTALL_DIR/Melodia\"" ;;
-  *)    EXEC_COMMAND="$INSTALL_DIR/Melodia" ;;
+  *\ *) EXEC_COMMAND="\"$INSTALL_DIR/Netodia\"" ;;
+  *)    EXEC_COMMAND="$INSTALL_DIR/Netodia" ;;
 esac
 sed -i "s|^Exec=[^ ]*|Exec=$EXEC_COMMAND|" "$APPS_DIR/$DESKTOP_FILE"
 
@@ -98,18 +98,18 @@ fi
 
 cat <<EOF
 
-✓ Melodia installed.
+✓ Netodia installed.
 
-  Binary    : $INSTALL_DIR/Melodia
+  Binary    : $INSTALL_DIR/Netodia
   Launcher  : $APPS_DIR/$DESKTOP_FILE
-  Icon      : $ICONS_DIR/melodia.svg
+  Icon      : $ICONS_DIR/netodia.svg
 
 Run it from your application launcher, or directly:
-    $INSTALL_DIR/Melodia
+    $INSTALL_DIR/Netodia
 
-Optional: add Melodia to your PATH:
+Optional: add Netodia to your PATH:
     mkdir -p \$HOME/.local/bin
-    ln -sf "$INSTALL_DIR/Melodia" \$HOME/.local/bin/melodia
+    ln -sf "$INSTALL_DIR/Netodia" \$HOME/.local/bin/netodia
 
 Uninstall: ./uninstall-linux.sh (or rm -rf $INSTALL_DIR and the .desktop/icon)
 EOF

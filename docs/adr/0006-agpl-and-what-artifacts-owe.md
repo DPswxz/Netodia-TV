@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-05-25
 
-Melodia is published, packaged in five formats and installed by people who will never read its
+Netodia is published, packaged in five formats and installed by people who will never read its
 source. Whatever licence it carries decides two separate things: what someone may do with a modified
 copy, and what every artifact has to ship alongside the binary.
 
@@ -31,7 +31,7 @@ Apache-2.0 section 4(a) requires it and the OFL FAQ recommends it for a bundled 
 formats built by five toolchains, one of them an MSI that no Linux runner can produce, so a format
 that quietly stops shipping the text fails nowhere until a packager files a bug. It is held by tests
 that walk the packaging inputs rather than by review, for exactly that reason, and
-`crates/melodia/tests/packaging.rs` is where they live.
+`crates/netodia/tests/packaging.rs` is where they live.
 
 **Amendment, 2026-09-08:** the constraint named above has bound. `kakasi`, the Japanese
 romanization engine [ADR 39](0039-romanization-runs-three-engines.md) chose, is GPL-3.0 with no

@@ -1,4 +1,4 @@
-# ADR 31: Melodia ships its own packages, in five formats
+# ADR 31: Netodia ships its own packages, in five formats
 
 **Status:** Accepted, 2026-08-12
 

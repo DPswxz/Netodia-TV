@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!--
+  Polkit action for the Netodia in-app updater.
+
+  This policy narrows pkexec elevation so the auth dialog shows
+  "Install Netodia update" instead of the raw dnf/apt command. The
+  action targets /usr/libexec/netodia-update-helper, which then
+  argv-dispatches to dnf5/dnf/apt/apt-get. Whitelisting the helper
+  binary (not /usr/bin/dnf itself) means the auth_admin_keep cache
+  only applies to Netodia updates, not to all dnf invocations under
+  the same session.
+
+  Translations: <message> tags repeat per supported locale via
+  xml:lang. Only English is shipped at v1; translators add per-locale
+  variants by appending <message xml:lang="de">…</message> entries.
+-->
+<policyconfig>
+
+  <vendor>Netodia</vendor>
+  <vendor_url>https://github.com/HELPMEEADICE/Netodia</vendor_url>
+  <icon_name>netodia</icon_name>
+
+  <action id="com.github.helpmeeadice.netodia.update">
+    <description>Install Netodia update</description>
+    <message>Authentication is required to install a Netodia update.</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/netodia-update-helper</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
+</policyconfig>

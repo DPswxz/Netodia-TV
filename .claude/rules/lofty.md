@@ -1,10 +1,10 @@
 ---
 paths:
-  - crates/melodia-store/src/media/ingest/**/*.rs
-  - crates/melodia-artwork/src/media/image/**/*.rs
-  - crates/melodia-app/src/library/tags.rs
-  - crates/melodia-app/src/tasks/file_event_processor/**/*.rs
-  - crates/melodia-views/src/ui/callbacks/tags/**/*.rs
+  - crates/netodia-store/src/media/ingest/**/*.rs
+  - crates/netodia-artwork/src/media/image/**/*.rs
+  - crates/netodia-app/src/library/tags.rs
+  - crates/netodia-app/src/tasks/file_event_processor/**/*.rs
+  - crates/netodia-views/src/ui/callbacks/tags/**/*.rs
 ---
 
 # Lofty Best Practices

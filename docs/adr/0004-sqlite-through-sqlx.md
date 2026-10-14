@@ -29,8 +29,8 @@ the pool, the migrator and an async driver that never blocks a runtime worker, a
 The heaviest consequence is that a migration is irreversible once it has been applied. That is what
 makes the database backup before migration fatal-if-it-fails rather than best-effort, and it is why
 a development build gets its own data root: a migration still on a branch would otherwise leave an
-installed Melodia unable to open its own library until that branch shipped.
+installed Netodia unable to open its own library until that branch shipped.
 
 This ADR was written in September 2026. No argument for this choice existed anywhere in the
 repository; it is reconstructed from the schema, the pool configuration in
-`crates/melodia-store/src/database/mod.rs` and the maintainer's account.
+`crates/netodia-store/src/database/mod.rs` and the maintainer's account.

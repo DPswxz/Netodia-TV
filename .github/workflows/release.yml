@@ -27,7 +27,7 @@ on:
 permissions:
   contents: write
   # OIDC token to mint the Sigstore certificate, plus write to the attestations
-  # store. Verify with `gh attestation verify <file> --repo KenanSalar/Melodia`.
+  # store. Verify with `gh attestation verify <file> --repo KenanSalar/Netodia`.
   id-token: write
   attestations: write
 

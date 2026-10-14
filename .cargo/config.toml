@@ -13,4 +13,4 @@ RUST_TEST_THREADS = "8"
 # than of one package. `CARGO_MANIFEST_DIR` answered that only while the tree
 # was one crate; cargo resolves this against the directory holding `.cargo`, so
 # it keeps meaning the root once packages move under it.
-MELODIA_REPO_ROOT = { value = "", relative = true }
+NETODIA_REPO_ROOT = { value = "", relative = true }

@@ -3602,24 +3602,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia"
-version = "0.18.0"
+name = "netodia"
+version = "0.1.0"
 dependencies = [
  "async-compat",
  "glob",
  "log",
- "melodia-app",
- "melodia-artwork",
- "melodia-audio",
- "melodia-core",
- "melodia-engine",
- "melodia-integrations",
- "melodia-platform",
- "melodia-playback",
- "melodia-store",
- "melodia-testkit",
- "melodia-ui",
- "melodia-views",
+ "netodia-app",
+ "netodia-artwork",
+ "netodia-audio",
+ "netodia-core",
+ "netodia-engine",
+ "netodia-integrations",
+ "netodia-platform",
+ "netodia-playback",
+ "netodia-store",
+ "netodia-testkit",
+ "netodia-ui",
+ "netodia-views",
  "rayon",
  "slint",
  "sqlx",
@@ -3631,8 +3631,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-app"
-version = "0.18.0"
+name = "netodia-app"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "chrono",
@@ -3642,15 +3642,15 @@ dependencies = [
  "kakasi",
  "lofty",
  "log",
- "melodia-artwork",
- "melodia-core",
- "melodia-engine",
- "melodia-integrations",
- "melodia-net",
- "melodia-platform",
- "melodia-playback",
- "melodia-store",
- "melodia-testkit",
+ "netodia-artwork",
+ "netodia-core",
+ "netodia-engine",
+ "netodia-integrations",
+ "netodia-net",
+ "netodia-platform",
+ "netodia-playback",
+ "netodia-store",
+ "netodia-testkit",
  "minisign-verify",
  "natord",
  "open",
@@ -3674,8 +3674,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-artwork"
-version = "0.18.0"
+name = "netodia-artwork"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "color-thief",
@@ -3686,8 +3686,8 @@ dependencies = [
  "log",
  "lru",
  "material-colors",
- "melodia-core",
- "melodia-testkit",
+ "netodia-core",
+ "netodia-testkit",
  "parking_lot",
  "rayon",
  "slint",
@@ -3695,13 +3695,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-audio"
-version = "0.18.0"
+name = "netodia-audio"
+version = "0.1.0"
 dependencies = [
  "lofty",
  "log",
- "melodia-core",
- "melodia-testkit",
+ "netodia-core",
+ "netodia-testkit",
  "opus-pure",
  "parking_lot",
  "symphonia",
@@ -3710,14 +3710,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-core"
-version = "0.18.0"
+name = "netodia-core"
+version = "0.1.0"
 dependencies = [
  "chrono",
  "dirs",
  "dunce",
  "log",
- "melodia-testkit",
+ "netodia-testkit",
  "parking_lot",
  "serde",
  "serde_json",
@@ -3729,15 +3729,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-engine"
-version = "0.18.0"
+name = "netodia-engine"
+version = "0.1.0"
 dependencies = [
  "cpal",
  "log",
- "melodia-audio",
- "melodia-core",
- "melodia-playback",
- "melodia-testkit",
+ "netodia-audio",
+ "netodia-core",
+ "netodia-playback",
+ "netodia-testkit",
  "parking_lot",
  "rand 0.10.2",
  "serde",
@@ -3748,12 +3748,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-integrations"
-version = "0.18.0"
+name = "netodia-integrations"
+version = "0.1.0"
 dependencies = [
  "log",
- "melodia-core",
- "melodia-engine",
+ "netodia-core",
+ "netodia-engine",
  "parking_lot",
  "souvlaki",
  "tokio",
@@ -3762,13 +3762,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-net"
-version = "0.18.0"
+name = "netodia-net"
+version = "0.1.0"
 dependencies = [
  "futures-util",
  "log",
- "melodia-core",
- "melodia-testkit",
+ "netodia-core",
+ "netodia-testkit",
  "reqwest",
  "serde",
  "serde_json",
@@ -3776,8 +3776,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-platform"
-version = "0.18.0"
+name = "netodia-platform"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "chrono",
@@ -3788,8 +3788,8 @@ dependencies = [
  "ksni",
  "libc",
  "log",
- "melodia-core",
- "melodia-testkit",
+ "netodia-core",
+ "netodia-testkit",
  "parking_lot",
  "serde",
  "serde_json",
@@ -3801,16 +3801,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-playback"
-version = "0.18.0"
+name = "netodia-playback"
+version = "0.1.0"
 dependencies = [
  "alsa",
  "biquad",
  "cpal",
  "log",
- "melodia-audio",
- "melodia-core",
- "melodia-testkit",
+ "netodia-audio",
+ "netodia-core",
+ "netodia-testkit",
  "parking_lot",
  "realfft",
  "rustix 1.1.5",
@@ -3824,8 +3824,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-store"
-version = "0.18.0"
+name = "netodia-store"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "chrono",
@@ -3833,10 +3833,10 @@ dependencies = [
  "image",
  "lofty",
  "log",
- "melodia-artwork",
- "melodia-audio",
- "melodia-core",
- "melodia-testkit",
+ "netodia-artwork",
+ "netodia-audio",
+ "netodia-core",
+ "netodia-testkit",
  "notify",
  "notify-debouncer-full",
  "rayon",
@@ -3847,24 +3847,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "melodia-testkit"
-version = "0.18.0"
+name = "netodia-testkit"
+version = "0.1.0"
 dependencies = [
  "image",
  "tempfile",
 ]
 
 [[package]]
-name = "melodia-ui"
-version = "0.18.0"
+name = "netodia-ui"
+version = "0.1.0"
 dependencies = [
  "slint",
  "slint-build",
 ]
 
 [[package]]
-name = "melodia-views"
-version = "0.18.0"
+name = "netodia-views"
+version = "0.1.0"
 dependencies = [
  "async-compat",
  "chrono",
@@ -3872,14 +3872,14 @@ dependencies = [
  "log",
  "lru",
  "material-colors",
- "melodia-app",
- "melodia-artwork",
- "melodia-core",
- "melodia-engine",
- "melodia-platform",
- "melodia-playback",
- "melodia-testkit",
- "melodia-ui",
+ "netodia-app",
+ "netodia-artwork",
+ "netodia-core",
+ "netodia-engine",
+ "netodia-platform",
+ "netodia-playback",
+ "netodia-testkit",
+ "netodia-ui",
  "open",
  "parking_lot",
  "rand 0.10.2",

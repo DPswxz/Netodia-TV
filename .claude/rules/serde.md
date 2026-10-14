@@ -1,17 +1,17 @@
 ---
 paths:
-  - crates/melodia-core/src/entities/**/*.rs
-  - crates/melodia-app/src/services/**/*.rs
-  - crates/melodia-integrations/src/services/integrations/**/*.rs
-  - crates/melodia-net/src/services/net/**/*.rs
-  - crates/melodia-net/src/media/fetch/**/*.rs
-  - crates/melodia-platform/src/services/platform/**/*.rs
-  - crates/melodia-app/src/library/**/*.rs
-  - crates/melodia-app/src/state/**/*.rs
-  - crates/melodia-engine/src/player/engine/**/*.rs
-  - crates/melodia-store/src/media/ingest/**/*.rs
-  - crates/melodia-core/src/utils/atomic_file.rs
-  - crates/melodia-core/src/error.rs
+  - crates/netodia-core/src/entities/**/*.rs
+  - crates/netodia-app/src/services/**/*.rs
+  - crates/netodia-integrations/src/services/integrations/**/*.rs
+  - crates/netodia-net/src/services/net/**/*.rs
+  - crates/netodia-net/src/media/fetch/**/*.rs
+  - crates/netodia-platform/src/services/platform/**/*.rs
+  - crates/netodia-app/src/library/**/*.rs
+  - crates/netodia-app/src/state/**/*.rs
+  - crates/netodia-engine/src/player/engine/**/*.rs
+  - crates/netodia-store/src/media/ingest/**/*.rs
+  - crates/netodia-core/src/utils/atomic_file.rs
+  - crates/netodia-core/src/error.rs
 ---
 
 # Serde Best Practices

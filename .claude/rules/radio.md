@@ -1,33 +1,33 @@
 ---
 paths:
-  - crates/melodia-views/src/ui/radio/**/*.rs
-  - crates/melodia-app/src/library/radio/**/*.rs
-  - crates/melodia-app/src/library/radio_files.rs
-  - crates/melodia-net/src/services/net/radio_browser/**/*.rs
-  - crates/melodia-audio/src/player/source/stream_source.rs
-  - crates/melodia-audio/src/player/source/prebuffer.rs
-  - crates/melodia-audio/src/player/source/stream_decode.rs
-  - crates/melodia-net/src/media/fetch/station_logo.rs
-  - crates/melodia-artwork/src/media/image/logo_tile.rs
-  - crates/melodia-core/src/entities/radio.rs
-  - crates/melodia-store/src/database/queries/radio.rs
-  - crates/melodia-app/src/tasks/radio_logo_cache.rs
-  - crates/melodia-app/src/library/settings/radio.rs
-  - crates/melodia-views/src/ui/settings/radio_settings.rs
-  - crates/melodia-ui/ui/globals/radio.slint
-  - crates/melodia-ui/ui/components/station-facts.slint
-  - crates/melodia-ui/ui/views/radio-view.slint
-  - crates/melodia-ui/ui/views/radio/browse-tab.slint
-  - crates/melodia-ui/ui/views/radio/kept-stations-tab.slint
-  - crates/melodia-ui/ui/views/radio/station-detail.slint
-  - crates/melodia-ui/ui/views/radio/station-card.slint
-  - crates/melodia-ui/ui/views/radio/station-grid.slint
-  - crates/melodia-ui/ui/components/grid/station-context-menu.slint
-  - crates/melodia-ui/ui/views/radio/facet-chip.slint
-  - crates/melodia-ui/ui/views/radio/suggestion-pill.slint
-  - crates/melodia-ui/ui/views/radio/tab-pills.slint
-  - crates/melodia-ui/ui/views/settings/radio-section.slint
-  - crates/melodia-ui/ui/components/dialog/add-station-body.slint
+  - crates/netodia-views/src/ui/radio/**/*.rs
+  - crates/netodia-app/src/library/radio/**/*.rs
+  - crates/netodia-app/src/library/radio_files.rs
+  - crates/netodia-net/src/services/net/radio_browser/**/*.rs
+  - crates/netodia-audio/src/player/source/stream_source.rs
+  - crates/netodia-audio/src/player/source/prebuffer.rs
+  - crates/netodia-audio/src/player/source/stream_decode.rs
+  - crates/netodia-net/src/media/fetch/station_logo.rs
+  - crates/netodia-artwork/src/media/image/logo_tile.rs
+  - crates/netodia-core/src/entities/radio.rs
+  - crates/netodia-store/src/database/queries/radio.rs
+  - crates/netodia-app/src/tasks/radio_logo_cache.rs
+  - crates/netodia-app/src/library/settings/radio.rs
+  - crates/netodia-views/src/ui/settings/radio_settings.rs
+  - crates/netodia-ui/ui/globals/radio.slint
+  - crates/netodia-ui/ui/components/station-facts.slint
+  - crates/netodia-ui/ui/views/radio-view.slint
+  - crates/netodia-ui/ui/views/radio/browse-tab.slint
+  - crates/netodia-ui/ui/views/radio/kept-stations-tab.slint
+  - crates/netodia-ui/ui/views/radio/station-detail.slint
+  - crates/netodia-ui/ui/views/radio/station-card.slint
+  - crates/netodia-ui/ui/views/radio/station-grid.slint
+  - crates/netodia-ui/ui/components/grid/station-context-menu.slint
+  - crates/netodia-ui/ui/views/radio/facet-chip.slint
+  - crates/netodia-ui/ui/views/radio/suggestion-pill.slint
+  - crates/netodia-ui/ui/views/radio/tab-pills.slint
+  - crates/netodia-ui/ui/views/settings/radio-section.slint
+  - crates/netodia-ui/ui/components/dialog/add-station-body.slint
   - migrations/20260820000000_radio_stations.sql
 ---
 
@@ -35,7 +35,7 @@ paths:
 
 The couplings no single file can hold: an off switch enforced one place and observable from four,
 two tables the artwork sweep has to know about, a stream whose prohibitions and dependency pins
-reach out of `melodia-audio`, and a handful of numbers spelled in both trees.
+reach out of `netodia-audio`, and a handful of numbers spelled in both trees.
 
 The page's own shape belongs to `.claude/rules/ui-patterns.md` — the Browse box and its scope
 pills, `StationCard` as an `EntityCard` host, and why three tabs share one `SectionActiveGate`.
@@ -48,8 +48,8 @@ is the copy to delete.
 - **The switch itself is argued on `library::radio`'s own items** — why it sits at the facade,
   what the getters are exempt from, and why the logo download is not. What spans is the walks
   holding it: four now, and no one of them covers another's half. Two are per direction —
-  `crates/melodia/tests/radio_facade.rs`'s `every_outbound_call_takes_its_client_from_behind_the_switch` counts the
-  reaches inside the facade, `crates/melodia/tests/radio_facade.rs`'s `only_the_radio_facade_reaches_the_directory_client`
+  `crates/netodia/tests/radio_facade.rs`'s `every_outbound_call_takes_its_client_from_behind_the_switch` counts the
+  reaches inside the facade, `crates/netodia/tests/radio_facade.rs`'s `only_the_radio_facade_reaches_the_directory_client`
   counts them outside it. So **`http_client()` may be named exactly once across all of
   `library/radio/`** and `radio_browser` may be named nowhere else in the tree. Both walks read the
   facade off its **directory** rather than off a file list, so a sixth submodule is covered the day
@@ -83,7 +83,7 @@ is the copy to delete.
 
 - **`queries::radio::` is `library::radio`'s to name, and `library::radio_files`'s by the written
   exemption at that module's own `//!`.** The facade's doc argues the door against the *UI*, which
-  leaves the sibling nobody expects: a station-row write from elsewhere in `melodia-app` reads as
+  leaves the sibling nobody expects: a station-row write from elsewhere in `netodia-app` reads as
   ordinary transport code and is one. `record_probed_codec` was exactly that and now sits beside
   `mark_played`, whose one-line-`UPDATE`-per-play shape it copies. **`radio_facade.rs`'s
   `only_the_radio_facade_writes_to_the_station_table` is what holds it**, and its own doc comment
@@ -120,7 +120,7 @@ is the copy to delete.
   including `handlers.rs` — the monitor the reconnect argument is *about*, and the one file in it
   no glob here reaches.
 - **The feed thread's name is spelled inline and may not become a const.**
-  `crates/melodia/tests/packaging.rs`'s `no_thread_name_outgrows_what_the_kernel_keeps` matches a literal after
+  `crates/netodia/tests/packaging.rs`'s `no_thread_name_outgrows_what_the_kernel_keeps` matches a literal after
   `.name(`, so lifting `"radio-buffer"` out would leave it silently unmeasured — the one refactor
   here that looks like an improvement and disables a check.
 - **Nothing may call `StreamDownload::new_http`** — it constructs its own unconfigured client behind
@@ -179,8 +179,8 @@ Each of these is written once in Rust and again in `.slint`, so each needs a pin
 - **`id == 0` means "no database row"**, given its one meaning in `rows::station_has_row` and asked
   from four directions: which cache a page resolves from, whether a removal has a target, whether
   `views.json` may name the page (D6), and whether a history walk may reopen it. A fifth asks it
-  in `melodia-app`, where `record_probed_codec` refuses to write a row that does not exist, and
-  that one spells the comparison by hand: `station_has_row` lives in `melodia-views`, which nothing
+  in `netodia-app`, where `record_probed_codec` refuses to write a row that does not exist, and
+  that one spells the comparison by hand: `station_has_row` lives in `netodia-views`, which nothing
   below it can name. So the sentinel now has two homes rather than one, and the raw spelling is the
   one to grep for when its meaning moves.
 - **The `-1` sentinels are declared twice by hand** — `NO_SEAT`, `VOTES_UNKNOWN`, `chip_index`'s

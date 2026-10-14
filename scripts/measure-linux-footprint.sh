@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Measures Melodia's memory, CPU and GPU footprint on Linux the same way every run.
+# Measures Netodia's memory, CPU and GPU footprint on Linux the same way every run.
 #
-# Launches Melodia (or attaches to a running one), lets it settle, then samples one window per
+# Launches Netodia (or attaches to a running one), lets it settle, then samples one window per
 # scenario while you switch between scenarios by hand. Every sample goes to samples.csv and the
 # per-scenario figures to summary.md. Run with --help for the options.
 #
 # Anonymous is the headline figure: anonymous memory in RAM plus what of it sits in swap, zram
 # included. Linux overcommits and keeps no commit charge per process, so this is the nearest it
-# has. It doesn't fall when memory pressure pushes Melodia into swap, and nothing another process
-# does moves it, so it tracks what Melodia allocated. Chromium reports the same sum as its private
+# has. It doesn't fall when memory pressure pushes Netodia into swap, and nothing another process
+# does moves it, so it tracks what Netodia allocated. Chromium reports the same sum as its private
 # footprint on Linux.
 #
 # PSS is KDE System Monitor's Memory column. It is exact on a kernel that keeps per-page mapcounts,
 # and the report says whether this one does, but it splits every shared page between the
-# processes mapping it: start another OpenGL application and Melodia's PSS drops while Melodia
+# processes mapping it: start another OpenGL application and Netodia's PSS drops while Netodia
 # does nothing. It is recorded because it is the number people check a README against, not
 # because two runs can be compared on it.
 #
@@ -84,7 +84,7 @@ readonly PMON_HEADER='
 '
 
 # awk and printf write decimals the locale's way, and a comma decimal splits a CSV column in two.
-# Melodia is launched with the caller's own setting.
+# Netodia is launched with the caller's own setting.
 readonly INHERITED_LC_ALL="${LC_ALL-}"
 readonly INHERITED_LC_ALL_IS_SET="${LC_ALL+set}"
 export LC_ALL=C
@@ -110,8 +110,8 @@ interval_seconds=$DEFAULT_INTERVAL_SECONDS
 interval_microseconds=0
 out_dir=''
 
-melodia_pid=''
-launched_melodia=''
+netodia_pid=''
+launched_netodia=''
 origin=''
 work_dir=''
 nvidia_log=''
@@ -137,9 +137,9 @@ main() {
   trap 'exit 130' INT TERM
 
   if [[ -n $attach_pid ]]; then
-    attach_melodia
+    attach_netodia
   else
-    start_melodia
+    start_netodia
   fi
   measure_footprint
 }
@@ -148,15 +148,15 @@ usage() {
   cat <<EOF
 Usage: scripts/measure-linux-footprint.sh [options]
 
-Measures Melodia's memory, CPU and GPU footprint on Linux. The comment at the top of the script
+Measures Netodia's memory, CPU and GPU footprint on Linux. The comment at the top of the script
 explains every column.
 
 Options:
   --exe PATH                 Binary to launch. Defaults to the release build:
-                             cargo build --release -p melodia
-  --data-dir DIR             Data root to launch against, passed as MELODIA_DATA_DIR, so every run
+                             cargo build --release -p netodia
+  --data-dir DIR             Data root to launch against, passed as NETODIA_DATA_DIR, so every run
                              sees the same library.
-  --pid PID                  Measure an already running Melodia instead of launching one.
+  --pid PID                  Measure an already running Netodia instead of launching one.
   --scenario NAME            One measurement window per name, in order; repeat it for more. You are
                              prompted before each. Defaults to "${DEFAULT_SCENARIOS[0]}", "${DEFAULT_SCENARIOS[1]}"
                              and "${DEFAULT_SCENARIOS[2]}".
@@ -172,7 +172,7 @@ Options:
 
 Examples:
   scripts/measure-linux-footprint.sh
-  scripts/measure-linux-footprint.sh --data-dir ~/melodia-bench --scenario Idle --scenario 'Playing, list view'
+  scripts/measure-linux-footprint.sh --data-dir ~/netodia-bench --scenario Idle --scenario 'Playing, list view'
 EOF
 }
 
@@ -212,7 +212,7 @@ require_value() {
 validate_arguments() {
   if [[ -n $attach_pid ]]; then
     if [[ -n $exe || -n $data_dir ]]; then
-      die '--pid measures a running Melodia, so it takes neither --exe nor --data-dir.'
+      die '--pid measures a running Netodia, so it takes neither --exe nor --data-dir.'
     fi
     if [[ ! $attach_pid =~ ^[1-9][0-9]*$ ]]; then
       die "--pid must be a process id, not $attach_pid."
@@ -228,7 +228,7 @@ validate_arguments() {
     die '--interval-seconds must not exceed --duration-seconds.'
   fi
 
-  exe=${exe:-$REPO_ROOT/target/release/Melodia}
+  exe=${exe:-$REPO_ROOT/target/release/Netodia}
   out_dir=${out_dir:-$REPO_ROOT/target/linux-footprint/$(date +%Y%m%d-%H%M%S)}
 }
 
@@ -254,9 +254,9 @@ read_terminal_columns() {
 }
 
 measure_footprint() {
-  echo "Measuring Melodia (pid $melodia_pid), $origin."
+  echo "Measuring Netodia (pid $netodia_pid), $origin."
   start_nvidia_monitor
-  wait_countdown 'Waiting for Melodia to settle' "$settle_seconds"
+  wait_countdown 'Waiting for Netodia to settle' "$settle_seconds"
 
   local index title
   for index in "${!scenarios[@]}"; do
@@ -268,12 +268,12 @@ measure_footprint() {
   done
 
   save_report
-  echo "Melodia (pid $melodia_pid) is still running. Close it before the next run."
+  echo "Netodia (pid $netodia_pid) is still running. Close it before the next run."
 }
 
-start_melodia() {
+start_netodia() {
   if [[ ! -f $exe || ! -x $exe ]]; then
-    die "No Melodia binary at $exe. Build one with: cargo build --release -p melodia"
+    die "No Netodia binary at $exe. Build one with: cargo build --release -p netodia"
   fi
 
   local environment=(-u LC_ALL)
@@ -281,47 +281,47 @@ start_melodia() {
     environment+=("LC_ALL=$INHERITED_LC_ALL")
   fi
   if [[ -n $data_dir ]]; then
-    environment+=("MELODIA_DATA_DIR=$(realpath -m -- "$data_dir")")
+    environment+=("NETODIA_DATA_DIR=$(realpath -m -- "$data_dir")")
   fi
 
-  # A session of its own, so Ctrl-C here or closing the terminal leaves Melodia running. Its log
+  # A session of its own, so Ctrl-C here or closing the terminal leaves Netodia running. Its log
   # is mirrored to stderr, which would scroll the progress bar away.
   env "${environment[@]}" setsid "$exe" </dev/null >/dev/null 2>&1 &
-  melodia_pid=$!
-  launched_melodia=yes
+  netodia_pid=$!
+  launched_netodia=yes
 
   if [[ -n $data_dir ]]; then
-    origin="launched with MELODIA_DATA_DIR=$data_dir"
+    origin="launched with NETODIA_DATA_DIR=$data_dir"
   else
     origin='launched against its default data root'
   fi
 }
 
-attach_melodia() {
+attach_netodia() {
   if [[ ! -r /proc/$attach_pid/stat ]]; then
     die "No process with pid $attach_pid."
   fi
-  melodia_pid=$attach_pid
+  netodia_pid=$attach_pid
   origin="attached to pid $attach_pid"
 }
 
-# A launched Melodia that exits stays a zombie until it is reaped, and a zombie still has a /proc
+# A launched Netodia that exits stays a zombie until it is reaped, and a zombie still has a /proc
 # entry.
 assert_running() {
   local stat=''
-  { read -r stat < "/proc/$melodia_pid/stat"; } 2>/dev/null || true
+  { read -r stat < "/proc/$netodia_pid/stat"; } 2>/dev/null || true
   local fields=${stat##*) }
   local state=${fields%% *}
   if [[ -n $stat && $state != Z && $state != X ]]; then
     return 0
   fi
 
-  if [[ -z $launched_melodia ]]; then
-    die "Melodia (pid $melodia_pid) exited."
+  if [[ -z $launched_netodia ]]; then
+    die "Netodia (pid $netodia_pid) exited."
   fi
   local code=0
-  wait "$melodia_pid" || code=$?
-  die "Melodia exited with code $code. Straight after a launch that means another instance holds this data root and the launch was forwarded to it: close that one, or measure it with --pid. Otherwise, '$exe --logs' prints where its log is."
+  wait "$netodia_pid" || code=$?
+  die "Netodia exited with code $code. Straight after a launch that means another instance holds this data root and the launch was forwarded to it: close that one, or measure it with --pid. Otherwise, '$exe --logs' prints where its log is."
 }
 
 wait_countdown() {
@@ -336,7 +336,7 @@ start_countdown() {
   read_clock countdown_started
 }
 
-# Sleeps in short slices so the bar keeps moving and an exited Melodia is noticed promptly.
+# Sleeps in short slices so the bar keeps moving and an exited Netodia is noticed promptly.
 wait_until() {
   local target=$1 now remaining step step_seconds
   while true; do
@@ -378,7 +378,7 @@ complete_progress() {
 
 read_confirmation() {
   printf '\n%s%s%s\n' "$COLOR_TITLE" "$1" "$COLOR_RESET"
-  echo '  Set Melodia up for it, keep its window visible and unminimized, then press Enter.'
+  echo '  Set Netodia up for it, keep its window visible and unminimized, then press Enter.'
   # A closed stdin reads end-of-input at once, which would sample a scenario nobody set up.
   if ! read -r; then
     die 'No input to confirm the scenario with. Run the script from an interactive terminal.'
@@ -431,17 +431,17 @@ read_sample() {
   microseconds_to_seconds seconds "$1"
   if ! counters="$(read_process_counters)"; then
     assert_running
-    die "Could not read the memory counters under /proc/$melodia_pid."
+    die "Could not read the memory counters under /proc/$netodia_pid."
   fi
   nvidia_framebuffer="$(read_nvidia_framebuffer)"
   drm_resident="$(read_drm_usage | awk '$1 == "memory" { print $2 }')"
-  local descriptors=("/proc/$melodia_pid/fd"/*)
+  local descriptors=("/proc/$netodia_pid/fd"/*)
   printf '%s\t%s\t%s\t%s\t%s\n' "$seconds" "$counters" "$nvidia_framebuffer" "$drm_resident" "${#descriptors[@]}"
 }
 
 # Prints anonymous through memory_maps, in SAMPLE_COLUMNS order.
 read_process_counters() {
-  local proc="/proc/$melodia_pid"
+  local proc="/proc/$netodia_pid"
   awk -v clock_ticks="$CLOCK_TICKS" -v rollup="$proc/smaps_rollup" -v status="$proc/status" \
       -v stat="$proc/stat" -v maps="$proc/maps" '
     function kib(amount) { return amount * 1024 }
@@ -464,7 +464,7 @@ read_process_counters() {
 # Prints "memory <bytes>" and one "engine <driver/pdev/engine> <nanoseconds>" line per engine,
 # nothing when the process holds no DRM client.
 read_drm_usage() {
-  local fdinfo=("/proc/$melodia_pid/fdinfo"/*)
+  local fdinfo=("/proc/$netodia_pid/fdinfo"/*)
   if (( ${#fdinfo[@]} == 0 )); then
     return 0
   fi
@@ -543,7 +543,7 @@ read_nvidia_framebuffer() {
   if [[ -z $nvidia_log ]]; then
     return 0
   fi
-  awk -v pid="$melodia_pid" "$PMON_HEADER"'
+  awk -v pid="$netodia_pid" "$PMON_HEADER"'
     $column["pid"] != pid { next }
     {
       if ($column["Time"] != latest_second) {
@@ -557,12 +557,12 @@ read_nvidia_framebuffer() {
 }
 
 # pmon prints "-" for a second without a utilization sample, which is an idle one. Seconds come
-# from every process's rows, so a second with no Melodia row still counts, as an idle one.
+# from every process's rows, so a second with no Netodia row still counts, as an idle one.
 nvidia_utilization_percent() {
   if [[ -z $nvidia_log ]]; then
     return 0
   fi
-  awk -v pid="$melodia_pid" -v first_line="$1" -v last_line="$2" "$PMON_HEADER"'
+  awk -v pid="$netodia_pid" -v first_line="$1" -v last_line="$2" "$PMON_HEADER"'
     FNR <= first_line || FNR > last_line { next }
     { busiest_in_second[$column["Time"]] += 0 }
     $column["pid"] == pid {
@@ -679,7 +679,7 @@ write_samples_csv() {
 }
 
 format_report() {
-  echo "# Melodia footprint, $(date '+%Y-%m-%d %H:%M')"
+  echo "# Netodia footprint, $(date '+%Y-%m-%d %H:%M')"
   echo
   echo "- Binary: $(describe_binary)"
   echo "- Process: $origin"
@@ -716,11 +716,11 @@ format_report() {
 # Read through /proc/<pid>/exe, which still opens the binary that is running after a rebuild has
 # replaced it on disk, and then reads "(deleted)".
 describe_binary() {
-  local exe_path="/proc/$melodia_pid/exe"
+  local exe_path="/proc/$netodia_pid/exe"
   local version
   version="$(timeout "$VERSION_TIMEOUT_SECONDS" "$exe_path" --version 2>/dev/null)" || version='unknown'
   version=${version%%$'\n'*}
-  echo "$(readlink "$exe_path"), version ${version#Melodia }, built $(date -r "$exe_path" '+%Y-%m-%d %H:%M')"
+  echo "$(readlink "$exe_path"), version ${version#Netodia }, built $(date -r "$exe_path" '+%Y-%m-%d %H:%M')"
 }
 
 os_name() {
@@ -830,12 +830,12 @@ kwin_is_reachable() {
 }
 
 find_window_output() {
-  local token="melodia-footprint-$$-$RANDOM"
+  local token="netodia-footprint-$$-$RANDOM"
   local script="$work_dir/$token.js"
   cat > "$script" <<EOF
 let output = "";
 for (const candidate of workspace.windowList()) {
-    if (candidate.pid === $melodia_pid && candidate.output) {
+    if (candidate.pid === $netodia_pid && candidate.output) {
         output = candidate.output.name;
         break;
     }

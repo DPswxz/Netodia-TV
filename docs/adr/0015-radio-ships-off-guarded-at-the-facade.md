@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-08-20
 
-Melodia's package description, already shipped to every distribution, says the collection stays on
+Netodia's package description, already shipped to every distribution, says the collection stays on
 your own machine with no accounts, streaming or cloud. Radio makes that false for anyone who turns
 it on, and it must not make it false for anyone who does not.
 

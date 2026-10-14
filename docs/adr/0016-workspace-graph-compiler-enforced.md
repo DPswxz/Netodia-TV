@@ -35,6 +35,6 @@ not know about each other has to move down rather than sideways. The bet is that
 graph is worth more over the next two years of podcasts and streaming than those three were, and
 that the cost is paid once.
 
-Three properties no compile can answer are held by `crates/melodia/tests/workspace_shape.rs`
+Three properties no compile can answer are held by `crates/netodia/tests/workspace_shape.rs`
 instead: every member carries the workspace lint set, every member sits directly under `crates/`,
 and no crate re-exports another's items ([ADR 17](0017-no-cross-crate-re-exports.md)).

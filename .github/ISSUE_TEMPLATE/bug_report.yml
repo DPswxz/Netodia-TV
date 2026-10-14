@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in Melodia doesn't work the way it should
+description: Something in Netodia doesn't work the way it should
 labels: ["bug"]
 body:
   - type: markdown
@@ -7,16 +7,16 @@ body:
       value: |
         Thanks for taking the time to report this.
 
-        Please search the [existing issues](https://github.com/KenanSalar/Melodia/issues?q=is%3Aissue)
+        Please search the [existing issues](https://github.com/HELPMEEADICE/Netodia/issues?q=is%3Aissue)
         first — if you find yours, add a comment there rather than opening a new one.
 
   - type: input
     id: version
     attributes:
-      label: Melodia version
+      label: Netodia version
       description: >-
-        Settings → About. From a terminal it's `melodia --version` —
-        `Melodia.exe --version` on Windows, `./melodia-*.AppImage --version` for the AppImage.
+        Settings → About. From a terminal it's `netodia --version` —
+        `Netodia.exe --version` on Windows, `./netodia-*.AppImage --version` for the AppImage.
       placeholder: "0.10.0"
     validations:
       required: true
@@ -98,7 +98,7 @@ body:
       label: Log output
       description: |
         Go to **Settings → About → Diagnostics → Save…** and attach the file to this issue. It gathers your system details, a short list of settings, any recent crash reports and the tail of the log — paths are shortened to `~`, and no credentials or tokens are included.
-        Melodia logs to a file on every run, so there's no need to reproduce the problem from a terminal. **Open Folder** on the same card shows you where they live. If Melodia won't start far enough to reach Settings, `melodia --logs` prints the same path on Linux and macOS; on Windows the folder is `%APPDATA%\Melodia\logs\`.
+        Netodia logs to a file on every run, so there's no need to reproduce the problem from a terminal. **Open Folder** on the same card shows you where they live. If Netodia won't start far enough to reach Settings, `netodia --logs` prints the same path on Linux and macOS; on Windows the folder is `%APPDATA%\Netodia\logs\`.
         If you'd rather paste than attach, this box is automatically formatted as code — no backticks needed.
       render: shell
 

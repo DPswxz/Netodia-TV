@@ -2,8 +2,8 @@
 paths:
   - crates/*/src/**/tests/*.rs
   - crates/*/src/**/fixtures.rs
-  - crates/melodia/tests/**/*.rs
-  - crates/melodia-testkit/src/**/*.rs
+  - crates/netodia/tests/**/*.rs
+  - crates/netodia-testkit/src/**/*.rs
   - crates/*/Cargo.toml
   - .cargo/config.toml
 ---

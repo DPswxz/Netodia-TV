@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerates crates/melodia-ui/translations/melodia-ui.pot from the @tr strings
+# Regenerates crates/netodia-ui/translations/netodia-ui.pot from the @tr strings
 # in the .slint tree and merges it into every catalog beside it. Run it after
 # adding, changing or removing an @tr string; translating one needs nothing but
 # an editor.
@@ -13,8 +13,8 @@
 set -euo pipefail
 
 repo=$(cd "$(dirname "$0")/.." && pwd)
-crate=$repo/crates/melodia-ui
-template=translations/melodia-ui.pot
+crate=$repo/crates/netodia-ui
+template=translations/netodia-ui.pot
 
 fail() {
     printf 'error: %s\n' "$@" >&2
@@ -111,7 +111,7 @@ msgcat --no-wrap --add-location=file --sort-by-file \
     cat "$work/template.pot"
 } > "$template"
 
-for catalog in translations/*/LC_MESSAGES/melodia-ui.po; do
+for catalog in translations/*/LC_MESSAGES/netodia-ui.po; do
     msgmerge -q -U --no-wrap --add-location=file --sort-by-file --backup=none \
         "$catalog" "$work/numbered.pot"
     msgattrib --no-wrap --no-obsolete -o "$catalog" "$catalog"
@@ -119,7 +119,7 @@ done
 
 # A Windows gettext reports in the system language's code page, which Git Bash
 # shows as mojibake.
-for catalog in translations/*/LC_MESSAGES/melodia-ui.po; do
+for catalog in translations/*/LC_MESSAGES/netodia-ui.po; do
     language=${catalog#translations/}
     stats=$(LC_ALL=C msgfmt -c --statistics -o "$work/stats.mo" "$catalog" 2>&1) || fail "$stats"
     echo "${language%%/*}: $stats"

@@ -1,9 +1,9 @@
 ---
 paths:
-  - crates/melodia-store/src/database/**/*.rs
-  - crates/melodia-core/src/entities/**/*.rs
-  - crates/melodia-app/src/library/**/*.rs
-  - crates/melodia-app/src/tasks/**/*.rs
+  - crates/netodia-store/src/database/**/*.rs
+  - crates/netodia-core/src/entities/**/*.rs
+  - crates/netodia-app/src/library/**/*.rs
+  - crates/netodia-app/src/tasks/**/*.rs
   - migrations/**/*.sql
 ---
 
@@ -14,7 +14,7 @@ paths:
 - Use **two-pool architecture** for SQLite:
   - Write pool: `max_connections(1)` — SQLite only supports one concurrent writer
   - Read pool: `max_connections(num_cpus)` with `.read_only(true)` — multiple concurrent readers in WAL mode
-    - **Desktop caveat (Melodia):** a single-user desktop app issues tiny, effectively-sequential reads, so scaling per-core just multiplies idle per-connection page-cache/statement-cache memory. Clamp to a small fixed band (`.clamp(2, 4)`) and add an `idle_timeout` so boot-burst connections get reaped. See `init_database` in `crates/melodia-store/src/database/mod.rs`.
+    - **Desktop caveat (Netodia):** a single-user desktop app issues tiny, effectively-sequential reads, so scaling per-core just multiplies idle per-connection page-cache/statement-cache memory. Clamp to a small fixed band (`.clamp(2, 4)`) and add an `idle_timeout` so boot-burst connections get reaped. See `init_database` in `crates/netodia-store/src/database/mod.rs`.
 - A single shared pool degrades write performance by ~20x due to reader/writer contention
 
 ## Pragmas & Configuration
@@ -38,7 +38,7 @@ paths:
 
 - SQLite's default bind variable limit is 32,766 as of 3.32. The 999 that most documentation still
   quotes is the *old* default.
-    - **Melodia chunks at its own `database::MAX_BINDS_PER_STATEMENT`, which keeps that lower
+    - **Netodia chunks at its own `database::MAX_BINDS_PER_STATEMENT`, which keeps that lower
       figure deliberately.** Named for the role rather than for the engine, because it is a budget
       we pick; the argument for the value, and for what moving it would take, lives on the constant.
 - Chunk rows at the budget *less* every bind that is not part of a row (the `SET` value an
@@ -72,7 +72,7 @@ paths:
 - Avoid `SELECT *` — specify only needed columns
 - Use covering indexes for frequently accessed column combinations
 - Regular `VACUUM` for reclaiming space after bulk deletes (but not during normal operation)
-- `VACUUM INTO '<path>'` is the safe way to copy a *live* database — it runs through the open connection, so WAL content is folded in and the output needs no `-wal`/`-shm` beside it. Takes no bind parameter, so the path is interpolated (wrap in `AssertSqlSafe`, double any `'`). **It silently no-ops against an in-memory pool**: `sqlite::memory:` through sqlx returns `Ok` and writes no file, while the identical statement in the `sqlite3` CLI against `:memory:` does write one. So a test covering a backup path must build a **file-backed** pool — `DbPool::test_pool()` will pass while proving nothing. `crates/melodia-store/src/database/tests/backup_tests.rs::open_db` is the worked example.
+- `VACUUM INTO '<path>'` is the safe way to copy a *live* database — it runs through the open connection, so WAL content is folded in and the output needs no `-wal`/`-shm` beside it. Takes no bind parameter, so the path is interpolated (wrap in `AssertSqlSafe`, double any `'`). **It silently no-ops against an in-memory pool**: `sqlite::memory:` through sqlx returns `Ok` and writes no file, while the identical statement in the `sqlite3` CLI against `:memory:` does write one. So a test covering a backup path must build a **file-backed** pool — `DbPool::test_pool()` will pass while proving nothing. `crates/netodia-store/src/database/tests/backup_tests.rs::open_db` is the worked example.
 
 ## Fetch Methods
 
@@ -97,7 +97,7 @@ paths:
 
 ## SQLite-Specific Pragmas
 
-- `PRAGMA cache_size = -64000` (64MB page cache) — significantly improves read performance for large DBs. For a small single-user desktop DB (Melodia), size it modestly (e.g. `-16000`); with `mmap_size` set, cold pages stay cheaply file-backed instead of being copied into per-connection heap cache, so a large cache there is just idle resident overhead multiplied across the pool.
+- `PRAGMA cache_size = -64000` (64MB page cache) — significantly improves read performance for large DBs. For a small single-user desktop DB (Netodia), size it modestly (e.g. `-16000`); with `mmap_size` set, cold pages stay cheaply file-backed instead of being copied into per-connection heap cache, so a large cache there is just idle resident overhead multiplied across the pool.
 - `PRAGMA wal_autocheckpoint = 1000` — tune how often WAL is checkpointed (default 1000 pages)
 - `PRAGMA optimize` — run periodically (e.g. on app close) to update query planner statistics; fast and safe
 

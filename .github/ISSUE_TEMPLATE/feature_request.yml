@@ -1,19 +1,19 @@
 name: Feature request
-description: Suggest something Melodia should be able to do
+description: Suggest something Netodia should be able to do
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
         Before opening this, please check the
-        [existing issues](https://github.com/KenanSalar/Melodia/issues?q=is%3Aissue) —
+        [existing issues](https://github.com/HELPMEEADICE/Netodia/issues?q=is%3Aissue) —
         it may already be planned.
 
   - type: textarea
     id: problem
     attributes:
       label: What problem does this solve?
-      description: What are you trying to do that Melodia makes hard or impossible today?
+      description: What are you trying to do that Netodia makes hard or impossible today?
     validations:
       required: true
 

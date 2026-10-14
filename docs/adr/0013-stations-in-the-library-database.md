@@ -12,7 +12,7 @@ Decision: one `radio_stations` table in the existing library database, with `is_
 Alternatives: a JSON file beside the other persisted state, and three separate stores for the three
 features.
 
-Trade: a JSON file is the lighter thing to reach for and Melodia already has several, so it was the
+Trade: a JSON file is the lighter thing to reach for and Netodia already has several, so it was the
 real alternative rather than a straw one. It loses ordering, counting and the artwork join, and each
 of those is something the UI needs on the first screen: most-played ordering, a play count, and a
 logo resolved through the same artwork store every other image goes through. Rebuilding those over a

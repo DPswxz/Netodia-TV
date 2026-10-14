@@ -1,10 +1,10 @@
 ---
 paths:
-  - crates/melodia-ui/ui/**/*.slint
-  - crates/melodia-views/src/ui/**/*.rs
-  - crates/melodia/src/boot/**/*.rs
-  - crates/melodia-core/src/utils/toast.rs
-  - crates/melodia-ui/build.rs
+  - crates/netodia-ui/ui/**/*.slint
+  - crates/netodia-views/src/ui/**/*.rs
+  - crates/netodia/src/boot/**/*.rs
+  - crates/netodia-core/src/utils/toast.rs
+  - crates/netodia-ui/build.rs
 ---
 
 # UI patterns — what already exists
@@ -14,7 +14,7 @@ are wrong* are `slint-pitfalls.md`, which loads on the same globs and owns every
 file points at rather than restates.
 
 A rule rather than a `CLAUDE.md` beside the code: UI features cut across two trees (`.slint`
-under `crates/melodia-ui/ui/`, Rust under `crates/melodia-views/src/ui/`), so a per-directory
+under `crates/netodia-ui/ui/`, Rust under `crates/netodia-views/src/ui/`), so a per-directory
 file would reach one and
 silently miss the other.
 
@@ -126,7 +126,7 @@ silently miss the other.
   by one scope string. **Radio is the seventh, and the one that clears without dropping its rows**:
   its leave keeps every list, but its station cards pick in `CardSelection`. A card grid is the
   surface that needs it most, having no pill and no second activation: a set left live turns every
-  click into a pick. Held by `crates/melodia/tests/card_selection.rs`'s
+  click into a pick. Held by `crates/netodia/tests/card_selection.rs`'s
   `every_section_leave_hands_its_card_selection_back`, an **equality** over the seven because a
   floor cannot see one slice stop clearing; the walk reads the `on_section_active_changed` block
   itself, so the clear goes in that closure and not in a `leave()` it calls. The same file holds
@@ -194,7 +194,7 @@ silently miss the other.
   `↑`/`↓` into the label. It exists for what it makes *unspellable*: the per-pill slot, ternary and
   `active` comparison could each go missing at one site and look right until the sort moved. What
   the *mount* still owes is the two arrays lining up — a label with no matching field sorts by the
-  empty string — so both pins check lengths through `melodia_testkit::sort_mount_arrays`. `labels`
+  empty string — so both pins check lengths through `netodia_testkit::sort_mount_arrays`. `labels`
   stays an inline `[@tr("…"), …]` literal.
 
 ### Rounded edges
@@ -727,7 +727,7 @@ three components that answer it, and each argues its geometry at its own file.
 
 ### Filtering
 
-- **Every filter box answers "does this row match" through `crates/melodia-views/src/ui/row_match.rs`, and none of them
+- **Every filter box answers "does this row match" through `crates/netodia-views/src/ui/row_match.rs`, and none of them
   spells `to_lowercase().contains(…)`.** It owns `search_fields` (ordered like the `tracks_fts`
   column list it mirrors), the `fold_needle` pair folding case **and accents**, and the predicates
   over them. Sixteen surfaces route through it; on all three tabbed pages the needle is **one
@@ -1007,7 +1007,7 @@ three components that answer it, and each argues its geometry at its own file.
 - **Native dialogs (rfd) — always through `ui::file_dialog::parented(&weak, title)`.** The helper
   owns the `weak.upgrade()` + `.set_parent(…)` half; the caller chains its own
   `add_filter`/`pick_*`/`save_file`. **Never build one inline**, and the reason is that the bug is
-  invisible here: without the parent it z-orders behind Melodia on Windows and macOS, while Linux's
+  invisible here: without the parent it z-orders behind Netodia on Windows and macOS, while Linux's
   XDG portal parents OS-side regardless. Held by a test that **walks every crate's `src/`** rather than naming
   the five sites, and carries a caller floor so a caller that stops opening a dialog trips it too.
 

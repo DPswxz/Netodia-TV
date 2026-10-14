@@ -33,7 +33,7 @@ heavy non-Rust dependency and a second threading model, which is the shape
 The mixer and the clock are ours to get right now, and that bill arrived in pieces. A deck that
 renders a whole device block opened a crossfade overshoot that the previous per-sample pull had
 bounded, which is why `output::mixer::LOCKSTEP_FRAMES` exists and why
-`crates/melodia/tests/crossfade.rs` derives its tolerance from that constant rather than guessing
+`crates/netodia/tests/crossfade.rs` derives its tolerance from that constant rather than guessing
 one. Symphonia 0.6 refuses HE-AAC where the container declares it, so those files stopped playing
 until the decoder was handed a plain AAC-LC config built from values it had already parsed. Its PCM
 decoder added a width check that the CAF demuxer contradicts, so every A-law `.caf` failed to build
@@ -56,7 +56,7 @@ Windows, and the working doc it names was deleted when it did. The prediction he
 Exclusive output, through ALSA's `hw:` devices on Linux and WASAPI's exclusive mode on Windows, is
 one more backend under the same mixer, and `output::encode` is the only place a sample becomes the
 bytes a device receives. Nothing above the output had to change for a file to reach the device
-untouched, which `crates/melodia/tests/bit_perfect.rs` holds by playing a file through the real
+untouched, which `crates/netodia/tests/bit_perfect.rs` holds by playing a file through the real
 engine and finding its PCM whole in what `encode` writes. It held less for the device itself, where
 the rest of the work was per platform: taking the device from the system, asking the Linux sound
 server for the card and handing it back, and carrying the volume on the device's own control. The

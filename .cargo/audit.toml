@@ -4,7 +4,7 @@
 #
 # Rules for adding an entry to `ignore`:
 #
-#   1. Include the advisory ID, the reason it doesn't apply to Melodia, and a `revisit:` date.
+#   1. Include the advisory ID, the reason it doesn't apply to Netodia, and a `revisit:` date.
 #   2. Prefer pinning around the flagged crate, or removing the dep, over ignoring. Use this list
 #      only for transitive deps with no upgrade path that we've confirmed are safe to ship.
 #   3. Re-evaluate every `revisit:` date. Stale entries are worse than none — they hide real

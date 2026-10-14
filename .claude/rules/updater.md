@@ -1,11 +1,11 @@
 ---
 paths:
-  - crates/melodia-app/src/services/updater/**/*.rs
-  - crates/melodia-platform/src/services/platform/install_kind/**/*.rs
-  - crates/melodia-platform/src/services/platform/desktop_integration.rs
-  - crates/melodia-app/src/tasks/updater_daily.rs
-  - crates/melodia-views/src/ui/settings/updater_settings.rs
-  - crates/melodia/wix/main.wxs
+  - crates/netodia-app/src/services/updater/**/*.rs
+  - crates/netodia-platform/src/services/platform/install_kind/**/*.rs
+  - crates/netodia-platform/src/services/platform/desktop_integration.rs
+  - crates/netodia-app/src/tasks/updater_daily.rs
+  - crates/netodia-views/src/ui/settings/updater_settings.rs
+  - crates/netodia/wix/main.wxs
   - scripts/build-latest-json.py
   - scripts/build-appimage.sh
   - scripts/build-rpm.sh
@@ -34,7 +34,7 @@ from `main.rs` without ever opening this file.
   `updater::is_available()` is the outer one: false on a source build, because `target/` belongs to
   cargo and a swapped-in release would be older than the tree above it and gone at the next build.
   It stops `updater_daily::spawn` in `boot::ui_setup::install` and clears
-  `MelodiaUpdater.updates-supported`, which gates `UpdateSection.has-matches` and so takes the card *and* its settings-search hits.
+  `NetodiaUpdater.updates-supported`, which gates `UpdateSection.has-matches` and so takes the card *and* its settings-search hits.
   `is_system_install()` is the inner one and softer: the update is real, only the mechanism is the
   package manager's, so the check survives and Download/Skip become a hint. Reach for the right one
   — widening `is_system_install` to cover a dev build would offer a `sudo dnf update` hint to
@@ -49,23 +49,23 @@ from `main.rs` without ever opening this file.
   `cfg(target_os = "linux")`, and macOS isn't a CI target, so `swap_in_place` falls through to
   `std::fs::rename`.
 
-- **Windows installs are per-machine MSIs at `C:\Program Files\Melodia\bin\`.** `crates/melodia/wix/main.wxs`
+- **Windows installs are per-machine MSIs at `C:\Program Files\Netodia\bin\`.** `crates/netodia/wix/main.wxs`
   `Scope="perMachine"` + `ProgramFiles6432Folder`; UAC at install. The Start Menu shortcut
   Component under `ProgramMenuFolder` is what lets Windows Search find the app. Console suppressed
   via `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` — release runs as GUI,
   `cargo run` keeps the console for `RUST_LOG`. The in-app updater downloads the signed `.msi` to
-  `%LocalAppData%\Melodia\update-staging\` and spawns `msiexec /i <staged> /qb!` non-blocking: UAC
+  `%LocalAppData%\Netodia\update-staging\` and spawns `msiexec /i <staged> /qb!` non-blocking: UAC
   re-prompts, and WiX `MajorUpgrade` + `util:RestartResource` handle replacing the running binary.
   Smoke test skipped. `system_install::probe` short-circuits `windows-*-msi` keys to `false` so the
   updater UI stays visible — symmetric with `linux_pkg::detect`.
 
-- **Polkit helper for in-app updater RPM/DEB installs.** `/usr/libexec/melodia-update-helper`
-  argv-dispatches to dnf5/dnf/apt/apt-get; policy `com.github.kenansalar.melodia.update`.
+- **Polkit helper for in-app updater RPM/DEB installs.** `/usr/libexec/netodia-update-helper`
+  argv-dispatches to dnf5/dnf/apt/apt-get; policy `com.github.helpmeeadice.netodia.update`.
   `install_via_package_manager` runtime-detects and falls back to a direct `pkexec dnf install`.
   **`LinuxPackageFormat` variants double as helper argv-dispatch keys.**
 
 - **Replacing the binary under a running process breaks its own path two different ways, and only
-  one of them is recoverable after the fact.** An RPM/DEB upgrade *unlinks* `/usr/bin/Melodia` and
+  one of them is recoverable after the fact.** An RPM/DEB upgrade *unlinks* `/usr/bin/Netodia` and
   the kernel marks `/proc/self/exe` `" (deleted)"`; `utils::exe::current_exe` resolves that centrally
   (root `CLAUDE.md` argues the rule) and `install_target()` is the single updater consumer. **The
   marker can only appear mid-session** — you cannot exec an unlinked path — so the callers that
@@ -81,16 +81,16 @@ from `main.rs` without ever opening this file.
   returns `None`, so the updater offers a tarball asset to an RPM install (and would swap it into
   root-owned `/usr/bin` rather than going through `pkexec dnf install`), the crash report's
   `install=` field names the wrong format, and `desktop_integration` stops skipping and
-  BLAKE3-writes `Exec=/usr/bin/Melodia (deleted)` into the user's launcher. The atomic swap
+  BLAKE3-writes `Exec=/usr/bin/Netodia (deleted)` into the user's launcher. The atomic swap
   *renames* instead, and a rename leaves `/proc/self/exe` reporting the stale path with a straight
   face — nothing can undo that after the fact, which is why
   **`ui::window_chrome::set_respawn_exe`** still has to capture the target *before* the swap and
   stays load-bearing. Don't read the central fix as retiring it.
 
 - **`services::platform::desktop_integration` self-deploys `.desktop` + icon on boot for tarball installs.**
-  Compiled-in payloads `assets/desktop/Melodia.desktop.tmpl` (`@EXEC@`) +
+  Compiled-in payloads `assets/desktop/Netodia.desktop.tmpl` (`@EXEC@`) +
   `logo-with-background.svg`; BLAKE3-gated idempotent writes to
-  `~/.local/share/applications/…desktop` + `~/.local/share/icons/…/melodia.svg`. Skipped on
+  `~/.local/share/applications/…desktop` + `~/.local/share/icons/…/netodia.svg`. Skipped on
   AppImage (`$APPIMAGE` set) and RPM/DEB. Don't move the source paths without updating the
   `include_*!` call sites.
 
@@ -118,7 +118,7 @@ from `main.rs` without ever opening this file.
   `latest.json` in `artifacts/` alongside them is what broke v0.9.0's refresh on the first publish
   after that guard landed.
 
-- **Manifest schema gate + critical-release flag** (`crates/melodia-app/src/services/updater/manifest.rs`).
+- **Manifest schema gate + critical-release flag** (`crates/netodia-app/src/services/updater/manifest.rs`).
   `manifest_schema_version: u32` (default 1) — `check.rs` returns `Verdict::UnsupportedSchema`
   when `> SUPPORTED_MANIFEST_SCHEMA`, treated like `NoAssetForTarget`; bumping it means bumping
   `build-latest-json.py`'s `--manifest-schema-version` and the CI invocation. `critical: bool`
@@ -129,7 +129,7 @@ from `main.rs` without ever opening this file.
 
 - **Build provenance attestation.** `release-build.yml` runs `actions/attest-build-provenance` (v4,
   SHA-pinned) in every slot, needing `id-token: write` + `attestations: write`. Verify with
-  `gh attestation verify <file> --repo KenanSalar/Melodia`. Upstream now calls v4 a thin wrapper
+  `gh attestation verify <file> --repo KenanSalar/Netodia`. Upstream now calls v4 a thin wrapper
   over `actions/attest` and points new work at that directly — worth folding in next time this line
   is touched.
 
@@ -140,8 +140,8 @@ from `main.rs` without ever opening this file.
   Every pattern pins an explicit arch token, so the two arch groups are disjoint and the
   aarch64-first ordering is readability rather than disambiguation — that ordering existed for
   cargo-deb's native `_arm64.deb`, which carries no leading-arch token, and `release-build.yml`
-  renames the deb to the `melodia-<tag>-<arch>.deb` scheme every other slot produces so its
-  `melodia-*.deb` globs match. The table was left on the old name and **v0.8.0 shipped with no deb
+  renames the deb to the `netodia-<tag>-<arch>.deb` scheme every other slot produces so its
+  `netodia-*.deb` globs match. The table was left on the old name and **v0.8.0 shipped with no deb
   entry at all** while both signed `.deb` files sat on the release, leaving deb clients on
   `NoAssetForTarget` indefinitely; it survived because `classify()` returning `None` was a bare
   `continue`, which is the guard now spelled above. Client `target::current_target_key()` is
