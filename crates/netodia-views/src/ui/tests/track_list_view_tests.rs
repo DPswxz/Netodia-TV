@@ -131,7 +131,7 @@ fn every_view_hides_and_locks_the_columns_it_shipped_with() {
         ("album_detail", &[], Some("album")),
         ("artist_detail", &["number"], Some("artist")),
         ("genre_detail", &["number"], Some("genre")),
-        ("playlist_detail", &["genre"], None),
+        ("playlist_detail", &["number", "genre", "year"], None),
         ("favorites", &["number", "genre", "year"], None),
         ("recently_played", &["number", "genre", "year"], None),
         ("search", &["genre", "year"], None),

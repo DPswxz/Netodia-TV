@@ -60,6 +60,7 @@ export component FavoritesView inherits Rectangle {
                     width: 100%;
                     height: 100%;
                     rows: Favorites.tracks;
+                    columns <=> Favorites.track-columns;
                     sort-field: Favorites.sort-field;
                     sort-dir: Favorites.sort-dir;
                     loading: Favorites.cloud-loading;

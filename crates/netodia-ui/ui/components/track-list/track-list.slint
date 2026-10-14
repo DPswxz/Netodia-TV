@@ -48,6 +48,12 @@ export component TrackList inherits Rectangle {
     // Now-playing highlight.
     in property <int> playing-track-id;
 
+    // Cloud hosts share all table visuals while owning actions through exact string IDs.
+    in property <bool> cloud-rows: false;
+    in property <bool> cloud-favorite-clickable: false;
+    callback play-cloud-row(string, int);
+    callback toggle-cloud-favorite(string);
+
     callback request-sort(string /*field*/);
     callback play-row(int /*track_id*/, int /*index*/);
     // Batch-shaped: one element in single-row mode, the whole selection in multi.
@@ -126,11 +132,17 @@ export component TrackList inherits Rectangle {
                 sort-dir: root.sort-dir;
                 row-count: root.rows.length;
                 playing-track-id: root.playing-track-id;
+                cloud-row: root.cloud-rows;
+                favorite-clickable: !root.cloud-rows || root.cloud-favorite-clickable;
                 view-context: root.view-context;
                 current-playlist-id: root.current-playlist-id;
                 view-selected-ids: root.view-selected-ids;
                 double-clicked-row => { root.play-row(r.id, idx); }
-                toggle-favorite => { root.toggle-row-favorite([r.id], !r.is_favorite); }
+                clicked-row => { root.play-cloud-row(r.remote_id, idx); }
+                toggle-favorite => {
+                    if (root.cloud-rows) { root.toggle-cloud-favorite(r.remote_id); }
+                    else { root.toggle-row-favorite([r.id], !r.is_favorite); }
+                }
                 play-row(id, i) => { root.play-row(id, i); }
                 play-next(ids) => { root.play-next(ids); }
                 add-to-queue(ids) => { root.add-to-queue(ids); }

@@ -72,11 +72,13 @@ async fn fetch_playlist_detail(
     let thumbnail_path =
         playlists_ui.grid_stats_by_id(playlist_id).and_then(|stats| stats.thumbnail_path);
     let detail = cloud_playlist_stats(playlist, thumbnail_path, &songs);
+    let covers = crate::ui::favorites::cache_song_covers(state, &songs).await;
     let tracks = songs
         .into_iter()
         .map(|song| {
             let is_favorite = liked_ids.contains(&song.id);
-            cloud_song_row(song, is_favorite)
+            let artwork_path = covers.get(&song.id).cloned();
+            cloud_song_row(song, is_favorite, artwork_path)
         })
         .collect();
     Ok((detail, tracks))
@@ -104,7 +106,7 @@ fn cloud_playlist_stats(
     }
 }
 
-fn cloud_song_row(song: Song, is_favorite: bool) -> RsTrackListRow {
+fn cloud_song_row(song: Song, is_favorite: bool, artwork_path: Option<String>) -> RsTrackListRow {
     let artist = song.artist_names();
     let artist_id = song.artists.first().map(|artist| artist.id);
     RsTrackListRow {
@@ -120,7 +122,7 @@ fn cloud_song_row(song: Song, is_favorite: bool) -> RsTrackListRow {
         disc_number: None,
         year: None,
         duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
-        artwork_path: None,
+        artwork_path,
         is_favorite,
         rating: 0,
         album_id: (song.album.id > 0).then_some(song.album.id),

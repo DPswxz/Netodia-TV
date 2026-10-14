@@ -73,7 +73,7 @@ fn the_songs_model_is_written_only_while_its_tab_is_mounted() {
         SUBVIEWS.contains("apply_filtered_tracks_now(&ui, &fu)"),
         "the tab pick must write without hopping the event loop, or the clear above shows as a bare list"
     );
-    assert!(CLOUD_TRACKS.contains("root.play-track(song.remote_id, index)"));
+    assert!(CLOUD_TRACKS.contains("root.play-track(id, index)"));
     assert!(VIEW.contains("Favorites.play-cloud-row(id, index)"));
     assert!(VIEW.contains("Favorites.toggle-cloud-favorite(id, false)"));
 }
@@ -194,9 +194,9 @@ fn favorites_view_uses_cloud_rows_with_sortable_netease_columns() {
     );
     assert!(CLOUD_SONGS_TAB.contains("position-field: \"track_number\";"));
     assert!(CLOUD_SONGS_TAB.contains("favorite-clickable: true;"));
-    for field in ["position", "title", "album", "favorite", "length"] {
-        assert!(CLOUD_TRACKS.contains(&format!("field: \"{field}\";")));
-    }
+    assert!(CLOUD_TRACKS.contains("TrackList {"));
+    assert!(VIEW.contains("columns <=> Favorites.track-columns;"));
+    assert!(CLOUD_TRACKS.contains("root.toggle-favorite(id)"));
     assert!(GLOBAL.contains("sort-field: \"track_number\";"));
     assert!(SONGS.contains("track_number: Some(favorite_order)"));
     assert!(SONGS.contains("state.cloud.liked_songs().await?"));

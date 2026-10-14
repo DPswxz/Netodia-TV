@@ -123,16 +123,16 @@ fn compute_indices_default_sort_is_most_recently_updated_first() {
 }
 
 #[test]
-fn cloud_playlist_rows_expose_netease_columns_and_position_is_the_default_sort() {
+fn cloud_playlist_rows_share_the_standard_header_and_position_is_the_default_sort() {
     assert!(PLAYLISTS_TAB.contains("open-playlist(id) => { Playlists.open-playlist(id); }"));
     assert!(PLAYLIST_GRID.contains("clicked => { root.open-playlist(playlist.remote_id); }"));
     assert!(PLAYLIST_DETAIL_GLOBAL.contains("callback open-playlist(string"));
     assert!(GRID_CALLBACKS.contains("playlist_id.to_string().parse::<i64>()"));
     assert!(PLAYLIST_DETAIL_GLOBAL.contains("in-out property <string> sort-field: \"position\";"));
-    for field in ["position", "title", "album", "favorite", "length"] {
-        assert!(CLOUD_TRACKS.contains(&format!("field: \"{field}\";")));
-    }
-    assert!(CLOUD_TRACKS.contains("root.play-track(song.remote_id, index)"));
+    assert!(CLOUD_TRACKS.contains("TrackList {"));
+    assert!(CLOUD_TRACKS.contains("columns <=> root.columns;"));
+    assert!(CLOUD_TRACKS.contains("field == \"track_number\" ? root.position-field : field"));
+    assert!(CLOUD_TRACKS.contains("root.play-track(id, index)"));
     assert!(DETAIL_VIEW.contains("PlaylistDetail.play-cloud-row(id, index)"));
 }
 

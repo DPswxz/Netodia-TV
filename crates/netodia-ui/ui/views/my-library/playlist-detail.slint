@@ -37,6 +37,7 @@ export component PlaylistDetailBody inherits Rectangle {
             height: 100%;
             visible: PlaylistDetail.cloud-collection;
             rows: PlaylistDetail.tracks;
+            columns <=> PlaylistDetail.track-columns;
             sort-field: PlaylistDetail.sort-field;
             sort-dir: PlaylistDetail.sort-dir;
             request-sort(field) => { PlaylistDetail.request-sort(field); }
