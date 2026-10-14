@@ -44,6 +44,18 @@ pub struct Song {
     pub privilege: Option<Privilege>,
 }
 
+/// A song entry from the account's special "liked songs" playlist.
+///
+/// `favorite_order` is the one-based position in the `trackIds` array returned by `NetEase` for
+/// that playlist. `added_at_ms` keeps the server's favorite timestamp when the endpoint supplies
+/// it; the client must not infer favorite order from a later song-detail response.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct LikedSong {
+    pub song: Song,
+    pub favorite_order: i32,
+    pub added_at_ms: Option<i64>,
+}
+
 impl Song {
     pub fn artist_names(&self) -> String {
         self.artists.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(" / ")

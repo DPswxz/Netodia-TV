@@ -198,7 +198,8 @@ fn favorites_view_uses_cloud_rows_with_sortable_netease_columns() {
         assert!(CLOUD_TRACKS.contains(&format!("field: \"{field}\";")));
     }
     assert!(GLOBAL.contains("sort-field: \"track_number\";"));
-    assert!(SONGS.contains("track_number: Some(i32::try_from(index.saturating_add(1))"));
+    assert!(SONGS.contains("track_number: Some(favorite_order)"));
+    assert!(SONGS.contains("state.cloud.liked_songs().await?"));
     assert_eq!(
         VIEW.matches("if Favorites.tab-idx == Favorites.tab-").count(),
         1,

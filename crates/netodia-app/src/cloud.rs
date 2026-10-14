@@ -8,7 +8,8 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use netodia_core::entities::cloud::{
-    Account, Album, Artist, Lyrics, Playlist, Quality, SearchKind, SearchResult, Song, StreamTicket,
+    Account, Album, Artist, LikedSong, Lyrics, Playlist, Quality, SearchKind, SearchResult, Song,
+    StreamTicket,
 };
 use netodia_core::error::{AppError, AppResult};
 use netodia_net::netease::Client;
@@ -212,16 +213,10 @@ impl CloudService {
         self.account_request_in_generation(self.client.liked_ids(account.id), cancellation).await
     }
 
-    /// Load liked songs without allowing an account transition between the IDs and metadata fetch.
-    pub async fn liked_songs(&self) -> AppResult<Vec<Song>> {
+    /// Load the liked playlist's server order without allowing an account transition during fetch.
+    pub async fn liked_songs(&self) -> AppResult<Vec<LikedSong>> {
         let (account, cancellation) = self.account_snapshot()?;
-        let ids = self
-            .account_request_in_generation(self.client.liked_ids(account.id), cancellation.clone())
-            .await?;
-        if ids.is_empty() {
-            return Ok(Vec::new());
-        }
-        self.account_request_in_generation(self.client.songs(&ids), cancellation).await
+        self.account_request_in_generation(self.client.liked_songs(account.id), cancellation).await
     }
 
     pub async fn like(&self, song_id: i64, liked: bool) -> AppResult<()> {

@@ -15,7 +15,7 @@ use crate::ui::row_match::{self, Needle};
 use crate::ui::track_sort;
 use netodia_app::services::settings::{SortDir, ViewSort};
 use netodia_app::state::AppState;
-use netodia_core::entities::cloud::Song;
+use netodia_core::entities::cloud::{LikedSong, Song};
 use netodia_core::entities::track::TrackListRow as RsTrackListRow;
 use netodia_core::error::{AppResult, describe};
 use netodia_ui::{AppWindow, Favorites, TrackListRow as UiTrackListRow};
@@ -161,19 +161,20 @@ pub async fn refresh_tracks(
 /// shared track-list model. The local file path stays empty: cloud identities are never treated
 /// as files in the local library.
 async fn fetch_cloud_favorites(state: &AppState) -> AppResult<Vec<RsTrackListRow>> {
-    let songs = state.cloud.liked_songs().await?;
+    let liked_songs = state.cloud.liked_songs().await?;
+    let songs = liked_songs.iter().map(|entry| entry.song.clone()).collect::<Vec<_>>();
     let covers = cache_song_covers(state, &songs).await;
-    Ok(songs
+    Ok(liked_songs
         .into_iter()
-        .enumerate()
-        .map(|(index, song)| {
-            let artwork_path = covers.get(&song.id).cloned();
-            cloud_song_row(song, artwork_path, index)
+        .map(|entry| {
+            let artwork_path = covers.get(&entry.song.id).cloned();
+            cloud_song_row(entry, artwork_path)
         })
         .collect())
 }
 
-fn cloud_song_row(song: Song, artwork_path: Option<String>, index: usize) -> RsTrackListRow {
+fn cloud_song_row(entry: LikedSong, artwork_path: Option<String>) -> RsTrackListRow {
+    let LikedSong { song, favorite_order, .. } = entry;
     let artist = song.artist_names();
     let artist_id = song.artists.first().map(|artist| artist.id);
     RsTrackListRow {
@@ -185,9 +186,9 @@ fn cloud_song_row(song: Song, artwork_path: Option<String>, index: usize) -> RsT
         album_artist: None,
         album: (!song.album.name.is_empty()).then_some(song.album.name),
         genre: None,
-        // The liked-song API returns the account's current favorite order. Treat that
-        // order as the table's `#` column so it is also the initial sort.
-        track_number: Some(i32::try_from(index.saturating_add(1)).unwrap_or(i32::MAX)),
+        // NetEase's liked-playlist `trackIds` order is authoritative. This position was captured
+        // at the network boundary before song details were requested or sorted for display.
+        track_number: Some(favorite_order),
         disc_number: Some(1),
         year: None,
         duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),

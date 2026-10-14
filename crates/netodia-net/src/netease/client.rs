@@ -4,7 +4,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use netodia_core::entities::cloud::{
-    Account, Album, Artist, Lyrics, Playlist, Quality, SearchKind, SearchResult, Song, StreamTicket,
+    Account, Album, Artist, LikedSong, Lyrics, Playlist, Quality, SearchKind, SearchResult, Song,
+    StreamTicket,
 };
 use reqwest::header::{COOKIE, SET_COOKIE};
 use serde::de::DeserializeOwned;
@@ -572,6 +573,33 @@ impl Client {
     pub async fn liked_ids(&self, uid: i64) -> Result<Vec<i64>> {
         field(self.request(ep::LIKED, json!({"uid":uid})).await?, "ids")
     }
+
+    /// Fetch liked songs in the order `NetEase` returns for the account's special liked playlist.
+    /// Song details are fetched separately, so explicitly rejoin them by ID without allowing the
+    /// detail endpoint's response order to change the server-provided favorite sequence.
+    pub async fn liked_songs(&self, uid: i64) -> Result<Vec<LikedSong>> {
+        let playlists = self
+            .request(
+                ep::USER_PLAYLISTS,
+                json!({"uid":uid,"offset":0,"limit":30,"includeVideo":false}),
+            )
+            .await?;
+        let playlist_id = decode_liked_playlist_id(&playlists)?;
+        let body = self.request(ep::PLAYLIST, json!({"id":playlist_id,"n":100_000,"s":0})).await?;
+        let entries = decode_liked_playlist_entries(&body)?;
+        if entries.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let mut seen = std::collections::HashSet::new();
+        let ids = entries
+            .iter()
+            .filter_map(|entry| seen.insert(entry.id).then_some(entry.id))
+            .collect::<Vec<_>>();
+        let songs = self.songs(&ids).await?;
+        Ok(assemble_liked_songs(entries, songs))
+    }
+
     pub async fn like(&self, id: i64, like: bool) -> Result<()> {
         self.request(ep::LIKE, json!({"alg":"itembased","trackId":id,"like":like,"time":"3"}))
             .await?;
@@ -647,6 +675,52 @@ fn decode_saved_playlists(body: &Value, uid: i64) -> Result<(Vec<Playlist>, bool
     let playlists = decode(Value::Array(collected))?;
     let more = body["more"].as_bool().unwrap_or(page_len >= 30);
     Ok((playlists, more))
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct LikedPlaylistEntry {
+    id: i64,
+    added_at_ms: Option<i64>,
+}
+
+fn decode_liked_playlist_id(body: &Value) -> Result<i64> {
+    body["playlist"]
+        .as_array()
+        .and_then(|playlists| {
+            playlists.iter().find(|playlist| playlist["specialType"].as_i64() == Some(5))
+        })
+        .and_then(|playlist| playlist["id"].as_i64())
+        .filter(|id| *id > 0)
+        .ok_or(Error::InvalidResponse)
+}
+
+fn decode_liked_playlist_entries(body: &Value) -> Result<Vec<LikedPlaylistEntry>> {
+    let entries = body["playlist"]["trackIds"].as_array().ok_or(Error::InvalidResponse)?;
+    Ok(entries
+        .iter()
+        .filter_map(|entry| {
+            let id = entry["id"].as_i64().filter(|id| *id > 0)?;
+            let added_at_ms = entry["at"]
+                .as_i64()
+                .or_else(|| entry["at"].as_str().and_then(|value| value.parse().ok()));
+            Some(LikedPlaylistEntry { id, added_at_ms })
+        })
+        .collect())
+}
+
+fn assemble_liked_songs(entries: Vec<LikedPlaylistEntry>, songs: Vec<Song>) -> Vec<LikedSong> {
+    let by_id = songs.into_iter().map(|song| (song.id, song)).collect::<BTreeMap<_, _>>();
+    entries
+        .into_iter()
+        .enumerate()
+        .filter_map(|(index, entry)| {
+            by_id.get(&entry.id).cloned().map(|song| LikedSong {
+                song,
+                favorite_order: i32::try_from(index.saturating_add(1)).unwrap_or(i32::MAX),
+                added_at_ms: entry.added_at_ms,
+            })
+        })
+        .collect()
 }
 
 fn field<T: DeserializeOwned>(mut body: Value, name: &str) -> Result<T> {
@@ -807,6 +881,68 @@ mod tests {
 
         assert_eq!(playlists.iter().map(|playlist| playlist.id).collect::<Vec<_>>(), [11]);
         assert!(more);
+        Ok(())
+    }
+
+    #[test]
+    fn liked_playlist_lookup_uses_the_netease_special_playlist() -> Result<()> {
+        let body = json!({
+            "playlist": [
+                {"id": 99, "name": "Collected", "specialType": 0},
+                {"id": 88, "name": "My liked songs", "specialType": 5}
+            ]
+        });
+
+        assert_eq!(decode_liked_playlist_id(&body)?, 88);
+        assert!(decode_liked_playlist_id(&json!({"playlist": []})).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn liked_song_sequence_and_favorite_times_come_from_track_ids() -> Result<()> {
+        let body = json!({
+            "playlist": {
+                "trackIds": [
+                    {"id": 42, "v": 1, "at": 1_700_000_000_000_i64},
+                    {"id": 7, "v": 1, "at": 1_600_000_000_000_i64}
+                ]
+            }
+        });
+        let entries = decode_liked_playlist_entries(&body)?;
+        let liked = assemble_liked_songs(
+            entries,
+            vec![
+                Song { id: 7, name: "Detail returned first".into(), ..Song::default() },
+                Song { id: 42, name: "Favorite returned first".into(), ..Song::default() },
+            ],
+        );
+
+        assert_eq!(liked.iter().map(|entry| entry.song.id).collect::<Vec<_>>(), [42, 7]);
+        assert_eq!(liked.iter().map(|entry| entry.favorite_order).collect::<Vec<_>>(), [1, 2]);
+        assert_eq!(
+            liked.iter().map(|entry| entry.added_at_ms).collect::<Vec<_>>(),
+            [Some(1_700_000_000_000), Some(1_600_000_000_000)]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn unavailable_liked_song_does_not_shift_later_server_positions() -> Result<()> {
+        let entries = decode_liked_playlist_entries(&json!({
+            "playlist": {"trackIds": [
+                {"id": 42, "at": 100},
+                {"id": 99, "at": 200},
+                {"id": 7, "at": 300}
+            ]}
+        }))?;
+        let liked = assemble_liked_songs(
+            entries,
+            vec![Song { id: 7, name: "Available".into(), ..Song::default() }],
+        );
+
+        assert_eq!(liked.len(), 1);
+        assert_eq!(liked[0].song.id, 7);
+        assert_eq!(liked[0].favorite_order, 3);
         Ok(())
     }
 
