@@ -1,6 +1,7 @@
 pub mod album;
 pub mod artist;
 pub mod browse;
+pub mod cloud;
 pub mod credits;
 pub mod folder;
 pub mod genre;

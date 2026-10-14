@@ -13,3 +13,5 @@ pub mod services {
 pub mod media {
     pub mod fetch;
 }
+
+pub mod netease;
