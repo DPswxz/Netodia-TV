@@ -25,13 +25,15 @@ impl_curated_hero_helpers!(
 /// The up-to-`n` most-recently-played *distinct* cover paths, in recency
 /// order — the collage's sources. Skips empty/absent artwork.
 ///
-/// The dedup is [`crate::ui::grid_prewarm::unique_artwork_paths`]', the same
-/// one every cover prewarm in the tree uses; only the `String` shape the
-/// Slint model wants is this function's own.
+/// Artwork sources can be local paths or remote URLs, so this deduplicates the original strings
+/// instead of converting through the local-file prewarm helper.
 pub fn mosaic_paths_from(rows: &[RsTrackListRow], n: usize) -> Vec<String> {
-    crate::ui::grid_prewarm::unique_artwork_paths(rows.iter().map(|r| r.artwork_path.as_deref()), n)
-        .into_iter()
-        .map(|p| p.to_string_lossy().into_owned())
+    let mut seen = std::collections::HashSet::new();
+    rows.iter()
+        .filter_map(|row| row.artwork_path.as_deref())
+        .filter(|source| !source.is_empty() && seen.insert(*source))
+        .take(n)
+        .map(str::to_owned)
         .collect()
 }
 

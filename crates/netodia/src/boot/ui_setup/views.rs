@@ -32,11 +32,32 @@ pub struct UiHandles {
 /// through the one shared row-tier LRU. Rows carry only the artwork path, so
 /// only instantiated rows pay a lookup and nothing pins evicted buffers. Part of
 /// no slice's `install`, serving every view.
-fn install_row_covers(app: &AppWindow, cover_thumbs: &Arc<image::cover_thumbs::CoverThumbs>) {
+fn install_row_covers(
+    app: &AppWindow,
+    state: &AppState,
+    cover_thumbs: &Arc<image::cover_thumbs::CoverThumbs>,
+) {
     let ct = cover_thumbs.clone();
+    let weak = app.as_weak();
+    let remote = Arc::new(ui::remote_covers::RemoteCoverThumbs::new(
+        state.http_client().clone(),
+        state.runtime.clone(),
+        move || {
+            let weak = weak.clone();
+            let _ = slint::invoke_from_event_loop(move || {
+                let Some(app) = weak.upgrade() else { return };
+                let covers = app.global::<netodia_ui::RowCovers>();
+                covers.set_generation(covers.get_generation().wrapping_add(1));
+            });
+        },
+    ));
     // `generation` is read for its effect on the binding, never its value — see `RowCovers`.
-    app.global::<netodia_ui::RowCovers>().on_request(move |path, _generation| {
-        ct.get_or_schedule_opt(ui::grid_prewarm::nonempty_artwork_path(path.as_str()))
+    app.global::<netodia_ui::RowCovers>().on_request(move |source, _generation| {
+        if ui::remote_covers::is_remote_artwork_url(source.as_str()) {
+            remote.get_or_schedule(source.as_str())
+        } else {
+            ct.get_or_schedule_opt(ui::grid_prewarm::nonempty_artwork_path(source.as_str()))
+        }
     });
 
     ui::cover_generation::notify_on_decode(cover_thumbs, app, |app| {
@@ -109,7 +130,7 @@ pub fn install_views(
     // Ahead of the first `install`, every slice cloning the row cache into its handle. The grid
     // tier needs no clone and no `cx` field — `ui::grid_prewarm::tier()` is the whole of it.
     let cover_thumbs = Arc::new(image::cover_thumbs::CoverThumbs::new());
-    install_row_covers(app, &cover_thumbs);
+    install_row_covers(app, state, &cover_thumbs);
     install_grid_covers(app);
 
     let cx = ui::view_ctx::ViewCtx {

@@ -194,8 +194,6 @@ async fn fetch_cloud_recent_tracks(state: &AppState) -> AppResult<Vec<RsTrackLis
             HashSet::new()
         }
     };
-    let songs = recent.iter().map(|entry| entry.song.clone()).collect::<Vec<_>>();
-    let covers = crate::ui::favorites::cache_song_covers(state, &songs).await;
     Ok(recent
         .into_iter()
         .enumerate()
@@ -203,7 +201,12 @@ async fn fetch_cloud_recent_tracks(state: &AppState) -> AppResult<Vec<RsTrackLis
             let song_id = entry.song.id;
             let is_favorite = liked_ids.contains(&song_id)
                 || state.cloud.cached_is_liked(song_id).unwrap_or(false);
-            let artwork_path = covers.get(&song_id).cloned();
+            let artwork_path = entry
+                .song
+                .album
+                .cover_url
+                .clone()
+                .filter(|url| crate::ui::remote_covers::is_remote_artwork_url(url));
             recent_song_row(
                 entry,
                 i32::try_from(index.saturating_add(1)).unwrap_or(i32::MAX),

@@ -44,7 +44,7 @@ use crate::media::image::image_decode::{self, FilterType, MAX_SOURCE_DIM, resize
 pub mod composite;
 pub mod sweep;
 
-pub use composite::{compose_artwork, compose_cover};
+pub use composite::{compose_artwork, compose_cover, compose_cover_from_memory};
 
 /// Pipes every byte to both the wrapped writer and a BLAKE3 hasher. Used by
 /// `compose_artwork` to encode a JPEG into a temp file while computing its

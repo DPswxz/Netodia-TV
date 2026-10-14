@@ -115,8 +115,8 @@ where
     let _ = tokio::task::spawn_blocking(move || warm(&grid)).await;
 }
 
-/// Deduplicated, non-empty artwork paths from an iterator of optional path strings,
-/// first-seen order preserved, stopping at `cap`.
+/// Deduplicated, non-empty local artwork paths from optional artwork sources, first-seen order
+/// preserved, stopping at `cap`. Remote HTTP/S URLs are requested lazily by visible rows instead.
 ///
 /// `cap` keeps a detail over a huge entity from allocating a path per track only for
 /// `prewarm` to discard all but the LRU's worth: the cache capacity for a full-list
@@ -136,7 +136,9 @@ pub fn unique_artwork_paths<'a>(
         if out.len() >= cap {
             break;
         }
-        if !p.is_empty() && seen.insert(p) {
+        // Remote cloud art is fetched lazily by the visible row. Feeding its URL to the local
+        // file decoder would cache a permanent decode failure under what looks like a path.
+        if !p.is_empty() && !crate::ui::remote_covers::is_remote_artwork_url(p) && seen.insert(p) {
             out.push(PathBuf::from(p));
         }
     }

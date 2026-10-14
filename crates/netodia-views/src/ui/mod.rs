@@ -36,6 +36,7 @@ pub mod onboarding;
 pub mod playlists;
 pub mod queue_sheet;
 pub mod recently_played;
+pub mod remote_covers;
 pub mod replaygain;
 pub mod row_match;
 pub mod search;

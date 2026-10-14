@@ -72,12 +72,16 @@ async fn fetch_playlist_detail(
     let thumbnail_path =
         playlists_ui.grid_stats_by_id(playlist_id).and_then(|stats| stats.thumbnail_path);
     let detail = cloud_playlist_stats(playlist, thumbnail_path, &songs);
-    let covers = crate::ui::favorites::cache_song_covers(state, &songs).await;
     let tracks = songs
         .into_iter()
         .map(|song| {
             let is_favorite = liked_ids.contains(&song.id);
-            let artwork_path = covers.get(&song.id).cloned();
+            let artwork_path = song
+                .album
+                .cover_url
+                .as_ref()
+                .filter(|url| crate::ui::remote_covers::is_remote_artwork_url(url))
+                .cloned();
             cloud_song_row(song, is_favorite, artwork_path)
         })
         .collect();

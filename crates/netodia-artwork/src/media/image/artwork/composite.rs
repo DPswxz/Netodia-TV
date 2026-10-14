@@ -16,7 +16,10 @@ use std::path::{Path, PathBuf};
 
 use netodia_core::error::describe;
 
-use crate::media::image::image_decode::{FilterType, MAX_SOURCE_DIM, decode_capped};
+use crate::media::image::image_decode::{
+    FilterType, MAX_SOURCE_DIM, decode_capped, decode_memory_capped, large_decode_guard,
+    memory_dimensions,
+};
 
 use super::{
     HASH_HEX_LEN, HashingWriter, STORE_JPEG_QUALITY, STORE_MAX_DIM, persist_unless_exists,
@@ -82,6 +85,47 @@ pub fn compose_cover(source_paths: &[PathBuf], side: u32) -> Option<image::RgbIm
             Err(ComposeStop::Unreadable(index)) => {
                 sources.remove(index);
             }
+        }
+    }
+}
+
+/// Compose 1–4 already-fetched image bodies into a hero collage, without creating files.
+///
+/// Invalid or oversized images are skipped just like unreadable paths in [`compose_cover`].
+/// Blocking — call from `spawn_blocking` or a Rayon worker.
+pub fn compose_cover_from_memory(source_bytes: &[Vec<u8>], side: u32) -> Option<image::RgbImage> {
+    let mut sources: Vec<&[u8]> = source_bytes.iter().map(Vec::as_slice).collect();
+
+    loop {
+        let rects = layout_for(sources.len())?;
+        debug_assert!(
+            side >= 2 && side.is_multiple_of(2),
+            "the half-unit layout needs an even side"
+        );
+        let half = side / 2;
+        let mut canvas = image::RgbImage::new(side, side);
+        let mut unreadable = None;
+        for (index, (bytes, &(x, y, width, height))) in sources.iter().zip(rects).enumerate() {
+            // As with local composites, only one full-size source is live at a time. The shared
+            // guard also serializes unusually large decodes from the row thumbnail workers.
+            let _oversized = memory_dimensions(bytes, MAX_SOURCE_DIM)
+                .map(|(w, h)| u64::from(w) * u64::from(h))
+                .and_then(large_decode_guard);
+            let Some(source) = decode_memory_capped(bytes, MAX_SOURCE_DIM) else {
+                unreadable = Some(index);
+                break;
+            };
+            let Some(tile) = resize_to_cover(&source, width * half, height * half, HERO_FILTER)
+            else {
+                unreadable = Some(index);
+                break;
+            };
+            image::imageops::overlay(&mut canvas, &tile, i64::from(x * half), i64::from(y * half));
+        }
+        if let Some(index) = unreadable {
+            sources.remove(index);
+        } else {
+            return Some(canvas);
         }
     }
 }

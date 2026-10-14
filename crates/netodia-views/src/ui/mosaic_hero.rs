@@ -28,6 +28,38 @@ pub(crate) async fn compose_off_thread(
     paths: Vec<String>,
     blur: Option<BlurSpec>,
 ) -> Option<DetailPair> {
+    if paths.iter().all(|source| crate::ui::remote_covers::is_remote_artwork_url(source)) {
+        let client = state.http_client().clone();
+        let sources = futures_util::future::join_all(
+            paths.iter().map(|url| crate::ui::remote_covers::fetch_image_bytes(&client, url)),
+        )
+        .await
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+        return match state
+            .runtime
+            .spawn_blocking(move || {
+                let Some(canvas) =
+                    netodia_artwork::media::image::artwork::compose_cover_from_memory(
+                        &sources, COVER_SIZE,
+                    )
+                else {
+                    return DetailPair::default();
+                };
+                pair_from_image(&image::DynamicImage::ImageRgb8(canvas), blur)
+                    .map_or_else(DetailPair::default, Into::into)
+            })
+            .await
+        {
+            Ok(pair) => Some(pair),
+            Err(e) => {
+                log::warn!("curated hero compose: {}", describe(&e));
+                None
+            }
+        };
+    }
+
     match state.runtime.spawn_blocking(move || compose_hero_pair(&paths, blur)).await {
         Ok(pair) => Some(pair),
         Err(e) => {

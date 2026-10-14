@@ -4,8 +4,7 @@
 //! with both the per-keystroke filter walk and the per-header-click re-sort running in memory off
 //! [`crate::ui::track_list_cache`].
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use slint::{ComponentHandle, Model, SharedString, VecModel, Weak};
@@ -15,7 +14,7 @@ use crate::ui::row_match::{self, Needle};
 use crate::ui::track_sort;
 use netodia_app::services::settings::{SortDir, ViewSort};
 use netodia_app::state::AppState;
-use netodia_core::entities::cloud::{LikedSong, Song};
+use netodia_core::entities::cloud::LikedSong;
 use netodia_core::entities::track::TrackListRow as RsTrackListRow;
 use netodia_core::error::{AppResult, describe};
 use netodia_ui::{AppWindow, Favorites, TrackListRow as UiTrackListRow};
@@ -189,21 +188,15 @@ pub async fn refresh_tracks(
 /// as files in the local library.
 async fn fetch_cloud_favorites(state: &AppState) -> AppResult<Vec<RsTrackListRow>> {
     let liked_songs = state.cloud.liked_songs().await?;
-    let songs = liked_songs.iter().map(|entry| entry.song.clone()).collect::<Vec<_>>();
-    let covers = cache_song_covers(state, &songs).await;
-    Ok(liked_songs
-        .into_iter()
-        .map(|entry| {
-            let artwork_path = covers.get(&entry.song.id).cloned();
-            cloud_song_row(entry, artwork_path)
-        })
-        .collect())
+    Ok(liked_songs.into_iter().map(cloud_song_row).collect())
 }
 
-fn cloud_song_row(entry: LikedSong, artwork_path: Option<String>) -> RsTrackListRow {
+fn cloud_song_row(entry: LikedSong) -> RsTrackListRow {
     let LikedSong { song, favorite_order, .. } = entry;
     let artist = song.artist_names();
     let artist_id = song.artists.first().map(|artist| artist.id);
+    let artwork_path =
+        song.album.cover_url.filter(|url| crate::ui::remote_covers::is_remote_artwork_url(url));
     RsTrackListRow {
         id: song.id,
         file_path: String::new(),
@@ -228,67 +221,6 @@ fn cloud_song_row(entry: LikedSong, artwork_path: Option<String>) -> RsTrackList
         date_added: String::new(),
         sort_key: None,
     }
-}
-
-/// Fetch only the first screenful of distinct cover URLs. The rest of a large favourites list
-/// still renders immediately and its rows can request local artwork as they become visible.
-pub(in crate::ui) async fn cache_song_covers(
-    state: &AppState,
-    songs: &[Song],
-) -> HashMap<i64, String> {
-    const COVER_LIMIT: usize = 48;
-    let mut urls = Vec::new();
-    let mut seen = std::collections::HashSet::new();
-    for song in songs {
-        let Some(url) = song.album.cover_url.as_deref() else { continue };
-        if seen.insert(url.to_owned()) {
-            urls.push(url.to_owned());
-            if urls.len() == COVER_LIMIT {
-                break;
-            }
-        }
-    }
-    if urls.is_empty() {
-        return HashMap::new();
-    }
-
-    let client = state.http_client().clone();
-    let dir = state.paths.data_dir.join("netease-artwork");
-    let stored = futures_util::future::join_all(urls.into_iter().map(|url| {
-        let client = client.clone();
-        let dir = dir.clone();
-        async move { (url.clone(), download_cover(&client, &url, &dir).await) }
-    }))
-    .await;
-    let by_url: HashMap<String, String> =
-        stored.into_iter().filter_map(|(url, path)| path.map(|path| (url, path))).collect();
-    songs
-        .iter()
-        .filter_map(|song| {
-            let url = song.album.cover_url.as_ref()?;
-            Some((song.id, by_url.get(url)?.clone()))
-        })
-        .collect()
-}
-
-async fn download_cover(client: &reqwest::Client, url: &str, dir: &Path) -> Option<String> {
-    const MAX_BYTES: u64 = 1_048_576;
-    let response = client.get(url).send().await.ok()?.error_for_status().ok()?;
-    if response.content_length().is_some_and(|length| length > MAX_BYTES) {
-        return None;
-    }
-    let bytes = response.bytes().await.ok()?;
-    if u64::try_from(bytes.len()).ok()? > MAX_BYTES {
-        return None;
-    }
-    let bytes = bytes.to_vec();
-    let dir = dir.to_path_buf();
-    tokio::task::spawn_blocking(move || {
-        netodia_artwork::media::image::artwork::store_image(&bytes, "jpg", &dir)
-    })
-    .await
-    .ok()
-    .flatten()
 }
 
 fn set_cloud_state(weak: &Weak<AppWindow>, loading: bool, error: Option<String>, count: i32) {
