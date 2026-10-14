@@ -5,8 +5,9 @@
 //! Plus the four things drag-to-reorder needs to stay alive, none of which any
 //! other pin can see go missing.
 
-use super::detail::{POSITION_FIELD, is_manual_order};
+use super::detail::{POSITION_FIELD, is_manual_order, sort_playlist_tracks};
 use super::*;
+use netodia_core::entities::track::TrackListRow;
 use netodia_testkit::code_tokens;
 
 const DRAGGABLE_LIST: &str =
@@ -16,6 +17,12 @@ const DETAIL_VIEW: &str =
     include_str!("../../../../../netodia-ui/ui/views/my-library/playlist-detail.slint");
 const SHARED_DETAIL_WIRING: &str = include_str!("../../callbacks/track_detail.rs");
 const DETAIL: &str = include_str!("../detail.rs");
+const CLOUD_TRACKS: &str =
+    include_str!("../../../../../netodia-ui/ui/views/my-library/cloud-playlist-tracks.slint");
+const PLAYLISTS_TAB: &str =
+    include_str!("../../../../../netodia-ui/ui/views/my-library/playlists-tab.slint");
+const PLAYLIST_DETAIL_GLOBAL: &str =
+    include_str!("../../../../../netodia-ui/ui/globals/playlists.slint");
 
 /// Minimal `PlaylistStats` builder — only the fields the grid filter / sort
 /// read matter. Regular playlist, so `smart_criteria` never parses.
@@ -37,6 +44,31 @@ fn playlist(id: i64, name: &str, track_count: i32, updated_at: &str) -> Playlist
 
 fn names(data: &GridData, indices: &[usize]) -> Vec<String> {
     indices.iter().map(|&i| data.playlists[i].name.clone()).collect()
+}
+
+fn track(id: i64, title: &str, album: &str, favorite: bool, length: i64) -> TrackListRow {
+    TrackListRow {
+        id,
+        file_path: String::new(),
+        file_name: title.to_owned(),
+        title: title.to_owned(),
+        artist: Some("Artist".to_owned()),
+        album_artist: None,
+        album: Some(album.to_owned()),
+        genre: None,
+        track_number: None,
+        disc_number: None,
+        year: None,
+        duration_ms: length,
+        artwork_path: None,
+        is_favorite: favorite,
+        rating: 0,
+        album_id: None,
+        artist_id: None,
+        genre_id: None,
+        date_added: String::new(),
+        sort_key: None,
+    }
 }
 
 #[test]
@@ -85,6 +117,55 @@ fn compute_indices_default_sort_is_most_recently_updated_first() {
     assert_eq!(names(&data, &desc), ["Newest", "Middle", "Oldest"]);
     let asc = compute_indices(&data, "updated", "asc", "");
     assert_eq!(names(&data, &asc), ["Oldest", "Middle", "Newest"]);
+}
+
+#[test]
+fn cloud_playlist_rows_expose_netease_columns_and_position_is_the_default_sort() {
+    assert!(PLAYLISTS_TAB.contains("open-playlist(id) => { Playlists.open-playlist(id); }"));
+    assert!(PLAYLIST_DETAIL_GLOBAL.contains("in-out property <string> sort-field: \"position\";"));
+    for field in ["position", "title", "album", "favorite", "length"] {
+        assert!(CLOUD_TRACKS.contains(&format!("field: \"{field}\";")));
+    }
+}
+
+#[test]
+fn cloud_playlist_sort_covers_position_title_album_favorite_and_length() {
+    let seed = || {
+        vec![
+            track(1, "Bravo", "Zulu", true, 300),
+            track(2, "Alpha", "Able", false, 100),
+            track(3, "Charlie", "Mango", true, 200),
+        ]
+    };
+    let ids = |rows: &[TrackListRow]| rows.iter().map(|row| row.id).collect::<Vec<_>>();
+
+    let mut rows = seed();
+    sort_playlist_tracks(&mut rows, &[3, 1, 2], POSITION_FIELD, "asc");
+    assert_eq!(ids(&rows), [3, 1, 2]);
+    sort_playlist_tracks(&mut rows, &[3, 1, 2], POSITION_FIELD, "desc");
+    assert_eq!(ids(&rows), [2, 1, 3]);
+
+    let mut rows = seed();
+    sort_playlist_tracks(&mut rows, &[], "title", "asc");
+    assert_eq!(ids(&rows), [2, 1, 3]);
+    sort_playlist_tracks(&mut rows, &[], "title", "desc");
+    assert_eq!(ids(&rows), [3, 1, 2]);
+
+    let mut rows = seed();
+    sort_playlist_tracks(&mut rows, &[], "album", "asc");
+    assert_eq!(ids(&rows), [2, 3, 1]);
+
+    let mut rows = seed();
+    sort_playlist_tracks(&mut rows, &[], "favorite", "asc");
+    assert_eq!(ids(&rows), [2, 1, 3]);
+    sort_playlist_tracks(&mut rows, &[], "favorite", "desc");
+    assert_eq!(ids(&rows), [3, 1, 2]);
+
+    let mut rows = seed();
+    sort_playlist_tracks(&mut rows, &[], "length", "asc");
+    assert_eq!(ids(&rows), [2, 3, 1]);
+    sort_playlist_tracks(&mut rows, &[], "length", "desc");
+    assert_eq!(ids(&rows), [1, 3, 2]);
 }
 
 /// A row drag and the list's own drag-pan are one gesture, and whichever element

@@ -2,63 +2,191 @@ import { Theme } from "../../theme.slint";
 import { TrackListRow } from "../../models.slint";
 import { ListView } from "std-widgets.slint";
 import { OverlayScrollbar } from "../../components/overlay-scrollbar.slint";
-import { IconButton } from "../../components/icon-button.slint";
+import { MaterialIcon } from "../../components/material-icon.slint";
+
+component CloudSortHeader inherits Rectangle {
+    in property <string> label;
+    in property <string> field;
+    in property <string> active-field;
+    in property <string> active-dir;
+    callback clicked();
+
+    min-height: 40px;
+    max-height: 40px;
+
+    Rectangle {
+        x: 0;
+        y: Theme.pad-xs;
+        width: parent.width;
+        height: parent.height - 2 * Theme.pad-xs;
+        border-radius: Theme.radius-md;
+        background: touch.has-hover ? Theme.surface0 : transparent;
+    }
+
+    HorizontalLayout {
+        padding-left: Theme.pad-sm;
+        padding-right: Theme.pad-sm;
+        spacing: 2px;
+        alignment: center;
+        Text {
+            text: root.label;
+            color: root.field == root.active-field ? Theme.accent : Theme.text;
+            font-size: Theme.font-size-row;
+            font-weight: 600;
+            overflow: elide;
+            horizontal-stretch: 1;
+        }
+        if root.field == root.active-field: MaterialIcon {
+            name: root.active-dir == "asc" ? "arrow_drop_up" : "arrow_drop_down";
+            icon-size: 16px;
+            icon-color: Theme.accent;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}
 
 export component CloudPlaylistTracks inherits Rectangle {
     in property <[TrackListRow]> rows;
-    callback play-track(int);
+    in property <string> sort-field;
+    in property <string> sort-dir;
+    callback request-sort(string);
+    callback play-track(int, int);
+
+    HorizontalLayout {
+        x: Theme.pad-md;
+        y: 0;
+        width: parent.width - 2 * Theme.pad-md - Theme.scrollbar-slot;
+        height: 40px;
+        spacing: Theme.pad-sm;
+
+        CloudSortHeader {
+            width: 48px;
+            label: "#";
+            field: "position";
+            active-field: root.sort-field;
+            active-dir: root.sort-dir;
+            clicked => { root.request-sort("position"); }
+        }
+        CloudSortHeader {
+            horizontal-stretch: 2;
+            label: @tr("Title");
+            field: "title";
+            active-field: root.sort-field;
+            active-dir: root.sort-dir;
+            clicked => { root.request-sort("title"); }
+        }
+        CloudSortHeader {
+            horizontal-stretch: 1;
+            label: @tr("Album");
+            field: "album";
+            active-field: root.sort-field;
+            active-dir: root.sort-dir;
+            clicked => { root.request-sort("album"); }
+        }
+        CloudSortHeader {
+            width: 70px;
+            label: @tr("Liked");
+            field: "favorite";
+            active-field: root.sort-field;
+            active-dir: root.sort-dir;
+            clicked => { root.request-sort("favorite"); }
+        }
+        CloudSortHeader {
+            width: 76px;
+            label: @tr("Length");
+            field: "length";
+            active-field: root.sort-field;
+            active-dir: root.sort-dir;
+            clicked => { root.request-sort("length"); }
+        }
+    }
+
+    Rectangle {
+        x: Theme.pad-md;
+        y: 40px;
+        width: parent.width - 2 * Theme.pad-md - Theme.scrollbar-slot;
+        height: 1px;
+        background: Theme.border;
+    }
 
     list := ListView {
         x: Theme.pad-md;
-        y: Theme.pad-md;
+        y: 41px;
         width: parent.width - 2 * Theme.pad-md - Theme.scrollbar-slot;
-        height: parent.height - 2 * Theme.pad-md;
+        height: parent.height - 41px;
         vertical-scrollbar-policy: always-off;
         horizontal-scrollbar-policy: always-off;
 
-        for song in root.rows: Rectangle {
-            min-height: 68px;
-            max-height: 68px;
+        for song[index] in root.rows: Rectangle {
+            min-height: 64px;
+            max-height: 64px;
             border-radius: Theme.radius-sm;
             background: row.has-hover ? Theme.surface0 : transparent;
 
             row := TouchArea {
-                clicked => { root.play-track(song.id); }
+                mouse-cursor: pointer;
+                clicked => { root.play-track(song.id, index); }
             }
 
             HorizontalLayout {
-                padding-left: Theme.pad-md;
+                padding-left: Theme.pad-sm;
                 padding-right: Theme.pad-sm;
-                spacing: Theme.pad-md;
+                spacing: Theme.pad-sm;
 
-                IconButton {
-                    icon: "play_arrow";
-                    icon-size: 22px;
-                    idle-fg: Theme.accent;
-                    tooltip-text: @tr("Play");
-                    clicked => { root.play-track(song.id); }
+                Text {
+                    width: 48px;
+                    text: index + 1;
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-row;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
                 }
                 VerticalLayout {
+                    horizontal-stretch: 2;
                     alignment: center;
-                    spacing: 3px;
+                    spacing: 2px;
                     Text {
                         text: song.title;
                         color: Theme.text;
-                        font-size: Theme.font-size-md;
+                        font-size: Theme.font-size-row;
                         overflow: elide;
                     }
                     Text {
-                        text: song.artist + (song.album != "" ? " · " + song.album : "");
+                        text: song.artist;
                         color: Theme.subtext0;
                         font-size: Theme.font-size-sm;
                         overflow: elide;
                     }
                 }
                 Text {
+                    horizontal-stretch: 1;
+                    text: song.album;
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-row;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+                VerticalLayout {
+                    width: 70px;
+                    alignment: center;
+                    MaterialIcon {
+                        name: song.is_favorite ? "favorite" : "favorite_border";
+                        icon-size: 20px;
+                        icon-color: song.is_favorite ? Theme.red : Theme.subtext0;
+                        filled: song.is_favorite;
+                    }
+                }
+                Text {
+                    width: 76px;
                     text: song.display_duration;
                     color: Theme.subtext0;
+                    font-size: Theme.font-size-row;
                     vertical-alignment: center;
-                    font-size: Theme.font-size-sm;
+                    horizontal-alignment: right;
                 }
             }
         }
@@ -67,9 +195,9 @@ export component CloudPlaylistTracks inherits Rectangle {
     OverlayScrollbar {
         horizontal: false;
         x: parent.width - self.width;
-        y: Theme.pad-md;
+        y: 41px;
         width: Theme.scrollbar-slot;
-        height: parent.height - 2 * Theme.pad-md;
+        height: parent.height - 41px;
         visible-size: list.visible-height;
         content-size: list.viewport-height;
         offset: -list.viewport-y;

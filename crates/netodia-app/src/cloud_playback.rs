@@ -6,9 +6,13 @@ use std::time::Duration;
 use netodia_audio::player::source::audio::AudioSource;
 use netodia_audio::player::source::buffered::BufferedAudioSource;
 use netodia_audio::player::source::file_decode::FileDecoder;
-use netodia_core::entities::cloud::{Account, Quality};
+use netodia_core::entities::cloud::{Account, Quality, Song};
+use netodia_core::entities::track::TrackSummary;
 use netodia_core::error::{AppError, AppResult};
 use netodia_engine::player::engine::backend::PlaybackEngine;
+use netodia_engine::player::engine::event_sink::PlayerSinks;
+use netodia_engine::player::engine::state::{PlayerStateHandle, with_state_emit};
+use netodia_engine::player::engine::types::PlaybackStatus;
 use netodia_net::services::net::range_reader::RangeReader;
 use netodia_playback::player::playback::replaygain::TrackReplayGain;
 
@@ -29,11 +33,18 @@ pub struct CloudPlaybackResult {
 pub struct CloudPlayback {
     cloud: CloudService,
     engine: Arc<PlaybackEngine>,
+    player_state: Arc<PlayerStateHandle>,
+    sinks: Arc<PlayerSinks>,
 }
 
 impl CloudPlayback {
-    pub fn new(cloud: CloudService, engine: Arc<PlaybackEngine>) -> Self {
-        Self { cloud, engine }
+    pub fn new(
+        cloud: CloudService,
+        engine: Arc<PlaybackEngine>,
+        player_state: Arc<PlayerStateHandle>,
+        sinks: Arc<PlayerSinks>,
+    ) -> Self {
+        Self { cloud, engine, player_state, sinks }
     }
 
     pub fn account_status(&self) -> SessionStatus {
@@ -91,10 +102,19 @@ impl CloudPlayback {
     ) -> AppResult<CloudPlaybackResult> {
         let generation = self.engine.reserve_playback_request();
         let cancellation = self.cloud.account_tasks_token();
-        let ticket = self.cloud.stream_ticket(song_id, quality).await?;
+        let song_ids = [song_id];
+        let (ticket, songs) = tokio::try_join!(
+            self.cloud.stream_ticket(song_id, quality),
+            self.cloud.songs(&song_ids),
+        )?;
         if cancellation.is_cancelled() {
             return Err(AppError::network_msg("网易云播放请求已取消"));
         }
+        let song = songs
+            .into_iter()
+            .find(|song| song.id == song_id)
+            .ok_or_else(|| AppError::network_msg("网易云未返回歌曲信息"))?;
+        let summary = Arc::new(track_summary(song));
 
         let trial = ticket.trial;
         let url = ticket.url;
@@ -117,6 +137,10 @@ impl CloudPlayback {
             return Err(AppError::network_msg("网易云播放请求已取消"));
         }
 
+        // Serialize the deck handoff and the player-state publication together with local
+        // transport actions. Otherwise the audio can start while the player bar still has no
+        // current track, or an older network request can publish after a newer local selection.
+        let _exec = self.player_state.lock_exec();
         let started = self.engine.play_prepared_source(
             generation,
             source,
@@ -125,7 +149,44 @@ impl CloudPlayback {
             start_position,
             TrackReplayGain::default(),
         );
+        if started {
+            let duration_ms = u64::try_from(summary.duration_ms.max(0)).unwrap_or(0);
+            let position_ms = u64::try_from(start.as_millis()).unwrap_or(u64::MAX);
+            with_state_emit(&self.player_state, &self.sinks, |state| {
+                // Cloud queue entries have no durable local path. Keep the currently playing
+                // identity in `source` for the player bar and OS media metadata, and clear a
+                // previous local queue so Next cannot try to open a local file for this song.
+                state.queue.clear();
+                state.source = Some(summary);
+                state.status = PlaybackStatus::Playing;
+                state.duration_ms = duration_ms;
+                state.position_ms = position_ms.min(duration_ms.saturating_sub(500));
+            });
+        }
         Ok(CloudPlaybackResult { started, trial })
+    }
+}
+
+fn track_summary(song: Song) -> TrackSummary {
+    let artist = song.artist_names();
+    TrackSummary {
+        id: song.id,
+        file_path: String::new(),
+        file_name: song.name.clone(),
+        title: song.name,
+        artist: (!artist.is_empty()).then_some(artist),
+        album: (!song.album.name.is_empty()).then_some(song.album.name),
+        duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
+        artwork_path: None,
+        track_number: None,
+        disc_number: None,
+        last_position: 0,
+        is_favorite: false,
+        rating: 0,
+        replaygain_track_gain: None,
+        replaygain_track_peak: None,
+        replaygain_album_gain: None,
+        replaygain_album_peak: None,
     }
 }
 
@@ -158,8 +219,9 @@ fn decoder_extension(format: &str) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::{decoder_extension, open_buffered_source};
+    use super::{decoder_extension, open_buffered_source, track_summary};
     use netodia_audio::player::source::audio::AudioSource;
+    use netodia_core::entities::cloud::{Album, Artist, Song};
     use std::io::{Read, Write};
     use std::net::TcpListener;
     use std::thread;
@@ -197,6 +259,25 @@ mod tests {
         {
             assert_eq!(decoder_extension(input), expected);
         }
+    }
+
+    #[test]
+    fn cloud_track_summary_keeps_the_metadata_the_player_bar_renders() {
+        let summary = track_summary(Song {
+            id: 812,
+            name: "Cloud song".to_owned(),
+            artists: vec![Artist { id: 91, name: "Cloud artist".to_owned(), ..Artist::default() }],
+            album: Album { id: 77, name: "Cloud album".to_owned(), ..Album::default() },
+            duration_ms: 181_000,
+            ..Song::default()
+        });
+
+        assert_eq!(summary.id, 812);
+        assert_eq!(summary.title, "Cloud song");
+        assert_eq!(summary.artist.as_deref(), Some("Cloud artist"));
+        assert_eq!(summary.album.as_deref(), Some("Cloud album"));
+        assert_eq!(summary.duration_ms, 181_000);
+        assert!(summary.file_path.is_empty());
     }
 
     #[test]

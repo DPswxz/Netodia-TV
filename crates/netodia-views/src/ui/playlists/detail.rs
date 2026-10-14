@@ -2,7 +2,7 @@
 //! plus a `"position"` sort that rebuilds the display order from the canonical position-order
 //! cache instead of re-fetching. What the four details share is [`crate::ui::track_detail`].
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use slint::{ComponentHandle, SharedString, Weak};
@@ -66,11 +66,19 @@ async fn fetch_playlist_detail(
     playlists_ui: &PlaylistsUi,
     playlist_id: i64,
 ) -> AppResult<(PlaylistStats, Vec<RsTrackListRow>)> {
-    let (playlist, songs) = state.cloud.saved_playlist(playlist_id).await?;
+    let ((playlist, songs), liked_ids) =
+        tokio::try_join!(state.cloud.saved_playlist(playlist_id), state.cloud.liked_ids(),)?;
+    let liked_ids: HashSet<i64> = liked_ids.into_iter().collect();
     let thumbnail_path =
         playlists_ui.grid_stats_by_id(playlist_id).and_then(|stats| stats.thumbnail_path);
     let detail = cloud_playlist_stats(playlist, thumbnail_path, &songs);
-    let tracks = songs.into_iter().map(cloud_song_row).collect();
+    let tracks = songs
+        .into_iter()
+        .map(|song| {
+            let is_favorite = liked_ids.contains(&song.id);
+            cloud_song_row(song, is_favorite)
+        })
+        .collect();
     Ok((detail, tracks))
 }
 
@@ -96,7 +104,7 @@ fn cloud_playlist_stats(
     }
 }
 
-fn cloud_song_row(song: Song) -> RsTrackListRow {
+fn cloud_song_row(song: Song, is_favorite: bool) -> RsTrackListRow {
     let artist = song.artist_names();
     let artist_id = song.artists.first().map(|artist| artist.id);
     RsTrackListRow {
@@ -113,7 +121,7 @@ fn cloud_song_row(song: Song) -> RsTrackListRow {
         year: None,
         duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
         artwork_path: None,
-        is_favorite: false,
+        is_favorite,
         rating: 0,
         album_id: (song.album.id > 0).then_some(song.album.id),
         artist_id,
@@ -424,7 +432,7 @@ pub fn seed_detail_from_settings(
 /// Sort `rows` in place by `field` / `dir`. `"position"` rebuilds from
 /// the position-order cache (an O(N) `HashMap` lookup per row); any
 /// other field falls through to the shared `sort_track_rows_by` helper.
-fn sort_playlist_tracks(
+pub(super) fn sort_playlist_tracks(
     rows: &mut [RsTrackListRow],
     position_order: &[i64],
     field: &str,
@@ -434,6 +442,13 @@ fn sort_playlist_tracks(
         let index_of: HashMap<i64, usize> =
             position_order.iter().enumerate().map(|(i, &id)| (id, i)).collect();
         rows.sort_by_cached_key(|r| index_of.get(&r.id).copied().unwrap_or(usize::MAX));
+        if dir == "desc" {
+            rows.reverse();
+        }
+        return;
+    }
+    if field == "favorite" {
+        rows.sort_by_cached_key(|row| (row.is_favorite, row.title.to_lowercase()));
         if dir == "desc" {
             rows.reverse();
         }

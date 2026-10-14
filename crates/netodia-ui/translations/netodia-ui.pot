@@ -3025,3 +3025,7 @@ msgstr ""
 #: ui/views/my-library/playlist-detail.slint
 msgid "This NetEase playlist has no available tracks."
 msgstr ""
+
+#: ui/views/my-library/cloud-playlist-tracks.slint
+msgid "Liked"
+msgstr ""

@@ -37,7 +37,10 @@ export component PlaylistDetailBody inherits Rectangle {
             height: 100%;
             visible: PlaylistDetail.cloud-collection;
             rows: PlaylistDetail.tracks;
-            play-track(id) => { PlaylistDetail.play-row(id, 0); }
+            sort-field: PlaylistDetail.sort-field;
+            sort-dir: PlaylistDetail.sort-dir;
+            request-sort(field) => { PlaylistDetail.request-sort(field); }
+            play-track(id, index) => { PlaylistDetail.play-row(id, index); }
         }
 
         tl := DraggableTrackList {

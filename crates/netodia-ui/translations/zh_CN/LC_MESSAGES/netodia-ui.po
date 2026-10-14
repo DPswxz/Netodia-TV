@@ -3007,3 +3007,7 @@ msgstr "在网易云收藏的歌单会显示在这里。"
 #: ui/views/my-library/playlist-detail.slint
 msgid "This NetEase playlist has no available tracks."
 msgstr "这个网易云歌单暂时没有可播放的歌曲。"
+
+#: ui/views/my-library/cloud-playlist-tracks.slint
+msgid "Liked"
+msgstr "喜欢"

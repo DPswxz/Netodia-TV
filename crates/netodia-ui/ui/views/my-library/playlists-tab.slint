@@ -23,7 +23,7 @@ export component MyLibraryPlaylistsTab inherits Rectangle {
         row-height: root.row-h;
         gap: root.gap;
         editable: false;
-        open-playlist(_) => { }
+        open-playlist(id) => { Playlists.open-playlist(id); }
         delete-playlist(_) => { }
         edit-playlist-artwork(_) => { }
         rename-playlist(_) => { }

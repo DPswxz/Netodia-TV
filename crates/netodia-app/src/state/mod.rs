@@ -227,7 +227,8 @@ impl AppState {
             http_client.get_or_init(netodia_net::services::net::build_http_client).clone(),
         )
         .await;
-        let cloud_playback = CloudPlayback::new(cloud.clone(), engine.clone());
+        let cloud_playback =
+            CloudPlayback::new(cloud.clone(), engine.clone(), player_state.clone(), sinks.clone());
 
         let state = Self {
             paths: Arc::new(paths),
