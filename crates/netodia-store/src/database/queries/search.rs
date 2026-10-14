@@ -80,7 +80,7 @@ pub async fn search_all(db: &DbPool, query: &str) -> Result<SearchResults, AppEr
     }
 
     let fts_query = build_fts_query(trimmed);
-    let cols = columns::TRACK_LIST.prefixed("t");
+    let cols = columns::TRACK_LIST.with_album_artwork_fallback(Some("t"));
 
     // Name matching for albums / artists / genres is LIKE against their
     // `*_stats` views — small tables, no index to gain. One pattern serves

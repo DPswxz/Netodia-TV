@@ -25,7 +25,8 @@ pub async fn get_smart_playlist_tracks(
     db: &DbPool,
     criteria: &SmartCriteria,
 ) -> Result<Vec<track::TrackListRow>, AppError> {
-    let mut qb = membership_query(columns::TRACK_LIST.joined(), criteria);
+    let cols = columns::TRACK_LIST.with_album_artwork_fallback(None);
+    let mut qb = membership_query(&cols, criteria);
     let rows =
         qb.build_query_as::<track::TrackListRow>().persistent(false).fetch_all(db.read()).await?;
     Ok(rows)

@@ -233,7 +233,7 @@ pub async fn get_playlist_tracks_for_list(
     db: &DbPool,
     playlist_id: i64,
 ) -> Result<Vec<track::TrackListRow>, AppError> {
-    let cols = columns::TRACK_LIST.prefixed("t");
+    let cols = columns::TRACK_LIST.with_album_artwork_fallback(Some("t"));
     let sql = format!(
         "SELECT {cols} FROM tracks t \
          JOIN playlist_items pi ON pi.track_id = t.id \

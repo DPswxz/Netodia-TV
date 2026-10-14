@@ -22,6 +22,36 @@ impl Columns {
         self.joined.get_or_init(|| self.names.join(", "))
     }
 
+    /// Project these columns while resolving a missing track cover from its album.
+    ///
+    /// Track files can carry their own artwork, but many releases store the cover only once on
+    /// the album row. Track lists need a usable path for both shapes, with track artwork taking
+    /// precedence when it exists. `alias` is the track table's alias where the surrounding query
+    /// has one; the album lookup stays a primary-key subquery so callers need no extra join.
+    pub(crate) fn with_album_artwork_fallback(&self, alias: Option<&str>) -> String {
+        let qualify = |column: &str| match alias {
+            Some(alias) => format!("{alias}.{column}"),
+            None => column.to_owned(),
+        };
+
+        self.names
+            .iter()
+            .map(|column| {
+                if *column == "artwork_path" {
+                    format!(
+                        "COALESCE(NULLIF({}, ''), (SELECT NULLIF(albums.artwork_path, '') \
+                         FROM albums WHERE albums.id = {})) AS artwork_path",
+                        qualify("artwork_path"),
+                        qualify("album_id")
+                    )
+                } else {
+                    qualify(column)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
     /// The list with every column qualified by `alias`, for a query that joins `tracks`.
     pub(crate) fn prefixed(&self, alias: &'static str) -> &'static str {
         let mut cache = self.prefixed.lock().unwrap_or_else(PoisonError::into_inner);
