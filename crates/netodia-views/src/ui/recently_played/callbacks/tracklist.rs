@@ -31,6 +31,15 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedU
 }
 
 fn wire_play_row(g: &RecentlyPlayed<'_>, state: &AppState, rp_ui: &Arc<RecentlyPlayedUi>) {
+    let cloud_state = state.clone();
+    let cloud_ui = rp_ui.clone();
+    g.on_play_cloud_row(move |remote_id, _index| {
+        let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else { return };
+        let ids = cloud_ui.filtered_track_ids();
+        if ids.contains(&song_id) {
+            play_recent_queue(&cloud_state, ids, song_id, false);
+        }
+    });
     let state = state.clone();
     let rp_ui = rp_ui.clone();
     g.on_play_row(move |track_id, index| {

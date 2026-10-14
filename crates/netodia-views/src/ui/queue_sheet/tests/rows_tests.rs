@@ -117,3 +117,15 @@ fn a_negative_duration_is_drawn_as_no_time_at_all() {
 
     assert_eq!(to_slint_queue_row(&track, false).display_duration.as_str(), "0:00");
 }
+
+#[test]
+fn queue_rows_keep_distinct_cloud_identity_for_likes_and_copy_actions() {
+    let first = to_slint_queue_row(&summary(2_147_483_648, "First"), false);
+    let second = to_slint_queue_row(&summary(3_000_000_000, "Second"), false);
+
+    assert!(first.is_cloud);
+    assert!(second.is_cloud);
+    assert_eq!(first.remote_id.as_str(), "2147483648");
+    assert_eq!(second.remote_id.as_str(), "3000000000");
+    assert_ne!(first.remote_id, second.remote_id);
+}

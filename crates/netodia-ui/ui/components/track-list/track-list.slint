@@ -47,12 +47,14 @@ export component TrackList inherits Rectangle {
 
     // Now-playing highlight.
     in property <int> playing-track-id;
+    in property <string> playing-remote-id;
 
     // Cloud hosts share all table visuals while owning actions through exact string IDs.
     in property <bool> cloud-rows: false;
+    in property <bool> cloud-single-click: true;
     in property <bool> cloud-favorite-clickable: false;
     callback play-cloud-row(string, int);
-    callback toggle-cloud-favorite(string);
+    callback toggle-cloud-favorite(string, bool);
 
     callback request-sort(string /*field*/);
     callback play-row(int /*track_id*/, int /*index*/);
@@ -132,7 +134,9 @@ export component TrackList inherits Rectangle {
                 sort-dir: root.sort-dir;
                 row-count: root.rows.length;
                 playing-track-id: root.playing-track-id;
+                playing-remote-id: root.playing-remote-id;
                 cloud-row: root.cloud-rows;
+                single-click-play: root.cloud-single-click;
                 favorite-clickable: !root.cloud-rows || root.cloud-favorite-clickable;
                 view-context: root.view-context;
                 current-playlist-id: root.current-playlist-id;
@@ -140,7 +144,7 @@ export component TrackList inherits Rectangle {
                 double-clicked-row => { root.play-row(r.id, idx); }
                 clicked-row => { root.play-cloud-row(r.remote_id, idx); }
                 toggle-favorite => {
-                    if (root.cloud-rows) { root.toggle-cloud-favorite(r.remote_id); }
+                    if (root.cloud-rows) { root.toggle-cloud-favorite(r.remote_id, !r.is_favorite); }
                     else { root.toggle-row-favorite([r.id], !r.is_favorite); }
                 }
                 play-row(id, i) => { root.play-row(id, i); }

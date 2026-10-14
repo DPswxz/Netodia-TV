@@ -98,6 +98,32 @@ impl CloudPlayback {
         self.cloud.subscribe()
     }
 
+    /// Queue cloud songs without querying the local library or narrowing their IDs.
+    pub async fn enqueue(&self, song_ids: &[i64], play_next: bool) -> AppResult<()> {
+        if song_ids.is_empty() {
+            return Ok(());
+        }
+        let generation = self.cloud.status().generation;
+        let cancellation = self.cloud.account_tasks_token();
+        let songs = self.cloud.songs(song_ids).await?;
+        if cancellation.is_cancelled() || self.cloud.status().generation != generation {
+            return Err(AppError::network_msg("网易云排队请求已取消"));
+        }
+        let mut by_id: HashMap<i64, Song> = songs.into_iter().map(|song| (song.id, song)).collect();
+        let tracks = song_ids
+            .iter()
+            .filter_map(|id| by_id.remove(id))
+            .map(|song| {
+                let liked = self.cloud.cached_is_liked(song.id).unwrap_or(false);
+                Arc::new(track_summary(song, None, liked))
+            })
+            .collect();
+        with_state_emit(&self.player_state, &self.sinks, |state| {
+            queue_cloud_tracks(&mut state.queue, tracks, play_next);
+        });
+        Ok(())
+    }
+
     /// Build the cloud queue in the supplied list order and start the selected song. Existing
     /// repeat and shuffle preferences are retained; `shuffle` forces shuffle on for Shuffle All.
     pub async fn play_queue(
@@ -640,6 +666,24 @@ fn open_buffered_source(
     }
     BufferedAudioSource::open(move || Ok(decoder))
 }
+
+fn queue_cloud_tracks(
+    queue: &mut netodia_engine::player::engine::queue::QueueState,
+    tracks: Vec<Arc<TrackSummary>>,
+    play_next: bool,
+) {
+    if play_next {
+        for track in tracks.into_iter().rev() {
+            queue.insert_next(track);
+        }
+    } else {
+        queue.add_tracks(tracks);
+    }
+}
+
+#[cfg(test)]
+#[path = "tests/cloud_queue_tests.rs"]
+mod queue_tests;
 
 fn decoder_extension(format: &str) -> &'static str {
     match format.to_ascii_lowercase().as_str() {

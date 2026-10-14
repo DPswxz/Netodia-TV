@@ -7,6 +7,7 @@ import { GridEmptyState } from "../../components/grid/grid-empty-state.slint";
 import { TrackListScrollbars } from "../../components/track-list-scrollbars.slint";
 import { MaterialIcon } from "../../components/material-icon.slint";
 import { CloudPlaylistTracks } from "./cloud-playlist-tracks.slint";
+import { CloudTrackActions } from "../../globals/cloud-track-actions.slint";
 
 // `AlbumDetailBody`'s shape over `DraggableTrackList` — the shared `TrackList` stays
 // drag-free for Tracks / Browse / the other three details — plus the empty state and the
@@ -42,6 +43,8 @@ export component PlaylistDetailBody inherits Rectangle {
             sort-dir: PlaylistDetail.sort-dir;
             request-sort(field) => { PlaylistDetail.request-sort(field); }
             play-track(id, index) => { PlaylistDetail.play-cloud-row(id, index); }
+            toggle-favorite(id, liked) => { CloudTrackActions.toggle-favorite(id, liked); }
+            request-blur-search => { MyLibrary.blur-search-tick += 1; }
         }
 
         tl := DraggableTrackList {

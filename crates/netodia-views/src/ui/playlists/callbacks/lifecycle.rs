@@ -37,6 +37,27 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
     install_library_refresher(ui, state, playlists_ui);
     install_stats_refresher(ui, state, playlists_ui);
     install_account_refresher(ui, state, playlists_ui);
+    install_liked_refresher(ui, state, playlists_ui);
+}
+
+fn install_liked_refresher(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
+    let s = state.clone();
+    let pu = playlists_ui.clone();
+    if let Err(error) =
+        on_signal(&state.cloud_liked_changed, ui.as_weak(), "playlist-likes", move |ui| {
+            let g = ui.global::<PlaylistDetail>();
+            if !g.get_cloud_collection() {
+                return;
+            }
+            if !pu.section_active() {
+                pu.mark_dirty();
+                return;
+            }
+            super::super::detail::refresh_cloud_likes(&g, &pu, &s);
+        })
+    {
+        log::warn!("Playlists won't follow cloud likes: {}", describe(&error));
+    }
 }
 
 /// Clear saved playlist rows as soon as the account changes, then reload for the active session.

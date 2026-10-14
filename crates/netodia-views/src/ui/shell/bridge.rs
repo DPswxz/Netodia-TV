@@ -67,7 +67,7 @@ pub fn spawn_view_model_subscriber(
                 // catches up (±2s) or the current track changes.
                 let pending = player.get_seek_pending_ms();
                 if pending >= 0
-                    && (new_vm.track.id != prev_vm.track.id
+                    && (new_vm.track.remote_id != prev_vm.track.remote_id
                         || (new_position_ms - pending).abs() < 2000)
                 {
                     player.set_seek_pending_ms(-1);
@@ -177,6 +177,7 @@ pub fn to_slint_track(t: &TrackSummary, cover_thumbs: &CoverThumbs) -> TrackSumm
     let cover_img = cover_thumbs.get_cached_opt(t.artwork_path.as_deref());
     TrackSummaryRow {
         id: clamp_i64_to_i32(t.id),
+        remote_id: SharedString::from(t.id.to_string()),
         file_path: SharedString::from(t.file_path.as_str()),
         title: SharedString::from(t.title.as_str()),
         artist: opt_shared(t.artist.as_deref()),
@@ -188,6 +189,10 @@ pub fn to_slint_track(t: &TrackSummary, cover_thumbs: &CoverThumbs) -> TrackSumm
         rating: t.rating,
     }
 }
+
+#[cfg(test)]
+#[path = "tests/bridge_identity_tests.rs"]
+mod identity_tests;
 
 /// Both halves of one artwork slot's contract: keep the handle where the path stands still, and
 /// answer the path to warm where it moved onto a tier that had nothing.

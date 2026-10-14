@@ -201,6 +201,7 @@ export global RecentlyPlayed {
 
     // The Tracks / Favorites row shape.
     callback play-row(int /*track_id*/, int /*index*/);
+    callback play-cloud-row(string /*song_id*/, int /*index*/);
     callback play-next([int] /*track_ids*/);
     callback add-to-queue([int]);
     callback toggle-row-favorite([int] /*track_ids*/, bool /*new*/);

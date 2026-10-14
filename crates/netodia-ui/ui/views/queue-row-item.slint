@@ -6,6 +6,8 @@ import { ArtworkImage } from "../components/artwork-image.slint";
 import { IconButton } from "../components/icon-button.slint";
 import { Checkbox } from "../components/checkbox.slint";
 import { TrackContextMenu } from "../components/track-list/track-context-menu.slint";
+import { CloudTrackContextMenu } from "../components/track-list/cloud-track-context-menu.slint";
+import { CloudTrackActions } from "../globals/cloud-track-actions.slint";
 import { SelectionPill } from "../components/track-list/selection-pill.slint";
 
 // One fixed-height queue row: number-or-checkbox, artwork, title, duration, delete.
@@ -196,7 +198,8 @@ export component QueueRowItem inherits Rectangle {
                 // Nothing here touches the drag state: its arm is left-only, so a right-click
                 // can't ghost the row.
                 if (ev.kind == PointerEventKind.down && ev.button == PointerEventButton.right) {
-                    ctx-menu.show();
+                    if (root.row-data.is_cloud) { cloud-menu.show(); }
+                    else { ctx-menu.show(); }
                 }
             }
             moved => {
@@ -353,10 +356,12 @@ export component QueueRowItem inherits Rectangle {
                             fav-touch := TouchArea {
                                 mouse-cursor: pointer;
                                 clicked => {
-                                    Queue.toggle-row-favorite(
+                                    if (root.row-data.is_cloud) {
+                                        CloudTrackActions.toggle-favorite(root.row-data.remote_id, !root.row-data.is_favorite);
+                                    } else { Queue.toggle-row-favorite(
                                         [root.row-data.id],
                                         !root.row-data.is_favorite,
-                                    );
+                                    ); }
                                 }
                             }
                         }
@@ -387,6 +392,20 @@ export component QueueRowItem inherits Rectangle {
         // Next and Add to Queue (the queue *is* what they name) and swaps the remove entry onto
         // this list. `play-next` and `add-to-queue` are left unbound; nothing under that
         // context fires them.
+        cloud-menu := CloudTrackContextMenu {
+            row-data: {remote_id: root.row-data.remote_id, title: root.row-data.title,
+                artist: root.row-data.artist, album: root.row-data.album,
+                is_favorite: root.row-data.is_favorite};
+            at-x: touch.mouse-x;
+            at-y: touch.mouse-y;
+            show-queue-remove: true;
+            play => { Queue.skip-to(root.row-index); }
+            toggle-favorite => {
+                CloudTrackActions.toggle-favorite(root.row-data.remote_id, !root.row-data.is_favorite);
+            }
+            remove => { Queue.remove(root.row-index); }
+        }
+
         ctx-menu := TrackContextMenu {
             row-id: root.row-data.id;
             row-is-favorite: root.row-data.is_favorite;

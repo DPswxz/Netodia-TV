@@ -1,0 +1,5 @@
+// Cloud rows never send their 64-bit identities through a Slint int.
+export global CloudTrackActions {
+    callback enqueue(string /*song ID*/, bool /*play next*/);
+    callback toggle-favorite(string /*song ID*/, bool /*liked*/);
+}

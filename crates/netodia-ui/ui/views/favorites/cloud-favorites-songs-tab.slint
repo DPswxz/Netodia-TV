@@ -17,8 +17,9 @@ export component CloudFavoritesSongsTab inherits Rectangle {
     callback play-track(string, int);
     callback remove-favorite(string);
     callback request-sort(string);
+    callback request-blur-search();
 
-    CloudPlaylistTracks {
+    songs-list := CloudPlaylistTracks {
         width: 100%;
         height: 100%;
         rows: root.rows;
@@ -26,22 +27,24 @@ export component CloudFavoritesSongsTab inherits Rectangle {
         sort-field: root.sort-field;
         sort-dir: root.sort-dir;
         position-field: "track_number";
+        show-number: true;
         favorite-clickable: true;
         request-sort(field) => { root.request-sort(field); }
         play-track(id, index) => { root.play-track(id, index); }
-        toggle-favorite(id) => { root.remove-favorite(id); }
+        toggle-favorite(id, liked) => { if (!liked) { root.remove-favorite(id); } }
+        request-blur-search => { root.request-blur-search(); }
     }
 
     if root.loading && root.rows.length == 0: Text {
         x: Theme.pad-lg;
-        y: Theme.pad-lg;
+        y: songs-list.body-y + Theme.pad-lg;
         text: @tr("Loading favorites…");
         color: Theme.subtext0;
     }
 
     if root.error != "" && root.rows.length == 0: VerticalLayout {
         x: Theme.pad-lg;
-        y: Theme.pad-lg;
+        y: songs-list.body-y + Theme.pad-lg;
         width: parent.width - 2 * Theme.pad-lg;
         spacing: Theme.pad-md;
         Text {
@@ -60,7 +63,7 @@ export component CloudFavoritesSongsTab inherits Rectangle {
 
     if !root.loading && root.error == "" && root.rows.length == 0: Text {
         x: Theme.pad-lg;
-        y: Theme.pad-lg;
+        y: songs-list.body-y + Theme.pad-lg;
         text: @tr("No NetEase favorites yet");
         color: Theme.subtext0;
     }

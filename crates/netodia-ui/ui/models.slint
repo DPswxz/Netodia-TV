@@ -4,6 +4,8 @@
 
 export struct TrackSummaryRow {
     id: int,
+    // Exact identity across the Slint boundary, including cloud IDs above i32::MAX.
+    remote_id: string,
     file_path: string,
     title: string,
     artist: string,
@@ -256,8 +258,11 @@ export struct QueueVm {
 // the live `VecModel` so the UI flips synchronously.
 export struct QueueRow {
     id: int,
+    remote_id: string,
+    is_cloud: bool,
     title: string,
     artist: string,
+    album: string,
     artwork_path: string,
     // No `cover_img`, per the `TrackListRow` contract — and it matters most here:
     // activating a row queues the whole view, so an eager cover meant one cache lookup

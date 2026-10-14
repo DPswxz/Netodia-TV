@@ -242,7 +242,7 @@ track_list_views! {
     ArtistDetail => ARTIST_DETAIL, hidden = [number], locked = artist;
     GenreDetail => GENRE_DETAIL, hidden = [number], locked = genre;
     PlaylistDetail => PLAYLIST_DETAIL, hidden = [number, genre, year];
-    Favorites => FAVORITES, hidden = [number, genre, year];
+    Favorites => FAVORITES, hidden = [genre, year];
     RecentlyPlayed => RECENTLY_PLAYED, hidden = [number, genre, year];
     Search => SEARCH, hidden = [genre, year];
 }

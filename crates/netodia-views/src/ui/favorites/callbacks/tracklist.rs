@@ -12,7 +12,7 @@ use netodia_app::state::AppState;
 use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
-use netodia_ui::{AppWindow, Favorites};
+use netodia_ui::{AppWindow, CloudTrackActions, Favorites};
 
 pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
     let g = ui.global::<Favorites>();
@@ -21,35 +21,10 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
     wire_playback(ui, state, fav_ui);
 
     {
-        let state = state.clone();
-        let runtime = state.runtime.clone();
-        let cloud = state.cloud.clone();
-        let fav_ui = fav_ui.clone();
         let weak = weak.clone();
         g.on_toggle_cloud_favorite(move |remote_id, liked| {
-            let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
-                log::warn!("favorites::netease_like: invalid NetEase song ID");
-                return;
-            };
-            let state = state.clone();
-            let cloud = cloud.clone();
-            let fav_ui = fav_ui.clone();
-            let weak = weak.clone();
-            runtime.spawn(async move {
-                if let Err(error) = cloud.like(song_id, liked).await {
-                    log::warn!("favorites::netease_like({song_id}): {}", describe(&error));
-                    return;
-                }
-                if fav_ui.section_active() {
-                    if let Err(error) =
-                        favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await
-                    {
-                        log::warn!("favorites::refresh_after_like: {}", describe(&error));
-                    }
-                } else {
-                    fav_ui.mark_songs_dirty();
-                }
-            });
+            let Some(ui) = weak.upgrade() else { return };
+            ui.global::<CloudTrackActions>().invoke_toggle_favorite(remote_id, liked);
         });
     }
 

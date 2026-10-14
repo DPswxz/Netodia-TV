@@ -205,8 +205,11 @@ pub(crate) fn to_slint_queue_row(t: &TrackSummary, selected: bool) -> QueueRow {
     let display_duration = format_duration_ms(t.duration_ms.max(0));
     QueueRow {
         id: i32::try_from(t.id).unwrap_or(i32::MAX),
+        remote_id: t.id.to_string().into(),
+        is_cloud: t.file_path.is_empty(),
         title: t.title.as_str().into(),
         artist: opt_shared(t.artist.as_deref()),
+        album: opt_shared(t.album.as_deref()),
         artwork_path: opt_shared(t.artwork_path.as_deref()),
         display_duration: display_duration.into(),
         selected,

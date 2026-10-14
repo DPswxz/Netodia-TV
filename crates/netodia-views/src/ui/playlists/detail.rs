@@ -336,6 +336,16 @@ fn resort_detail(g: &PlaylistDetail<'_>, playlists_ui: &PlaylistsUi) {
     selection::apply_selection_to_rows(g, &playlists_ui.detail.cache);
 }
 
+pub(super) fn refresh_cloud_likes(
+    g: &PlaylistDetail<'_>,
+    playlists_ui: &PlaylistsUi,
+    state: &AppState,
+) {
+    playlists_ui.detail.cache.refresh_favorite_flags(|id| state.cloud.cached_is_liked(id));
+    resort_detail(g, playlists_ui);
+    apply_filtered_detail(g, playlists_ui);
+}
+
 /// Optimistically reorder the cached detail state for a drag-and-drop commit *before* the DB write
 /// lands. Returns the position order it replaced so the caller can roll back on a DB error, or
 /// `None` when nothing was touched.

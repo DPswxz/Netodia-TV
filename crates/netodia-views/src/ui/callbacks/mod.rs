@@ -13,6 +13,7 @@ pub(in crate::ui) mod macros;
 pub(in crate::ui) mod card_actions;
 pub(in crate::ui) mod card_selection;
 mod clipboard;
+mod cloud_tracks;
 pub(in crate::ui) mod cross_tab_nav;
 mod dialog_closed;
 pub(in crate::ui) mod index_persist;
@@ -220,6 +221,7 @@ pub fn wire_all(ui: &AppWindow, state: &AppState) {
     card_actions::wire(ui, state);
     // Every row and card menu's Copy entries, answering to no single view for the same reason.
     clipboard::wire(ui, state);
+    cloud_tracks::wire(ui, state);
     dialog_closed::wire(ui, state);
 
     let player = ui.global::<Player>();

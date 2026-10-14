@@ -69,6 +69,7 @@ export component FavoritesView inherits Rectangle {
                     play-track(id, index) => { Favorites.play-cloud-row(id, index); }
                     remove-favorite(id) => { Favorites.toggle-cloud-favorite(id, false); }
                     request-sort(field) => { Favorites.request-sort(field); }
+                    request-blur-search => { Favorites.blur-search-tick += 1; }
                 }
             }
         }

@@ -10,10 +10,16 @@ export component CloudPlaylistTracks inherits Rectangle {
     in property <string> sort-field;
     in property <string> sort-dir;
     in property <string> position-field: "position";
-    in property <bool> favorite-clickable: false;
+    in property <bool> favorite-clickable: true;
+    in property <bool> show-number: false;
     callback request-sort(string);
     callback play-track(string, int);
-    callback toggle-favorite(string);
+    callback toggle-favorite(string, bool);
+    callback request-blur-search();
+    out property <length> body-y: tl.body-y;
+
+    // Restore the favorites order column even for view state saved by the old layout.
+    init => { if (root.show-number) { root.columns.show_number = true; } }
 
     tl := TrackList {
         width: 100%;
@@ -23,13 +29,15 @@ export component CloudPlaylistTracks inherits Rectangle {
         sort-field: root.sort-field == root.position-field ? "track_number" : root.sort-field;
         sort-dir: root.sort-dir;
         playing-track-id: Player.vm.track.id;
+        playing-remote-id: Player.vm.track.file_path == "" ? Player.vm.track.remote_id : "";
         cloud-rows: true;
         cloud-favorite-clickable: root.favorite-clickable;
         request-sort(field) => {
             root.request-sort(field == "track_number" ? root.position-field : field);
         }
         play-cloud-row(id, index) => { root.play-track(id, index); }
-        toggle-cloud-favorite(id) => { root.toggle-favorite(id); }
+        toggle-cloud-favorite(id, liked) => { root.toggle-favorite(id, liked); }
+        request-blur-search => { root.request-blur-search(); }
     }
 
     TrackListScrollbars {

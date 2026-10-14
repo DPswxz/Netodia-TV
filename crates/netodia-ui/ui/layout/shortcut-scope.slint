@@ -59,7 +59,7 @@ export component ShortcutScope inherits FocusScope {
     // common way to reach the end rather than an exotic one. Without this the trailing edge
     // would seek the *incoming* track to the outgoing one's target. On a mirror because
     // `changed` rejects path expressions on globals.
-    property <int> watched-seek-track: Player.vm.track.id;
+    property <string> watched-seek-track: Player.vm.track.remote_id;
     changed watched-seek-track => {
         Player.end-seek-run();
     }

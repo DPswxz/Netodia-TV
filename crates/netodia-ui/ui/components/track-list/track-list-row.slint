@@ -5,6 +5,7 @@ import { MaterialIcon } from "../material-icon.slint";
 import { StarRating } from "../star-rating.slint";
 import { ArtworkImage } from "../artwork-image.slint";
 import { TrackContextMenu } from "track-context-menu.slint";
+import { CloudTrackContextMenu } from "cloud-track-context-menu.slint";
 import { DataCell } from "track-list-cell.slint";
 import { Checkbox } from "../checkbox.slint";
 import { SelectionPill } from "selection-pill.slint";
@@ -36,10 +37,12 @@ export component TrackListRowItem inherits Rectangle {
     // Rows matching it flip their cells to accent. Handed down rather than read off
     // `Player` so the component stays reusable with no implicit dependencies.
     in property <int> playing-track-id;
+    in property <string> playing-remote-id;
 
     // Cloud hosts own activation and likes through the exact remote ID. They share the
     // row visuals, but local selection, ratings and SQLite context actions do not apply.
     in property <bool> cloud-row: false;
+    in property <bool> single-click-play: true;
     in property <bool> favorite-clickable: true;
 
     // Merge contiguous selected rows into one continuous pill: top corners square when
@@ -49,7 +52,9 @@ export component TrackListRowItem inherits Rectangle {
     in property <bool> next-selected;
 
     // Derived state.
-    property <bool> playing: root.row-data.id == root.playing-track-id;
+    property <bool> playing: root.cloud-row
+        ? root.playing-remote-id != "" && root.row-data.remote_id == root.playing-remote-id
+        : root.row-data.id == root.playing-track-id;
     property <bool> selected: root.row-data.selected;
     // Once the view holds a selection the row body picks too. The first pick stays the box's,
     // which is what keeps an idle list from selecting by accident.
@@ -220,15 +225,18 @@ export component TrackListRowItem inherits Rectangle {
             // `slint-pitfalls.md`'s grab-invalidation entry. It runs before `pointer-event`, so
             // `drag-started` still holds the value the block below is about to reset.
             clicked => {
-                if (root.enabled && root.cloud-row) {
+                if (root.enabled && root.cloud-row && root.single-click-play) {
                     root.clicked-row();
-                } else if (root.enabled && root.selecting && !root.drag-started) {
+                } else if (!root.cloud-row && root.enabled && root.selecting && !root.drag-started) {
                     root.pick(root.press-shift);
                 }
             }
             // Still plays while a selection is live: the two clicks pick and unpick, so the set
             // comes out where it started.
-            double-clicked => { if (!root.cloud-row) { root.double-clicked-row(); } }
+            double-clicked => {
+                if (!root.cloud-row) { root.double-clicked-row(); }
+                else if (!root.single-click-play) { root.clicked-row(); }
+            }
             // The blur request is every left release, so clicking anywhere on a row drops filter
             // focus. Drag press/up tracking shares this handler, `touch` being where Slint
             // delivers them.
@@ -241,8 +249,9 @@ export component TrackListRowItem inherits Rectangle {
                 if (ev.kind == PointerEventKind.up && ev.button == PointerEventButton.left) {
                     root.request-blur-search();
                 }
-                if (ev.kind == PointerEventKind.down && ev.button == PointerEventButton.right && root.enabled && !root.cloud-row) {
-                    ctx-menu.show();
+                if (ev.kind == PointerEventKind.down && ev.button == PointerEventButton.right && root.enabled) {
+                    if (root.cloud-row) { cloud-menu.show(); }
+                    else { ctx-menu.show(); }
                     root.request-blur-search();
                 }
                 // Drag-reorder tracking — opt-in via `enable-drag`.
@@ -527,6 +536,14 @@ export component TrackListRowItem inherits Rectangle {
 
         // The menu itself is `TrackContextMenu`, shared with the queue sheet's row. What stays
         // here is the pointer position, the one thing it deliberately doesn't own.
+        cloud-menu := CloudTrackContextMenu {
+            row-data: root.row-data;
+            at-x: touch.mouse-x;
+            at-y: touch.mouse-y;
+            play => { root.clicked-row(); }
+            toggle-favorite => { root.toggle-favorite(); }
+        }
+
         ctx-menu := TrackContextMenu {
             row-id: root.row-data.id;
             row-is-favorite: root.row-data.is_favorite;

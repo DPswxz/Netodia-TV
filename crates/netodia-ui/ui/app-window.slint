@@ -33,6 +33,7 @@ import { CardSelection } from "globals/card-selection.slint";
 import { Selection } from "globals/selection.slint";
 import { CardActions } from "globals/card-actions.slint";
 import { CopyActions } from "globals/copy-actions.slint";
+import { CloudTrackActions } from "globals/cloud-track-actions.slint";
 import { Queue, NowPlaying } from "globals/queue.slint";
 import { Search } from "globals/search.slint";
 import { SettingsPage } from "globals/settings-page.slint";
@@ -76,6 +77,7 @@ import { ViewTransition } from "components/view-transition.slint";
 
 // Re-export so Rust can mention these from `slint::include_modules!`.
 export {
+    CloudTrackActions,
     Theme, Settings, CloudAccount, SettingsPage, Player, HeroBackdrop, HeroChips, Equalizer, ReplayGain, Visualizer, SignalPathUi, SmartEditor, TagEditor, Nav, CompositeScroll, MiniPlayer, MyLibrary, Tracks, Browse, LibrarySettings, Dialog, WindowChrome, Queue, Notifications, NowPlaying, Favorites, RecentlyPlayed, Albums, AlbumDetail, Artists, ArtistDetail, Genres, GenreDetail, Playlists, PlaylistDetail, PopupHighlight, Search, NetodiaUpdater, RowCovers, Onboarding, Lyrics, Wrap, TrackColumnSizing, CardSelection, CardActions, CopyActions, Selection,
     TrackSummaryRow, TrackListRow, PlayerVm, QueueVm, QueueRow, FolderListRow, LyricRow,
     TrackColumns, TrackColumnLayout, TrackColumn,

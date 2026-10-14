@@ -53,6 +53,17 @@ impl DetailCache {
         self.tracks.lock().iter().map(|r| r.id).collect()
     }
 
+    /// Keep cloud favorite flags in both cache tiers so a later sort cannot restore old hearts.
+    pub fn refresh_favorite_flags(&self, liked: impl Fn(i64) -> Option<bool>) {
+        for rows in [&self.all_tracks, &self.tracks] {
+            for row in rows.lock().iter_mut() {
+                if let Some(value) = liked(row.id) {
+                    row.is_favorite = value;
+                }
+            }
+        }
+    }
+
     pub fn flip_favorite(&self, id: i64, fav: bool) {
         self.patch_row(id, |r| r.is_favorite = fav);
     }

@@ -196,7 +196,7 @@ fn favorites_view_uses_cloud_rows_with_sortable_netease_columns() {
     assert!(CLOUD_SONGS_TAB.contains("favorite-clickable: true;"));
     assert!(CLOUD_TRACKS.contains("TrackList {"));
     assert!(VIEW.contains("columns <=> Favorites.track-columns;"));
-    assert!(CLOUD_TRACKS.contains("root.toggle-favorite(id)"));
+    assert!(CLOUD_TRACKS.contains("root.toggle-favorite(id, liked)"));
     assert!(GLOBAL.contains("sort-field: \"track_number\";"));
     assert!(SONGS.contains("track_number: Some(favorite_order)"));
     assert!(SONGS.contains("state.cloud.liked_songs().await?"));
