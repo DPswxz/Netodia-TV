@@ -9,6 +9,7 @@
 
 pub mod lyrics_directory;
 pub mod pacer;
+pub mod range_reader;
 
 use netodia_core::error::{AppError, describe};
 

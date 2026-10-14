@@ -15,6 +15,7 @@ doctest = false
 netodia-core = { path = "../netodia-core" }
 
 reqwest.workspace = true
+tempfile.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
