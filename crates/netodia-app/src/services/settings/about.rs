@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 /// version" affordance. Dismissing the toast deliberately doesn't, since a dismissed
 /// update returns at the next daily check while a skipped one stays quiet until a
 /// strictly newer release lands.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct UpdateFlags {
     pub auto_check_enabled: bool,
@@ -57,19 +57,6 @@ impl UpdateFlags {
     pub fn record_failure(&mut self, now_unix: i64) {
         self.last_check_unix = now_unix;
         self.consecutive_failures = self.consecutive_failures.saturating_add(1);
-    }
-}
-
-impl Default for UpdateFlags {
-    fn default() -> Self {
-        Self {
-            auto_check_enabled: false,
-            last_check_unix: 0,
-            last_known_release: String::new(),
-            skipped_release: String::new(),
-            last_manifest_etag: String::new(),
-            consecutive_failures: 0,
-        }
     }
 }
 

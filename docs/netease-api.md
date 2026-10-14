@@ -25,7 +25,15 @@ use `/api/register/anonimous`. Credentials are attached only to NetEase API call
 never to a returned CDN address. Safe reads receive at most two attempts; writes
 are never automatically retried. Session generations reject stale responses.
 
+`netodia-app::cloud::CloudService` owns login and account transitions. Successful
+sessions store only the NetEase cookie and device identifier in the OS credential
+store; passwords are never persisted. When the system store is unavailable, login
+works for the current process and the UI receives a notice. Startup restoration
+retries transient network failures and removes credentials only after the server
+rejects the session. Account transitions cancel the prior account task token.
+
 Run unit tests with `cargo test --locked -p netodia-net --lib`.
+Run session state checks with `cargo test --locked -p netodia-app --lib cloud::tests`.
 Run the public protocol probe with `cargo run --locked -p netodia-net --example netease_probe`.
 The probe prints counts and permission status, never cookies or signed URLs.
 Password/QR account validation remains a manual release check with a user's own account.

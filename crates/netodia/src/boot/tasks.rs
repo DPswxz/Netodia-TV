@@ -22,6 +22,25 @@ pub fn spawn_background_tasks(
     state: &AppState,
     mut channels: StartupChannels,
 ) {
+    let cloud = state.cloud.clone();
+    spawner.spawn_cancellable(move |shutdown| async move {
+        let retry_delays = [
+            std::time::Duration::ZERO,
+            std::time::Duration::from_secs(3),
+            std::time::Duration::from_secs(12),
+        ];
+        for delay in retry_delays {
+            tokio::select! {
+                () = shutdown.cancelled() => return,
+                () = tokio::time::sleep(delay) => {},
+            }
+            match cloud.restore_session().await {
+                Ok(_) => return,
+                Err(error) => log::warn!("NetEase session restore: {}", describe(&error)),
+            }
+        }
+    });
+
     tasks::playback_monitor::spawn(spawner, state);
     tasks::file_event_processor::spawn(spawner, state, channels.file_event_rx);
     tasks::queue_prune::spawn(spawner, state);

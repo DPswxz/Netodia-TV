@@ -17,8 +17,8 @@
 //! what these suites are about, and the audio thread never touches it.
 
 use std::num::NonZero;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
 use tempfile::TempDir;
@@ -134,7 +134,6 @@ impl TestPlayback {
                 engine: Arc::new(engine),
                 db,
                 paths: Arc::new(paths),
-                http: Arc::new(OnceLock::new()),
             },
             tmp,
             callback: Some(Callback { stop, thread }),

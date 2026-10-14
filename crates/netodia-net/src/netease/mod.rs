@@ -24,6 +24,8 @@ pub enum Error {
     Unavailable,
     #[error("网易云接口返回了无法识别的数据")]
     InvalidResponse,
+    #[error("网易云设备标识无效")]
+    InvalidDeviceId,
     #[error("网络请求已取消")]
     Cancelled,
     #[error("网易云接口暂时不可用（状态码 {0}）")]

@@ -39,7 +39,26 @@ pub enum QrStatus {
 
 impl Client {
     pub fn new(http: reqwest::Client) -> Self {
-        let device_id = crypto::hex(&rand::random::<[u8; 26]>(), true);
+        Self::from_parts(http, crypto::hex(&rand::random::<[u8; 26]>(), true))
+    }
+
+    /// Creates a client with a stable device identifier restored from the OS credential store.
+    pub fn with_device_id(http: reqwest::Client, device_id: impl Into<String>) -> Result<Self> {
+        let device_id = device_id.into();
+        if device_id.len() != 52
+            || !device_id.bytes().all(|b| b.is_ascii_digit() || (b'A'..=b'F').contains(&b))
+        {
+            return Err(Error::InvalidDeviceId);
+        }
+        Ok(Self::from_parts(http, device_id))
+    }
+
+    #[must_use]
+    pub fn device_id(&self) -> &str {
+        &self.device_id
+    }
+
+    fn from_parts(http: reqwest::Client, device_id: String) -> Self {
         Self {
             http,
             cookies: Arc::new(RwLock::new(BTreeMap::new())),
@@ -590,5 +609,13 @@ mod tests {
         assert!(client.generation() > before);
         client.clear_session().await;
         assert_eq!(client.cookie_for_storage().await, "");
+    }
+
+    #[test]
+    fn persisted_device_identifier_must_be_uppercase_hex() {
+        let http = reqwest::Client::new();
+        let valid = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123";
+        assert!(Client::with_device_id(http.clone(), valid).is_ok());
+        assert!(Client::with_device_id(http, valid.to_ascii_lowercase()).is_err());
     }
 }

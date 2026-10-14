@@ -14,6 +14,7 @@ pub use contexts::PlaybackContext;
 pub use scan::{ScanControl, ScanPhase, ScanProgressTick};
 pub use signal::{SharedFlag, Signal};
 
+use crate::cloud::CloudService;
 use crate::services::search_history::SearchHistoryState;
 use crate::services::settings;
 use netodia_artwork::media::image::artwork::CoverCache;
@@ -39,6 +40,8 @@ use netodia_store::media::ingest::watcher::{FileEvent, FolderWatcher};
 pub struct AppState {
     pub paths: Arc<Paths>,
     pub runtime: Handle,
+    /// Direct `NetEase` API and account session boundary shared by cloud views and playback.
+    pub cloud: CloudService,
     pub db: DbPool,
     pub cover_cache: CoverCache,
     pub player_state: Arc<PlayerStateHandle>,
@@ -127,14 +130,10 @@ pub struct AppState {
     /// the path a rating click already paid for.
     pub write_ratings_to_tags: SharedFlag,
     pub media_controls: Option<Arc<MediaControlsHandle>>,
-    /// Shared `reqwest::Client`, built lazily on first use via
-    /// [`AppState::http_client`]. Only the updater and the post-scan Deezer
-    /// artist-image fetch ever need it, so deferring construction keeps the
-    /// rustls TLS stack and connection pool off the boot/idle footprint.
-    /// `Arc<OnceLock<…>>` so every cloned `AppState` shares one client and one
-    /// initialization (`reqwest::Client` itself wraps an internal pool in
-    /// `Arc`). Future remote calls should reuse the accessor rather than
-    /// constructing a new client per call.
+    /// Shared `reqwest::Client`, initialized for the `NetEase` service and reused
+    /// by other remote calls. `Arc<OnceLock<…>>` keeps clones of `AppState` on
+    /// one connection pool (`reqwest::Client` itself wraps an internal pool in
+    /// `Arc`).
     http_client: Arc<OnceLock<reqwest::Client>>,
     /// Tracks every spawned background task so shutdown can wait for them
     /// to finish their current write before the runtime is dropped.
@@ -222,10 +221,15 @@ impl AppState {
         let search_history = Arc::new(SearchHistoryState::init(&paths).await);
         // Shared lazy client: the TLS stack and connection pool are constructed on first use.
         let http_client = Arc::new(OnceLock::new());
+        let cloud = CloudService::new(
+            http_client.get_or_init(netodia_net::services::net::build_http_client).clone(),
+        )
+        .await;
 
         let state = Self {
             paths: Arc::new(paths),
             runtime,
+            cloud,
             db,
             cover_cache,
             player_state,
@@ -285,13 +289,9 @@ impl AppState {
         });
     }
 
-    /// The shared `reqwest::Client`, built on first call and reused for the
-    /// process lifetime. Construction is deferred out of `init` (see
-    /// [`netodia_net::services::net::build_http_client`]) so the rustls TLS stack and
-    /// connection pool never load at boot/idle — only the updater, the post-scan
-    /// Deezer artist-image fetch and online lyrics lookup pull them in. reqwest's
-    /// connection pool lives on the client, so callers reuse this accessor (and
-    /// constructing a new client per request.
+    /// The shared `reqwest::Client`, reused for the process lifetime. Its pool is
+    /// also injected into [`CloudService`](crate::cloud::CloudService), so API
+    /// calls and other remote services share connections.
     pub fn http_client(&self) -> &reqwest::Client {
         self.http_client.get_or_init(netodia_net::services::net::build_http_client)
     }

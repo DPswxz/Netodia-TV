@@ -9,6 +9,7 @@
 //! socket do not resolve there at all. A facade would have handed both back, which is why there
 //! was one to delete.
 
+pub mod cloud;
 pub mod library;
 pub mod services;
 pub mod state;
