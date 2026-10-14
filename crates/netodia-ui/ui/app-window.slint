@@ -195,6 +195,16 @@ export component AppWindow inherits Window {
         shortcut-scope.grab-focus();
     }
 
+    // QR polling belongs to the account card's page. Leaving Settings, opening Now Playing, or
+    // switching away from Services ends it even though `CloudAccount` outlives the view itself.
+    property <bool> watched-qr-login-page-active:
+        self.watched-nav-idx == 9 && !Nav.now-playing-open
+        && (SettingsPage.tab-idx == SettingsPage.tab-services
+            || SettingsPage.search-query != "");
+    changed watched-qr-login-page-active => {
+        CloudAccount.qr-page-active-changed(self.watched-qr-login-page-active);
+    }
+
     // A My Library tab pick swaps the mounted body without moving `Nav.selected-index`, so the
     // mirror above never sees it. Artist Detail is one of the bodies it unmounts and it is
     // composite, so this owes the reset as well as the regrab.

@@ -2939,3 +2939,39 @@ msgstr "系统凭据存储不可用。Netodia 关闭后此会话将结束。"
 #: ui/views/settings/netease-account-section.slint
 msgid "Connecting…"
 msgstr "正在连接…"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code"
+msgstr "二维码"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app"
+msgstr "使用网易云音乐 App 扫描此二维码"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Generating QR code…"
+msgstr "正在生成二维码…"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app."
+msgstr "请使用网易云音乐 App 扫描此二维码。"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scanned. Confirm login on your phone."
+msgstr "已扫码，请在手机上确认登录。"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code expired. Refresh to try again."
+msgstr "二维码已过期，请刷新重试。"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Login successful."
+msgstr "登录成功。"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Could not start QR login."
+msgstr "无法发起扫码登录。"
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Refresh code"
+msgstr "刷新二维码"

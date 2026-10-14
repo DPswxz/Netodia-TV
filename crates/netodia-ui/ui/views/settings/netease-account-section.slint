@@ -33,7 +33,8 @@ export component NeteaseAccountSection inherits Rectangle {
     out property <bool> has-matches: row-visible(account-label, account-desc)
         || row-visible(login-label, "")
         || row-visible(@tr("Phone number"), @tr("Country code"))
-        || row-visible(@tr("Email"), @tr("Password"));
+        || row-visible(@tr("Email"), @tr("Password"))
+        || row-visible(@tr("QR code"), @tr("Scan this code with the NetEase Music app"));
 
     VerticalLayout {
         if root.has-matches: SectionCard {
@@ -71,7 +72,7 @@ export component NeteaseAccountSection inherits Rectangle {
                     alignment: end;
                     SectionButton {
                         label: @tr("Sign out");
-                        icon: "logout";
+                        leading-icon-image: @image-url("../../assets/icons/lucide/log-out.svg");
                         primary: false;
                         button-enabled: !CloudAccount.busy;
                         clicked => { CloudAccount.logout(); }
@@ -94,17 +95,33 @@ export component NeteaseAccountSection inherits Rectangle {
                     spacing: Theme.pad-sm;
                     SectionButton {
                         label: @tr("Phone");
-                        icon: "phone";
+                        leading-icon-image: @image-url("../../assets/icons/lucide/phone.svg");
                         primary: root.login-mode == 0;
                         button-enabled: !CloudAccount.busy;
-                        clicked => { root.login-mode = 0; }
+                        clicked => {
+                            CloudAccount.cancel-qr-login();
+                            root.login-mode = 0;
+                        }
                     }
                     SectionButton {
                         label: @tr("Email");
-                        icon: "mail";
+                        leading-icon-image: @image-url("../../assets/icons/lucide/mail.svg");
                         primary: root.login-mode == 1;
                         button-enabled: !CloudAccount.busy;
-                        clicked => { root.login-mode = 1; }
+                        clicked => {
+                            CloudAccount.cancel-qr-login();
+                            root.login-mode = 1;
+                        }
+                    }
+                    SectionButton {
+                        label: @tr("QR code");
+                        leading-icon-image: @image-url("../../assets/icons/lucide/qr-code.svg");
+                        primary: root.login-mode == 2;
+                        button-enabled: !CloudAccount.busy;
+                        clicked => {
+                            root.login-mode = 2;
+                            CloudAccount.start-qr-login();
+                        }
                     }
                 }
 
@@ -131,7 +148,7 @@ export component NeteaseAccountSection inherits Rectangle {
                         alignment: end;
                         SectionButton {
                             label: @tr("Sign in");
-                            icon: "login";
+                            leading-icon-image: @image-url("../../assets/icons/lucide/log-in.svg");
                             button-enabled: !CloudAccount.busy;
                             clicked => { root.submit-phone(); }
                         }
@@ -156,9 +173,45 @@ export component NeteaseAccountSection inherits Rectangle {
                         alignment: end;
                         SectionButton {
                             label: @tr("Sign in");
-                            icon: "login";
+                            leading-icon-image: @image-url("../../assets/icons/lucide/log-in.svg");
                             button-enabled: !CloudAccount.busy;
                             clicked => { root.submit-email(); }
+                        }
+                    }
+                }
+
+                if root.login-mode == 2: VerticalLayout {
+                    alignment: center;
+                    spacing: Theme.pad-md;
+                    padding-top: Theme.pad-sm;
+
+                    if CloudAccount.qr-image.width > 0: Image {
+                        source: CloudAccount.qr-image;
+                        width: 220px;
+                        height: 220px;
+                        image-fit: contain;
+                    }
+                    if CloudAccount.qr-image.width == 0: Image {
+                        source: @image-url("../../assets/icons/lucide/qr-code.svg");
+                        width: 72px;
+                        height: 72px;
+                        image-fit: contain;
+                        colorize: Theme.subtext0;
+                    }
+                    Text {
+                        text: root.qr-status-label();
+                        color: Theme.subtext0;
+                        font-size: Theme.font-size-sm;
+                        horizontal-alignment: center;
+                        wrap: word-wrap;
+                    }
+                    HorizontalLayout {
+                        alignment: center;
+                        SectionButton {
+                            label: @tr("Refresh code");
+                            leading-icon-image: @image-url("../../assets/icons/lucide/refresh-cw.svg");
+                            button-enabled: !CloudAccount.qr-busy;
+                            clicked => { CloudAccount.start-qr-login(); }
                         }
                     }
                 }
@@ -195,5 +248,24 @@ export component NeteaseAccountSection inherits Rectangle {
         CloudAccount.notice = "";
         CloudAccount.login-email(root.email, root.password);
         root.password = "";
+    }
+
+    pure function qr-status-label() -> string {
+        if CloudAccount.qr-status == 1 { return @tr("Generating QR code…"); }
+        if CloudAccount.qr-status == 2 { return @tr("Scan this code with the NetEase Music app."); }
+        if CloudAccount.qr-status == 3 { return @tr("Scanned. Confirm login on your phone."); }
+        if CloudAccount.qr-status == 4 { return @tr("QR code expired. Refresh to try again."); }
+        if CloudAccount.qr-status == 5 { return @tr("Login successful."); }
+        if CloudAccount.qr-status == 6 { return @tr("Could not start QR login."); }
+        return "";
+    }
+
+    property <bool> watched-logged-in: CloudAccount.logged-in;
+    changed watched-logged-in => {
+        if !self.watched-logged-in {
+            root.login-mode = 0;
+            root.password = "";
+            CloudAccount.cancel-qr-login();
+        }
     }
 }

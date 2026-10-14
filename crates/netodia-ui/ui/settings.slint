@@ -602,7 +602,13 @@ export global CloudAccount {
     in-out property <bool> logged-in;
     in-out property <bool> remember-available: true;
     in-out property <bool> busy;
+    in-out property <image> qr-image;
+    in-out property <int> qr-status: 0;
+    in-out property <bool> qr-busy;
     callback login-phone(string /* phone */, string /* country code */, string /* password */);
     callback login-email(string /* email */, string /* password */);
+    callback start-qr-login();
+    callback cancel-qr-login();
+    callback qr-page-active-changed(bool /* active */);
     callback logout();
 }

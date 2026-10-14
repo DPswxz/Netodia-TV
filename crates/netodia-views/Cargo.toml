@@ -29,6 +29,7 @@ netodia-app = { path = "../netodia-app" }
 netodia-ui = { path = "../netodia-ui" }
 
 slint.workspace = true
+qrcode = { workspace = true, features = ["svg"] }
 tokio.workspace = true
 tokio-util.workspace = true
 async-compat.workspace = true

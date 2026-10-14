@@ -2957,3 +2957,39 @@ msgstr ""
 #: ui/views/settings/netease-account-section.slint
 msgid "Connecting…"
 msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Generating QR code…"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scanned. Confirm login on your phone."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code expired. Refresh to try again."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Login successful."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Could not start QR login."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Refresh code"
+msgstr ""
