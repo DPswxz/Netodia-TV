@@ -100,6 +100,21 @@ pub fn md5_hex(input: &[u8]) -> String {
     hex(&Md5::digest(input), false)
 }
 
+/// Build the username accepted by `NetEase`'s anonymous-device registration endpoint.
+///
+/// This is the same `cloudmusic_dll_encode_id` transform used by the desktop client, wrapped in
+/// base64 as expected by `/api/register/anonimous`.
+pub fn anonymous_username(device_id: &str) -> String {
+    const XOR_KEY: &[u8] = b"3go8&$8*3*3h0k(2)2";
+    let xored = device_id
+        .bytes()
+        .enumerate()
+        .map(|(index, byte)| byte ^ XOR_KEY[index % XOR_KEY.len()])
+        .collect::<Vec<_>>();
+    let digest = STANDARD.encode(Md5::digest(xored));
+    STANDARD.encode(format!("{device_id} {digest}"))
+}
+
 pub fn weapi(data: &Value) -> Result<Vec<(String, String)>> {
     const BASE62: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let key = rand::random::<[u8; 16]>().map(|b| BASE62[usize::from(b) % BASE62.len()]);
@@ -123,6 +138,19 @@ pub fn eapi(path: &str, data: &Value) -> Result<Vec<(String, String)>> {
     let bytes = encrypt128(plain.as_bytes(), EAPI_KEY, None);
     let hex = hex(&bytes, true);
     Ok(vec![("params".into(), hex)])
+}
+
+#[cfg(test)]
+mod anonymous_tests {
+    use super::anonymous_username;
+
+    #[test]
+    fn anonymous_registration_username_matches_the_upstream_vector() {
+        assert_eq!(
+            anonymous_username("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123"),
+            "MDEyMzQ1Njc4OUFCQ0RFRjAxMjM0NTY3ODlBQkNERUYwMTIzNDU2Nzg5QUJDREVGMDEyMyBYa2pIc2o5dnlXcTVRNDdCdXYyVWNnPT0=",
+        );
+    }
 }
 
 pub fn xeapi_signature(timestamp: &str, nonce: &str) -> Result<String> {

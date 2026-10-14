@@ -28,6 +28,7 @@ use Protocol::{Eapi, Weapi, Xeapi};
 
 pub const QR_KEY: Endpoint<'static> = Endpoint::read("/api/login/qrcode/unikey", Eapi);
 pub const QR_CHECK: Endpoint<'static> = Endpoint::read("/api/login/qrcode/client/login", Eapi);
+pub const REGISTER_ANONYMOUS: Endpoint<'static> = Endpoint::write("/api/register/anonimous", Xeapi);
 pub const PHONE_LOGIN: Endpoint<'static> = Endpoint::write("/api/w/login/cellphone", Weapi);
 pub const EMAIL_LOGIN: Endpoint<'static> = Endpoint::write("/api/w/login", Eapi);
 pub const ACCOUNT: Endpoint<'static> = Endpoint::read("/api/nuser/account/get", Weapi);

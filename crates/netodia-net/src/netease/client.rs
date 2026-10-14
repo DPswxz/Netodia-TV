@@ -25,6 +25,7 @@ pub struct Client {
     http: reqwest::Client,
     cookies: Arc<RwLock<BTreeMap<String, String>>>,
     xeapi_key: Arc<Mutex<Option<crypto::XeapiKey>>>,
+    anonymous_registration: Arc<Mutex<()>>,
     epoch: Arc<AtomicU64>,
     device_id: String,
 }
@@ -63,6 +64,7 @@ impl Client {
             http,
             cookies: Arc::new(RwLock::new(BTreeMap::new())),
             xeapi_key: Arc::new(Mutex::new(None)),
+            anonymous_registration: Arc::new(Mutex::new(())),
             epoch: Arc::new(AtomicU64::new(0)),
             device_id,
         }
@@ -108,10 +110,47 @@ impl Client {
     ) -> Result<reqwest::RequestBuilder> {
         let csrf = cookies.get("__csrf").cloned().unwrap_or_default();
         data["e_r"] = json!(false);
-        let cookie_header =
-            cookies.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>().join("; ");
-        let headers = json!({"os":"android","appver":"9.5.61","osver":"12","deviceId":self.device_id,"channel":"netease","__csrf":csrf,
-            "requestId":format!("{}_{}",chrono_millis(),rand::random::<u16>()),"MUSIC_U":cookies.get("MUSIC_U").cloned().unwrap_or_default(),"MUSIC_A":cookies.get("MUSIC_A").cloned().unwrap_or_default()});
+        let now = chrono_millis();
+        let build_version = (now / 1000).to_string();
+        let mut request_cookies = cookies.clone();
+        for (name, value) in [
+            ("os", "android"),
+            ("appver", "9.5.61"),
+            ("osver", "12"),
+            ("channel", "netease"),
+            ("versioncode", "140"),
+            ("mobilename", ""),
+            ("resolution", "1920x1080"),
+            ("__remember_me", "true"),
+            ("ntes_kaola_ad", "1"),
+            ("WEVNSM", "1.0.0"),
+        ] {
+            request_cookies.insert(name.to_owned(), value.to_owned());
+        }
+        request_cookies.insert("deviceId".to_owned(), self.device_id.clone());
+        request_cookies.insert("buildver".to_owned(), build_version.clone());
+        request_cookies.insert("__csrf".to_owned(), csrf.clone());
+        let nuid = crypto::hex(&rand::random::<[u8; 32]>(), false);
+        request_cookies.insert("_ntes_nuid".to_owned(), nuid.clone());
+        request_cookies.insert("_ntes_nnid".to_owned(), format!("{nuid},{now}"));
+        let cookie_header = request_cookies
+            .iter()
+            .map(|(key, value)| format!("{key}={value}"))
+            .collect::<Vec<_>>()
+            .join("; ");
+
+        let mut headers = json!({
+            "os":"android", "appver":"9.5.61", "osver":"12", "deviceId":self.device_id,
+            "channel":"netease", "__csrf":csrf, "versioncode":"140", "mobilename":"",
+            "buildver":build_version, "resolution":"1920x1080",
+            "requestId":format!("{}_{}",now,format!("{:04}",rand::random::<u16>()%1000))
+        });
+        if let Some(value) = request_cookies.get("MUSIC_U") {
+            headers["MUSIC_U"] = json!(value);
+        }
+        if let Some(value) = request_cookies.get("MUSIC_A") {
+            headers["MUSIC_A"] = json!(value);
+        }
         let (base, route, payload) = match endpoint.protocol {
             Protocol::Weapi => {
                 data["csrf_token"] = json!(csrf);
@@ -146,10 +185,7 @@ impl Client {
             .timeout(Duration::from_secs(15))
             .header("Referer", "https://music.163.com/")
             .header("User-Agent", ANDROID_UA)
-            .header(
-                COOKIE,
-                format!("{cookie_header}; os=android; appver=9.5.61; deviceId={}", self.device_id),
-            )
+            .header(COOKIE, cookie_header)
             .form(&payload);
         if endpoint.protocol == Protocol::Xeapi {
             request = request
@@ -328,8 +364,33 @@ impl Client {
     }
 
     pub async fn qr_key(&self) -> Result<String> {
+        self.ensure_anonymous_session().await?;
         let body = self.request(ep::QR_KEY, json!({"type":3})).await?;
         body["unikey"].as_str().map(str::to_owned).ok_or(Error::InvalidResponse)
+    }
+
+    /// The API-enhanced QR flow registers this device before starting login. That supplies the
+    /// anonymous credential and device-bound cookie context the mobile app expects to see.
+    async fn ensure_anonymous_session(&self) -> Result<()> {
+        let _registration = self.anonymous_registration.lock().await;
+        {
+            let cookies = self.cookies.read().await;
+            if cookies.contains_key("MUSIC_U") || cookies.contains_key("MUSIC_A") {
+                return Ok(());
+            }
+        }
+
+        self.request(
+            ep::REGISTER_ANONYMOUS,
+            json!({"username":crypto::anonymous_username(&self.device_id)}),
+        )
+        .await?;
+        let cookies = self.cookies.read().await;
+        if cookies.contains_key("MUSIC_U") || cookies.contains_key("MUSIC_A") {
+            Ok(())
+        } else {
+            Err(Error::InvalidResponse)
+        }
     }
 
     pub async fn qr_check(&self, key: &str) -> Result<QrStatus> {
