@@ -735,6 +735,10 @@ impl<S: AudioSource> AudioSource for EqSource<S> {
         self.input.total_duration()
     }
 
+    fn is_buffering(&self) -> bool {
+        self.input.is_buffering()
+    }
+
     fn try_seek(&mut self, pos: Duration) -> Result<(), SeekError> {
         self.input.try_seek(pos)?;
         // Clear the delay lines and limiter envelope so the destination doesn't

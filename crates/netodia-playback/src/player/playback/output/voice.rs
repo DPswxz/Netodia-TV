@@ -37,6 +37,8 @@ pub struct PlayingSource {
     pub format: SourceFormat,
     /// Whether anything between the decoder and the deck changed the samples.
     pub dsp_engaged: bool,
+    /// Whether the decoder worker is temporarily waiting for more input bytes.
+    pub buffering: bool,
 }
 
 /// How long a control op waits for the callback before giving up.
@@ -143,6 +145,8 @@ struct VoiceShared {
     /// Frames the playing source's converter has pulled past the one it is writing, which the ear
     /// trails the clock by as well as the device's lead. Written once per render.
     converter_ahead: AtomicU64,
+    /// Whether the active source last starved while its decoder was still working.
+    buffering: AtomicBool,
     /// The rest of what [`Voice::playing`] reports. The source's own four are written with the
     /// clock at takeover, ahead of `rate`; `dsp_engaged` once per render. A read that straddles a
     /// handover can pair two tracks' answers, which the next read puts right.
@@ -359,6 +363,7 @@ impl Voice {
             shape: Shape { channels, rate },
             format,
             dsp_engaged: self.shared.dsp_engaged.load(Ordering::Relaxed),
+            buffering: self.shared.buffering.load(Ordering::Relaxed),
         })
     }
 
@@ -458,9 +463,17 @@ impl VoicePull {
             written += samples;
             self.shared.frames.fetch_add(source_frames, Ordering::Relaxed);
             if loaded.converter.is_done() {
+                self.shared.buffering.store(false, Ordering::Relaxed);
                 self.finish_current();
             } else if loaded.converter.is_starved() {
+                if loaded.source.is_buffering() {
+                    self.shared.buffering.store(true, Ordering::Relaxed);
+                    break;
+                }
+                self.shared.buffering.store(false, Ordering::Relaxed);
                 self.hand_over_or_drain();
+            } else {
+                self.shared.buffering.store(false, Ordering::Relaxed);
             }
         }
 
@@ -530,6 +543,7 @@ impl VoicePull {
     fn start_at(&mut self, loaded: Loaded, frames: u64) {
         let source = &loaded.source;
         let format = source.format();
+        self.shared.buffering.store(false, Ordering::Relaxed);
         self.shared.source_channels.store(source.channels().get(), Ordering::Relaxed);
         self.shared.source_bits.store(format.bits, Ordering::Relaxed);
         self.shared.source_float.store(format.float, Ordering::Relaxed);
@@ -642,6 +656,7 @@ pub fn pair(device: Shape) -> (Voice, VoicePull) {
         rate: AtomicU32::new(0),
         anchor: AtomicU64::new(0),
         converter_ahead: AtomicU64::new(0),
+        buffering: AtomicBool::new(false),
         source_channels: AtomicU16::new(0),
         source_bits: AtomicU8::new(0),
         source_float: AtomicBool::new(false),

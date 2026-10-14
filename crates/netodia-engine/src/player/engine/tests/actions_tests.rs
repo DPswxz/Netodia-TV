@@ -34,12 +34,8 @@ struct MockBackendInner {
     volume_calls: Vec<f64>,
     speed_calls: Vec<f64>,
     preload_calls: Vec<Option<String>>,
-    /// `(generation, volume)` per `play_stream`. No path: the stream was opened long before the
-    /// action ran, and the backend finds it by generation alone.
-    play_stream_calls: Vec<(u64, f64)>,
     play_media_should_fail: bool,
     begin_crossfade_should_fail: bool,
-    play_stream_should_fail: bool,
 }
 
 struct MockBackend {
@@ -64,15 +60,6 @@ impl MockBackend {
         Self {
             inner: Mutex::new(MockBackendInner {
                 begin_crossfade_should_fail: true,
-                ..Default::default()
-            }),
-        }
-    }
-
-    fn with_stream_failure() -> Self {
-        Self {
-            inner: Mutex::new(MockBackendInner {
-                play_stream_should_fail: true,
                 ..Default::default()
             }),
         }
@@ -141,14 +128,6 @@ impl PlayerBackend for MockBackend {
     }
     fn preload_gapless(&self, file_path: Option<&str>, _baked_rg: TrackReplayGain) {
         self.inner().preload_calls.push(file_path.map(std::borrow::ToOwned::to_owned));
-    }
-    fn play_stream(&self, generation: u64, volume: f64) -> Result<(), AppError> {
-        let mut inner = self.inner();
-        if inner.play_stream_should_fail {
-            return Err(AppError::Player("mock stream failure".to_owned()));
-        }
-        inner.play_stream_calls.push((generation, volume));
-        Ok(())
     }
 }
 

@@ -39,6 +39,7 @@ fn clean_inputs() -> SignalInputs {
             shape: shape(2, 44_100),
             format: SourceFormat { bits: 16, float: false, lossy: false },
             dsp_engaged: false,
+            buffering: false,
         },
         eq_on: false,
         rg_on: false,

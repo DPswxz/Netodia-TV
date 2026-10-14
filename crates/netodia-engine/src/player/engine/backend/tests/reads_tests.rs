@@ -7,6 +7,8 @@ use std::num::NonZero;
 use std::path::Path;
 
 use netodia_audio::player::source::audio::{Sample, Shape};
+use netodia_audio::player::source::buffered::BufferedAudioSource;
+use netodia_audio::player::source::file_decode::FileDecoder;
 use netodia_core::error::AppError;
 use netodia_playback::player::playback::decks::DECK_COUNT;
 use netodia_playback::player::playback::output::mixer::{self, MixerPull};
@@ -73,6 +75,50 @@ async fn a_deck_yet_to_take_its_source_has_no_settled_position() -> Result<(), A
     let settled = engine.query_settled_position(HELD_MS);
 
     assert_eq!(settled, None);
+    Ok(())
+}
+
+/// A source opened by a worker can use the ordinary engine path while its PCM arrives through the
+/// same bounded consumer the output callback pulls from.
+#[tokio::test]
+async fn a_prepared_buffered_source_plays_and_advances_the_engine_clock() -> Result<(), AppError> {
+    let (engine, mut pull) = engine()?;
+    let generation = engine.reserve_playback_request();
+    let path = fixture();
+    let source = BufferedAudioSource::open(move || FileDecoder::open(Path::new(&path)))?;
+    assert!(engine.play_prepared_source(
+        generation,
+        source,
+        1.0,
+        1.0,
+        None,
+        TrackReplayGain::default()
+    ));
+
+    pull_ms(&mut pull, 100);
+
+    assert!(engine.query_position() > 0);
+    assert!(!engine.query_buffering());
+    Ok(())
+}
+
+#[tokio::test]
+async fn a_late_prepared_source_is_discarded_after_a_newer_request() -> Result<(), AppError> {
+    let (engine, _pull) = engine()?;
+    let stale_generation = engine.reserve_playback_request();
+    let path = fixture();
+    let source = BufferedAudioSource::open(move || FileDecoder::open(Path::new(&path)))?;
+    let _current_generation = engine.reserve_playback_request();
+
+    assert!(!engine.play_prepared_source(
+        stale_generation,
+        source,
+        1.0,
+        1.0,
+        None,
+        TrackReplayGain::default()
+    ));
+    assert!(!engine.holds_source(), "the stale decoder replaced the current track");
     Ok(())
 }
 

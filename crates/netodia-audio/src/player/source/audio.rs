@@ -153,6 +153,15 @@ pub trait AudioSource: Iterator<Item = Sample> + Send {
     /// How long the source runs for, when it is the kind of thing that ends.
     fn total_duration(&self) -> Option<Duration>;
 
+    /// Whether an empty pull means the producer is still working rather than reaching the end.
+    ///
+    /// A real-time callback must leave the converter starved in this case: the output mixer has
+    /// already zeroed the remainder of its block, and the next callback can resume from the same
+    /// media position once a decoder worker supplies more PCM.
+    fn is_buffering(&self) -> bool {
+        false
+    }
+
     /// Seek to `pos` on the source's own timeline.
     ///
     /// # Errors

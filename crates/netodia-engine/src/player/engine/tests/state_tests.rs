@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::*;
-use crate::player::engine::types::{PersistableQueue, PersistedPlayback, RepeatMode};
+use crate::player::engine::types::{PersistableQueue, RepeatMode};
 use netodia_core::error::AppError;
 use netodia_playback::player::playback::crossfade::CrossfadeDecision;
 use netodia_playback::player::playback::replaygain::TrackReplayGain;

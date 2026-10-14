@@ -22,6 +22,11 @@ impl PlaybackEngine {
         millis(self.lock_decks().active().voice.heard(self.output.lead.get()))
     }
 
+    /// Whether the active decoder has temporarily run out of buffered PCM while fetching more.
+    pub fn query_buffering(&self) -> bool {
+        self.lock_decks().active().voice.playing().is_some_and(|source| source.buffering)
+    }
+
     /// [`Self::query_position`] once the active deck has acted on everything sent to it, or `None`
     /// while it hasn't, a seek's swap being sent before the deck takes it.
     ///

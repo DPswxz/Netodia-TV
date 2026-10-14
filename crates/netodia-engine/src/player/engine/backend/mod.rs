@@ -103,6 +103,9 @@ pub struct PlaybackEngine {
     viz: Arc<VisualizerShared>,
     // Only ever schedules the deferred half of a faded pause / stop.
     runtime: tokio::runtime::Handle,
+    // Orders network/decode jobs before they finish opening. A late source from an older request
+    // must not replace the track selected by a newer action.
+    playback_generation: AtomicU64,
 }
 
 impl PlaybackEngine {
@@ -123,6 +126,7 @@ impl PlaybackEngine {
             xf: CrossfadeShared::new(),
             viz: VisualizerShared::new(false),
             runtime,
+            playback_generation: AtomicU64::new(0),
         })
     }
 
@@ -144,6 +148,15 @@ impl PlaybackEngine {
     /// returning the new epoch. Every op that replaces deck contents calls this.
     fn bump_epoch(&self) -> u64 {
         self.deck_epoch.fetch_add(1, Ordering::AcqRel) + 1
+    }
+
+    /// Reserve a playback request before opening or decoding its source on a worker thread.
+    ///
+    /// Pass the returned generation to [`Self::play_prepared_source`]. A later reservation,
+    /// pause, or stop makes an older result a no-op when it eventually finishes loading.
+    pub fn reserve_playback_request(&self) -> u64 {
+        let _decks = self.lock_decks();
+        self.playback_generation.fetch_add(1, Ordering::AcqRel) + 1
     }
 
     /// Run `op` after `delay_ms`, unless a newer control op bumped the epoch in
@@ -237,6 +250,7 @@ impl PlaybackEngine {
         start_position_ms: Option<u64>,
         baked_rg: TrackReplayGain,
     ) -> Result<(), AppError> {
+        let generation = self.reserve_playback_request();
         let fade_ms = self.manual_fade_ms(start_position_ms);
 
         // Decode outside the deck lock — the position monitor's `query_position`
@@ -265,8 +279,28 @@ impl PlaybackEngine {
 
         // A manual fade is never asked for with a resume position, so the two can't both apply.
         let entry = if fade_ms > 0 { Entry::Fade(fade_ms) } else { Entry::Cut(start) };
-        self.start_track(decoded, baked_rg, entry, volume, speed);
+        self.start_track(decoded, baked_rg, entry, volume, speed, Some(generation));
         Ok(())
+    }
+
+    /// Play a source that another layer has already opened and positioned, including a buffered
+    /// network decoder. Its reads must be nonblocking because the decks pull samples on the audio
+    /// callback.
+    pub fn play_prepared_source<S: AudioSource + 'static>(
+        &self,
+        generation: u64,
+        source: S,
+        volume: f64,
+        speed: f64,
+        start_position: Option<Duration>,
+        baked_rg: TrackReplayGain,
+    ) -> bool {
+        let start_position_ms =
+            start_position.map(|position| u64::try_from(position.as_millis()).unwrap_or(u64::MAX));
+        let fade_ms = self.manual_fade_ms(start_position_ms);
+        let start = start_position.unwrap_or(Duration::ZERO);
+        let entry = if fade_ms > 0 { Entry::Fade(fade_ms) } else { Entry::Cut(start) };
+        self.start_track(source, baked_rg, entry, volume, speed, Some(generation))
     }
 
     /// Put `decoded` on the decks as `entry` asks, cutting from the top where a fade can't go.
@@ -275,16 +309,22 @@ impl PlaybackEngine {
     /// staged since (its flag is set under this same lock), and an output that has to reopen for
     /// the track. A cut is always safe, clearing both decks with any staged source in them. A fade
     /// never reopens, so whatever a track start would reclaim waits for the next cut.
-    fn start_track(
+    fn start_track<S: AudioSource + 'static>(
         &self,
-        decoded: FileDecoder,
+        decoded: S,
         baked_rg: TrackReplayGain,
         entry: Entry,
         volume: f64,
         speed: f64,
-    ) {
-        self.bump_epoch();
+        generation: Option<u64>,
+    ) -> bool {
         let mut decks = self.lock_decks();
+        if generation.is_some_and(|generation| {
+            self.playback_generation.load(Ordering::Acquire) != generation
+        }) {
+            return false;
+        }
+        self.bump_epoch();
         let fade_blocked = self.gapless_pending.load(Ordering::Acquire)
             || !self.plays_without_reopen(decoded.shape(), decoded.format());
         let entry = match entry {
@@ -308,6 +348,7 @@ impl PlaybackEngine {
             }
         }
         self.gapless_pending.store(false, Ordering::Release);
+        true
     }
 
     /// Play `source` alone from `start`, reopening the output for it first.
@@ -347,6 +388,7 @@ impl PlaybackEngine {
         volume: f64,
         speed: f64,
     ) -> Result<(), AppError> {
+        let generation = self.reserve_playback_request();
         // Decode outside the deck lock, as `play_media` does.
         let decoded = FileDecoder::open(Path::new(file_path))?;
 
@@ -357,7 +399,7 @@ impl PlaybackEngine {
             !self.gapless_pending.load(Ordering::Acquire),
             "crossfade must never race a staged gapless preload"
         );
-        self.start_track(decoded, baked_rg, Entry::Fade(fade_ms), volume, speed);
+        self.start_track(decoded, baked_rg, Entry::Fade(fade_ms), volume, speed, Some(generation));
         Ok(())
     }
 
@@ -438,8 +480,10 @@ impl PlaybackEngine {
     /// Pause both decks now. The caller decides whether a fade is wanted; see
     /// [`Self::pause_with_fade`].
     pub fn pause(&self) {
+        let decks = self.lock_decks();
         self.bump_epoch();
-        self.lock_decks().pause_all();
+        self.playback_generation.fetch_add(1, Ordering::AcqRel);
+        decks.pause_all();
     }
 
     /// Arm a fade to silence on the active deck and schedule `op` to land once
@@ -463,6 +507,7 @@ impl PlaybackEngine {
             if self.gapless_pending.load(Ordering::Acquire) {
                 return false;
             }
+            self.playback_generation.fetch_add(1, Ordering::AcqRel);
             decks.active().fade.arm(None, 0.0, fade_ms, false);
         }
         self.schedule_after(epoch, fade_ms, op);
@@ -478,11 +523,12 @@ impl PlaybackEngine {
 
     /// Stop playback. `Deck::clear` removes all sources and pauses automatically.
     pub fn stop(&self) {
-        self.bump_epoch();
-        self.crossfade_armed.store(false, Ordering::Release);
         // Clearing the decks drops a live stream's source, whose `Drop` is what tells its feed
         // thread to close the connection; this only stops anyone still reading the cell.
         let decks = self.lock_decks();
+        self.bump_epoch();
+        self.playback_generation.fetch_add(1, Ordering::AcqRel);
+        self.crossfade_armed.store(false, Ordering::Release);
         decks.clear_all();
         self.gapless_pending.store(false, Ordering::Release);
         output::release_exclusive(&self.output.device);

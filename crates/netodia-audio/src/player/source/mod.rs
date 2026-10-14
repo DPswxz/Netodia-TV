@@ -8,6 +8,7 @@
 pub mod aac_config;
 pub mod aac_trim;
 pub mod audio;
+pub mod buffered;
 pub mod decode;
 pub mod file_decode;
 pub mod mkv_trim;

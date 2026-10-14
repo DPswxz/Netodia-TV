@@ -140,12 +140,36 @@ fn the_report_follows_a_staged_source_when_it_takes_over() {
     voice.append(silence(100, 96_000).with_format(hi_res).engaged());
 
     pump(&mut pull, 50);
-    let first = Some(PlayingSource { shape: mono(RATE), format: cd, dsp_engaged: false });
+    let first =
+        Some(PlayingSource { shape: mono(RATE), format: cd, dsp_engaged: false, buffering: false });
     assert_eq!(voice.playing(), first, "the first track");
 
     pump(&mut pull, 60);
-    let second = Some(PlayingSource { shape: mono(96_000), format: hi_res, dsp_engaged: true });
+    let second = Some(PlayingSource {
+        shape: mono(96_000),
+        format: hi_res,
+        dsp_engaged: true,
+        buffering: false,
+    });
     assert_eq!(voice.playing(), second, "the successor");
+}
+
+/// A temporary empty pull keeps the source mounted and the position fixed until the producer
+/// supplies data or reports a real end.
+#[test]
+fn buffering_starvation_does_not_drain_the_voice_or_advance_its_clock() {
+    let (voice, mut pull) = pair(mono(RATE));
+    let buffering = Arc::new(AtomicBool::new(true));
+    voice.append(TestSource::new(Vec::new(), 1, RATE).while_buffering(Arc::clone(&buffering)));
+
+    assert!(pump(&mut pull, 256).is_empty());
+    assert!(!voice.is_empty(), "temporary starvation ended the voice");
+    assert_eq!(voice.position(), Duration::ZERO, "silence advanced the media clock");
+    assert!(voice.playing().is_some_and(|playing| playing.buffering));
+
+    buffering.store(false, Ordering::Release);
+    pump(&mut pull, 256);
+    assert!(voice.is_empty(), "a real end did not drain the voice");
 }
 
 /// Media time, whatever the speed. rodio counted output frames after its speed wrapper, so a

@@ -19,6 +19,7 @@ use netodia_playback::player::playback::crossfade::CrossfadeSettings;
 use netodia_playback::player::playback::decks::DECK_COUNT;
 use netodia_playback::player::playback::output::mixer;
 use netodia_testkit::ASSETS_DIR;
+use tokio::sync::watch;
 
 fn track(id: i64, album: Option<&str>) -> Arc<TrackSummary> {
     Arc::new(TrackSummary {
@@ -83,6 +84,17 @@ fn backend(position_ms: u64, xf: CrossfadeSettings) -> BackendSnapshot {
 /// A backend whose device still holds what was pulled past `heard_ms`.
 fn backend_behind(heard_ms: u64, pulled_ms: u64, xf: CrossfadeSettings) -> BackendSnapshot {
     BackendSnapshot { pulled_ms, ..backend(heard_ms, xf) }
+}
+
+fn seated(
+    state: PlayerState,
+) -> (PlayerStateHandle, PlayerSinks, watch::Receiver<Option<PlayerViewModelLight>>) {
+    let (view_model, published) = watch::channel(None);
+    let (queue, _) = watch::channel(None);
+    let sinks = PlayerSinks { view_model, queue, media_controls: None };
+    let handle = PlayerStateHandle::default();
+    crate::player::engine::state::with_state_emit(&handle, &sinks, |live| *live = state);
+    (handle, sinks, published)
 }
 
 /// The position at which `remaining_ms` of the 180 s fixture track are left.

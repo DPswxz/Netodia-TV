@@ -17,6 +17,8 @@
 //! counter rather than the output of a filter.
 
 use std::num::NonZero;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use netodia_audio::player::source::audio::{
@@ -78,11 +80,20 @@ pub(crate) struct TestSource {
     sample_rate: u32,
     format: SourceFormat,
     dsp_engaged: bool,
+    buffering: Option<Arc<AtomicBool>>,
 }
 
 impl TestSource {
     pub(crate) fn new(data: Vec<f32>, channels: u16, sample_rate: u32) -> Self {
-        Self { data, pos: 0, channels, sample_rate, format: SourceFormat::F32, dsp_engaged: false }
+        Self {
+            data,
+            pos: 0,
+            channels,
+            sample_rate,
+            format: SourceFormat::F32,
+            dsp_engaged: false,
+            buffering: None,
+        }
     }
 
     /// Report `format` as what the decoder produced.
@@ -93,6 +104,10 @@ impl TestSource {
     /// Report the samples as processed, as a wrapper with its DSP engaged would.
     pub(crate) fn engaged(self) -> Self {
         Self { dsp_engaged: true, ..self }
+    }
+
+    pub(crate) fn while_buffering(self, state: Arc<AtomicBool>) -> Self {
+        Self { buffering: Some(state), ..self }
     }
 }
 
@@ -122,6 +137,9 @@ impl AudioSource for TestSource {
     }
     fn total_duration(&self) -> Option<Duration> {
         None
+    }
+    fn is_buffering(&self) -> bool {
+        self.buffering.as_ref().is_some_and(|state| state.load(Ordering::Acquire))
     }
     fn try_seek(&mut self, _pos: Duration) -> Result<(), SeekError> {
         self.pos = 0;
