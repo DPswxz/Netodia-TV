@@ -1,5 +1,6 @@
 //! Joins typed `NetEase` stream tickets to the native decoder and output engine.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -11,7 +12,7 @@ use netodia_core::entities::track::TrackSummary;
 use netodia_core::error::{AppError, AppResult};
 use netodia_engine::player::engine::backend::PlaybackEngine;
 use netodia_engine::player::engine::event_sink::PlayerSinks;
-use netodia_engine::player::engine::state::{PlayerStateHandle, with_state_emit};
+use netodia_engine::player::engine::state::{PlayerStateHandle, lock_state, with_state_emit};
 use netodia_engine::player::engine::types::PlaybackStatus;
 use netodia_net::services::net::range_reader::RangeReader;
 use netodia_playback::player::playback::replaygain::TrackReplayGain;
@@ -32,19 +33,36 @@ pub struct CloudPlaybackResult {
 #[derive(Clone)]
 pub struct CloudPlayback {
     cloud: CloudService,
+    http: reqwest::Client,
+    artwork_dir: PathBuf,
     engine: Arc<PlaybackEngine>,
     player_state: Arc<PlayerStateHandle>,
     sinks: Arc<PlayerSinks>,
 }
 
 impl CloudPlayback {
+    /// Build the shared API and playback handles from the one HTTP client and artwork cache root.
+    pub async fn initialize(
+        http: reqwest::Client,
+        artwork_dir: PathBuf,
+        engine: Arc<PlaybackEngine>,
+        player_state: Arc<PlayerStateHandle>,
+        sinks: Arc<PlayerSinks>,
+    ) -> (CloudService, Self) {
+        let cloud = CloudService::new(http.clone()).await;
+        let playback = Self::new(cloud.clone(), http, artwork_dir, engine, player_state, sinks);
+        (cloud, playback)
+    }
+
     pub fn new(
         cloud: CloudService,
+        http: reqwest::Client,
+        artwork_dir: PathBuf,
         engine: Arc<PlaybackEngine>,
         player_state: Arc<PlayerStateHandle>,
         sinks: Arc<PlayerSinks>,
     ) -> Self {
-        Self { cloud, engine, player_state, sinks }
+        Self { cloud, http, artwork_dir, engine, player_state, sinks }
     }
 
     pub fn account_status(&self) -> SessionStatus {
@@ -101,6 +119,55 @@ impl CloudPlayback {
         start_position: Option<Duration>,
     ) -> AppResult<CloudPlaybackResult> {
         let generation = self.engine.reserve_playback_request();
+        self.play_reserved(song_id, quality, volume, speed, start_position, generation, false).await
+    }
+
+    /// Re-open a cloud stream at a new position. Cloud sources cannot use the local-file seek
+    /// action, so seeking is a new range-backed decoder generation. The current-track check and
+    /// generation reservation happen before the first await, preventing a delayed slider task
+    /// from taking over a song selected after the user dragged it.
+    pub async fn seek(
+        &self,
+        song_id: i64,
+        quality: Quality,
+        position: Duration,
+    ) -> AppResult<CloudPlaybackResult> {
+        let (generation, volume, speed, was_paused, position) = {
+            let _exec = self.player_state.lock_exec();
+            let state = lock_state(&self.player_state);
+            let Some(track) = state.source.as_ref() else {
+                return Ok(CloudPlaybackResult { started: false, trial: false });
+            };
+            if track.id != song_id || !track.file_path.is_empty() {
+                return Ok(CloudPlaybackResult { started: false, trial: false });
+            }
+            if !matches!(state.status, PlaybackStatus::Playing | PlaybackStatus::Paused) {
+                return Ok(CloudPlaybackResult { started: false, trial: false });
+            }
+            let volume = state.effective_volume();
+            let speed = state.playback_speed;
+            let was_paused = state.status == PlaybackStatus::Paused;
+            let requested_ms = u64::try_from(position.as_millis()).unwrap_or(u64::MAX);
+            let position =
+                Duration::from_millis(requested_ms.min(state.duration_ms.saturating_sub(500)));
+            drop(state);
+            let generation = self.engine.reserve_playback_request();
+            (generation, volume, speed, was_paused, position)
+        };
+        self.play_reserved(song_id, quality, volume, speed, Some(position), generation, was_paused)
+            .await
+    }
+
+    async fn play_reserved(
+        &self,
+        song_id: i64,
+        quality: Quality,
+        volume: f64,
+        speed: f64,
+        start_position: Option<Duration>,
+        generation: u64,
+        keep_paused: bool,
+    ) -> AppResult<CloudPlaybackResult> {
         let cancellation = self.cloud.account_tasks_token();
         let song_ids = [song_id];
         let (ticket, songs) = tokio::try_join!(
@@ -110,11 +177,18 @@ impl CloudPlayback {
         if cancellation.is_cancelled() {
             return Err(AppError::network_msg("网易云播放请求已取消"));
         }
+        let cached_artwork = lock_state(&self.player_state)
+            .source
+            .as_ref()
+            .filter(|current| current.id == song_id && current.file_path.is_empty())
+            .and_then(|current| current.artwork_path.clone());
         let song = songs
             .into_iter()
             .find(|song| song.id == song_id)
             .ok_or_else(|| AppError::network_msg("网易云未返回歌曲信息"))?;
-        let summary = Arc::new(track_summary(song));
+        let cover_url = song.album.cover_url.clone();
+        let summary = Arc::new(track_summary(song, cached_artwork));
+        let should_fetch_cover = summary.artwork_path.is_none() && cover_url.is_some();
 
         let trial = ticket.trial;
         let url = ticket.url;
@@ -150,6 +224,9 @@ impl CloudPlayback {
             TrackReplayGain::default(),
         );
         if started {
+            if keep_paused {
+                self.engine.pause();
+            }
             let duration_ms = u64::try_from(summary.duration_ms.max(0)).unwrap_or(0);
             let position_ms = u64::try_from(start.as_millis()).unwrap_or(u64::MAX);
             with_state_emit(&self.player_state, &self.sinks, |state| {
@@ -158,16 +235,76 @@ impl CloudPlayback {
                 // previous local queue so Next cannot try to open a local file for this song.
                 state.queue.clear();
                 state.source = Some(summary);
-                state.status = PlaybackStatus::Playing;
+                state.status =
+                    if keep_paused { PlaybackStatus::Paused } else { PlaybackStatus::Playing };
                 state.duration_ms = duration_ms;
                 state.position_ms = position_ms.min(duration_ms.saturating_sub(500));
             });
         }
+        if started
+            && should_fetch_cover
+            && let Some(url) = cover_url
+        {
+            self.cache_cover_after_start(song_id, url);
+        }
         Ok(CloudPlaybackResult { started, trial })
+    }
+
+    /// Cover traffic is detached from the audio handoff, so a slow image CDN cannot delay the
+    /// first PCM samples. The updated summary is emitted after caching and decoded by the normal
+    /// Now Playing artwork pipeline.
+    fn cache_cover_after_start(&self, song_id: i64, url: String) {
+        let http = self.http.clone();
+        let artwork_dir = self.artwork_dir.clone();
+        let player_state = self.player_state.clone();
+        let sinks = self.sinks.clone();
+        tokio::spawn(async move {
+            let Some(path) = download_cover(&http, &url, &artwork_dir).await else { return };
+            let _exec = player_state.lock_exec();
+            with_state_emit(&player_state, &sinks, |state| {
+                let Some(current) = state.source.as_ref() else { return };
+                if current.id != song_id
+                    || !current.file_path.is_empty()
+                    || current.artwork_path.is_some()
+                {
+                    return;
+                }
+                let mut updated = (**current).clone();
+                updated.artwork_path = Some(path);
+                state.source = Some(Arc::new(updated));
+            });
+        });
     }
 }
 
-fn track_summary(song: Song) -> TrackSummary {
+async fn download_cover(
+    http: &reqwest::Client,
+    url: &str,
+    dir: &std::path::Path,
+) -> Option<String> {
+    const MAX_BYTES: u64 = 1_048_576;
+    if !matches!(reqwest::Url::parse(url).ok()?.scheme(), "https" | "http") {
+        return None;
+    }
+    let response = http.get(url).send().await.ok()?.error_for_status().ok()?;
+    if response.content_length().is_some_and(|length| length > MAX_BYTES) {
+        return None;
+    }
+    let bytes = response.bytes().await.ok()?;
+    if u64::try_from(bytes.len()).ok()? > MAX_BYTES {
+        return None;
+    }
+    let bytes = bytes.to_vec();
+    let dir = dir.to_path_buf();
+    tokio::task::spawn_blocking(move || {
+        netodia_artwork::media::image::artwork::store_image(&bytes, "jpg", &dir)
+    })
+    .await
+    .ok()
+    .flatten()
+}
+
+fn track_summary(song: Song, artwork_path: Option<String>) -> TrackSummary {
     let artist = song.artist_names();
     TrackSummary {
         id: song.id,
@@ -177,7 +314,7 @@ fn track_summary(song: Song) -> TrackSummary {
         artist: (!artist.is_empty()).then_some(artist),
         album: (!song.album.name.is_empty()).then_some(song.album.name),
         duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
-        artwork_path: None,
+        artwork_path,
         track_number: None,
         disc_number: None,
         last_position: 0,
@@ -263,20 +400,28 @@ mod tests {
 
     #[test]
     fn cloud_track_summary_keeps_the_metadata_the_player_bar_renders() {
-        let summary = track_summary(Song {
-            id: 812,
-            name: "Cloud song".to_owned(),
-            artists: vec![Artist { id: 91, name: "Cloud artist".to_owned(), ..Artist::default() }],
-            album: Album { id: 77, name: "Cloud album".to_owned(), ..Album::default() },
-            duration_ms: 181_000,
-            ..Song::default()
-        });
+        let summary = track_summary(
+            Song {
+                id: 812,
+                name: "Cloud song".to_owned(),
+                artists: vec![Artist {
+                    id: 91,
+                    name: "Cloud artist".to_owned(),
+                    ..Artist::default()
+                }],
+                album: Album { id: 77, name: "Cloud album".to_owned(), ..Album::default() },
+                duration_ms: 181_000,
+                ..Song::default()
+            },
+            Some("/cache/cover.jpg".to_owned()),
+        );
 
         assert_eq!(summary.id, 812);
         assert_eq!(summary.title, "Cloud song");
         assert_eq!(summary.artist.as_deref(), Some("Cloud artist"));
         assert_eq!(summary.album.as_deref(), Some("Cloud album"));
         assert_eq!(summary.duration_ms, 181_000);
+        assert_eq!(summary.artwork_path.as_deref(), Some("/cache/cover.jpg"));
         assert!(summary.file_path.is_empty());
     }
 

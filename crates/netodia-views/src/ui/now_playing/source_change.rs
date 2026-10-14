@@ -52,6 +52,8 @@ pub(super) fn spawn_source_change_subscriber(
     // Seeded from the snapshot in `install` so the subscriber doesn't
     // re-fire for the already-seeded restored source.
     let mut last_key = initial_key;
+    let mut last_artwork_path =
+        np_state.current_source.borrow().as_ref().and_then(|source| source.artwork_path.clone());
     slint::spawn_local(Compat::new(async move {
         loop {
             if rx.changed().await.is_err() {
@@ -66,12 +68,17 @@ pub(super) fn spawn_source_change_subscriber(
                 let vm = rx.borrow_and_update();
                 let Some(vm) = vm.as_ref() else { continue };
                 let source = vm.source();
-                if SourceKey::describes(last_key.as_ref(), source.as_ref().map(|s| s.id)) {
+                let next = NowPlayingSource::from_vm(vm);
+                let artwork_path = next.as_ref().and_then(|source| source.artwork_path.clone());
+                if SourceKey::describes(last_key.as_ref(), source.as_ref().map(|s| s.id))
+                    && artwork_path == last_artwork_path
+                {
                     continue;
                 }
-                NowPlayingSource::from_vm(vm)
+                last_key = next.as_ref().map(|source| source.key.clone());
+                last_artwork_path = artwork_path;
+                next
             };
-            last_key = new_source.as_ref().map(|s| s.key.clone());
             // Regardless of visibility, so a later open can seed the artwork from it.
             np_state.current_source.borrow_mut().clone_from(&new_source);
             // The decode, blur and metadata read only produce something on screen while a surface
@@ -114,7 +121,8 @@ pub(super) async fn apply_source_change(
     np_state.lyrics.kick();
 
     let meta = fetch_track_meta(state, track.as_ref()).await;
-    let (cover, blurred, sample) = decode_artwork_for(state, np_artwork, artwork_path).await;
+    let (cover, blurred, sample) =
+        decode_artwork_for(state, np_artwork, artwork_path.clone()).await;
 
     // --- Write to Slint (UI thread) ---
     let Some(ui) = weak.upgrade() else { return };
@@ -122,9 +130,13 @@ pub(super) async fn apply_source_change(
     // A newer source change may have landed mid-decode: the open-seed task and the
     // subscriber can both have an `apply_source_change` in flight. If the decoded source
     // is no longer current, drop it — the newer call owns the slots and `applied_source`.
-    if key != np_state.current_source.borrow().as_ref().map(|s| s.key.clone()) {
+    let current = np_state.current_source.borrow();
+    if key != current.as_ref().map(|s| s.key.clone())
+        || artwork_path != current.as_ref().and_then(|s| s.artwork_path.clone())
+    {
         return;
     }
+    drop(current);
 
     let player = ui.global::<Player>();
     publish_chips(&player, np_state, meta);
@@ -152,6 +164,7 @@ pub(super) async fn apply_source_change(
     );
 
     *np_state.applied_source.borrow_mut() = key;
+    *np_state.applied_artwork_path.borrow_mut() = artwork_path;
 }
 
 /// The eight chip columns for `track`, awaited inline — sqlx has a reactor here. Every failure arm

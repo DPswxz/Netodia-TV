@@ -66,11 +66,12 @@ fn reseed(weak: &Weak<AppWindow>, state: &AppState, np_state: &Rc<NowPlayingStat
         }
         return;
     };
-    if ly.holds(&track.file_path) {
+    let track_key = lyrics_track_key(&track);
+    if ly.holds(&track_key) {
         return;
     }
 
-    mark_loading(&ui, ly, &track.file_path);
+    mark_loading(&ui, ly, &track_key);
     let weak = weak.clone();
     let state = state.clone();
     let np_state = np_state.clone();
@@ -79,10 +80,17 @@ fn reseed(weak: &Weak<AppWindow>, state: &AppState, np_state: &Rc<NowPlayingStat
         let Some(ui) = weak.upgrade() else { return };
         // The song may have moved under the lookup; the claim taken above is what says so, and it
         // is the same test the two other edges dedupe on.
-        if !np_state.lyrics.holds(&track.file_path) {
+        if !np_state.lyrics.holds(&track_key) {
             return;
         }
-        apply(&ui, &np_state.lyrics, &track.file_path, &outcome, state.lyrics_online_enabled.get());
+        apply(
+            &ui,
+            &np_state.lyrics,
+            &track_key,
+            &outcome,
+            state.lyrics_online_enabled.get(),
+            !track.file_path.is_empty(),
+        );
     }));
     if let Err(e) = res {
         log::warn!(
@@ -108,6 +116,7 @@ pub(crate) fn wire_menu(ui: &AppWindow, state: &AppState, np_state: &Rc<NowPlayi
             let Some(track) = playing_track(&np_state) else {
                 return;
             };
+            let cloud_track = track.file_path.is_empty();
             let Some(ui) = weak.upgrade() else { return };
 
             // Given up before the lookup, not after: the claim is what stops the reseed below
@@ -118,7 +127,9 @@ pub(crate) fn wire_menu(ui: &AppWindow, state: &AppState, np_state: &Rc<NowPlayi
             let state = state.clone();
             let np_state = np_state.clone();
             let res = slint::spawn_local(Compat::new(async move {
-                if let Err(e) = library::lyrics::forget(&state, &track.file_path).await {
+                if !cloud_track
+                    && let Err(e) = library::lyrics::forget(&state, &track.file_path).await
+                {
                     log::warn!("lyrics refresh: {}", netodia_core::error::describe(&e));
                 }
                 if weak.upgrade().is_some() {
@@ -142,6 +153,9 @@ pub(crate) fn wire_menu(ui: &AppWindow, state: &AppState, np_state: &Rc<NowPlayi
             let Some(track) = playing_track(&np_state) else {
                 return;
             };
+            if track.file_path.is_empty() {
+                return;
+            }
             let state = state.clone();
             let weak = weak.clone();
             let np_state = np_state.clone();
@@ -217,6 +231,7 @@ fn apply(
     track_path: &str,
     outcome: &LyricsOutcome,
     online_enabled: bool,
+    can_save_to_tag: bool,
 ) {
     ly.pinned.set(None);
     let global = ui.global::<Lyrics>();
@@ -233,7 +248,7 @@ fn apply(
             global.set_synced(sheet.is_synced());
             // Every source but the file's own tag is worth offering to write into it. A sidecar
             // counts: it is the user's file, but it is not the one that travels with the track.
-            global.set_can_save_to_tag(sheet.source != LyricsSource::Tag);
+            global.set_can_save_to_tag(can_save_to_tag && sheet.source != LyricsSource::Tag);
             global.set_state(LyricsState::Ready);
         }
         LyricsOutcome::Instrumental => {
@@ -252,6 +267,15 @@ fn apply(
             clear(ui, ly);
             global.set_state(LyricsState::Unavailable);
         }
+    }
+}
+
+/// Local lyrics use their path as identity; cloud paths are empty, so key those by `NetEase` ID.
+fn lyrics_track_key(track: &TrackSummary) -> String {
+    if track.file_path.is_empty() {
+        format!("netease:{}", track.id)
+    } else {
+        track.file_path.clone()
     }
 }
 

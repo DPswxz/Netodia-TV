@@ -131,6 +131,8 @@ pub struct NowPlayingState {
     /// callback compares it against `current_source` to skip a redundant re-seed when
     /// nothing changed while the view was closed.
     pub(super) applied_source: RefCell<Option<SourceKey>>,
+    /// Artwork may arrive after a cloud track starts, while its track ID stays the same.
+    pub(super) applied_artwork_path: RefCell<Option<String>>,
     /// Visible chip texts in declared order for the applied `track-meta`, re-chunked on
     /// every `Player.recompute-chip-rows(width)` so a resize needn't re-walk
     /// `TrackMetaRow`.
@@ -349,6 +351,7 @@ impl NowPlayingState {
             last_queue_index: Cell::new(qvm.queue_index),
             current_source: RefCell::new(current_source),
             applied_source: RefCell::new(None),
+            applied_artwork_path: RefCell::new(None),
             chip_texts: RefCell::new(Vec::new()),
             chip_last_width: Cell::new(0.0),
             chip_last_shape: RefCell::new(Vec::new()),
@@ -427,7 +430,10 @@ fn install_artwork_seeder(
         };
         let current_source = np_state.current_source.borrow().clone();
         let current_key = current_source.as_ref().map(|s| s.key.clone());
-        if current_key == *np_state.applied_source.borrow() {
+        let current_artwork = current_source.as_ref().and_then(|s| s.artwork_path.clone());
+        if current_key == *np_state.applied_source.borrow()
+            && current_artwork == *np_state.applied_artwork_path.borrow()
+        {
             return;
         }
         let weak_ui = weak_ui.clone();

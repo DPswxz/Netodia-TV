@@ -31,6 +31,7 @@
 
 mod embedded;
 mod lrc;
+mod netease;
 mod online;
 mod romanize;
 mod sidecar;
@@ -54,6 +55,9 @@ use netodia_net::services::net::pacer::RequestPacer;
 /// pool together, and [`romanized`] goes back only for a sheet that has something to romanize.
 pub async fn for_track(state: &AppState, track: &TrackSummary) -> Result<LyricsOutcome, AppError> {
     ensure_enabled(state)?;
+    if track.file_path.is_empty() {
+        return romanized(state, netease::look_up(state, track).await).await;
+    }
     romanized(state, resolve(state, track).await?).await
 }
 

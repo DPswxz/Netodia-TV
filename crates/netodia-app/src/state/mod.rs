@@ -223,12 +223,15 @@ impl AppState {
         let search_history = Arc::new(SearchHistoryState::init(&paths).await);
         // Shared lazy client: the TLS stack and connection pool are constructed on first use.
         let http_client = Arc::new(OnceLock::new());
-        let cloud = CloudService::new(
-            http_client.get_or_init(netodia_net::services::net::build_http_client).clone(),
+        let http = http_client.get_or_init(netodia_net::services::net::build_http_client).clone();
+        let (cloud, cloud_playback) = CloudPlayback::initialize(
+            http,
+            paths.data_dir.join("netease-artwork"),
+            engine.clone(),
+            player_state.clone(),
+            sinks.clone(),
         )
         .await;
-        let cloud_playback =
-            CloudPlayback::new(cloud.clone(), engine.clone(), player_state.clone(), sinks.clone());
 
         let state = Self {
             paths: Arc::new(paths),

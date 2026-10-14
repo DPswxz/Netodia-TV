@@ -33,6 +33,7 @@ use netodia_app::services::settings::{SortDir, ViewSort};
 use netodia_app::services::view_state::ViewStateData;
 use netodia_app::state::AppState;
 use netodia_core::error::describe;
+use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, Dialog, Nav, Player};
 
 use index_persist::IndexPersist;
@@ -275,6 +276,43 @@ fn wire_seek(ui: &AppWindow, state: &AppState) {
         }
         let s = s.clone();
         let pos = u64::try_from(position_ms.max(0)).unwrap_or(0);
+        let cloud_track_id = {
+            let player = lock_state(&s.player_state);
+            player.source.as_ref().filter(|track| track.file_path.is_empty()).map(|track| track.id)
+        };
+        if let Some(song_id) = cloud_track_id {
+            let weak = weak.clone();
+            s.runtime.clone().spawn(async move {
+                let result = s
+                    .cloud_playback
+                    .seek(
+                        song_id,
+                        netodia_core::entities::cloud::Quality::Exhigh,
+                        std::time::Duration::from_millis(pos),
+                    )
+                    .await;
+                let failed = match result {
+                    Ok(result) => !result.started,
+                    Err(error) => {
+                        log::warn!("cloud seek: {}", describe(&error));
+                        true
+                    }
+                };
+                if failed {
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Some(ui) = weak.upgrade() {
+                            let player = ui.global::<Player>();
+                            if player.get_seek_pending_ms()
+                                == i32::try_from(pos).unwrap_or(i32::MAX)
+                            {
+                                player.set_seek_pending_ms(-1);
+                            }
+                        }
+                    });
+                }
+            });
+            return;
+        }
         spawn_logged_sync!(s, "seek", library::playback::player_seek(&s.playback_ctx(), pos));
     });
 }
