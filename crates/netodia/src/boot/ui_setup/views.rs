@@ -225,6 +225,7 @@ pub fn install_library_settings_and_friends(
     ui::visualizer::install_visualizer(app, state);
     ui::sleep_timer::install_sleep_timer(app, state);
     ui::settings::lyrics_settings::install(app, state);
+    ui::settings::netease_account::install(app, state);
     let notifications = ui::shell::notifications::install(app);
     ui::settings::file_watching::install(app, state, &notifications);
     ui::settings::rating_writeback::install(app, state);

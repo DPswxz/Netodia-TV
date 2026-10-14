@@ -10,6 +10,7 @@ export component LabeledInput inherits VerticalLayout {
     in property <string> label;
     in property <string> placeholder;
     in-out property <string> text;
+    in property <bool> is-password: false;
     callback accepted();
     callback edited();
 
@@ -69,6 +70,7 @@ export component LabeledInput inherits VerticalLayout {
                     color: Theme.text;
                     font-size: Theme.font-size-md;
                     single-line: true;
+                    input-type: root.is-password ? InputType.password : InputType.text;
                     horizontal-alignment: left;
                     vertical-alignment: center;
                     height: 100%;

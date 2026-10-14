@@ -593,3 +593,16 @@ export global Settings {
         return @tr("No tracks were updated.");
     }
 }
+
+// Account state for the direct NetEase client. Credentials stay in the views layer and are never
+// part of application settings; this global carries display state and intent callbacks only.
+export global CloudAccount {
+    in-out property <string> account-name;
+    in-out property <string> notice;
+    in-out property <bool> logged-in;
+    in-out property <bool> remember-available: true;
+    in-out property <bool> busy;
+    callback login-phone(string /* phone */, string /* country code */, string /* password */);
+    callback login-email(string /* email */, string /* password */);
+    callback logout();
+}

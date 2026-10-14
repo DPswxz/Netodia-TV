@@ -1,0 +1,199 @@
+import { CloudAccount } from "../../settings.slint";
+import { Theme } from "../../theme.slint";
+import { SettingsPage } from "../../globals/settings-page.slint";
+import { SectionCard } from "../../components/settings/section-card.slint";
+import { SectionButton } from "../../components/settings/section-button.slint";
+import { LabeledInput } from "../../components/labeled-input.slint";
+
+// Account state is application-owned; credentials live in this mounted form only and are handed
+// directly to the account service when the user submits them.
+export component NeteaseAccountSection inherits Rectangle {
+    background: transparent;
+    horizontal-stretch: 1;
+    vertical-stretch: 0;
+
+    in property <string> tab-name;
+    in-out property <int> login-mode: 0; // 0 phone, 1 email
+    in-out property <string> phone;
+    in-out property <string> country-code: "86";
+    in-out property <string> email;
+    in-out property <string> password;
+
+    property <string> card-title: @tr("NetEase account");
+    property <string> account-label: @tr("NetEase Music account");
+    property <string> login-label: @tr("Sign in to NetEase Music");
+    property <string> account-desc: @tr("Connect an account to use personal recommendations, collections and playback permissions");
+
+    pure function row-visible(label: string, desc: string) -> bool {
+        return SettingsPage.row-visible(root.tab-name, root.card-title,
+                                        label + " " + desc,
+                                        SettingsPage.search-query);
+    }
+
+    out property <bool> has-matches: row-visible(account-label, account-desc)
+        || row-visible(login-label, "")
+        || row-visible(@tr("Phone number"), @tr("Country code"))
+        || row-visible(@tr("Email"), @tr("Password"));
+
+    VerticalLayout {
+        if root.has-matches: SectionCard {
+            title: root.card-title;
+
+            if CloudAccount.logged-in: VerticalLayout {
+                padding: Theme.pad-lg;
+                spacing: Theme.pad-md;
+
+                Text {
+                    text: root.account-label;
+                    color: Theme.text;
+                    font-size: Theme.font-size-md;
+                    font-weight: 600;
+                }
+                Text {
+                    text: CloudAccount.account-name;
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-sm;
+                    wrap: word-wrap;
+                }
+                if CloudAccount.notice != "": Text {
+                    text: CloudAccount.notice;
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-sm;
+                    wrap: word-wrap;
+                }
+                if !CloudAccount.remember-available: Text {
+                    text: @tr("The system credential store is unavailable. This session will end when Netodia closes.");
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-sm;
+                    wrap: word-wrap;
+                }
+                HorizontalLayout {
+                    alignment: end;
+                    SectionButton {
+                        label: @tr("Sign out");
+                        icon: "logout";
+                        primary: false;
+                        button-enabled: !CloudAccount.busy;
+                        clicked => { CloudAccount.logout(); }
+                    }
+                }
+            }
+
+            if !CloudAccount.logged-in: VerticalLayout {
+                padding: Theme.pad-lg;
+                spacing: Theme.pad-md;
+
+                Text {
+                    text: root.account-desc;
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-sm;
+                    wrap: word-wrap;
+                }
+
+                HorizontalLayout {
+                    spacing: Theme.pad-sm;
+                    SectionButton {
+                        label: @tr("Phone");
+                        icon: "phone";
+                        primary: root.login-mode == 0;
+                        button-enabled: !CloudAccount.busy;
+                        clicked => { root.login-mode = 0; }
+                    }
+                    SectionButton {
+                        label: @tr("Email");
+                        icon: "mail";
+                        primary: root.login-mode == 1;
+                        button-enabled: !CloudAccount.busy;
+                        clicked => { root.login-mode = 1; }
+                    }
+                }
+
+                if root.login-mode == 0: VerticalLayout {
+                    spacing: Theme.pad-sm;
+                    LabeledInput {
+                        label: @tr("Country code");
+                        placeholder: "86";
+                        text <=> root.country-code;
+                    }
+                    LabeledInput {
+                        label: @tr("Phone number");
+                        placeholder: @tr("Enter your phone number");
+                        text <=> root.phone;
+                    }
+                    LabeledInput {
+                        label: @tr("Password");
+                        placeholder: @tr("Enter your password");
+                        text <=> root.password;
+                        is-password: true;
+                        accepted => { root.submit-phone(); }
+                    }
+                    HorizontalLayout {
+                        alignment: end;
+                        SectionButton {
+                            label: @tr("Sign in");
+                            icon: "login";
+                            button-enabled: !CloudAccount.busy;
+                            clicked => { root.submit-phone(); }
+                        }
+                    }
+                }
+
+                if root.login-mode == 1: VerticalLayout {
+                    spacing: Theme.pad-sm;
+                    LabeledInput {
+                        label: @tr("Email");
+                        placeholder: @tr("Enter your email address");
+                        text <=> root.email;
+                    }
+                    LabeledInput {
+                        label: @tr("Password");
+                        placeholder: @tr("Enter your password");
+                        text <=> root.password;
+                        is-password: true;
+                        accepted => { root.submit-email(); }
+                    }
+                    HorizontalLayout {
+                        alignment: end;
+                        SectionButton {
+                            label: @tr("Sign in");
+                            icon: "login";
+                            button-enabled: !CloudAccount.busy;
+                            clicked => { root.submit-email(); }
+                        }
+                    }
+                }
+
+                if CloudAccount.busy: Text {
+                    text: @tr("Connecting…");
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-sm;
+                    horizontal-alignment: center;
+                }
+                if CloudAccount.notice != "": Text {
+                    text: CloudAccount.notice;
+                    color: Theme.danger;
+                    font-size: Theme.font-size-sm;
+                    wrap: word-wrap;
+                }
+                if !CloudAccount.remember-available: Text {
+                    text: @tr("The system credential store is unavailable. This session will end when Netodia closes.");
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-sm;
+                    wrap: word-wrap;
+                }
+            }
+        }
+    }
+
+    public function submit-phone() {
+        CloudAccount.notice = "";
+        CloudAccount.login-phone(root.phone, root.country-code, root.password);
+        root.password = "";
+    }
+
+    public function submit-email() {
+        CloudAccount.notice = "";
+        CloudAccount.login-email(root.email, root.password);
+        root.password = "";
+    }
+}

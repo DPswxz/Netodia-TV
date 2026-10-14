@@ -2893,3 +2893,67 @@ msgstr ""
 #: ui/views/settings/window-chrome-section.slint
 msgid "Changing the system tray icon requires restarting Netodia. Restart now?"
 msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "NetEase account"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "NetEase Music account"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in to NetEase Music"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Connect an account to use personal recommendations, collections and playback permissions"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Phone"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Email"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Country code"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Phone number"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Password"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Enter your phone number"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Enter your password"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Enter your email address"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign out"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "The system credential store is unavailable. This session will end when Netodia closes."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Connecting…"
+msgstr ""
