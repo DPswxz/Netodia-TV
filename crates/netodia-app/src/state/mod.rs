@@ -44,6 +44,8 @@ pub struct AppState {
     /// Direct `NetEase` API and account session boundary shared by cloud views and playback.
     pub cloud: CloudService,
     pub cloud_playback: CloudPlayback,
+    /// Session-scoped URL lookups for tracks without readable embedded artwork.
+    pub track_artwork: Arc<crate::services::track_artwork::TrackArtworkResolver>,
     pub db: DbPool,
     pub cover_cache: CoverCache,
     pub player_state: Arc<PlayerStateHandle>,
@@ -156,6 +158,10 @@ pub struct StartupChannels {
 }
 
 impl AppState {
+    #[allow(
+        clippy::too_many_lines,
+        reason = "initializes the shared runtime services and engine state as one startup transaction"
+    )]
     pub async fn init(paths: Paths, runtime: Handle) -> AppResult<(Self, StartupChannels)> {
         // Ahead of the output, which opens differently under exclusive output.
         let settings = settings::read_settings(&paths).unwrap_or_else(|e| {
@@ -243,6 +249,7 @@ impl AppState {
             runtime,
             cloud,
             cloud_playback,
+            track_artwork: Arc::new(crate::services::track_artwork::TrackArtworkResolver::new()),
             db,
             cover_cache,
             player_state,

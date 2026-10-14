@@ -1,8 +1,10 @@
 //! The per-view slices, their handles, and the Settings sections beside them.
 
+use std::path::Path;
 use std::sync::Arc;
 
 use netodia_app::services;
+use netodia_app::services::track_artwork::CachedCoverUrl;
 use netodia_app::state::AppState;
 use netodia_artwork::media::image;
 use netodia_core::error::describe;
@@ -51,12 +53,35 @@ fn install_row_covers(
             });
         },
     ));
+    let resolver = state.track_artwork.clone();
+    let state = state.clone();
+    let weak = app.as_weak();
     // `generation` is read for its effect on the binding, never its value — see `RowCovers`.
-    app.global::<netodia_ui::RowCovers>().on_request(move |source, _generation| {
+    app.global::<netodia_ui::RowCovers>().on_request(move |source, artist, album, _generation| {
         if ui::remote_covers::is_remote_artwork_url(source.as_str()) {
             remote.get_or_schedule(source.as_str())
+        } else if !source.is_empty() {
+            let local = ct.get_or_schedule_opt(Some(source.as_str()));
+            if local.size().width > 0 || !ct.has_cached_failure(Path::new(source.as_str())) {
+                return local;
+            }
+            request_metadata_fallback(
+                &resolver,
+                &remote,
+                &state,
+                &weak,
+                artist.as_str(),
+                album.as_str(),
+            )
         } else {
-            ct.get_or_schedule_opt(ui::grid_prewarm::nonempty_artwork_path(source.as_str()))
+            request_metadata_fallback(
+                &resolver,
+                &remote,
+                &state,
+                &weak,
+                artist.as_str(),
+                album.as_str(),
+            )
         }
     });
 
@@ -64,6 +89,53 @@ fn install_row_covers(
         let covers = app.global::<netodia_ui::RowCovers>();
         covers.set_generation(covers.get_generation().wrapping_add(1));
     });
+}
+
+/// Resolve a missing local cover from its tagged artist + album, then let the shared row cache
+/// fetch the returned URL and repaint all mounted consumers. Only the URL and decoded thumbnail
+/// live in memory; the original track and artwork store are untouched.
+fn request_metadata_fallback(
+    resolver: &Arc<netodia_app::services::track_artwork::TrackArtworkResolver>,
+    remote: &Arc<ui::remote_covers::RemoteCoverThumbs>,
+    state: &AppState,
+    weak: &slint::Weak<AppWindow>,
+    artist: &str,
+    album: &str,
+) -> slint::Image {
+    match resolver.cached_url(artist, album) {
+        CachedCoverUrl::Found(url) => remote.get_or_schedule(&url),
+        CachedCoverUrl::NotFound | CachedCoverUrl::Pending => slint::Image::default(),
+        CachedCoverUrl::NotCached => {
+            if resolver.claim_lookup(artist, album) {
+                let resolver = Arc::clone(resolver);
+                let artist = artist.to_owned();
+                let album = album.to_owned();
+                let client = state.http_client().clone();
+                let weak = weak.clone();
+                state.runtime.spawn(async move {
+                    let found = resolver.lookup_claimed(&client, &artist, &album).await.is_some();
+                    if !found {
+                        tokio::time::sleep(
+                            netodia_app::services::track_artwork::TRANSIENT_RETRY_DELAY,
+                        )
+                        .await;
+                        if !matches!(
+                            resolver.cached_url(&artist, &album),
+                            CachedCoverUrl::NotCached
+                        ) {
+                            return;
+                        }
+                    }
+                    let _ = slint::invoke_from_event_loop(move || {
+                        let Some(app) = weak.upgrade() else { return };
+                        let covers = app.global::<netodia_ui::RowCovers>();
+                        covers.set_generation(covers.get_generation().wrapping_add(1));
+                    });
+                });
+            }
+            slint::Image::default()
+        }
+    }
 }
 
 /// Re-run every card grid's cover binding once a scheduled decode lands.

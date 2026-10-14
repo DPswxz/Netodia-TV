@@ -157,6 +157,8 @@ pub struct NowPlayingState {
     /// Defers the release past the fades still reading the slots it clears. One timer rather than
     /// one per release, so a later release restarts the wait instead of racing it.
     slot_release: slint::Timer,
+    /// Retries a transient remote artwork failure while a surface still renders this source.
+    pub(super) artwork_retry: slint::Timer,
     /// The lyrics panel's rows, offset table and sung index. Lives here rather than beside the
     /// panel because the panel is `if`-mounted and this outlives it, and because the three edges
     /// that refill it are all out here.
@@ -359,6 +361,7 @@ impl NowPlayingState {
             artwork_seeder: RefCell::new(None),
             artwork_releaser: RefCell::new(None),
             slot_release: slint::Timer::default(),
+            artwork_retry: slint::Timer::default(),
             lyrics: lyrics::install(ui, state),
         }
     }
@@ -440,7 +443,7 @@ fn install_artwork_seeder(
         let state = state.clone();
         let np_artwork = np_artwork.clone();
         let res = slint::spawn_local(Compat::new(async move {
-            apply_source_change(&weak_ui, &state, &np_artwork, &np_state, current_source, false)
+            apply_source_change(&weak_ui, &state, &np_artwork, np_state, current_source, false)
                 .await;
         }));
         if let Err(e) = res {

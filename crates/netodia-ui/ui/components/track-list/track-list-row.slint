@@ -389,7 +389,7 @@ export component TrackListRowItem inherits Rectangle {
                             // virtualized list reach the shared row-tier LRU. A miss paints the
                             // placeholder and schedules; `generation` is what repaints it.
                             cover: RowCovers.request(root.row-data.artwork_path,
-                                RowCovers.generation);
+                                root.row-data.artist, root.row-data.album, RowCovers.generation);
                             tile-size: 36px;
                             tile-radius: Theme.radius-sm;
                             fade: root.fade;

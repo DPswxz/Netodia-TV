@@ -97,7 +97,7 @@ export global Player {
     in-out property <bool> blur-has-image: false;
 
     // The foreground cover tile, same dual-slot contract over the sharp artwork rather than
-    // the row thumbnail in `vm.track.cover_img`.
+    // the row-tier fallback `SourceArtwork` resolves from `RowCovers`.
     in-out property <image> np-cover-a;
     in-out property <image> np-cover-b;
     in-out property <bool> np-cover-use-a: true;

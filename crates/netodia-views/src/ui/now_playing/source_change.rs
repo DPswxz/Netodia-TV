@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use async_compat::Compat;
-use slint::{ComponentHandle, Image, Weak};
+use slint::{ComponentHandle, Image, TimerMode, Weak};
 
 use super::metadata::to_slint_track_meta;
 use super::write_crossfade_slot;
@@ -19,6 +19,7 @@ use crate::ui::aurora;
 use crate::ui::backdrop::{self, BackdropSample};
 use crate::ui::chips;
 use crate::ui::now_playing_artwork::NowPlayingArtwork;
+use crate::ui::remote_covers;
 use netodia_app::library;
 use netodia_app::state::AppState;
 use netodia_core::entities::track::TrackSummary;
@@ -85,7 +86,8 @@ pub(super) fn spawn_source_change_subscriber(
             // renders them. Otherwise `wire_now_playing_open` or `kick_artwork` seeds on the next
             // open.
             if np_state.renders_artwork() {
-                apply_source_change(&weak, &state, &np_artwork, &np_state, new_source, true).await;
+                apply_source_change(&weak, &state, &np_artwork, np_state.clone(), new_source, true)
+                    .await;
             }
         }
         log::debug!("ui::now_playing source-change subscriber stopped");
@@ -104,13 +106,24 @@ pub(super) async fn apply_source_change(
     weak: &Weak<AppWindow>,
     state: &AppState,
     np_artwork: &Arc<NowPlayingArtwork>,
-    np_state: &NowPlayingState,
+    np_state: Rc<NowPlayingState>,
     source: Option<NowPlayingSource>,
     animate: bool,
 ) {
     let key = source.as_ref().map(|s| s.key.clone());
     let track = source.as_ref().and_then(|s| s.track.clone());
     let artwork_path = source.as_ref().and_then(|s| s.artwork_path.clone());
+
+    // A source with no local artwork may spend a moment resolving its remote URL. Clear the old
+    // song's large slots before that await so they are never shown as the new song's cover.
+    if artwork_path.as_deref().is_none_or(str::is_empty)
+        && let Some(ui) = weak.upgrade()
+    {
+        let player = ui.global::<Player>();
+        player.set_np_cover_has_image(false);
+        player.set_blur_has_image(false);
+        write_backdrop_tiers(&ui, BackdropSample::default());
+    }
 
     // **Kicked rather than awaited, and ahead of both reads rather than past the guard below.**
     // The lookup reaches a file and then a socket, so awaited here it put the cover, the title and
@@ -121,8 +134,9 @@ pub(super) async fn apply_source_change(
     np_state.lyrics.kick();
 
     let meta = fetch_track_meta(state, track.as_ref()).await;
-    let (cover, blurred, sample) =
-        decode_artwork_for(state, np_artwork, artwork_path.clone()).await;
+    let (cover, blurred, sample, resolved_artwork_path) =
+        decode_artwork_for(state, np_artwork, artwork_path.clone(), track.as_deref()).await;
+    let cover_missing = cover.is_none();
 
     // --- Write to Slint (UI thread) ---
     let Some(ui) = weak.upgrade() else { return };
@@ -130,16 +144,26 @@ pub(super) async fn apply_source_change(
     // A newer source change may have landed mid-decode: the open-seed task and the
     // subscriber can both have an `apply_source_change` in flight. If the decoded source
     // is no longer current, drop it — the newer call owns the slots and `applied_source`.
-    let current = np_state.current_source.borrow();
+    let mut current = np_state.current_source.borrow_mut();
     if key != current.as_ref().map(|s| s.key.clone())
         || artwork_path != current.as_ref().and_then(|s| s.artwork_path.clone())
     {
         return;
     }
+    if let Some(current) = current.as_mut() {
+        current.artwork_path.clone_from(&resolved_artwork_path);
+    }
     drop(current);
 
+    if resolved_artwork_path != artwork_path
+        && resolved_artwork_path.as_deref().is_some_and(remote_covers::is_remote_artwork_url)
+    {
+        let covers = ui.global::<netodia_ui::RowCovers>();
+        covers.set_generation(covers.get_generation().wrapping_add(1));
+    }
+
     let player = ui.global::<Player>();
-    publish_chips(&player, np_state, meta);
+    publish_chips(&player, &np_state, meta);
     write_backdrop_tiers(&ui, sample);
 
     // The blur is the backdrop, so it takes the same cross-fade as the cover.
@@ -164,7 +188,75 @@ pub(super) async fn apply_source_change(
     );
 
     *np_state.applied_source.borrow_mut() = key;
-    *np_state.applied_artwork_path.borrow_mut() = artwork_path;
+    *np_state.applied_artwork_path.borrow_mut() = resolved_artwork_path;
+
+    if cover_missing
+        && let Some(track) = track.as_deref()
+        && let (Some(artist), Some(album)) = (track.artist.as_deref(), track.album.as_deref())
+        && !artist.trim().is_empty()
+        && !album.trim().is_empty()
+    {
+        schedule_artwork_retry(weak, state, np_artwork, &np_state, artist, album);
+    } else {
+        np_state.artwork_retry.stop();
+    }
+}
+
+/// Retry a transient remote lookup/download only while the same source still has a chance to
+/// produce a cover. Definitive no-matches stay quiet; failed lookups expire after a short delay.
+fn schedule_artwork_retry(
+    weak_ui: &Weak<AppWindow>,
+    state: &AppState,
+    np_artwork: &Arc<NowPlayingArtwork>,
+    np_state: &Rc<NowPlayingState>,
+    artist: &str,
+    album: &str,
+) {
+    let weak_ui = weak_ui.clone();
+    let weak_np = Rc::downgrade(np_state);
+    let state = state.clone();
+    let np_artwork = Arc::clone(np_artwork);
+    let artist = artist.to_owned();
+    let album = album.to_owned();
+    let source_key = np_state.current_source.borrow().as_ref().map(|source| source.key.clone());
+    np_state.artwork_retry.start(
+        TimerMode::SingleShot,
+        netodia_app::services::track_artwork::TRANSIENT_RETRY_DELAY,
+        move || {
+            let (Some(_ui), Some(np_state)) = (weak_ui.upgrade(), weak_np.upgrade()) else {
+                return;
+            };
+            if !np_state.renders_artwork() {
+                return;
+            }
+            let Some(source) = np_state.current_source.borrow().clone() else { return };
+            if Some(source.key.clone()) != source_key {
+                return;
+            }
+            let is_remote_source =
+                source.artwork_path.as_deref().is_some_and(remote_covers::is_remote_artwork_url);
+            let lookup_may_change = matches!(
+                state.track_artwork.cached_url(&artist, &album),
+                netodia_app::services::track_artwork::CachedCoverUrl::NotCached
+                    | netodia_app::services::track_artwork::CachedCoverUrl::Pending
+                    | netodia_app::services::track_artwork::CachedCoverUrl::Found(_)
+            );
+            if !is_remote_source && !lookup_may_change {
+                return;
+            }
+
+            let weak_ui = weak_ui.clone();
+            let state = state.clone();
+            let np_artwork = Arc::clone(&np_artwork);
+            let result = slint::spawn_local(Compat::new(async move {
+                apply_source_change(&weak_ui, &state, &np_artwork, np_state, Some(source), false)
+                    .await;
+            }));
+            if let Err(error) = result {
+                log::warn!("ui::now_playing artwork retry task spawn: {}", describe(&error));
+            }
+        },
+    );
 }
 
 /// The eight chip columns for `track`, awaited inline — sqlx has a reactor here. Every failure arm
@@ -189,8 +281,8 @@ async fn fetch_track_meta(state: &AppState, track: Option<&Arc<TrackSummary>>) -
 /// and the blurred backdrop — the cover is the largest image on the app's hot path, so decoding it
 /// once rather than twice halves the per-skip cost.
 ///
-/// Takes a path rather than the source, which is all it ever wanted: `ArtworkCache` is path-keyed
-/// and knows nothing about entity kinds.
+/// Local paths use the path-keyed artwork cache. HTTP/S sources are fetched under a byte cap and
+/// share the same cache keyed by URL, so no image file is needed for either path.
 ///
 /// Every arm that isn't a decoded pair answers with an empty sample rather than a previous one:
 /// `BackdropSample::solve` reads that as "no artwork" and falls back to `Theme.accent`, the honest
@@ -199,22 +291,65 @@ async fn decode_artwork_for(
     state: &AppState,
     np_artwork: &Arc<NowPlayingArtwork>,
     artwork_path: Option<String>,
-) -> DecodedArtwork {
+    track: Option<&TrackSummary>,
+) -> (Option<Image>, Option<Image>, backdrop::BackdropSample, Option<String>) {
     let empty = (None, None, BackdropSample::default());
-
-    let Some(path) = artwork_path.filter(|p| !p.is_empty()) else {
-        return empty;
+    let mut resolved_path = artwork_path.filter(|path| !path.is_empty());
+    let mut decoded = match resolved_path.as_deref() {
+        Some(source) => decode_artwork_source(state, np_artwork, source).await,
+        None => empty,
     };
 
+    // Some local files have no embedded cover (or reference a damaged/missing stored one). Resolve
+    // the tagged album online only after the local path failed, so intact local artwork remains
+    // immediate and offline playback keeps working.
+    if decoded.0.is_none()
+        && let Some(track) = track
+        && let (Some(artist), Some(album)) = (track.artist.as_deref(), track.album.as_deref())
+        && let Some(url) = state.track_artwork.resolve(state.http_client(), artist, album).await
+    {
+        decoded = decode_artwork_source(state, np_artwork, &url).await;
+        resolved_path = Some(url);
+    }
+
+    (decoded.0, decoded.1, decoded.2, resolved_path)
+}
+
+/// Decode one local path or bounded HTTP/S response on the blocking pool. Remote bytes use the
+/// same capped decoder and artwork-pair cache as local files, keyed by their URL in memory.
+async fn decode_artwork_source(
+    state: &AppState,
+    np_artwork: &Arc<NowPlayingArtwork>,
+    source: &str,
+) -> DecodedArtwork {
     let np = np_artwork.clone();
-    match state.runtime.spawn_blocking(move || np.get_or_decode(Path::new(&path))).await {
-        Ok(Some(pair)) => {
-            (Some(Image::from_rgb8(pair.cover)), pair.blur.map(Image::from_rgb8), pair.sample)
+    if remote_covers::is_remote_artwork_url(source) {
+        let Some(bytes) = remote_covers::fetch_image_bytes(state.http_client(), source).await
+        else {
+            return (None, None, BackdropSample::default());
+        };
+        let source = source.to_owned();
+        match state.runtime.spawn_blocking(move || np.get_or_decode_memory(&source, &bytes)).await {
+            Ok(Some(pair)) => {
+                (Some(Image::from_rgb8(pair.cover)), pair.blur.map(Image::from_rgb8), pair.sample)
+            }
+            Ok(None) => (None, None, BackdropSample::default()),
+            Err(e) => {
+                log::warn!("ui::now_playing remote artwork task join: {}", describe(&e));
+                (None, None, BackdropSample::default())
+            }
         }
-        Ok(None) => empty,
-        Err(e) => {
-            log::warn!("ui::now_playing artwork task join: {}", describe(&e));
-            empty
+    } else {
+        let source = source.to_owned();
+        match state.runtime.spawn_blocking(move || np.get_or_decode(Path::new(&source))).await {
+            Ok(Some(pair)) => {
+                (Some(Image::from_rgb8(pair.cover)), pair.blur.map(Image::from_rgb8), pair.sample)
+            }
+            Ok(None) => (None, None, BackdropSample::default()),
+            Err(e) => {
+                log::warn!("ui::now_playing artwork task join: {}", describe(&e));
+                (None, None, BackdropSample::default())
+            }
         }
     }
 }

@@ -417,6 +417,18 @@ impl CoverThumbs {
         img
     }
 
+    /// Whether a path has a current, remembered decode failure at this tier's live size.
+    ///
+    /// The shared row-cover callback uses this to distinguish "still decoding" from "this local
+    /// source cannot provide pixels" before it asks the remote metadata fallback for a URL.
+    pub fn has_cached_failure(&self, path: &Path) -> bool {
+        let thumb_size = self.thumb_size();
+        self.cache
+            .lock()
+            .peek(path)
+            .is_some_and(|held| held.size == thumb_size && held.buf.ready().is_none())
+    }
+
     /// Register what to call when a scheduled batch lands. First caller wins.
     ///
     /// Takes a plain closure rather than anything UI-shaped so this module stays unaware of Slint

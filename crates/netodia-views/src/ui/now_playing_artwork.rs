@@ -45,6 +45,11 @@ impl NowPlayingArtwork {
         self.0.get_or_decode(path)
     }
 
+    /// See [`ArtworkCache::get_or_decode_memory`].
+    pub fn get_or_decode_memory(&self, source: &str, bytes: &[u8]) -> CachedArtwork {
+        self.0.get_or_decode_memory(source, bytes)
+    }
+
     /// Drop every cached pair — called when the Now Playing view closes.
     pub fn clear(&self) {
         self.0.clear();

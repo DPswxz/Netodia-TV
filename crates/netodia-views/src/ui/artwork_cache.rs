@@ -26,7 +26,8 @@ use crate::ui::backdrop::BackdropSample;
 use crate::ui::util::{BLUR_TARGET, COVER_SIZE, buffer_from_rgb};
 use netodia_artwork::media::image::decoded::Decoded;
 use netodia_artwork::media::image::image_decode::{
-    FilterType, MAX_SOURCE_DIM, decode_capped_to, fit_within, resize_rgb8,
+    FilterType, MAX_SOURCE_DIM, decode_capped_to, decode_memory_capped, fit_within,
+    large_decode_guard, memory_dimensions, resize_rgb8,
 };
 
 /// The blurred half's shape: [`BLUR_TARGET`] wide by `height`, softened at `sigma`. The
@@ -86,6 +87,26 @@ impl ArtworkCache {
         let returned = pair.ready().cloned();
         self.cache.lock().put(path.to_path_buf(), pair);
         returned
+    }
+
+    /// Decode a remote image body already fetched under a byte cap, deriving the same sharp cover
+    /// and blurred backdrop as [`Self::get_or_decode`]. The URL is the stable in-memory cache key;
+    /// no file is created and no filesystem metadata is consulted.
+    pub fn get_or_decode_memory(&self, source: &str, bytes: &[u8]) -> CachedArtwork {
+        let key = PathBuf::from(source);
+        if let Some(cached) = self.cache.lock().get(&key) {
+            return cached.ready().cloned();
+        }
+
+        // Keep the same forged-dimension guard as the disk decoder. It spans the full decode and
+        // the one downsized pair, so a remote response can't inflate concurrent process RSS.
+        let _oversized = memory_dimensions(bytes, MAX_SOURCE_DIM)
+            .map(|(width, height)| u64::from(width) * u64::from(height))
+            .and_then(large_decode_guard);
+        let pair = decode_memory_capped(bytes, MAX_SOURCE_DIM)
+            .and_then(|decoded| pair_from_image(&decoded, self.blur))?;
+        self.cache.lock().put(key, Decoded::Ready(pair.clone()));
+        Some(pair)
     }
 
     /// Drop every cached pair when the surface goes away. The caller pairs this with

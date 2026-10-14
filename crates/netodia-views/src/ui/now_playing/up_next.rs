@@ -164,7 +164,7 @@ pub(super) fn wire_now_playing_open(
             let np_artwork = np_artwork.clone();
             let np_state = np_state.clone();
             let res = slint::spawn_local(Compat::new(async move {
-                apply_source_change(&weak, &state, &np_artwork, &np_state, current_source, false)
+                apply_source_change(&weak, &state, &np_artwork, np_state, current_source, false)
                     .await;
             }));
             if let Err(e) = res {

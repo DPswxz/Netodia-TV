@@ -6,5 +6,6 @@ pub mod artist_images;
 pub mod diagnostics;
 pub mod search_history;
 pub mod settings;
+pub mod track_artwork;
 pub mod updater;
 pub mod view_state;

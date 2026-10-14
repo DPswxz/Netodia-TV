@@ -37,7 +37,7 @@ export struct TrackListRow {
     artwork_path: string,
     // This source is either a local path or, for cloud rows, a remote HTTP/S URL. **No decoded
     // cover field** — the thumbnail resolves lazily through `RowCovers.request(artwork_path,
-    // generation)` per instantiated row, the grids'
+    // artist, album, generation)` per instantiated row, the grids'
     // `request-cover` contract.
     // An `image` here made every model row pin its pixel buffer past LRU eviction, so resident
     // artwork scaled with the library rather than with the visible rows.

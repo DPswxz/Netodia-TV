@@ -15,5 +15,5 @@ export component MiniArtwork inherits SourceArtwork {
     // The large slot is the track cross-fade artwork.
     cover: root.large && Player.np-cover-has-image
             ? (Player.np-cover-use-a ? Player.np-cover-a : Player.np-cover-b)
-              : Player.vm.track.cover_img;
+              : root.row-cover;
 }

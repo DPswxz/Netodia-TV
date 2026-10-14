@@ -139,13 +139,14 @@ export global Browse {
 
 // The lazy thumbnail lookup **every** `TrackListRowItem` in the tree resolves through — they all
 // render the same row component. One global rather than per-view forwarding, wired once to the
-// shared row-tier LRU. Rows carry only `artwork_path` and the decode happens here, per
-// *instantiated* row, so no model row pins a buffer the LRU has already evicted.
+// shared row-tier LRU. Each mounted row passes its artwork path and tagged artist/album search
+// terms; no model row pins a buffer the LRU has already evicted.
 export global RowCovers {
-    // The lookup is cache-only and hands a miss to the decode pool, so reading `generation` is
-    // what brings the row back: it is bumped once per landed batch and re-evaluates every `pure`
-    // binding over it. Unlike `Queue.covers-generation` its *value* means nothing — a row that
-    // misses at any generation paints the placeholder and repaints at the next.
+    // The lookup is cache-only and hands a miss to the decode pool or remote resolver, so reading
+    // `generation` is what brings the row back: it is bumped when either result lands and
+    // re-evaluates every `pure` binding over it. Unlike `Queue.covers-generation` its *value* means
+    // nothing — a row that misses at any generation paints the placeholder and repaints at the next.
     in property <int> generation: 0;
-    pure callback request(string /*artwork_path*/, int /*generation*/) -> image;
+    pure callback request(string /*artwork_path*/, string /*artist*/, string /*album*/,
+        int /*generation*/) -> image;
 }
