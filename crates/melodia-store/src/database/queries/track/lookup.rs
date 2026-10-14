@@ -23,47 +23,6 @@ pub async fn get_track_meta(db: &DbPool, id: i64) -> Result<Option<track::TrackM
     Ok(row)
 }
 
-/// Single-id fetch of the columns a scrobble needs, for the detector's per-track-start enrichment.
-/// Sibling of `get_track_meta`; returns `None` for a missing id, and the detector then skips it.
-pub async fn get_scrobble_row(
-    db: &DbPool,
-    id: i64,
-) -> Result<Option<track::ScrobbleRow>, AppError> {
-    let cols = columns::SCROBBLE_ROW.joined();
-    let sql = format!("SELECT {cols} FROM tracks WHERE id = ? LIMIT 1");
-    let row: Option<track::ScrobbleRow> =
-        sqlx::query_as::<_, track::ScrobbleRow>(AssertSqlSafe(sql))
-            .bind(id)
-            .fetch_optional(db.read())
-            .await?;
-    Ok(row)
-}
-
-/// Every favorited track's scrobble projection — the bulk source for the retroactive love
-/// backfill, so connecting a service syncs existing favorites without re-toggling each heart.
-/// Carries the `MusicBrainz` ids `ScrobbleRow` needs for the `ListenBrainz` love path.
-pub async fn get_favorite_scrobble_rows(db: &DbPool) -> Result<Vec<track::ScrobbleRow>, AppError> {
-    let cols = columns::SCROBBLE_ROW.joined();
-    let sql = format!("SELECT {cols} FROM tracks WHERE is_favorite = TRUE");
-    let rows =
-        sqlx::query_as::<_, track::ScrobbleRow>(AssertSqlSafe(sql)).fetch_all(db.read()).await?;
-    Ok(rows)
-}
-
-/// Bulk sibling of [`get_scrobble_row`]: the scrobble projection for an arbitrary id set in one
-/// chunked `IN (…)` query, so the favorite→love sync enriches a multi-selection without a per-id
-/// round-trip. Love order is irrelevant, so rows come back in query order.
-pub async fn get_scrobble_rows_by_ids(
-    db: &DbPool,
-    ids: &[i64],
-) -> Result<Vec<track::ScrobbleRow>, AppError> {
-    let cols = columns::SCROBBLE_ROW.joined();
-    chunked_in_query(db.read(), ids, |placeholders| {
-        format!("SELECT {cols} FROM tracks WHERE id IN ({placeholders})")
-    })
-    .await
-}
-
 /// Fetch just the `file_path` column for a single track id — the leanest projection, for the "Open
 /// Containing Folder" action. Returns `None` for a missing id.
 pub async fn get_track_file_path(db: &DbPool, id: i64) -> Result<Option<String>, AppError> {

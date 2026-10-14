@@ -10,7 +10,7 @@ use melodia_engine::player::engine::types::{PlaybackStatus, RepeatMode};
 /// The metadata last handed to the panel.
 ///
 /// **The dedupe key is the metadata, not a proxy for it.** Keyed on the track id, a live title
-/// arriving on the station already playing looked unchanged and never reached the panel — and so
+/// arriving while the track was already playing looked unchanged and never reached the panel — and so
 /// did a track re-tagged in place. The identity is deliberately *not* part of the comparison:
 /// two sources that would publish the same panel do not need a second platform round trip.
 ///
@@ -56,8 +56,8 @@ impl From<&SourceSummary<'_>> for PublishedMetadata {
 
 /// The playback rate the panel was told, and whether the source lets it move.
 ///
-/// One value because MPRIS says both through the rate and its bounds, which a station pins to one:
-/// a change to either is announced together.
+/// One value because MPRIS says both through the rate and its bounds, and a change to either is
+/// announced together.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(super) struct PublishedRate {
     pub(super) rate: f64,
@@ -66,7 +66,7 @@ pub(super) struct PublishedRate {
 
 impl PublishedRate {
     fn of(vm: &PlayerViewModelLight) -> Self {
-        Self { rate: vm.playback_speed, variable: vm.radio.is_none() }
+        Self { rate: vm.playback_speed, variable: true }
     }
 }
 

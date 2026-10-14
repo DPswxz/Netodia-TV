@@ -2,8 +2,8 @@
 //!
 //! Four places a sheet can come from, and a caller learns which one answered only by asking the
 //! sheet itself. They resolve through one function so the two switches in front of them each have
-//! a single place to guard, which is `library::radio`'s shape and is here for its reason: the
-//! feature switch in front of all four, the lookup switch in front of the directory.
+//! a single place to guard: the feature switch in front of all four, the lookup switch in front of
+//! the directory.
 //!
 //! **`is_enabled` and `online_lookup_enabled` may not move, and each is the one place its flag is
 //! named.** A switch is enforced at the seam rather than per call site, so a fifth source added
@@ -67,8 +67,8 @@ pub fn is_enabled(state: &AppState) -> bool {
 
 /// A refusal when the user has switched lyrics off.
 ///
-/// **A refusal rather than [`LyricsOutcome::Absent`], `library::radio`'s shape**: the panel is
-/// unmounted while off, so a call still arriving is a stale edge worth a log line, where
+/// A refusal rather than [`LyricsOutcome::Absent`]: the panel is unmounted while off, so a call
+/// still arriving is a stale edge worth a log line, where
 /// [`online_lookup_enabled`]'s `false` is the ordinary state of most libraries.
 fn ensure_enabled(state: &AppState) -> Result<(), AppError> {
     if is_enabled(state) {
@@ -234,11 +234,11 @@ fn read_local(path: &Path, lyrics_dir: &Path, track_path: &str) -> Result<Local,
 /// Whether a track with no sheet of its own may be looked up online.
 ///
 /// **The one reader of the setting.** A second one is a copy that can be got wrong separately,
-/// which is why radio's equivalent is pinned to exactly one naming of its own flag.
+/// which is why the feature switch is pinned to exactly one naming of its flag.
 ///
-/// Answering `false` ends the chain in [`LyricsOutcome::Absent`] rather than an error, and that is
-/// the whole difference from radio's guard, which refuses. Radio unmounts its section when off, so
-/// a call arriving there is a bug worth reporting; a track with no lyrics and no lookup is the
+/// Answering `false` ends the chain in [`LyricsOutcome::Absent`] rather than an error. The panel
+/// unmounts while lyrics are off, so a call arriving there is a bug worth reporting; a track with
+/// no lyrics and no lookup is the
 /// ordinary state of most libraries, and a panel saying so would be right.
 fn online_lookup_enabled(state: &AppState) -> bool {
     state.lyrics_online_enabled.get()

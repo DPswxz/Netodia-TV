@@ -6,8 +6,8 @@ const RAW_SCHEME_TEST: &str = "starts_with(\"http";
 /// Nobody. The pin lives outside the tree it walks, so it is not among the candidates either.
 const SCHEME_EXEMPT: [(&str, usize); 0] = [];
 
-/// Four sites tested a scheme by prefix — a station's website field, its logo URL, a `.pls`/`.m3u`
-/// line and an import line — and two admitted a bare `http://`, which names no host; on the import
+/// URL sites tested a scheme by prefix — a website field, an artwork URL, a `.pls`/`.m3u` line and
+/// an import line — and two admitted a bare `http://`, which names no host; on the import
 /// path that became a row. [`super::http_url`] is the one parse now, and only a corpus walk can
 /// see a fifth copy: a prefix test reads as ordinary code and is wrong only on input nobody types
 /// by hand.

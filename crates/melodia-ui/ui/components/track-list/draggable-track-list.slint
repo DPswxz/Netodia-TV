@@ -123,7 +123,7 @@ export component DraggableTrackList inherits Rectangle {
             // grab and intercepts at 8px of travel, which reaches the row as a
             // pointer cancel rather than the release that commits. The row arms
             // at 4px, inside that window. Stated rather than inherited, the
-            // default being the style's to pick; `station-grid.slint` argues it.
+            // default being the style's to pick; entity-card grids set it explicitly.
             mouse-drag-pan-enabled: false;
             for r[idx] in root.rows: TrackListRowItem {
                 row-data: r;

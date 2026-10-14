@@ -7,8 +7,7 @@
 //! hands back the bytes without handing back the picture.
 //!
 //! Search's two card strips and the queue sheet keep private tiers, theirs decoding at sizes of
-//! their own. Radio's logo tier is private for a different reason and argues it at
-//! `ui::radio::covers`: its card reads the decoded extent, so a proxy would move the layout.
+//! their own.
 //!
 //! Beside the tier, the three things every grid needs and none should own: turning an iterator of
 //! optional artwork paths into a deduplicated, display-ordered `Vec<PathBuf>` for
@@ -190,12 +189,9 @@ pub fn cover_cap(
     NonZeroUsize::new(cap).unwrap_or(fallback)
 }
 
-/// `GridGeometry`'s four length defaults. Every one of its five mounts binds
-/// `avail-width: body.width` and the shared gap and takes the width pitch as declared, so there is
-/// one answer to what a card measures and this is what derives it. Radio is the one mount that
-/// moves `card-text-h`, its station card carrying a third line, and that can only make its rows
-/// taller than [`cover_cap`]'s `ROW_PITCH_H` assumes: fewer rows on screen than counted, which is
-/// the safe direction for a cap.
+/// `GridGeometry`'s four length defaults. Every grid mount binds `avail-width: body.width` and the
+/// shared gap and takes the width pitch as declared, so this is the one answer to what a card
+/// measures. [`cover_cap`]'s `ROW_PITCH_H` uses that same text height when estimating visible rows.
 const MIN_CARD_W: u32 = 180;
 const GAP: u32 = 20;
 const CARD_TEXT_H: u32 = 46;

@@ -15,12 +15,11 @@ msgstr ""
 msgid "Search"
 msgstr "Keresés"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Browse"
 msgstr "Böngészés"
 
 #: ui/app-window.slint ui/layout/sidebar.slint ui/views/favorites-view.slint
-#: ui/views/radio-view.slint
 msgid "Favorites"
 msgstr "Kedvencek"
 
@@ -28,7 +27,7 @@ msgstr "Kedvencek"
 msgid "My Library"
 msgstr "Könyvtáram"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 #: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "Nemrég lejátszottak"
@@ -36,11 +35,6 @@ msgstr "Nemrég lejátszottak"
 #: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Settings"
 msgstr "Beállítások"
-
-#: ui/app-window.slint ui/layout/sidebar.slint
-#: ui/views/settings/radio-section.slint
-msgid "Radio"
-msgstr "Rádió"
 
 #: ui/components/caption-buttons.slint
 #: ui/components/macos-titlebar-cluster.slint
@@ -81,74 +75,23 @@ msgstr "Hozzáadás a kedvencekhez"
 msgid "Remove from Favorites"
 msgstr "Eltávolítás a kedvencek közül"
 
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-msgid "Stream URL"
-msgstr "Adatfolyam URL-je"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Name (optional)"
-msgstr "Név (nem kötelező)"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to use the station's own name"
-msgstr "Hagyd üresen az állomás saját nevének használatához"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
-msgid "Website"
-msgstr "Weboldal"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Logo URL"
-msgstr "Logó URL-je"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to look for a logo on the website above."
-msgstr "Ha üresen hagyod, a logót a fenti weboldalon keresi."
-
-#: ui/components/dialog/add-station-body.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/track-list/column-toggle-popup.slint
 #: ui/components/track-list/track-list-header.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "Műfaj"
 
-#: ui/components/dialog/add-station-body.slint
-msgid "Jazz, Blues"
-msgstr "Jazz, blues"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "Country"
-msgstr "Ország"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Tunisia"
-msgstr "Tunézia"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "The directory owns this station's name and stream. What it left blank is yours to fill in; leave a field empty to remove it again."
-msgstr "Az állomás nevét és adatfolyamát a katalógus adja. Amit üresen hagyott, azt te töltheted ki; egy mezőt kiürítve újra eltávolíthatod."
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Checking the stream…"
-msgstr "Adatfolyam ellenőrzése…"
-
 #: ui/components/dialog/credit-editor.slint
 #: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Add"
 msgstr "Hozzáadás"
 
 #: ui/components/dialog/dialog.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/grid/station-context-menu.slint ui/views/favorites-view.slint
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/favorites-view.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "Név"
 
@@ -168,11 +111,7 @@ msgstr "Adj hozzá leírást…"
 msgid "Finish"
 msgstr "Befejezés"
 
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
-msgid "Open Last.fm"
-msgstr "Last.fm megnyitása"
-
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
+#: ui/components/dialog/dialog.slint
 msgid "Connect"
 msgstr "Csatlakozás"
 
@@ -307,35 +246,12 @@ msgstr "Túlvezérlés megelőzése"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "A ReplayGain csak azokra a számokra hat, amelyekben már vannak hangosságcímkék. Ezek hozzáadásához dolgozd fel a könyvtáradat például az rsgain vagy a loudgain eszközzel."
 
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "Click Open Last.fm to approve Melodia in your browser."
-msgstr "Kattints a Last.fm megnyitása gombra, és hagyd jóvá a Melodiát a böngészőben."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "After approving Melodia in your browser, click Finish."
-msgstr "Miután a böngészőben jóváhagytad a Melodiát, kattints a Befejezés gombra."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
 #: ui/globals/player.slint
 msgid "Connecting…"
 msgstr "Csatlakozás…"
 
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "User token"
-msgstr "Felhasználói token"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Paste your ListenBrainz user token"
-msgstr "Illeszd be a ListenBrainz felhasználói tokenedet"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Find your token on your ListenBrainz profile settings page."
-msgstr "A tokenedet a ListenBrainz-profilod beállításainál találod."
-
 #: ui/components/dialog/selectable-picker.slint
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "Összes kijelölése"
@@ -410,7 +326,6 @@ msgid "Duration (sec)"
 msgstr "Időtartam (mp)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/station-facts.slint ui/views/radio/tab-pills.slint
 msgid "Plays"
 msgstr "Lejátszások"
 
@@ -456,7 +371,6 @@ msgid "File size (bytes)"
 msgstr "Fájlméret (bájt)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Last played"
 msgstr "Utoljára lejátszva"
 
@@ -703,7 +617,6 @@ msgstr "Sorszám"
 
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/onboarding/appearance-panel.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "Nyelv"
@@ -753,8 +666,7 @@ msgstr "Elérési út"
 msgid "Codec"
 msgstr "Kodek"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/station-facts.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Bitrate"
 msgstr "Bitráta"
 
@@ -806,10 +718,8 @@ msgid "Folder"
 msgstr "Mappa"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/now-playing/play-button.slint
 #: ui/components/track-list/track-context-menu.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Play"
 msgstr "Lejátszás"
 
@@ -875,8 +785,6 @@ msgid "Edit Track Information"
 msgstr "Számadatok szerkesztése"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "Másolás"
@@ -909,7 +817,6 @@ msgid "Go to Artist"
 msgstr "Ugrás az előadóra"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "Kijelölés törlése"
@@ -941,32 +848,6 @@ msgstr "Előadó - Album"
 #: ui/components/grid/playlist-grid.slint
 msgid "0 tracks"
 msgstr "0 szám"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Open Website"
-msgstr "Weboldal megnyitása"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Edit…"
-msgstr "Szerkesztés…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Recently Played…"
-msgstr "{} állomás eltávolítása a Nemrég lejátszottak közül…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Recently Played…"
-msgstr "Eltávolítás a Nemrég lejátszottak közül…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Favorites…"
-msgstr "{} állomás eltávolítása a kedvencek közül…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Favorites…"
-msgstr "Eltávolítás a kedvencek közül…"
 
 #: ui/components/mini-player/mini-captions.slint
 msgid "Full Player"
@@ -1255,33 +1136,9 @@ msgid "Melodia works offline. These are the parts that reach out."
 msgstr "A Melodia offline működik. Ezek a részei kapcsolódnak a hálózathoz."
 
 #: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Internet radio"
-msgstr "Internetes rádió"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Browse and play live stations from radio-browser.info"
-msgstr "Élő állomások böngészése és lejátszása a radio-browser.info katalógusából"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/discord-section.slint
-msgid "Show the track you're playing on your Discord profile"
-msgstr "A lejátszott szám megjelenítése a Discord-profilodon"
-
-#: ui/components/onboarding/features-panel.slint
 #: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "Ha egy szám nem tartalmaz saját szöveget, lekérés innen: lrclib.net"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobbling"
-msgstr "Scrobblolás"
-
-#: ui/components/onboarding/features-panel.slint
-msgid "Send what you play to Last.fm or ListenBrainz"
-msgstr "A lejátszott számok elküldése a Last.fm vagy a ListenBrainz szolgáltatásnak"
 
 #: ui/components/onboarding/features-panel.slint
 msgid "Set Up"
@@ -1384,10 +1241,9 @@ msgstr "{}/{} fájl"
 
 #: ui/components/settings/scan-progress.slint ui/globals/dialog-forms.slint
 #: ui/globals/dialog.slint ui/views/queue-sheet.slint
-#: ui/views/radio/tab-pills.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/appearance-section.slint
 #: ui/views/settings/library-section.slint
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 #: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "Mégse"
@@ -1396,54 +1252,11 @@ msgstr "Mégse"
 msgid "Sort"
 msgstr "Rendezés"
 
-#: ui/components/station-facts.slint
-msgid "Stream"
-msgstr "Adatfolyam"
-
-#: ui/components/station-facts.slint
-msgid "Copy stream URL"
-msgstr "Adatfolyam URL-jének másolása"
-
-#: ui/components/station-facts.slint
-msgid "Open in your browser"
-msgstr "Megnyitás a böngészőben"
-
-#: ui/components/station-facts.slint ui/views/radio/suggestion-pill.slint
-#: ui/views/radio/tab-pills.slint
-msgid "Format"
-msgstr "Formátum"
-
-#: ui/components/station-facts.slint ui/views/radio/station-grid.slint
-msgid "{} kbps"
-msgstr "{} kbps"
-
-#: ui/components/station-facts.slint
-msgid "Votes"
-msgstr "Szavazatok"
-
-#: ui/components/station-facts.slint
-msgid "{n} vote"
-msgid_plural "{n} votes"
-msgstr[0] "{n} szavazat"
-msgstr[1] "{n} szavazat"
-
-#: ui/components/station-facts.slint ui/globals/hero-chips.slint
+#: ui/globals/hero-chips.slint
 msgid "{n} play"
 msgid_plural "{n} plays"
 msgstr[0] "{n} lejátszás"
 msgstr[1] "{n} lejátszás"
-
-#: ui/components/station-facts.slint
-msgid "Recently played on this station"
-msgstr "Nemrég szólt ezen az állomáson"
-
-#: ui/components/station-facts.slint
-msgid "Copy Title"
-msgstr "Cím másolása"
-
-#: ui/components/station-facts.slint
-msgid "Copy Artist"
-msgstr "Előadó másolása"
 
 #: ui/components/track-copy-items.slint
 msgid "Artist - Title"
@@ -1523,14 +1336,6 @@ msgstr "Még nincs jóváhagyva. Hagyd jóvá a Melodiát a böngészőben, majd
 msgid "Couldn't save your credentials."
 msgstr "Nem sikerült menteni a hitelesítő adataidat."
 
-#: ui/globals/dialog-forms.slint
-msgid "Edit Station"
-msgstr "Állomás szerkesztése"
-
-#: ui/globals/dialog-forms.slint
-msgid "Station Details"
-msgstr "Állomás adatai"
-
 #: ui/globals/dialog-forms.slint ui/globals/dialog.slint
 msgid "Save"
 msgstr "Mentés"
@@ -1542,10 +1347,6 @@ msgstr "Ez a cím nem érhető el. Ellenőrizd az URL-t és a kapcsolatot."
 #: ui/globals/dialog-forms.slint
 msgid "That address doesn't play as audio Melodia can decode."
 msgstr "Ez a cím nem ad olyan hangot, amelyet a Melodia dekódolni tud."
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't save the station."
-msgstr "Nem sikerült menteni az állomást."
 
 #: ui/globals/dialog-forms.slint
 msgid "That doesn't look like a web address. It should start with https://"
@@ -1596,32 +1397,8 @@ msgid "\"{}\" will be removed from Recently Played."
 msgstr "„{}” kikerül a Nemrég lejátszottak közül."
 
 #: ui/globals/dialog.slint
-msgid "\"{}\" will be removed from your stations, along with its play history."
-msgstr "„{}” kikerül az állomásaid közül, a lejátszási előzményeivel együtt."
-
-#: ui/globals/dialog.slint
 msgid "\"{}\" will be removed from your favorites."
 msgstr "„{}” kikerül a kedvenceid közül."
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from Recently Played?"
-msgid_plural "Remove {n} stations from Recently Played?"
-msgstr[0] "Eltávolítasz {n} állomást a Nemrég lejátszottak közül?"
-msgstr[1] "Eltávolítasz {n} állomást a Nemrég lejátszottak közül?"
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from favorites?"
-msgid_plural "Remove {n} stations from favorites?"
-msgstr[0] "Eltávolítasz {n} állomást a kedvencek közül?"
-msgstr[1] "Eltávolítasz {n} állomást a kedvencek közül?"
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from Recently Played."
-msgstr "Az állomások kikerülnek a Nemrég lejátszottak közül."
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from your favorites. Any you added by hand are removed from your stations, along with their play history."
-msgstr "Az állomások kikerülnek a kedvenceid közül. A kézzel hozzáadottak az állomásaid közül is törlődnek, a lejátszási előzményeikkel együtt."
 
 #: ui/globals/dialog.slint
 msgid "Edit Rules"
@@ -1648,7 +1425,6 @@ msgid "Choose playlists to export."
 msgstr "Válaszd ki az exportálandó lejátszási listákat."
 
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Export"
 msgstr "Exportálás"
 
@@ -1672,7 +1448,6 @@ msgstr "Válogatás"
 msgid "No track playing"
 msgstr "Nincs lejátszott szám"
 
-#. Translators: a state on the station pill, not the Pause button's verb
 #: ui/globals/player.slint
 msgid "Paused"
 msgstr "Szüneteltetve"
@@ -1917,30 +1692,10 @@ msgid "These playlists are too large for one .zip file. Export fewer at a time."
 msgstr "Ezek a lejátszási listák túl nagyok egyetlen .zip fájlhoz. Exportálj egyszerre kevesebbet."
 
 #: ui/settings.slint
-msgid "{n} station added"
-msgid_plural "{n} stations added"
-msgstr[0] "{n} állomás hozzáadva"
-msgstr[1] "{n} állomás hozzáadva"
-
-#: ui/settings.slint
 msgid "{n} was already in your list."
 msgid_plural "{n} were already in your list."
 msgstr[0] "{n} már szerepelt a listádon."
 msgstr[1] "{n} már szerepelt a listádon."
-
-#: ui/settings.slint
-msgid "Couldn't read any stations from the selected file(s)."
-msgstr "Nem sikerült állomást beolvasni a kiválasztott fájl(ok)ból."
-
-#: ui/settings.slint
-msgid "{n} station exported"
-msgid_plural "{n} stations exported"
-msgstr[0] "{n} állomás exportálva"
-msgstr[1] "{n} állomás exportálva"
-
-#: ui/settings.slint
-msgid "Couldn't write the station list."
-msgstr "Nem sikerült kiírni az állomáslistát."
 
 #: ui/settings.slint
 msgid "Playback error"
@@ -2112,7 +1867,7 @@ msgstr "Még nincsenek kedvenc előadók"
 msgid "Favorite a song and its artist appears here."
 msgstr "Jelölj meg egy dalt kedvencként, és az előadója itt jelenik meg."
 
-#: ui/views/favorites/most-played-tab.slint ui/views/radio-view.slint
+#: ui/views/favorites/most-played-tab.slint
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "Még nem játszottál le semmit"
@@ -2253,18 +2008,13 @@ msgstr "Lejátszási lista létrehozása szabályok alapján"
 msgid "More playlist actions"
 msgstr "További lejátszásilista-műveletek"
 
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Import"
 msgstr "Importálás"
 
-#: ui/views/now-playing-view.slint ui/views/radio/tab-pills.slint
+#: ui/views/now-playing-view.slint
 msgid "Vote"
 msgstr "Szavazás"
-
-#. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/views/now-playing-view.slint
-msgid "Station"
-msgstr "Állomás"
 
 #: ui/views/now-playing-view.slint
 msgid "Up Next"
@@ -2297,108 +2047,6 @@ msgstr "A lejátszási sor üres"
 #: ui/views/queue-sheet.slint
 msgid "Drop to add to queue"
 msgstr "Engedd el, hogy a lejátszási sorhoz add"
-
-#: ui/views/radio-view.slint ui/views/radio/suggestion-pill.slint
-msgid "{n} station"
-msgid_plural "{n} stations"
-msgstr[0] "{n} állomás"
-msgstr[1] "{n} állomás"
-
-#: ui/views/radio-view.slint
-msgid "Search stations…"
-msgstr "Állomások keresése…"
-
-#: ui/views/radio-view.slint
-msgid "Filter stations…"
-msgstr "Állomások szűrése…"
-
-#: ui/views/radio-view.slint
-msgid "No stations kept yet"
-msgstr "Még nincsenek megtartott állomások"
-
-#: ui/views/radio-view.slint
-msgid "Star a station in Browse, or add one by URL."
-msgstr "Jelölj meg csillaggal egy állomást a Böngészésben, vagy adj hozzá egyet URL alapján."
-
-#: ui/views/radio-view.slint
-msgid "Stations you listen to show up here."
-msgstr "Az általad hallgatott állomások itt jelennek meg."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Searching the directory…"
-msgstr "Keresés a katalógusban…"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Stations are coming from radio-browser.info."
-msgstr "Az állomások a radio-browser.info katalógusából érkeznek."
-
-#: ui/views/radio/browse-tab.slint
-msgid "The station directory is unreachable"
-msgstr "Az állomáskatalógus nem érhető el"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Check your connection and try again."
-msgstr "Ellenőrizd a kapcsolatot, és próbáld újra."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Try again"
-msgstr "Újrapróbálás"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "No stations matched"
-msgstr "Nincs egyező állomás"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "Try a different name, or clear a filter."
-msgstr "Próbálj másik nevet, vagy törölj egy szűrőt."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Load more stations"
-msgstr "További állomások betöltése"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/facet-chip.slint
-msgid "Loading…"
-msgstr "Betöltés…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Filter…"
-msgstr "Szűrés…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Nothing to pick from"
-msgstr "Nincs miből választani"
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory reached this station on its last check."
-msgstr "A katalógus a legutóbbi ellenőrzéskor elérte ezt az állomást."
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory could not reach this station on its last check."
-msgstr "A katalógus a legutóbbi ellenőrzéskor nem érte el ezt az állomást."
-
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "{} kbps and up"
-msgstr "{} kbps vagy több"
-
-#: ui/views/radio/suggestion-pill.slint
-msgid "{}: {}"
-msgstr "{}: {}"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Add Station"
-msgstr "Állomás hozzáadása"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Added"
-msgstr "Hozzáadva"
-
-#: ui/views/radio/tab-pills.slint
-msgid "More station actions"
-msgstr "További állomásműveletek"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Edit"
-msgstr "Szerkesztés"
 
 #: ui/views/recently-played-view.slint
 msgid "Filter recently played…"
@@ -2603,34 +2251,6 @@ msgstr "További részletek rögzítése. Kapcsold be, idézd elő újra a hibá
 #: ui/views/settings/diagnostics-section.slint
 msgid "Save…"
 msgstr "Mentés…"
-
-#: ui/views/settings/discord-section.slint
-msgid "Show album artwork"
-msgstr "Albumborító megjelenítése"
-
-#: ui/views/settings/discord-section.slint
-msgid "Look up cover art online (via Deezer or iTunes) to show on the card"
-msgstr "Borító keresése online (a Deezeren vagy az iTunes-on keresztül) a kártyán való megjelenítéshez"
-
-#: ui/views/settings/discord-section.slint
-msgid "Hide while paused"
-msgstr "Elrejtés szüneteltetéskor"
-
-#: ui/views/settings/discord-section.slint
-msgid "Remove the card when paused instead of showing a paused marker"
-msgstr "Szüneteltetéskor a kártya eltűnik, a szünetjelzés helyett"
-
-#: ui/views/settings/discord-section.slint
-msgid "Status"
-msgstr "Állapot"
-
-#: ui/views/settings/discord-section.slint
-msgid "Connected to Discord"
-msgstr "Csatlakozva a Discordhoz"
-
-#: ui/views/settings/discord-section.slint
-msgid "Discord not running"
-msgstr "A Discord nem fut"
 
 #: ui/views/settings/file-watching-section.slint
 msgid "File Watching"
@@ -2859,7 +2479,6 @@ msgid "Exclusive"
 msgstr "Kizárólagos"
 
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 msgid "Not connected"
 msgstr "Nincs csatlakoztatva"
 
@@ -3077,22 +2696,6 @@ msgstr "Válaszd ki, hogyan rajzolja ki a vizualizáció a hangot"
 msgid "{} s"
 msgstr "{} mp"
 
-#: ui/views/settings/radio-section.slint
-msgid "Hide segmented stations"
-msgstr "Szegmentált állomások elrejtése"
-
-#: ui/views/settings/radio-section.slint
-msgid "Segmented (HLS) streams play, but take longer to start"
-msgstr "A szegmentált (HLS) adatfolyamok lejátszhatók, de lassabban indulnak"
-
-#: ui/views/settings/radio-section.slint
-msgid "Report plays to the directory"
-msgstr "Lejátszások jelentése a katalógusnak"
-
-#: ui/views/settings/radio-section.slint
-msgid "An anonymous count is what orders stations by popularity"
-msgstr "Egy névtelen számláló alapján rendeződnek az állomások népszerűség szerint"
-
 #: ui/views/settings/ratings-section.slint
 msgid "Ratings"
 msgstr "Értékelések"
@@ -3104,82 +2707,6 @@ msgstr "Értékelések mentése a fájlokba"
 #: ui/views/settings/ratings-section.slint
 msgid "Write star ratings into each file's tags, so they survive a rescan and other players can read them."
 msgstr "A csillagos értékelések beírása a fájlok címkéibe, így megmaradnak újraolvasás után is, és más lejátszók is olvashatják őket."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Last.fm"
-msgstr "Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to Last.fm"
-msgstr "Scrobblolás a Last.fm-re"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your Last.fm account"
-msgstr "Minden lejátszás jelentése a Last.fm-fiókodnak"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to Last.fm"
-msgstr "Kedvelt számok szinkronizálása a Last.fm-mel"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on Last.fm — turning this on syncs your existing favorites"
-msgstr "A kedvenc számaid kedveltként jelölése a Last.fm-en; bekapcsoláskor a meglévő kedvenceid is szinkronizálódnak"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "ListenBrainz"
-msgstr "ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to ListenBrainz"
-msgstr "Scrobblolás a ListenBrainzre"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your ListenBrainz account"
-msgstr "Minden lejátszás jelentése a ListenBrainz-fiókodnak"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to ListenBrainz"
-msgstr "Kedvelt számok szinkronizálása a ListenBrainzzel"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on ListenBrainz — turning this on syncs your existing favorites (needs MusicBrainz IDs)"
-msgstr "A kedvenc számaid kedveltként jelölése a ListenBrainzen; bekapcsoláskor a meglévő kedvenceid is szinkronizálódnak (MusicBrainz-azonosítók szükségesek)"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "MusicBrainz Picard adds these IDs to your files, identifying each track by its audio."
-msgstr "A MusicBrainz Picard hozzáadja ezeket az azonosítókat a fájljaidhoz, minden számot a hangja alapján azonosítva."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble radio songs"
-msgstr "Rádiós dalok scrobblolása"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Songs heard in full on a station go to your connected scrobbling services"
-msgstr "Az állomáson végighallgatott dalok a csatlakoztatott scrobble-szolgáltatásokhoz kerülnek"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connected as {}"
-msgstr "Csatlakozva: {}"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Not configured in this build"
-msgstr "Ebben a kiadásban nincs beállítva"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect Last.fm"
-msgstr "Last.fm csatlakoztatása"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Disconnect"
-msgstr "Leválasztás"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect ListenBrainz"
-msgstr "ListenBrainz csatlakoztatása"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Turn on Last.fm or ListenBrainz above first"
-msgstr "Előbb kapcsold be fent a Last.fm-et vagy a ListenBrainzt"
 
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"

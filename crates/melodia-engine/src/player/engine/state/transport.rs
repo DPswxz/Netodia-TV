@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use super::volume_to_amplitude;
 use super::{MAX_SPEED, MAX_VOLUME, MIN_SPEED, PlayerAction, PlayerState, RESTART_THRESHOLD_MS};
-use crate::player::engine::types::{PlaybackSource, PlaybackStatus};
+use crate::player::engine::types::PlaybackStatus;
 use melodia_core::entities::track::TrackSummary;
 use melodia_playback::player::playback::crossfade::CrossfadeDecision;
 use melodia_playback::player::playback::replaygain::TrackReplayGain;
@@ -19,13 +19,7 @@ impl PlayerState {
 
     /// Build actions for play/resume command.
     ///
-    /// A paused station has no deck contents to resume — pausing dropped its connection — and
-    /// re-opening one is a network round trip that cannot happen under the state lock. So this
-    /// declines, and `library::playback::player_play` takes the station branch ahead of it.
     pub fn build_play_actions(&mut self) -> Vec<PlayerAction> {
-        if self.is_radio() {
-            return vec![];
-        }
         if self.status == PlaybackStatus::Paused {
             self.status = PlaybackStatus::Playing;
             vec![PlayerAction::Resume]
@@ -50,16 +44,7 @@ impl PlayerState {
     /// Build actions for pause command. `fade_ms` is the pause-fade length when
     /// that setting is on, else `0` — same contract as [`Self::build_stop_actions`].
     ///
-    /// Pausing a station **drops its connection**: `stream-download` pauses its writer when the
-    /// reader falls behind, so a held-open socket would back-pressure the server and come back
-    /// playing audio that is seconds stale. The station stays on screen with a play button that
-    /// re-opens it.
     pub fn build_pause_actions(&mut self, fade_ms: u64) -> Vec<PlayerAction> {
-        if self.is_radio() && self.status != PlaybackStatus::Stopped {
-            self.status = PlaybackStatus::Paused;
-            self.end_stream_session();
-            return vec![PlayerAction::Stop { fade_ms }];
-        }
         if self.status == PlaybackStatus::Playing {
             self.status = PlaybackStatus::Paused;
             vec![PlayerAction::Pause { fade_ms }]
@@ -72,8 +57,7 @@ impl PlayerState {
     /// system, leaving it paused where the deck stopped for [`Self::build_replay_actions`] to
     /// start it again from.
     ///
-    /// The `Stop` is what gives the device back: it clears the decks while the stream can still
-    /// service the clear, then parks. The monitor decided this outside the emit lock, so what it
+    /// The monitor decided this outside the emit lock, so what it
     /// saw is checked again: still paused on the same track at the same position, a seek in the
     /// gap having moved only the last of those.
     pub fn build_release_actions(&mut self, decision: ReleaseDecision) -> Vec<PlayerAction> {
@@ -92,15 +76,9 @@ impl PlayerState {
     /// over. A pause is what keeps the position. `fade_ms` is the pause-fade length when that
     /// setting is on, else `0`.
     ///
-    /// A station is forgotten outright rather than paused, so the transport falls back to the
-    /// queue that was left untouched underneath it (D9).
     pub fn build_stop_actions(&mut self, fade_ms: u64) -> Vec<PlayerAction> {
         self.status = PlaybackStatus::Stopped;
         self.position_ms = 0;
-        if self.is_radio() {
-            self.end_stream_session();
-            self.source = None;
-        }
         vec![PlayerAction::Stop { fade_ms }]
     }
 
@@ -109,7 +87,7 @@ impl PlayerState {
     /// The track rides along because the backend rebuilds the source to move it; see
     /// [`PlayerAction::Seek`].
     fn seek_action(&self, position_ms: u64) -> Option<PlayerAction> {
-        let track = self.source.as_ref().and_then(PlaybackSource::track)?;
+        let track = self.source.as_ref()?;
         Some(PlayerAction::Seek {
             position_ms,
             file_path: track.file_path.clone(),
@@ -120,8 +98,7 @@ impl PlayerState {
     /// Move the position, and build the action that moves the deck with it.
     ///
     /// The position moves either way. Nothing seated is nothing for the backend to rebuild, but
-    /// `source_allows` passes on an absent source, so this is reachable before anything has
-    /// played — where the action the old in-place seek emitted was a no-op by the time it landed
+    /// this is reachable before anything has played — where the action the old in-place seek emitted was a no-op by the time it landed
     /// on an empty deck.
     fn build_move_to_actions(&mut self, position_ms: u64) -> Vec<PlayerAction> {
         let seek = self.seek_action(position_ms);
@@ -131,18 +108,11 @@ impl PlayerState {
 
     /// Build actions for seek command.
     pub fn build_seek_actions(&mut self, position_ms: u64) -> Vec<PlayerAction> {
-        // A live stream has no timeline to land on; the position is elapsed listening time.
-        if !self.source_allows(PlaybackSource::is_seekable) {
-            return vec![];
-        }
         self.build_move_to_actions(position_ms)
     }
 
     /// Build actions for next-track command.
     pub fn build_next_actions(&mut self) -> Vec<PlayerAction> {
-        if !self.source_allows(PlaybackSource::advances_queue) {
-            return vec![];
-        }
         let mut actions = vec![];
         let was_paused = self.status == PlaybackStatus::Paused;
 
@@ -179,9 +149,6 @@ impl PlayerState {
 
     /// Build actions for previous-track command.
     pub fn build_previous_actions(&mut self) -> Vec<PlayerAction> {
-        if !self.source_allows(PlaybackSource::advances_queue) {
-            return vec![];
-        }
         let was_paused = self.status == PlaybackStatus::Paused;
 
         if self.position_ms > RESTART_THRESHOLD_MS {
@@ -221,13 +188,6 @@ impl PlayerState {
     /// leaving `current_track` at position 0 for replay-from-start. Always
     /// counts a play for the track that just ended.
     pub fn build_end_of_stream_actions(&mut self) -> Vec<PlayerAction> {
-        // A station's deck only drains once its feed thread has spent its reconnect budget, so
-        // there is nothing to advance to — the queue underneath belongs to the library, and
-        // wandering into it because a station went off air would be a silent change of source.
-        if !self.source_allows(PlaybackSource::advances_queue) {
-            return self.build_stop_actions(0);
-        }
-
         let mut actions = Vec::with_capacity(4);
 
         if let Some(track) = self.current_track() {
@@ -282,10 +242,6 @@ impl PlayerState {
     pub fn build_crossfade_actions(&mut self, decision: CrossfadeDecision) -> Vec<PlayerAction> {
         let mut actions = Vec::with_capacity(2);
 
-        if !self.source_allows(PlaybackSource::advances_queue) {
-            return actions;
-        }
-
         let Some(outgoing_id) = self.current_track().map(|t| t.id) else {
             return actions;
         };
@@ -324,13 +280,6 @@ impl PlayerState {
 
     /// Build actions for set-playback-speed command.
     pub fn build_set_speed_actions(&mut self, speed: f64) -> Vec<PlayerAction> {
-        // Speed is a ratio on the deck's converter, so anything but 1.0 consumes a source faster or
-        // slower than real time, and a live mount arriving at exactly real time starves or overruns
-        // its ring. Refused rather than clamped, so the transport keeps showing the 1.0 the deck is
-        // actually running at.
-        if !self.source_allows(PlaybackSource::has_variable_speed) {
-            return vec![];
-        }
         let speed = speed.clamp(MIN_SPEED, MAX_SPEED);
         self.playback_speed = speed;
         vec![PlayerAction::SetSpeed(speed)]
@@ -371,12 +320,6 @@ fn begin_track(
     track: Arc<TrackSummary>,
     start_position_ms: Option<u64>,
 ) -> TrackStart {
-    // Seating the track below evicts a station on its own, the two being one field now. What
-    // still has to be said out loud is the session: a connect in flight would otherwise pass its
-    // generation check and start the station over the track that replaced it.
-    if state.is_radio() {
-        state.end_stream_session();
-    }
 
     state.status = PlaybackStatus::Playing;
     state.duration_ms = u64::try_from(track.duration_ms.max(0)).unwrap_or(0);
@@ -392,7 +335,7 @@ fn begin_track(
         speed: state.playback_speed,
         start_position_ms: clamped_pos,
     };
-    state.source = Some(PlaybackSource::Track(track));
+    state.source = Some(track);
     start
 }
 
@@ -428,10 +371,6 @@ pub fn stop_end_of_queue(state: &mut PlayerState) -> Vec<PlayerAction> {
 /// Resume playback from a Stopped state. Replays the current track from the saved position.
 /// Returns empty vec if status is not Stopped, or if neither the deck nor the queue holds a track.
 ///
-/// **The queue is the fallback because stopping a station leaves no `current_track`** — a station
-/// clears it on the way in and `build_stop_actions` forgets the station rather than pausing it, so
-/// without this the play button is inert over a queue that is still fully seated. That is the
-/// library D9 promised to hand back, and there is no position to resume from: the station zeroed it.
 pub fn resume_from_stopped(state: &mut PlayerState) -> Vec<PlayerAction> {
     if state.status != PlaybackStatus::Stopped {
         return vec![];

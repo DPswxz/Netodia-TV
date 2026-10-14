@@ -7,57 +7,11 @@ export global Player {
     in-out property <PlayerVm> vm;
     in-out property <QueueVm> queue;
 
-    // The two label lines every Now-Playing surface draws, derived once here rather than as a
-    // ternary at each of the three (bar, full view and miniplayer). The ladder is
-    // the same one `player::now_playing::SourceSummary` hands the OS surfaces, and it has to be
-    // spelled again in Slint because only `@tr` at a literal reaches the catalogues.
-    //
-    // **The song leads and the station follows**, so the station is on screen either way: as the
-    // third line once the stream names an artist, as the subtitle under a line naming none, and
-    // as the title until anything is announced. In that last case the subtitle falls through to
-    // the station's genres rather than standing empty — the line is there whatever happens, so it
-    // may as well say something, and a genre under a station name reads the way an artist under a
-    // title does.
-    //
-    // The LRM forces an LTR base direction so `elide` renders its `…` at the right edge for RTL
-    // scripts too; see the title-cell note in `track-list-row.slint`.
-    out property <string> source-title: root.vm.has_station
-        ? "‎" + (root.vm.radio.live_title == "" ? root.vm.radio.name : root.vm.radio.live_title)
-        : (root.vm.has_track ? "‎" + root.vm.track.title : @tr("No track playing"));
-
-    out property <string> source-subtitle: root.vm.has_station
-        ? "‎" + (root.vm.radio.live_title == ""
-            ? root.vm.radio.tags
-            : (root.vm.radio.live_artist == "" ? root.vm.radio.name : root.vm.radio.live_artist))
-        : (root.vm.has_track
-            ? "‎" + (root.vm.track.artist == "" ? @tr("Unknown artist") : root.vm.track.artist)
-            : "—");
-
-    // The third line: an album for a track; for a stream, the station once an artist has taken
-    // its line, otherwise the station's country. **Empty rather than LRM-prefixed when there is
-    // nothing**, so a host can gate its `Text` on `!= ""` without a second property to ask.
-    out property <string> source-tertiary: root.vm.has_station
-        ? (root.vm.radio.live_artist != ""
-            ? "‎" + root.vm.radio.name
-            : (root.vm.radio.country == "" ? "" : "‎" + root.vm.radio.country))
-        : (root.vm.has_track && root.vm.track.album != "" ? "‎" + root.vm.track.album : "");
-
-    // What the station pill says, in the slot a track's seek bar occupies. Four states, one
-    // pill: `loading` is the initial connect *and* the re-open a play on a paused station is,
-    // which is what keeps that from reading as a resume; `paused` has no connection left to be
-    // live over, `build_pause_actions` dropping it rather than holding a socket the server would
-    // back-pressure; `buffering` is a starved ring beside a still-`playing` status, so a dip
-    // never looks like a stop.
-    out property <string> live-label: root.vm.status == "loading"
-        ? @tr("Connecting…")
-        : (root.vm.status == "paused"
-            // Translators: a state on the station pill, not the Pause button's verb
-            ? @tr("Paused")
-            : (root.vm.radio.buffering
-                ? @tr("Buffering…")
-                // Translators: a short pill in place of a track's seek bar
-                : @tr("LIVE")));
-
+    out property <string> source-title: root.vm.has_track ? "‎" + root.vm.track.title : @tr("No track playing");
+    out property <string> source-subtitle: root.vm.has_track
+        ? "‎" + (root.vm.track.artist == "" ? @tr("Unknown artist") : root.vm.track.artist)
+        : "—";
+    out property <string> source-tertiary: root.vm.has_track && root.vm.track.album != "" ? "‎" + root.vm.track.album : "";
     // Projected out of `vm` for a *Rust* reader, which is the half a binding cannot help with:
     // reading a struct property from Rust clones the whole of it, and the lyrics panel's follow
     // wants these two on a 33 ms tick. Derived here so the clone happens once per publish rather
@@ -119,7 +73,7 @@ export global Player {
     // Clearly longer than any click on the most-pressed button, and than the scan's hold. Off where
     // a stop would change nothing, so a slow press there still plays.
     out property <duration> stop-hold:
-        (root.vm.has_track && !root.stopped-at-top) || root.vm.has_station ? 900ms : 0ms;
+        (root.vm.has_track && !root.stopped-at-top) ? 900ms : 0ms;
 
     // The tooltip is the only thing on screen naming the hold, and on a dimmed button the only
     // sign it does anything.
@@ -149,17 +103,7 @@ export global Player {
     in-out property <bool> np-cover-use-a: true;
     in-out property <bool> np-cover-has-image: false;
 
-    // The full view's station logo, at the same tier as the pair above but deliberately not in
-    // it: that pair is the *track's* cross-fade, and a station change is a deliberate act with
-    // nothing to cross-fade between. Empty (`width == 0`) with no logo, which is what puts the
-    // tile on its monogram.
-    in-out property <image> np-station-logo;
-    // The decoded logo's own smallest side, `Radio.detail-logo-size`'s twin. A station logo is
-    // routinely a favicon, so the tile needs it to know whether to draw an inset card instead of
-    // magnifying a 32 px source across 384.
-    in-out property <int> np-station-logo-size: 0;
-
-    // Replaced wholesale by the subscriber; `track_id` is what lets the view drop a stale push
+   // Replaced wholesale by the subscriber; `track_id` is what lets the view drop a stale push
     // landing after a rapid track change.
     in-out property <TrackMetaRow> track-meta;
 

@@ -53,7 +53,6 @@ pub struct ViewStateData {
     pub favorites_tab: i32,
     pub recently_played_tab: i32,
     pub my_library_tab: i32,
-    pub radio_tab: i32,
 }
 
 impl Default for ViewStateData {
@@ -71,7 +70,6 @@ impl Default for ViewStateData {
             favorites_tab: 0,
             recently_played_tab: 0,
             my_library_tab: 0,
-            radio_tab: 0,
         }
     }
 }
@@ -88,7 +86,7 @@ fn default_last_nav_index() -> i32 {
 /// `boot::ui_setup::views::install_views` — and the two have to agree, a section written
 /// past the write's clamp and one dropped by the read's guard both landing the
 /// next boot somewhere else with nothing to say why.
-pub const MAX_NAV_INDEX: i32 = 10;
+pub const MAX_NAV_INDEX: i32 = 9;
 
 pub fn read_view_state(paths: &Paths) -> AppResult<ViewStateData> {
     melodia_core::utils::atomic_file::load_json_or_default_sync(&paths.view_state_path)

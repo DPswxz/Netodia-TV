@@ -56,7 +56,7 @@ export component SleepTimerFlyout inherits PopupSurface {
     in property <int> active-total-seconds;
     // True while "End of current track" mode is armed (from the backend VM).
     in property <bool> track-end-active;
-    // True while the source has no track end to stop at, which today means a station.
+    // True while there is no track end for the sleep timer to stop at.
     in property <bool> track-end-unavailable;
     callback pick(int);          // preset value: 0 off / minutes / -1 end-of-track
     callback start-custom(int);  // custom duration in seconds

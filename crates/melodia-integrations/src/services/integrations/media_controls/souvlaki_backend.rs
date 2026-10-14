@@ -208,7 +208,7 @@ impl MediaControlsSync for MediaControlsHandle {
             let playback = match status {
                 PlaybackStatus::Playing => MediaPlayback::Playing { progress },
                 PlaybackStatus::Paused => MediaPlayback::Paused { progress },
-                PlaybackStatus::Stopped | PlaybackStatus::Loading => MediaPlayback::Stopped,
+                PlaybackStatus::Stopped => MediaPlayback::Stopped,
             };
             if let Err(e) = controls.set_playback(playback) {
                 log::debug!("Failed to set media playback status: {}", describe(&e));

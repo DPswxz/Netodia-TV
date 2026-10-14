@@ -246,18 +246,6 @@ pub fn install_toast_bridge(
                         6000,
                     );
                 }
-                // A vote the directory would not take. Auto-dismissing: nothing is broken
-                // and there is nothing for the user to do about it.
-                ToastKind::RadioVote => {
-                    notifications.show_auto_dismiss(
-                        NotificationParams::plain(
-                            NotificationVariant::Warning,
-                            g.invoke_toast_radio_vote_title(),
-                            detail.into(),
-                        ),
-                        6000,
-                    );
-                }
             }
         }
     }))

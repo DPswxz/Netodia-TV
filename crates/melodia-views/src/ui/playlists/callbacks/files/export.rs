@@ -140,8 +140,8 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, notifications: &Rc<Notifica
     }
 }
 
-/// What the ticked rows ask for. One playlist is a bare `.m3u8` any player opens, the way a station
-/// list is; several are one zip of them, so either answer is a single file the user names.
+/// What the ticked rows ask for. One playlist is a bare `.m3u8` any player opens; several are one
+/// zip of them, so either answer is a single file the user names.
 enum Selection {
     One { id: i64, name: String },
     Many(Vec<i64>),

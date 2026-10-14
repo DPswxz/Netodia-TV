@@ -1,8 +1,6 @@
 use std::cell::Cell;
-use std::sync::Arc;
-
-use super::{NowPlayingSource, SourceKey, Surfaces, clear_unshown_slot};
-use melodia_engine::player::engine::fixtures::{test_station, test_track, test_view_model};
+use super::{SourceKey, Surfaces, clear_unshown_slot};
+use melodia_engine::player::engine::fixtures::test_track;
 use melodia_engine::player::engine::now_playing::SourceId;
 use melodia_ui::MiniLayout;
 
@@ -11,7 +9,6 @@ use melodia_ui::MiniLayout;
 fn key_for(id: SourceId<'_>) -> SourceKey {
     match id {
         SourceId::Track(track_id) => SourceKey::Track(track_id),
-        SourceId::Station(stream_url) => SourceKey::Station(stream_url.to_owned()),
     }
 }
 
@@ -24,8 +21,6 @@ fn describes_answers_the_key_compare_it_replaced() {
         None,
         Some(SourceId::Track(1)),
         Some(SourceId::Track(2)),
-        Some(SourceId::Station("http://example.test/a.mp3")),
-        Some(SourceId::Station("http://example.test/b.mp3")),
     ];
 
     for held in ids {
@@ -38,30 +33,6 @@ fn describes_answers_the_key_compare_it_replaced() {
             );
         }
     }
-}
-
-#[test]
-fn a_station_hands_the_chips_no_row_of_its_own() {
-    // The chips come off an eight-column projection of a `tracks` row, and a stream has none — so
-    // the row has to follow the arm the key came from rather than be read off `vm` beside it.
-    // Both halves set is unreachable through the state machine, which is why nothing else catches
-    // a projection that asks `current_track` independently.
-    let station = test_station("Night Radio");
-    let stream_url = station.stream_url.clone();
-    let mut station = Arc::unwrap_or_clone(station);
-    station.artwork_path = Some("logo.png".to_owned());
-
-    let vm = test_view_model(
-        Some(test_track("Nocturne", Some("Field"), Some("Airs"))),
-        Some(Arc::new(station)),
-        200_000,
-    );
-    let projected = NowPlayingSource::from_vm(&vm).map(|s| (s.key, s.track, s.artwork_path));
-
-    assert_eq!(
-        projected,
-        Some((SourceKey::Station(stream_url), None, Some("logo.png".to_owned())))
-    );
 }
 
 const fn on_screen(

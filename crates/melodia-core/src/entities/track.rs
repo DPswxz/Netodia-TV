@@ -14,7 +14,6 @@
 //! | [`TrackListRow`] | every track list, Files and Browse included |
 //! | [`TrackMeta`] | the Now-Playing technical chips |
 //! | [`TagEditRow`] | the Edit-Track-Information dialog |
-//! | [`ScrobbleRow`] | a scrobble or love submission |
 //! | [`PlaylistExportRow`] | one M3U8 line |
 //! | [`TrackLinks`] | the three FK ids a "Go to …" menu entry navigates by |
 //!
@@ -254,24 +253,6 @@ pub struct TagEditRow {
     pub date_modified: Option<String>,
     pub duration_ms: i64,
     pub file_hash: Option<String>,
-}
-
-/// The metadata a scrobble needs, projected straight off `tracks` at track
-/// start. Every field is a native column (artist/album are denormalized
-/// text), so the fetch needs no joins. `title` is the track name;
-/// the two `musicbrainz_*` ids map to a `ScrobbleTrack`'s recording/release
-/// MBIDs. `ScrobbleTrack::from_row` does the conversion.
-#[derive(Clone, Debug, PartialEq, FromRow, Serialize, Deserialize)]
-pub struct ScrobbleRow {
-    pub id: i64,
-    pub title: String,
-    pub artist: Option<String>,
-    pub album: Option<String>,
-    pub album_artist: Option<String>,
-    pub duration_ms: i64,
-    pub track_number: Option<i32>,
-    pub musicbrainz_track_id: Option<String>,
-    pub musicbrainz_release_id: Option<String>,
 }
 
 /// A track's album/artist/genre linkage and nothing else, for a surface that

@@ -34,7 +34,7 @@ enum Emit {
     Volume,
     LoopStatus,
     Shuffle,
-    /// The rate and both of its bounds, which a station closes on 1.0.
+    /// The rate and both of its bounds.
     Rate,
     Seeked(u64),
 }

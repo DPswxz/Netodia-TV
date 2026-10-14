@@ -21,7 +21,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread::JoinHandle;
 
-/// What the client asked for, body included: a scrobble suite's question is which listens went
+/// What the client asked for, body included: a network-service suite's question is which requests went
 /// out, not that a POST happened.
 #[derive(Debug, Clone)]
 pub struct TestRequest {

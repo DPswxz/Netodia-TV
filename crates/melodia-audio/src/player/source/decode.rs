@@ -1,11 +1,7 @@
 //! What both decoders need before and around the codec: the registry, the track pick, the open
 //! that resolves the two, and the packet cursor.
 //!
-//! [`super::file_decode`] and [`super::stream_decode`] differ in what they hand [`open`] — a file
-//! with a length and a seek against a mount with neither — and in nothing after that. That is
-//! structural rather than a convention held by review: each carried its own copy of the probe,
-//! track pick, decoder build and first packet once, five parallel failure arms apiece, and the two
-//! only agreed because nobody had yet edited one.
+//! [`super::file_decode`] hands [`open`] a file source with a known length and seek capability.
 //!
 //! **Why Symphonia 0.6 rather than the 0.5 rodio pinned.** 0.5's probe picks a demuxer by matching a
 //! two-byte marker and nothing else — its `format()` takes a `Hint` and discards it, and scoring is
@@ -13,10 +9,9 @@
 //! matches nothing at all, the search runs on into the payload, and the first stray `0xFFFB` in it
 //! hands an AAC stream to the MP3 demuxer. That reader then hunts forever for two consecutive
 //! similar frames it will never find: no decoder is built, no error is returned, and the audio
-//! simply never starts. It was internet radio that hit it first, but nothing about the fault is
-//! about the network — an MPEG-2 `.aac` file in a scanned folder is the same bytes and the same
-//! silence. 0.6 scores each candidate against the frames that follow it and registers all four
-//! ADTS sync words, and it answers for both paths so the same bytes cannot get two answers.
+//! simply never starts. An MPEG-2 `.aac` file in a scanned folder is the same bytes and the same
+//! silence. 0.6 scores each candidate against the frames that follow it and registers all four ADTS
+//! sync words.
 
 use std::sync::LazyLock;
 use std::time::Duration;
@@ -107,8 +102,7 @@ pub(super) fn ticks_to_frames(
 /// Build a decoder for `params`, taking them by value because it rewrites an HE-AAC config on the
 /// way past ([`super::aac_config`]).
 ///
-/// The Symphonia error goes back unwrapped: what a caller says about it names a file or a station,
-/// which is the half this cannot know.
+/// The Symphonia error goes back unwrapped so the caller can name the file, which this layer cannot.
 pub(super) fn make_decoder(
     mut params: AudioCodecParameters,
 ) -> Result<Box<dyn AudioDecoder>, SymphoniaError> {
@@ -175,7 +169,7 @@ pub(super) struct Opened {
 }
 
 /// Why a source could not be opened, phrased as the tail of a sentence naming it — so a caller
-/// says "`/music/x.flac` has no audio" or "The station's stream has no audio" over one message.
+/// says "`/music/x.flac` has no audio" instead of returning an unexplained engine error.
 pub(super) enum OpenError {
     Unreadable(SymphoniaError),
     NoAudio,

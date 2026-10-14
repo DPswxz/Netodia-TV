@@ -2,8 +2,8 @@
 //!
 //! What is this module's own is everything a file has and a mount does not — a length, a seek that
 //! can land anywhere, and an end it reaches by itself. The probe, the codec registry and the packet
-//! cursor are [`super::decode`]'s, shared with [`super::stream_decode`], and the argument for
-//! decoding against Symphonia 0.6 rather than the 0.5 rodio pinned is in that module's `//!`.
+//! cursor are [`super::decode`]'s, and the argument for decoding against Symphonia 0.6 rather than
+//! the 0.5 rodio pinned is in that module's `//!`.
 //!
 //! It replaced `rodio::Decoder`, so that type doubles as the specification: what must not be lost
 //! is the frame-accurate seek, which is the one thing here neither reference implementation does.
@@ -48,11 +48,9 @@ const SEEK_END_MARGIN: Duration = Duration::from_millis(100);
 
 /// A file as the demuxer wants it, with both of its answers taken once.
 ///
-/// The mirror of [`super::stream_decode::LiveSource`], which answers no to both. A stated length is
-/// what lets the probe reach trailing metadata and the seek land anywhere, neither of which a live
-/// mount can offer. Symphonia ships its own `MediaSource` for `File` and re-reads the filesystem on
-/// every call to say so, warning in its docs to cache what it returns; the demuxer asks once per
-/// probe and again per seek.
+/// A stated length lets the probe reach trailing metadata and the seek land anywhere. Symphonia
+/// ships its own `MediaSource` for `File` and re-reads the filesystem on every call to say so,
+/// warning in its docs to cache what it returns; the demuxer asks once per probe and again per seek.
 ///
 /// No `BufReader` underneath: [`MediaSourceStream`] is already the read-ahead buffer, and a second
 /// one only copies every byte again. Both reference players hand it the file directly.

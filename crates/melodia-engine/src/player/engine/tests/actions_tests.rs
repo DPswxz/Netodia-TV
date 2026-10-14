@@ -514,54 +514,6 @@ async fn execute_empty_actions_is_noop() -> Result<(), AppError> {
     Ok(())
 }
 
-// --- Live streams ----------------------------------------------------------
-
-/// Tune the fixture's state to a station and hand back the session generation.
-fn tune_in(player_state: &PlayerStateHandle) -> u64 {
-    let mut state = crate::player::engine::state::lock_state(player_state);
-    let (generation, _actions) = state.build_station_connecting_actions(
-        crate::player::engine::fixtures::test_station("Example FM"),
-    );
-    generation
-}
-
-/// The stream was opened long before the action ran, so there is no path to pre-flight with
-/// `Path::exists` and nothing to auto-skip onto — a station is one source, not a queue position.
-#[tokio::test]
-async fn execute_play_stream_reaches_the_backend_without_a_path() -> Result<(), AppError> {
-    let fx = fixture()?;
-    let mock = MockBackend::new();
-    let generation = tune_in(&fx.player_state);
-
-    let actions = vec![PlayerAction::PlayStream { generation, volume: 0.8 }];
-    crate::player::engine::actions::execute_actions(actions, &mock, &fx.player_state, &fx.sinks);
-
-    let inner = mock.inner();
-    assert_eq!(inner.play_stream_calls.len(), 1);
-    assert_eq!(inner.play_stream_calls[0].0, generation);
-    assert!((inner.play_stream_calls[0].1 - 0.8).abs() < f64::EPSILON);
-    assert_eq!(inner.stop_count, 0, "a successful start stops nothing");
-    Ok(())
-}
-
-#[tokio::test]
-async fn execute_play_stream_failure_clears_the_station() -> Result<(), AppError> {
-    let fx = fixture()?;
-    let mock = MockBackend::with_stream_failure();
-    let generation = tune_in(&fx.player_state);
-
-    let actions = vec![PlayerAction::PlayStream { generation, volume: 1.0 }];
-    crate::player::engine::actions::execute_actions(actions, &mock, &fx.player_state, &fx.sinks);
-
-    let state = crate::player::engine::state::lock_state(&fx.player_state);
-    assert!(state.station().is_none(), "a station that could not start must not sit on Loading");
-    assert_eq!(state.status, crate::player::engine::types::PlaybackStatus::Stopped);
-    // The failure path is `build_station_failed_actions`, not `enqueue_auto_skip`: there is no
-    // next station to fall through to, and reaching into the queue would be a change of source.
-    assert!(mock.inner().play_media_calls.is_empty());
-    Ok(())
-}
-
 /// Queues `paths` under `mode` and returns the actions that start the first of them.
 fn start_queue(fx: &ActionsFixture, paths: &[&str], mode: RepeatMode) -> Vec<PlayerAction> {
     let tracks = paths

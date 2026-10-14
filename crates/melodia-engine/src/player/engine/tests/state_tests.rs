@@ -166,7 +166,7 @@ fn test_play_track_with_resume_does_not_eager_preload() {
 fn test_stop_end_of_queue_helper() {
     let mut state = PlayerState {
         status: PlaybackStatus::Playing,
-        source: Some(PlaybackSource::Track(make_summary(1, "Song", 100_000))),
+        source: Some(make_summary(1, "Song", 100_000)),
         position_ms: 50_000,
         ..Default::default()
     };
@@ -238,7 +238,7 @@ fn test_resume_from_stopped_not_stopped() {
 fn test_stop_preserves_track() {
     let mut state = PlayerState {
         status: PlaybackStatus::Playing,
-        source: Some(PlaybackSource::Track(make_summary(1, "Song", 100_000))),
+        source: Some(make_summary(1, "Song", 100_000)),
         duration_ms: 100_000,
         position_ms: 50_000,
         ..Default::default()
@@ -332,7 +332,7 @@ fn test_queue_loaded_restores_state() {
 
     if let Some(track) = state.queue.get_current().cloned() {
         state.duration_ms = u64::try_from(track.duration_ms).unwrap_or(0);
-        state.source = Some(PlaybackSource::Track(track));
+        state.source = Some(track);
     }
 
     assert_eq!(state.queue.play_order.len(), 2);
@@ -482,7 +482,7 @@ fn test_to_view_model_light_mirrors_full() {
     let tracks = vec![make_summary(1, "Song 1", 200_000), make_summary(2, "Song 2", 100_000)];
     state.queue.add_tracks(tracks);
     state.queue.current_index = Some(0);
-    state.source = Some(PlaybackSource::Track(make_summary(1, "Song 1", 200_000)));
+    state.source = Some(make_summary(1, "Song 1", 200_000));
 
     let full = state.to_view_model();
     let light = state.to_view_model_light();
@@ -665,7 +665,7 @@ fn end_of_stream_advances_when_next_track_present() {
     let mut state = PlayerState::default();
     let track1 = make_summary(1, "Song 1", 100_000);
     let track2 = make_summary(2, "Song 2", 100_000);
-    state.source = Some(PlaybackSource::Track(track1.clone()));
+    state.source = Some(track1.clone());
     state.queue.add_tracks(vec![track1, track2]);
     state.queue.current_index = Some(0);
     state.status = PlaybackStatus::Playing;
@@ -685,7 +685,7 @@ fn end_of_stream_advances_when_next_track_present() {
 fn end_of_stream_stops_at_end_of_queue() {
     let mut state = PlayerState::default();
     let track = make_summary(1, "Only Song", 100_000);
-    state.source = Some(PlaybackSource::Track(track.clone()));
+    state.source = Some(track.clone());
     state.queue.add_tracks(vec![track]);
     state.queue.current_index = Some(0);
     state.status = PlaybackStatus::Playing;
@@ -705,7 +705,7 @@ fn end_of_stream_pauses_when_sleep_at_track_end_armed() {
     let mut state = PlayerState::default();
     let track1 = make_summary(1, "Song 1", 100_000);
     let track2 = make_summary(2, "Song 2", 100_000);
-    state.source = Some(PlaybackSource::Track(track1.clone()));
+    state.source = Some(track1.clone());
     state.queue.add_tracks(vec![track1, track2]);
     state.queue.current_index = Some(0);
     state.status = PlaybackStatus::Playing;
@@ -750,7 +750,7 @@ fn crossfade_advances_the_queue_and_starts_the_next_track() {
     let track2 = make_summary(2, "Two", 200_000);
     state.queue.add_tracks(vec![track1.clone(), track2]);
     state.queue.current_index = Some(0);
-    state.source = Some(PlaybackSource::Track(track1));
+    state.source = Some(track1);
     state.status = PlaybackStatus::Playing;
     state.duration_ms = 180_000;
     state.position_ms = 178_200;
@@ -782,7 +782,7 @@ fn crossfade_emits_nothing_when_the_queue_has_no_next_track() {
     let track1 = make_summary(1, "One", 180_000);
     state.queue.add_tracks(vec![track1.clone()]);
     state.queue.current_index = Some(0);
-    state.source = Some(PlaybackSource::Track(track1));
+    state.source = Some(track1);
     state.status = PlaybackStatus::Playing;
     state.duration_ms = 180_000;
     state.position_ms = 178_000;
@@ -806,7 +806,7 @@ fn crossfade_does_not_count_a_play_when_it_cannot_advance() {
     let track1 = make_summary(1, "One", 180_000);
     state.queue.add_tracks(vec![track1.clone()]);
     state.queue.current_index = Some(0);
-    state.source = Some(PlaybackSource::Track(track1));
+    state.source = Some(track1);
     state.status = PlaybackStatus::Playing;
     state.duration_ms = 180_000;
     state.position_ms = 178_000;
@@ -827,7 +827,7 @@ fn crossfade_is_dropped_when_a_pause_landed_since_the_decision() {
     let track2 = make_summary(2, "Two", 200_000);
     state.queue.add_tracks(vec![track1.clone(), track2]);
     state.queue.current_index = Some(0);
-    state.source = Some(PlaybackSource::Track(track1));
+    state.source = Some(track1);
     state.duration_ms = 180_000;
     state.position_ms = 178_200;
     // The pause won the race.
@@ -852,7 +852,7 @@ fn crossfade_is_dropped_when_the_track_changed_since_the_decision() {
     state.queue.add_tracks(vec![track1, track2.clone(), track3]);
     // A manual jump to track 2 landed after the monitor decided on track 1.
     state.queue.current_index = Some(1);
-    state.source = Some(PlaybackSource::Track(track2));
+    state.source = Some(track2);
     state.status = PlaybackStatus::Playing;
     state.duration_ms = 200_000;
     state.position_ms = 900;
@@ -878,7 +878,7 @@ fn crossfade_is_dropped_when_the_same_track_restarted_since_the_decision() {
     let track2 = make_summary(2, "Two", 200_000);
     state.queue.add_tracks(vec![track1.clone(), track2]);
     state.queue.current_index = Some(0);
-    state.source = Some(PlaybackSource::Track(track1));
+    state.source = Some(track1);
     state.status = PlaybackStatus::Playing;
     state.duration_ms = 180_000;
     state.position_ms = 0;
@@ -899,7 +899,7 @@ fn crossfade_is_dropped_when_a_seek_landed_since_the_decision() {
     let track2 = make_summary(2, "Two", 200_000);
     state.queue.add_tracks(vec![track1.clone(), track2]);
     state.queue.current_index = Some(0);
-    state.source = Some(PlaybackSource::Track(track1));
+    state.source = Some(track1);
     state.status = PlaybackStatus::Playing;
     state.duration_ms = 180_000;
     // The monitor decided at 178_200; the user scrubbed back to the middle.
@@ -935,7 +935,7 @@ fn sync_track_summaries_patches_current_queue_and_republishes() {
     with_state_emit(&handle, &sinks, |s| {
         let t1 = make_summary(1, "Old One", 1000);
         let t2 = make_summary(2, "Old Two", 2000);
-        s.source = Some(PlaybackSource::Track(Arc::clone(&t1)));
+        s.source = Some(Arc::clone(&t1));
         s.queue.tracks = vec![t1, t2];
         s.queue.play_order = vec![0, 1];
         s.queue.current_index = Some(0);
@@ -1133,7 +1133,7 @@ fn a_stop_takes_the_track_back_to_the_top_from_any_status() {
     for status in [PlaybackStatus::Playing, PlaybackStatus::Paused, PlaybackStatus::Stopped] {
         let mut state = PlayerState {
             status,
-            source: Some(PlaybackSource::Track(make_summary(1, "Song", 180_000))),
+            source: Some(make_summary(1, "Song", 180_000)),
             duration_ms: 180_000,
             position_ms: 60_000,
             ..Default::default()
@@ -1352,462 +1352,6 @@ fn next_at_end_with_repeat_all_wraps() {
     assert_eq!(state.queue.advance_skip().map(|t| t.id), Some(1));
 }
 
-// --- The radio arm ---------------------------------------------------------
-//
-// A live stream is the one source with no track behind it, so every transport builder above has a
-// branch for it. What these pin is that the branch is taken *and* that the queue underneath comes
-// through untouched: stopping a station is supposed to hand the library back exactly as it was.
-
-use crate::player::engine::fixtures::test_station as station;
-
-/// A player mid-album, so every "the queue is untouched" assertion has something to be about.
-fn playing_a_queue() -> PlayerState {
-    let mut state = PlayerState::default();
-    state.queue.add_tracks(vec![make_summary(1, "One", 180_000), make_summary(2, "Two", 180_000)]);
-    state.queue.current_index = Some(0);
-    let track = make_summary(1, "One", 180_000);
-    let _actions = play_track_inner(&mut state, track, Some(30_000));
-    state
-}
-
-fn tuned_in() -> (PlayerState, u64) {
-    let mut state = playing_a_queue();
-    let (generation, _actions) = state.build_station_connecting_actions(station("Example FM"));
-    (state, generation)
-}
-
-#[test]
-fn connecting_to_a_station_clears_the_decks_and_leaves_the_queue_alone() {
-    let mut state = playing_a_queue();
-    let queue_before = state.queue.to_persistable();
-
-    let (_generation, actions) = state.build_station_connecting_actions(station("Example FM"));
-
-    assert_eq!(actions.first(), Some(&PlayerAction::Stop { fade_ms: 0 }));
-    assert_eq!(state.status, PlaybackStatus::Loading);
-    assert_eq!(state.station().map(|r| r.name.as_str()), Some("Example FM"));
-    assert!(state.current_track().is_none(), "a station is not a track");
-    assert_eq!(state.duration_ms, 0);
-    assert_eq!(state.position_ms, 0);
-    assert_eq!(state.queue.to_persistable(), queue_before, "the queue must survive verbatim");
-}
-
-/// D11: speed is a ratio on the deck's converter, so anything but 1.0 starves or overruns a
-/// real-time source. Resetting the state alongside the deck is what keeps the transport honest.
-#[test]
-fn connecting_to_a_station_resets_playback_speed() {
-    let mut state = playing_a_queue();
-    let _speed = state.build_set_speed_actions(1.5);
-
-    let (_generation, actions) = state.build_station_connecting_actions(station("Example FM"));
-
-    assert!((state.playback_speed - 1.0).abs() < f64::EPSILON);
-    assert!(actions.contains(&PlayerAction::SetSpeed(1.0)));
-    // After the stop, so it lands on emptied decks and skips the re-anchoring seek.
-    assert_eq!(actions.first(), Some(&PlayerAction::Stop { fade_ms: 0 }));
-}
-
-#[test]
-fn a_station_already_at_unity_speed_emits_no_speed_action() {
-    let mut state = playing_a_queue();
-
-    let (_generation, actions) = state.build_station_connecting_actions(station("Example FM"));
-
-    assert_eq!(actions, vec![PlayerAction::Stop { fade_ms: 0 }]);
-}
-
-#[test]
-fn a_connected_station_starts_the_staged_stream() {
-    let (mut state, generation) = tuned_in();
-
-    let actions = state.build_station_connected_actions(generation);
-
-    assert_eq!(state.status, PlaybackStatus::Playing);
-    assert_eq!(actions, vec![PlayerAction::PlayStream { generation, volume: 1.0 }]);
-}
-
-/// An open takes seconds and a click takes none, so a stream that arrives after the user moved on
-/// must not start playing over whatever they moved to.
-#[test]
-fn a_stream_that_finished_connecting_too_late_is_refused() {
-    let (mut state, stale) = tuned_in();
-    let (fresh, _actions) = state.build_station_connecting_actions(station("Other FM"));
-    assert_ne!(stale, fresh);
-
-    assert_eq!(state.build_station_connected_actions(stale), vec![]);
-    assert_eq!(state.status, PlaybackStatus::Loading, "the newer station keeps connecting");
-    assert_eq!(state.station().map(|r| r.name.as_str()), Some("Other FM"));
-}
-
-/// [`tuned_in`] with the directory's word filled in, which is what a station tuned from a row
-/// carries: the column names the container, so an Ogg mount is filed under `OGG` whichever codec
-/// is inside it.
-fn tuned_in_to_a_station_filed_under(codec: &str) -> (PlayerState, u64) {
-    let mut filed = Arc::unwrap_or_clone(station("Example FM"));
-    filed.codec = Some(codec.to_owned());
-
-    let mut state = playing_a_queue();
-    let (generation, _actions) = state.build_station_connecting_actions(Arc::new(filed));
-    (state, generation)
-}
-
-/// The open is the first moment anything knows what an Ogg mount actually holds, and both answers
-/// are kept: a user who filtered on `OGG` and landed on a page reading `OPUS` alone has nothing to
-/// tell them those are the same station.
-#[test]
-fn a_measured_format_lands_on_the_station_already_on_the_bar() {
-    let (mut state, generation) = tuned_in_to_a_station_filed_under("OGG");
-
-    state.adopt_probed_codec(generation, "OPUS");
-
-    assert_eq!(state.station().and_then(|r| r.codec.as_deref()), Some("OGG/OPUS"));
-}
-
-/// An open takes seconds and a click takes none, so a measurement arriving after the user moved on
-/// must not rename whatever they moved to.
-#[test]
-fn a_format_measured_for_a_session_the_user_left_is_refused() {
-    let (mut state, stale) = tuned_in_to_a_station_filed_under("OGG");
-    let (_fresh, _actions) = state.build_station_connecting_actions(station("Other FM"));
-
-    state.adopt_probed_codec(stale, "OPUS");
-
-    assert_eq!(
-        state.station().and_then(|r| r.codec.as_deref()),
-        None,
-        "the newer station was renamed"
-    );
-}
-
-/// The bar already carries whatever the last play measured, so a second play composes against a
-/// composition. The containment arms absorb a repeat, which is what made this look safe: it breaks
-/// only for a station that changed what it serves, and then it names both codecs for one mount.
-#[test]
-fn a_second_play_of_the_same_station_does_not_name_its_format_twice() {
-    let (mut state, generation) = tuned_in_to_a_station_filed_under("OGG");
-
-    state.adopt_probed_codec(generation, "VORBIS");
-    state.adopt_probed_codec(generation, "OPUS");
-
-    assert_eq!(state.station().and_then(|r| r.codec.as_deref()), Some("OGG/OPUS"));
-}
-
-/// Observed as the allocation rather than the value, because the value is unchanged either way:
-/// composing a measurement the bar already carries hands back what it was given, so a test reading
-/// the string cannot see the guard go.
-///
-/// A second holder stands in for the published view model. `Arc::make_mut` copies only where the
-/// handle is shared, which is exactly when the guard is worth having.
-#[test]
-fn a_measurement_that_repeats_what_the_bar_says_pays_for_no_copy() {
-    let (mut state, generation) = tuned_in_to_a_station_filed_under("OGG");
-    state.adopt_probed_codec(generation, "OPUS");
-    let published = state.station().map(Arc::clone);
-
-    state.adopt_probed_codec(generation, "OPUS");
-
-    let held = published.as_ref().map(Arc::as_ptr);
-    assert_eq!(
-        held,
-        state.station().map(Arc::as_ptr),
-        "a repeated measurement rebuilt the station"
-    );
-}
-
-/// A mount whose codec the decoder could not name answers nothing, and nothing is not a format.
-#[test]
-fn an_empty_measurement_is_not_a_format() {
-    let (mut state, generation) = tuned_in_to_a_station_filed_under("OGG");
-
-    state.adopt_probed_codec(generation, "");
-
-    assert_eq!(state.station().and_then(|r| r.codec.as_deref()), Some("OGG"));
-}
-
-#[test]
-fn a_failed_connect_forgets_the_station() {
-    let (mut state, generation) = tuned_in();
-
-    let actions = state.build_station_failed_actions(generation);
-
-    assert_eq!(actions, vec![PlayerAction::Stop { fade_ms: 0 }]);
-    assert_eq!(state.status, PlaybackStatus::Stopped);
-    assert!(state.station().is_none());
-}
-
-#[test]
-fn a_failure_report_from_a_superseded_session_is_ignored() {
-    let (mut state, stale) = tuned_in();
-    let (_fresh, _actions) = state.build_station_connecting_actions(station("Other FM"));
-
-    assert_eq!(state.build_station_failed_actions(stale), vec![]);
-    assert!(state.station().is_some(), "the newer station must survive the older one's failure");
-}
-
-/// S4: `stream-download` back-pressures its writer when the reader falls behind, so a held-open
-/// socket would come back playing stale audio. Pause drops the connection and keeps the station.
-#[test]
-fn pausing_a_station_drops_the_connection_but_keeps_the_station() {
-    let (mut state, generation) = tuned_in();
-    let _started = state.build_station_connected_actions(generation);
-
-    let actions = state.build_pause_actions(250);
-
-    assert_eq!(actions, vec![PlayerAction::Stop { fade_ms: 250 }]);
-    assert_eq!(state.status, PlaybackStatus::Paused);
-    assert!(state.station().is_some(), "the station stays on screen with a play button");
-    assert_ne!(state.radio_generation, generation, "and its connection is invalidated");
-}
-
-#[test]
-fn stopping_a_station_forgets_it_and_hands_the_queue_back() {
-    let (mut state, generation) = tuned_in();
-    let _started = state.build_station_connected_actions(generation);
-    let queue_before = state.queue.to_persistable();
-
-    let actions = state.build_stop_actions(0);
-
-    assert_eq!(actions, vec![PlayerAction::Stop { fade_ms: 0 }]);
-    assert_eq!(state.status, PlaybackStatus::Stopped);
-    assert!(state.station().is_none());
-    assert_eq!(state.queue.to_persistable(), queue_before);
-}
-
-/// The deck draining means the feed thread spent its reconnect budget. Advancing the queue there
-/// would be a silent change of source, from a station to whatever the library was last on.
-#[test]
-fn a_station_going_off_air_stops_rather_than_advancing_the_queue() {
-    let (mut state, generation) = tuned_in();
-    let _started = state.build_station_connected_actions(generation);
-    let queue_before = state.queue.to_persistable();
-
-    let actions = state.build_end_of_stream_actions();
-
-    assert_eq!(actions, vec![PlayerAction::Stop { fade_ms: 0 }]);
-    assert_eq!(state.status, PlaybackStatus::Stopped);
-    assert!(state.station().is_none());
-    assert_eq!(state.queue.to_persistable(), queue_before, "the queue must not advance");
-}
-
-#[test]
-fn the_transport_refuses_everything_a_live_source_cannot_do() {
-    let (mut state, generation) = tuned_in();
-    let _started = state.build_station_connected_actions(generation);
-    let queue_before = state.queue.to_persistable();
-
-    assert_eq!(state.build_next_actions(), vec![], "a station has no next");
-    assert_eq!(state.build_previous_actions(), vec![], "a station has no previous");
-    assert_eq!(state.build_seek_actions(30_000), vec![], "a station has no timeline");
-    assert_eq!(state.build_set_speed_actions(1.5), vec![], "a station cannot be resampled");
-    assert_eq!(state.build_play_actions(), vec![], "resuming a station is a fresh open");
-
-    assert_eq!(state.position_ms, 0, "the refused seek must not move the position");
-    assert!((state.playback_speed - 1.0).abs() < f64::EPSILON);
-    assert_eq!(state.queue.to_persistable(), queue_before);
-}
-
-#[test]
-fn a_station_reports_no_next_or_previous() {
-    let (mut state, generation) = tuned_in();
-    assert!(state.queue.peek_next().is_some(), "the queue underneath still has one");
-
-    let vm = state.to_view_model_light();
-    assert!(!vm.has_next);
-    assert!(!vm.has_previous);
-
-    let _started = state.build_station_connected_actions(generation);
-    let vm = state.to_view_model_light();
-    assert!(!vm.has_next);
-    assert!(!vm.has_previous);
-}
-
-/// `source_allows` asks whether what is playing rules an action out, not whether something is
-/// playing — so an empty deck permits everything. Spelling it `is_some_and` instead would leave a
-/// fully loaded queue with its transport greyed out until the first track started, which is a
-/// silent failure nothing else in the suite would catch.
-#[test]
-fn an_empty_deck_rules_nothing_out() {
-    let mut state = PlayerState::default();
-    state.queue.add_tracks(vec![make_summary(1, "One", 100_000), make_summary(2, "Two", 100_000)]);
-    state.queue.current_index = Some(0);
-    assert!(state.current_track().is_none(), "nothing has reached the deck yet");
-
-    for capability in [
-        PlaybackSource::advances_queue,
-        PlaybackSource::is_seekable,
-        PlaybackSource::has_known_duration,
-        PlaybackSource::has_variable_speed,
-    ] {
-        assert!(state.source_allows(capability));
-    }
-
-    let vm = state.to_view_model_light();
-    assert!(vm.has_next, "a loaded queue offers Next before its first track plays");
-}
-
-#[test]
-fn the_view_model_carries_the_station_instead_of_a_track() {
-    let (mut state, generation) = tuned_in();
-    let _started = state.build_station_connected_actions(generation);
-    if let Some(radio) = state.station_mut() {
-        let radio = std::sync::Arc::make_mut(radio);
-        radio.live_title = Some("Artist - Track".to_owned());
-        radio.buffering = true;
-    }
-
-    let vm = state.to_view_model_light();
-
-    assert_eq!(vm.status, "playing", "a buffering station has not stopped");
-    assert!(vm.current_track.is_none());
-    assert_eq!(vm.duration_ms, 0);
-    assert!((vm.progress_percent - 0.0).abs() < f64::EPSILON);
-    let radio = vm.radio.as_ref();
-    assert_eq!(radio.map(|r| r.name.as_str()), Some("Example FM"));
-    assert_eq!(radio.and_then(|r| r.live_title.as_deref()), Some("Artist - Track"));
-    assert_eq!(radio.map(|r| r.buffering), Some(true));
-}
-
-/// The one thing that must never reach the log: a stream URL can carry a session token, and this
-/// line goes into the tail users attach to public issues.
-#[test]
-fn the_play_stream_action_never_renders_a_url() {
-    let rendered = PlayerAction::PlayStream { generation: 7, volume: 1.0 }.to_string();
-
-    assert!(rendered.contains('7'), "{rendered:?} should name the session it belongs to");
-    assert!(!rendered.contains("http"), "{rendered:?} must not carry the stream URL");
-}
-
-/// A track and a station are one deck's worth of source, so starting one has to end the other.
-/// Left standing, `radio` makes every transport builder below read the *track* as a live source,
-/// and the session guard still passes for a connect the pick was supposed to have cancelled.
-#[test]
-fn starting_a_track_ends_the_station_it_replaces() {
-    let (mut state, connecting) = tuned_in();
-
-    let _actions = play_track_inner(&mut state, make_summary(2, "Two", 180_000), None);
-
-    assert!(state.station().is_none(), "a track and a station cannot both be the source");
-    assert_eq!(state.current_track().map(|t| t.id), Some(2));
-    assert_eq!(
-        state.build_station_connected_actions(connecting),
-        vec![],
-        "the connect still in flight must not start over the track that replaced it"
-    );
-}
-
-/// The other half: every builder the radio arm refuses has to answer normally again.
-#[test]
-fn the_transport_is_a_tracks_again_once_one_replaces_the_station() {
-    let (mut state, generation) = tuned_in();
-    let _started = state.build_station_connected_actions(generation);
-
-    let _actions = play_track_inner(&mut state, make_summary(1, "One", 180_000), None);
-
-    let vm = state.to_view_model_light();
-    assert!(vm.radio.is_none());
-    assert!(vm.has_next, "the queue underneath is reachable again");
-
-    assert_eq!(
-        state.build_seek_actions(30_000),
-        vec![PlayerAction::Seek {
-            position_ms: 30_000,
-            file_path: "/music/1.mp3".to_owned(),
-            replaygain: TrackReplayGain::default(),
-        }]
-    );
-    assert_eq!(state.build_pause_actions(250), vec![PlayerAction::Pause { fade_ms: 250 }]);
-    assert_eq!(state.status, PlaybackStatus::Paused, "pausing a track is not a stop");
-}
-
-// --- The restart -----------------------------------------------------------
-//
-// `queue.json` is one file rather than two because a station leaves the queue seated underneath
-// it, so a restart owes both back. The round trip below is the whole of that claim: everything
-// above pins one side of it in memory, and nothing pinned it across the file.
-
-/// A player mid-album with a station tuned over it, which is the state the two-halves claim is
-/// about.
-fn tuned_over_a_queue() -> PlayerState {
-    let mut state = playing_a_queue();
-    let (generation, _actions) = state.build_station_connecting_actions(station("Example FM"));
-    let _started = state.build_station_connected_actions(generation);
-    state
-}
-
-#[test]
-fn a_station_over_a_queue_writes_both_halves_down() {
-    let state = tuned_over_a_queue();
-
-    let persisted = state.to_persisted();
-
-    assert_eq!(persisted.queue.track_ids, vec![1, 2], "the queue underneath is still owed");
-    assert_eq!(persisted.station_id, Some(42));
-}
-
-/// A station the user typed in but never saved has `station_id == 0`, and nothing could be looked
-/// back up with it. Writing it down would restore a station with no row on the next boot.
-#[test]
-fn a_station_with_no_row_of_its_own_is_not_written_down() {
-    let mut state = playing_a_queue();
-    let unsaved = Arc::new(RadioNowPlaying { station_id: 0, ..(*station("Unsaved FM")).clone() });
-    let (generation, _actions) = state.build_station_connecting_actions(unsaved);
-    let _started = state.build_station_connected_actions(generation);
-
-    assert!(state.station().is_some(), "the station is on the deck either way");
-    assert_eq!(state.to_persisted().station_id, None);
-}
-
-/// Seating the station is what evicts whatever the queue restore just put on the deck, the two
-/// being one field — but the queue itself has to survive that, or a stop hands back nothing.
-#[test]
-fn the_station_replaces_the_restored_track_and_not_the_queue_under_it() {
-    let mut state = PlayerState::default();
-    let persistable = PersistableQueue { track_ids: vec![1, 2], current_index: 0 };
-    restore_queue(
-        &mut state,
-        vec![make_summary(1, "One", 180_000), make_summary(2, "Two", 180_000)],
-        &persistable,
-    );
-    assert!(state.current_track().is_some(), "the queue restore seats a track first");
-
-    let _actions = restore_station(&mut state, station("Example FM"));
-
-    assert!(state.current_track().is_none(), "a station is not a track");
-    assert_eq!(state.station().map(|s| s.name.as_str()), Some("Example FM"));
-    assert_eq!(state.queue.to_persistable(), persistable, "the queue must survive verbatim");
-    assert_eq!(state.status, PlaybackStatus::Paused);
-    assert_eq!(state.duration_ms, 0);
-    assert_eq!(state.position_ms, 0);
-}
-
-/// The full trip through the file: what a session writes down is what the next one puts back,
-/// both halves of it.
-#[test]
-fn a_restart_puts_the_queue_back_under_the_station() -> Result<(), AppError> {
-    let before = tuned_over_a_queue();
-    let written = serde_json::to_string(&before.to_persisted())
-        .map_err(|e| AppError::Validation(format!("serialize queue.json: {e}")))?;
-
-    let read: PersistedPlayback = serde_json::from_str(&written)
-        .map_err(|e| AppError::Validation(format!("parse queue.json: {e}")))?;
-    let mut after = PlayerState::default();
-    restore_queue(
-        &mut after,
-        vec![make_summary(1, "One", 180_000), make_summary(2, "Two", 180_000)],
-        &read.queue,
-    );
-    let _actions = restore_station(&mut after, station("Example FM"));
-
-    assert_eq!(
-        after.queue.to_persistable(),
-        before.queue.to_persistable(),
-        "the queue came back as it went down"
-    );
-    assert_eq!(after.station().map(|s| s.name.as_str()), Some("Example FM"));
-    assert_eq!(read.station_id, Some(42), "and the id that found it survived the file");
-    Ok(())
-}
-
 // --- a long pause giving an exclusive device back ---
 
 /// The state's own position when the monitor decided to release, the last playing tick's.
@@ -1820,7 +1364,7 @@ const STOPPED_PULLING_AT: u64 = 30_400;
 fn paused_on(id: i64, position_ms: u64) -> PlayerState {
     PlayerState {
         status: PlaybackStatus::Paused,
-        source: Some(PlaybackSource::Track(make_summary(id, "Song", 180_000))),
+        source: Some(make_summary(id, "Song", 180_000)),
         duration_ms: 180_000,
         position_ms,
         ..Default::default()
@@ -1891,7 +1435,7 @@ fn a_replay_starts_the_paused_track_again_from_its_position() {
 /// Only a paused track can have been released, so a replay asked of any other state does nothing.
 #[test]
 fn a_replay_is_refused_unless_the_track_is_paused() {
-    for status in [PlaybackStatus::Playing, PlaybackStatus::Stopped, PlaybackStatus::Loading] {
+    for status in [PlaybackStatus::Playing, PlaybackStatus::Stopped] {
         let mut state = PlayerState { status, ..paused_on(1, PAUSED_AT) };
 
         let actions = state.build_replay_actions();

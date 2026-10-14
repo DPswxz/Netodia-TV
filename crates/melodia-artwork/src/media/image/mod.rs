@@ -17,5 +17,4 @@ pub mod artwork;
 pub mod cover_thumbs;
 pub mod decoded;
 pub mod image_decode;
-pub mod logo_tile;
 pub mod material_you;

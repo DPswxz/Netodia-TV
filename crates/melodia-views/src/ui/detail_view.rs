@@ -4,9 +4,7 @@
 use slint::Image;
 
 use crate::ui::detail_artwork::DetailPair;
-use melodia_ui::{
-    AlbumDetail, AppWindow, ArtistDetail, Favorites, PlaylistDetail, Radio, RecentlyPlayed,
-};
+use melodia_ui::{AlbumDetail, AppWindow, ArtistDetail, Favorites, PlaylistDetail, RecentlyPlayed};
 
 /// The cover and the two-slot blur cross-fade a hero global carries. Method names stay apart
 /// from the generated accessors, as `RowSelectionView`'s do.
@@ -44,7 +42,7 @@ macro_rules! impl_hero_slots {
     )+};
 }
 
-impl_hero_slots!(AlbumDetail, ArtistDetail, PlaylistDetail, Favorites, RecentlyPlayed, Radio);
+impl_hero_slots!(AlbumDetail, ArtistDetail, PlaylistDetail, Favorites, RecentlyPlayed);
 
 /// Push a decoded `(cover, blur)` pair into a hero global from the UI thread: the cover slot
 /// directly, the blur through `write_crossfade_slot` so switching entities fades rather than

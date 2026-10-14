@@ -35,7 +35,6 @@ fn stamping_the_revision_leaves_the_neighbouring_settings_alone() -> Result<(), 
     let (_tmp, paths) = seeded_root_with(|s| {
         s.theme_id = "material3".to_owned();
         s.accent_color = "teal".to_owned();
-        s.radio.radio_enabled = true;
     })?;
 
     set_onboarding_seen(&paths)?;
@@ -43,7 +42,6 @@ fn stamping_the_revision_leaves_the_neighbouring_settings_alone() -> Result<(), 
     let settings = services::settings::read_settings(&paths)?;
     assert_eq!(settings.theme_id, "material3");
     assert_eq!(settings.accent_color, "teal");
-    assert!(settings.radio.radio_enabled);
     Ok(())
 }
 

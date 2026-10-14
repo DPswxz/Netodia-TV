@@ -13,8 +13,8 @@ use melodia_core::error::AppError;
 /// `compose_artwork` wrote and no other row names, so a union that omits it reads them as orphans
 /// and the sweep blanks every custom playlist mosaic in the app; the auto-populated thumbnails
 /// alias a track's cover and would survive by coincidence, which is not a property to rely on.
-/// `radio_stations.artwork_path` is the same shape and worse, a station logo having come off a
-/// third-party host that is often already dead, so nothing can re-derive it.
+/// The two radio columns are retained for artwork paths in databases created by older versions;
+/// keeping them in the reference set prevents an upgrade from orphaning files still named there.
 ///
 /// [`repoint_all`] builds its statements from this. [`REFERENCED_PATHS`] spells the same six out
 /// by hand, a union reading better written than generated, and is pinned against this list.
@@ -24,15 +24,12 @@ pub(super) const ARTWORK_COLUMNS: [(&str, &str); 6] = [
     ("artists", "image_path"),
     ("playlists", "thumbnail_path"),
     ("radio_stations", "artwork_path"),
-    // The one entry that is not a row the user owns. A cached browse logo is held alive by its
-    // cache row alone, so the sweep has to see it or the cache would name a file the sweep just
-    // deleted; `library::radio`'s retention pass drops the row, and the file follows.
+    // Legacy cache rows are still artwork references and must keep their files alive.
     ("radio_logo_answers", "artwork_path"),
 ];
 
 /// The four arms of the reference set a library scan can re-derive, as one literal both unions
-/// below are built from. Radio's two stay out: `library::radio` drops a logo whose file is gone and
-/// fetches it again on its own.
+/// below are built from. Legacy radio references are added to the full set separately.
 macro_rules! library_reference_arms {
     () => {
         "\

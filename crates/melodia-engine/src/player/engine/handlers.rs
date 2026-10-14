@@ -15,8 +15,7 @@ use super::state::{
     PlayerAction, PlayerState, PlayerStateHandle, PositionTick, ReleaseDecision, lock_state,
     with_state_emit,
 };
-use super::types::{PersistedPlayback, PlaybackSource, PlaybackStatus};
-use melodia_audio::player::source::prebuffer::StreamShared;
+use super::types::{PersistedPlayback, PlaybackStatus};
 use melodia_playback::player::playback::crossfade;
 use melodia_playback::player::playback::replaygain::TrackReplayGain;
 
@@ -174,14 +173,6 @@ pub fn evaluate_playing_tick(
     state.position_ms = position_ms;
     let tick = PositionTick { position_ms, duration_ms: state.duration_ms };
 
-    // A live source has no track end, which is the only thing the two decisions below are about:
-    // a crossfade ramps between two tracks and a gapless preload stages the next one. The position
-    // published above is elapsed listening time, since the silence the prebuffer emits while
-    // starved still advances the deck's clock.
-    if !state.source_allows(PlaybackSource::advances_queue) {
-        return Some(PlayingTick { tick, late_preload: None, crossfade: None });
-    }
-
     let next = state.queue.peek_next();
     let same_album = match (state.current_track(), next) {
         (Some(cur), Some(nxt)) => crossfade::same_album(cur, nxt),
@@ -271,67 +262,9 @@ fn next_needs_reopen(
     }
     let next_path = {
         let state = lock_state(player_state);
-        if !state.source_allows(PlaybackSource::advances_queue) {
-            return false;
-        }
         state.queue.peek_next().map(|track| track.file_path.clone())
     };
     next_path.is_some_and(|path| engine.reopens_for(&path))
-}
-
-/// Tell the user a station gave up, which is otherwise a silence with no explanation.
-///
-/// Named rather than described: the station is what they chose, and by the time this fires the
-/// state is about to forget it.
-fn notify_station_ended(player_state: &PlayerStateHandle) {
-    let station = lock_state(player_state).station().map(|s| s.name.clone());
-    if let Some(name) = station {
-        melodia_core::utils::toast::notify(
-            melodia_core::utils::toast::ToastKind::PlaybackFailed,
-            name,
-        );
-    }
-}
-
-/// Bring `PlayerState` back in line with what the live stream is actually doing, emitting only
-/// when something moved.
-///
-/// The buffering flag and the ICY title are the two things a station changes on its own, and both
-/// arrive on the feed thread with no way to reach the state lock from there. Polling them on the
-/// tick the monitor already runs is cheaper than a channel and a task per station; the change
-/// checks are what stop it republishing the view model twice a second for a station that is
-/// perfectly happy.
-fn reconcile_live_stream(
-    stream: &StreamShared,
-    player_state: &PlayerStateHandle,
-    sinks: &PlayerSinks,
-    last_title_generation: &mut u64,
-) {
-    stream.publish_heard_title();
-    let buffering = stream.is_buffering();
-    let title_generation = stream.title_generation();
-    let title_moved = title_generation != *last_title_generation;
-    let buffering_moved =
-        lock_state(player_state).station().is_some_and(|station| station.buffering != buffering);
-
-    if !title_moved && !buffering_moved {
-        return;
-    }
-    *last_title_generation = title_generation;
-    let title = title_moved.then(|| stream.title());
-
-    with_state_emit(player_state, sinks, |state| {
-        if let Some(radio) = state.station_mut() {
-            // The one place the station is mutated in flight, so the `Arc`'s copy-on-write lands
-            // here: once a song, against a clone per emit if the struct were held inline.
-            let radio = std::sync::Arc::make_mut(radio);
-            radio.buffering = buffering;
-            if let Some(title) = title {
-                radio.live_title = title;
-            }
-        }
-        Vec::<PlayerAction>::new()
-    });
 }
 
 /// What the monitor knows at a save point, for whoever owns the writing.
@@ -403,9 +336,6 @@ struct Monitor {
     save_tick_counter: u64,
     publish: SecondGate,
     pause_watch: PauseWatch,
-    /// Last ICY title generation reconciled into `PlayerState`. Generations are process-wide
-    /// tickets starting at 1, so this holds across stations and `0` means nothing seen yet.
-    last_title_generation: u64,
 }
 
 impl Monitor {
@@ -420,7 +350,6 @@ impl Monitor {
             save_tick_counter: 0,
             publish: SecondGate::default(),
             pause_watch: PauseWatch::default(),
-            last_title_generation: 0,
         }
     }
 
@@ -478,7 +407,7 @@ impl Monitor {
             if let Some(track) = state.queue.advance().cloned() {
                 state.position_ms = 0;
                 state.duration_ms = u64::try_from(track.duration_ms.max(0)).unwrap_or(0);
-                state.source = Some(PlaybackSource::Track(track));
+                state.source = Some(track);
             }
 
             actions
@@ -486,17 +415,6 @@ impl Monitor {
     }
 
     fn end_of_stream(&self) -> Poll {
-        // A station's deck drains for exactly one reason — its feed thread spent the
-        // reconnect budget — and `is_finished` is that reason. Anything else is a deck
-        // caught in the instant between `play_stream` publishing the cell and
-        // appending the source, where an empty deck means "not yet", not "over".
-        let live = self.engine.stream_shared();
-        if live.as_deref().is_some_and(|s| !s.is_finished()) {
-            return Poll::Skipped;
-        }
-        if live.is_some() {
-            notify_station_ended(&self.player_state);
-        }
         // Advance the queue (or, if the sleep-timer's "End of current
         // track" mode is armed, disarm it and stop instead). See
         // `PlayerState::build_end_of_stream_actions`.
@@ -533,15 +451,6 @@ impl Monitor {
         if let Some(mc) = self.sinks.media_controls.as_ref() {
             mc.update_position(tick.position_ms);
         }
-        if let Some(stream) = self.engine.stream_shared() {
-            reconcile_live_stream(
-                &stream,
-                &self.player_state,
-                &self.sinks,
-                &mut self.last_title_generation,
-            );
-        }
-
         if let Some(decision) = crossfade {
             // Advance the queue and start the incoming track on the
             // idle deck in one serialized step. `emit_and_execute`

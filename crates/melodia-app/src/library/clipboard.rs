@@ -6,8 +6,8 @@
 //! sheet hands over queue order. An item without the field asked for contributes no line rather
 //! than an empty one, so a pasted list never carries blanks the user has to clean out.
 //!
-//! **Line breaks between items, never a space.** A title or a station name holds spaces of its
-//! own, so a space-joined list cannot say where one item ends, and a path can hold commas. Pasted
+//! **Line breaks between items, never a space.** A title holds spaces of its own, so a
+//! space-joined list cannot say where one item ends, and a path can hold commas. Pasted
 //! into a single-line field, the breaks become whatever that field makes of them: Melodia's own
 //! search box turns them into spaces, plenty of others drop them.
 //!
@@ -70,35 +70,6 @@ impl EntityField {
     }
 }
 
-/// What a station card's Copy flyout offers.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum StationField {
-    Name,
-    StreamUrl,
-    Website,
-}
-
-impl StationField {
-    /// Parses the token a `.slint` menu spells, `None` for anything else.
-    pub fn from_token(token: &str) -> Option<Self> {
-        match token {
-            "name" => Some(Self::Name),
-            "stream-url" => Some(Self::StreamUrl),
-            "website" => Some(Self::Website),
-            _ => None,
-        }
-    }
-}
-
-/// The parts of a station a Copy entry can reach. Borrowed, since the stations live in the radio
-/// slice's caches and a directory station and a kept one are different types there.
-#[derive(Clone, Copy, Debug)]
-pub struct StationText<'a> {
-    pub name: &'a str,
-    pub stream_url: &'a str,
-    pub website: Option<&'a str>,
-}
-
 /// One line per track, in the order `ids` gives.
 ///
 /// # Errors
@@ -123,14 +94,6 @@ pub async fn entity_lines(
 ) -> Result<String, AppError> {
     let labels = entity_labels(db, kind, ids).await?;
     Ok(lines_in_order(ids, labels, field))
-}
-
-/// One line per station, in the order handed over.
-pub fn station_lines<'a>(
-    stations: impl IntoIterator<Item = StationText<'a>>,
-    field: StationField,
-) -> String {
-    join_lines(stations.into_iter().filter_map(|station| station_line(station, field)))
 }
 
 /// What a card names, and the artist it credits where it has one.
@@ -195,15 +158,6 @@ fn entity_line(label: &EntityLabel, field: EntityField) -> Option<String> {
         EntityField::Artist => label.artist.as_deref().and_then(present).map(str::to_owned),
         EntityField::ArtistName => credited(label.artist.as_deref(), &label.name),
     }
-}
-
-fn station_line(station: StationText<'_>, field: StationField) -> Option<String> {
-    let text = match field {
-        StationField::Name => station.name,
-        StationField::StreamUrl => station.stream_url,
-        StationField::Website => station.website?,
-    };
-    present(text).map(str::to_owned)
 }
 
 /// `credit - name`, or the name alone where nothing is credited. A line with no name says

@@ -5,9 +5,8 @@ import { OverlayScrollbar } from "../overlay-scrollbar.slint";
 // The Now-Playing column's scrollbar: an `OverlayScrollbar` tinted with the per-artwork accent, so
 // the bar sits *into* the backdrop blur rather than on top of it.
 //
-// The palette is here because all three arms of that column draw the same bar — Up Next, the
-// lyrics sheet and the station panel — and a tint spelled per arm is one the three would come to
-// disagree about, which reads as one column not belonging with the others.
+// The palette is here because both arms of that column draw the same bar — Up Next and the lyrics
+// sheet — and a tint spelled per arm is one they would come to disagree about.
 //
 // `on-backdrop` is whether there is a backdrop for an accent to sit into. False is the neutral
 // page treatment, which is the miniplayer with its own backdrop switched off. Each pair is

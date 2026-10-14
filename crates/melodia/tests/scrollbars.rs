@@ -44,10 +44,8 @@ const GRID_DIR: &str = "components/grid/";
 /// a navigation, so it takes whatever the style publishes. `draggable-track-list.slint` is
 /// absent for the opposite reason, its two bindings being pinned by an exact count in
 /// `ui::playlists::tests` instead, a drag there being the reorder itself.
-const CARD_SHAPED_LISTS: [&str; 4] = [
-    "views/radio/station-grid.slint",
+const CARD_SHAPED_LISTS: [&str; 2] = [
     "views/browse-view.slint",
-    "views/radio/facet-chip.slint",
     "components/now-playing/up-next-list.slint",
 ];
 
@@ -169,7 +167,7 @@ fn every_scroller_opts_out_of_the_stock_scrollbar() {
 /// owns. Where the pan is on, 8 px of travel inside 500 ms hands the flickable the grab and
 /// every item under it is sent a cancel, so a press that drifts that far never lands as a
 /// click — "sometimes it doesn't open", on a grid long enough to flick and nowhere else.
-/// `views/radio/station-grid.slint` carries the argument.
+/// Entity-card grids carry the argument.
 #[test]
 fn every_grid_scroller_opts_out_of_drag_to_pan() {
     let sources = sources();

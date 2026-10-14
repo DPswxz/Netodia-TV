@@ -2,7 +2,7 @@
 //!
 //! At most two requests per track change, and only from behind `library::lyrics`' switch. The
 //! service's own response shape stays private here and what crosses out is
-//! [`LyricsAnswer`], the same way the radio directory keeps its `ApiStation` to itself.
+//! [`LyricsAnswer`], keeping the service shape out of callers.
 //!
 //! **Every request goes through the pacer, and a refusal arms it.** The service documents both
 //! halves as requirements rather than advice: a delay between requests, and a `429` whose
@@ -50,11 +50,11 @@ const MAX_SEARCH_BYTES: u64 = 2 * 1024 * 1024;
 /// How far a candidate's own duration may sit from the track's and still be the same recording.
 ///
 /// The signature endpoint's own window, measured against it: a track it answers for at `n` is
-/// still answered at `n ± 2` and refused at `n ± 3`. Taking anything wider here would let a radio
-/// edit answer for the album cut, which is precisely the confusion the signature avoids.
+/// still answered at `n ± 2` and refused at `n ± 3`. Taking anything wider here could let a
+/// different recording answer for the track, which is precisely the confusion the signature avoids.
 const DURATION_TOLERANCE_MS: f64 = 2_000.0;
 
-/// In line with the station logo's, the other fetch that must not hold a view open waiting.
+/// A lookup must not hold a view open while it waits for the network.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// How long to stand down after a refusal that named no period.

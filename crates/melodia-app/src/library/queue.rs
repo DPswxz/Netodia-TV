@@ -9,10 +9,10 @@ use melodia_core::error::{AppError, AppResult};
 use melodia_engine::player::engine::actions::emit_and_execute;
 use melodia_engine::player::engine::event_sink::PlayerSinks;
 use melodia_engine::player::engine::state::{
-    PlayerAction, PlayerState, PlayerStateHandle, play_track_inner, restore_queue, restore_station,
+    PlayerAction, PlayerState, PlayerStateHandle, play_track_inner, restore_queue,
     with_state_emit,
 };
-use melodia_engine::player::engine::types::{PersistedPlayback, RadioNowPlaying, RepeatMode};
+use melodia_engine::player::engine::types::{PersistedPlayback, RepeatMode};
 use melodia_store::database::{DbPool, queries};
 
 use super::import::{ImportFilesResult, import_and_summarize};
@@ -310,24 +310,11 @@ fn load_persisted_playback(paths: &Paths) -> Option<PersistedPlayback> {
 /// Startup restore: what the last session was playing back into `PlayerState`, once, from
 /// `boot::tasks`.
 ///
-/// The queue and the station over it come back together, in that order — seating the station
-/// clears the `current_track` the queue restore just set, and the queue underneath is what a stop
-/// hands back (D9).
-///
 /// Gather then apply, because the two halves are testable at different costs: [`plan_restore`]
-/// needs a pool and a data directory, the apply needs a `PlaybackEngine` and therefore an audio
-/// device. The station is resolved here rather than in the plan, being the one part that goes
-/// through the radio facade and its off switch.
+/// needs a pool and a data directory, and the apply restores the queue state.
 pub async fn restore_persisted_playback(state: &AppState) -> AppResult<()> {
     let persisted = load_persisted_playback(&state.paths);
-    let station = match persisted.as_ref().and_then(|p| p.station_id) {
-        Some(id) => super::radio::station_to_restore(state, id).await,
-        None => None,
-    };
-    let plan = plan_restore(&state.db, &state.paths, persisted, station).await?;
-
-    // `emit_and_execute` rather than a bare emit because a seated station may owe the deck a speed
-    // reset: `settings.json` hydrates the speed ahead of this and a station is pinned at 1.0.
+    let plan = plan_restore(&state.db, &state.paths, persisted).await?;
     emit_and_execute(&*state.engine, &state.player_state, &state.sinks, |s| apply_restore(s, plan));
 
     Ok(())
@@ -339,7 +326,6 @@ struct RestorePlan {
     /// The rows that still exist. Shorter than `persisted.queue.track_ids` when a folder went
     /// away between sessions, which is the ordinary case rather than the corrupt one.
     summaries: Vec<Arc<TrackSummary>>,
-    station: Option<Arc<RadioNowPlaying>>,
     repeat_mode: RepeatMode,
     shuffle_enabled: bool,
 }
@@ -355,7 +341,6 @@ async fn plan_restore(
     db: &DbPool,
     paths: &Arc<Paths>,
     persisted: Option<PersistedPlayback>,
-    station: Option<Arc<RadioNowPlaying>>,
 ) -> AppResult<RestorePlan> {
     let summaries: Vec<Arc<TrackSummary>> = match persisted.as_ref() {
         Some(p) => queries::track::get_track_summaries_by_ids(db, &p.queue.track_ids)
@@ -381,13 +366,12 @@ async fn plan_restore(
     .await
     .map_err(|e| AppError::io("restore_persisted_playback join", e))??;
 
-    Ok(RestorePlan { persisted, summaries, station, repeat_mode, shuffle_enabled })
+    Ok(RestorePlan { persisted, summaries, repeat_mode, shuffle_enabled })
 }
 
-/// Seat a [`RestorePlan`]. The queue first and the station over it, which is the order the two
-/// halves of `queue.json` owe each other.
+/// Seat a [`RestorePlan`].
 fn apply_restore(state: &mut PlayerState, plan: RestorePlan) -> Vec<PlayerAction> {
-    let RestorePlan { persisted, summaries, station, repeat_mode, shuffle_enabled } = plan;
+    let RestorePlan { persisted, summaries, repeat_mode, shuffle_enabled } = plan;
 
     if let Some(p) = persisted {
         restore_queue(state, summaries, &p.queue);
@@ -395,10 +379,7 @@ fn apply_restore(state: &mut PlayerState, plan: RestorePlan) -> Vec<PlayerAction
     state.queue.repeat_mode = repeat_mode;
     state.queue.shuffle_enabled = shuffle_enabled;
 
-    match station {
-        Some(station) => restore_station(state, station),
-        None => vec![],
-    }
+    Vec::new()
 }
 
 /// Shuffle the queue's `play_order` in place using a thread-local RNG,

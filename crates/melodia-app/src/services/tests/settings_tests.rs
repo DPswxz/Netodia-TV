@@ -717,64 +717,6 @@ fn test_replaygain_roundtrip() -> Result<(), AppError> {
     Ok(())
 }
 
-/// Click reporting is the one field a derive would get wrong, which is why `RadioFlags` writes its
-/// `Default` by hand: `false` there silently ships a directory nobody's plays are counted for, and
-/// popularity ordering is what every user browses by.
-#[test]
-fn test_radio_defaults_when_absent() -> Result<(), AppError> {
-    let json = r#"{"theme_id": "catppuccin"}"#;
-    let settings: SettingsData = serde_json::from_str(json).map_err(|e| json_err(&e))?;
-
-    assert!(!settings.radio.radio_enabled);
-    assert!(!settings.radio.radio_hide_segmented);
-    assert!(settings.radio.radio_send_clicks);
-    Ok(())
-}
-
-/// The key this replaced shipped defaulting to `true`, so every install that has written the file
-/// carries it. Renaming is what makes those installs take the new default; read back under the old
-/// name they would go on hiding stations that now play.
-#[test]
-fn test_the_retired_hls_key_does_not_carry_forward() -> Result<(), AppError> {
-    let json = r#"{"theme_id": "catppuccin", "radio_enabled": true, "radio_hide_hls": true}"#;
-    let settings: SettingsData = serde_json::from_str(json).map_err(|e| json_err(&e))?;
-
-    assert!(!settings.radio.radio_hide_segmented);
-    Ok(())
-}
-
-#[test]
-fn test_radio_roundtrip() -> Result<(), AppError> {
-    let settings = SettingsData {
-        radio: RadioFlags {
-            radio_enabled: true,
-            radio_hide_segmented: true,
-            radio_send_clicks: false,
-            radio_scrobble: false,
-        },
-        ..reading_env(SettingsData::default)
-    };
-    let json = serde_json::to_string(&settings).map_err(|e| json_err(&e))?;
-    let deserialized: SettingsData = serde_json::from_str(&json).map_err(|e| json_err(&e))?;
-
-    assert!(deserialized.radio.radio_enabled);
-    assert!(deserialized.radio.radio_hide_segmented);
-    assert!(!deserialized.radio.radio_send_clicks);
-    Ok(())
-}
-
-/// Click reporting is opt-*out*, so an install that turned radio on before it existed has to come
-/// back with it still on rather than with whatever a missing key defaults to elsewhere.
-#[test]
-fn test_radio_sub_toggles_survive_an_older_settings_file() -> Result<(), AppError> {
-    let json = r#"{"theme_id": "catppuccin", "radio_enabled": true}"#;
-    let settings: SettingsData = serde_json::from_str(json).map_err(|e| json_err(&e))?;
-
-    assert!(settings.radio.radio_enabled);
-    assert!(settings.radio.radio_send_clicks);
-    Ok(())
-}
-
 /// `0` is what a file written before the card existed deserializes to, and it is the only value
 /// that has to mean "owed". The comparison is `<` rather than `!=` so an install carrying a
 /// revision from a *newer* build — a downgrade, or a shared home directory — is left alone rather

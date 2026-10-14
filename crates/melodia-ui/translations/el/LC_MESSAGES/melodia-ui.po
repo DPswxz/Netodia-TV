@@ -15,12 +15,11 @@ msgstr ""
 msgid "Search"
 msgstr "Αναζήτηση"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Browse"
 msgstr "Περιήγηση"
 
 #: ui/app-window.slint ui/layout/sidebar.slint ui/views/favorites-view.slint
-#: ui/views/radio-view.slint
 msgid "Favorites"
 msgstr "Αγαπημένα"
 
@@ -28,7 +27,7 @@ msgstr "Αγαπημένα"
 msgid "My Library"
 msgstr "Η βιβλιοθήκη μου"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 #: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "Πρόσφατα αναπαραγόμενα"
@@ -36,11 +35,6 @@ msgstr "Πρόσφατα αναπαραγόμενα"
 #: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Settings"
 msgstr "Ρυθμίσεις"
-
-#: ui/app-window.slint ui/layout/sidebar.slint
-#: ui/views/settings/radio-section.slint
-msgid "Radio"
-msgstr "Ραδιόφωνο"
 
 #: ui/components/caption-buttons.slint
 #: ui/components/macos-titlebar-cluster.slint
@@ -81,74 +75,23 @@ msgstr "Προσθήκη στα αγαπημένα"
 msgid "Remove from Favorites"
 msgstr "Κατάργηση από τα αγαπημένα"
 
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-msgid "Stream URL"
-msgstr "URL ροής"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Name (optional)"
-msgstr "Όνομα (προαιρετικό)"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to use the station's own name"
-msgstr "Αφήστε το κενό για να χρησιμοποιηθεί το όνομα του σταθμού"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
-msgid "Website"
-msgstr "Ιστότοπος"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Logo URL"
-msgstr "URL λογότυπου"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to look for a logo on the website above."
-msgstr "Αφήστε το κενό για αναζήτηση λογότυπου στον παραπάνω ιστότοπο."
-
-#: ui/components/dialog/add-station-body.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/track-list/column-toggle-popup.slint
 #: ui/components/track-list/track-list-header.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "Είδος"
 
-#: ui/components/dialog/add-station-body.slint
-msgid "Jazz, Blues"
-msgstr "Τζαζ, Μπλουζ"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "Country"
-msgstr "Χώρα"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Tunisia"
-msgstr "Τυνησία"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "The directory owns this station's name and stream. What it left blank is yours to fill in; leave a field empty to remove it again."
-msgstr "Το όνομα και η ροή αυτού του σταθμού ανήκουν στον κατάλογο. Ό,τι άφησε κενό μπορείτε να το συμπληρώσετε· αφήστε ένα πεδίο κενό για να το αφαιρέσετε ξανά."
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Checking the stream…"
-msgstr "Έλεγχος της ροής…"
-
 #: ui/components/dialog/credit-editor.slint
 #: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Add"
 msgstr "Προσθήκη"
 
 #: ui/components/dialog/dialog.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/grid/station-context-menu.slint ui/views/favorites-view.slint
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/favorites-view.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "Όνομα"
 
@@ -168,11 +111,7 @@ msgstr "Προσθήκη περιγραφής…"
 msgid "Finish"
 msgstr "Ολοκλήρωση"
 
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
-msgid "Open Last.fm"
-msgstr "Άνοιγμα Last.fm"
-
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
+#: ui/components/dialog/dialog.slint
 msgid "Connect"
 msgstr "Σύνδεση"
 
@@ -306,35 +245,12 @@ msgstr "Αποτροπή ψαλιδίσματος"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "Το ReplayGain επηρεάζει μόνο κομμάτια που έχουν ήδη ετικέτες έντασης ήχου. Σαρώστε τη βιβλιοθήκη σας με ένα εργαλείο όπως το rsgain ή το loudgain για να τις προσθέσετε."
 
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "Click Open Last.fm to approve Melodia in your browser."
-msgstr "Κάντε κλικ στο Άνοιγμα Last.fm για να εγκρίνετε το Melodia στο πρόγραμμα περιήγησής σας."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "After approving Melodia in your browser, click Finish."
-msgstr "Αφού εγκρίνετε το Melodia στο πρόγραμμα περιήγησής σας, κάντε κλικ στο Ολοκλήρωση."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
 #: ui/globals/player.slint
 msgid "Connecting…"
 msgstr "Σύνδεση…"
 
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "User token"
-msgstr "Διακριτικό χρήστη"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Paste your ListenBrainz user token"
-msgstr "Επικολλήστε το διακριτικό χρήστη ListenBrainz"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Find your token on your ListenBrainz profile settings page."
-msgstr "Θα βρείτε το διακριτικό σας στη σελίδα ρυθμίσεων του προφίλ σας στο ListenBrainz."
-
 #: ui/components/dialog/selectable-picker.slint
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "Επιλογή όλων"
@@ -409,7 +325,6 @@ msgid "Duration (sec)"
 msgstr "Διάρκεια (δευτ.)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/station-facts.slint ui/views/radio/tab-pills.slint
 msgid "Plays"
 msgstr "Αναπαραγωγές"
 
@@ -455,7 +370,6 @@ msgid "File size (bytes)"
 msgstr "Μέγεθος αρχείου (bytes)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Last played"
 msgstr "Τελευταία αναπαραγωγή"
 
@@ -702,7 +616,6 @@ msgstr "Αριθμός"
 
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/onboarding/appearance-panel.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "Γλώσσα"
@@ -752,8 +665,7 @@ msgstr "Διαδρομή"
 msgid "Codec"
 msgstr "Codec"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/station-facts.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Bitrate"
 msgstr "Ρυθμός bit"
 
@@ -805,10 +717,8 @@ msgid "Folder"
 msgstr "Φάκελος"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/now-playing/play-button.slint
 #: ui/components/track-list/track-context-menu.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Play"
 msgstr "Αναπαραγωγή"
 
@@ -874,8 +784,6 @@ msgid "Edit Track Information"
 msgstr "Επεξεργασία πληροφοριών κομματιού"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "Αντιγραφή"
@@ -908,7 +816,6 @@ msgid "Go to Artist"
 msgstr "Μετάβαση στον καλλιτέχνη"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "Εκκαθάριση επιλογής"
@@ -940,32 +847,6 @@ msgstr "Καλλιτέχνης - Άλμπουμ"
 #: ui/components/grid/playlist-grid.slint
 msgid "0 tracks"
 msgstr "0 κομμάτια"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Open Website"
-msgstr "Άνοιγμα ιστότοπου"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Edit…"
-msgstr "Επεξεργασία…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Recently Played…"
-msgstr "Αφαίρεση {} από τα πρόσφατα αναπαραγόμενα…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Recently Played…"
-msgstr "Αφαίρεση από τα πρόσφατα αναπαραγόμενα…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Favorites…"
-msgstr "Αφαίρεση {} από τα αγαπημένα…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Favorites…"
-msgstr "Κατάργηση από τα αγαπημένα…"
 
 #: ui/components/mini-player/mini-captions.slint
 msgid "Full Player"
@@ -1254,33 +1135,9 @@ msgid "Melodia works offline. These are the parts that reach out."
 msgstr "Το Melodia λειτουργεί εκτός σύνδεσης. Αυτά είναι τα μέρη που συνδέονται."
 
 #: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Internet radio"
-msgstr "Διαδικτυακό ραδιόφωνο"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Browse and play live stations from radio-browser.info"
-msgstr "Περιήγηση και αναπαραγωγή ζωντανών σταθμών από το radio-browser.info"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/discord-section.slint
-msgid "Show the track you're playing on your Discord profile"
-msgstr "Εμφάνιση του κομματιού που ακούς στο προφίλ σου στο Discord"
-
-#: ui/components/onboarding/features-panel.slint
 #: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "Όταν ένα κομμάτι δεν έχει δικούς του στίχους, ζητούνται από το lrclib.net"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobbling"
-msgstr "Scrobbling"
-
-#: ui/components/onboarding/features-panel.slint
-msgid "Send what you play to Last.fm or ListenBrainz"
-msgstr "Στείλτε ό,τι ακούτε στο Last.fm ή στο ListenBrainz"
 
 #: ui/components/onboarding/features-panel.slint
 msgid "Set Up"
@@ -1383,10 +1240,9 @@ msgstr "{} / {} αρχεία"
 
 #: ui/components/settings/scan-progress.slint ui/globals/dialog-forms.slint
 #: ui/globals/dialog.slint ui/views/queue-sheet.slint
-#: ui/views/radio/tab-pills.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/appearance-section.slint
 #: ui/views/settings/library-section.slint
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 #: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "Άκυρο"
@@ -1395,54 +1251,11 @@ msgstr "Άκυρο"
 msgid "Sort"
 msgstr "Ταξινόμηση"
 
-#: ui/components/station-facts.slint
-msgid "Stream"
-msgstr "Ροή"
-
-#: ui/components/station-facts.slint
-msgid "Copy stream URL"
-msgstr "Αντιγραφή URL ροής"
-
-#: ui/components/station-facts.slint
-msgid "Open in your browser"
-msgstr "Άνοιγμα στο πρόγραμμα περιήγησης"
-
-#: ui/components/station-facts.slint ui/views/radio/suggestion-pill.slint
-#: ui/views/radio/tab-pills.slint
-msgid "Format"
-msgstr "Μορφή"
-
-#: ui/components/station-facts.slint ui/views/radio/station-grid.slint
-msgid "{} kbps"
-msgstr "{} kbps"
-
-#: ui/components/station-facts.slint
-msgid "Votes"
-msgstr "Ψήφοι"
-
-#: ui/components/station-facts.slint
-msgid "{n} vote"
-msgid_plural "{n} votes"
-msgstr[0] "{n} ψήφος"
-msgstr[1] "{n} ψήφοι"
-
-#: ui/components/station-facts.slint ui/globals/hero-chips.slint
+#: ui/globals/hero-chips.slint
 msgid "{n} play"
 msgid_plural "{n} plays"
 msgstr[0] "{n} αναπαραγωγή"
 msgstr[1] "{n} αναπαραγωγές"
-
-#: ui/components/station-facts.slint
-msgid "Recently played on this station"
-msgstr "Πρόσφατα σε αυτόν τον σταθμό"
-
-#: ui/components/station-facts.slint
-msgid "Copy Title"
-msgstr "Αντιγραφή τίτλου"
-
-#: ui/components/station-facts.slint
-msgid "Copy Artist"
-msgstr "Αντιγραφή καλλιτέχνη"
 
 #: ui/components/track-copy-items.slint
 msgid "Artist - Title"
@@ -1523,14 +1336,6 @@ msgstr "Δεν έχει εγκριθεί ακόμη. Εγκρίνετε το Mel
 msgid "Couldn't save your credentials."
 msgstr "Δεν ήταν δυνατή η αποθήκευση των διαπιστευτηρίων σας."
 
-#: ui/globals/dialog-forms.slint
-msgid "Edit Station"
-msgstr "Επεξεργασία σταθμού"
-
-#: ui/globals/dialog-forms.slint
-msgid "Station Details"
-msgstr "Στοιχεία σταθμού"
-
 #: ui/globals/dialog-forms.slint ui/globals/dialog.slint
 msgid "Save"
 msgstr "Αποθήκευση"
@@ -1542,10 +1347,6 @@ msgstr "Η διεύθυνση δεν είναι προσβάσιμη. Ελέγξ
 #: ui/globals/dialog-forms.slint
 msgid "That address doesn't play as audio Melodia can decode."
 msgstr "Η διεύθυνση δεν δίνει ήχο που μπορεί να αποκωδικοποιήσει το Melodia."
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't save the station."
-msgstr "Δεν ήταν δυνατή η αποθήκευση του σταθμού."
 
 #: ui/globals/dialog-forms.slint
 msgid "That doesn't look like a web address. It should start with https://"
@@ -1596,32 +1397,8 @@ msgid "\"{}\" will be removed from Recently Played."
 msgstr "Ο σταθμός «{}» θα αφαιρεθεί από τα πρόσφατα αναπαραγόμενα."
 
 #: ui/globals/dialog.slint
-msgid "\"{}\" will be removed from your stations, along with its play history."
-msgstr "Ο σταθμός «{}» θα αφαιρεθεί μαζί με το ιστορικό αναπαραγωγής του."
-
-#: ui/globals/dialog.slint
 msgid "\"{}\" will be removed from your favorites."
 msgstr "Ο σταθμός «{}» θα αφαιρεθεί από τα αγαπημένα σας."
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from Recently Played?"
-msgid_plural "Remove {n} stations from Recently Played?"
-msgstr[0] "Αφαίρεση {n} σταθμού από τα πρόσφατα αναπαραγόμενα;"
-msgstr[1] "Αφαίρεση {n} σταθμών από τα πρόσφατα αναπαραγόμενα;"
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from favorites?"
-msgid_plural "Remove {n} stations from favorites?"
-msgstr[0] "Αφαίρεση {n} σταθμού από τα αγαπημένα;"
-msgstr[1] "Αφαίρεση {n} σταθμών από τα αγαπημένα;"
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from Recently Played."
-msgstr "Οι σταθμοί θα αφαιρεθούν από τα πρόσφατα αναπαραγόμενα."
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from your favorites. Any you added by hand are removed from your stations, along with their play history."
-msgstr "Οι σταθμοί θα αφαιρεθούν από τα αγαπημένα σας. Όσοι προστέθηκαν χειροκίνητα θα αφαιρεθούν από τους σταθμούς σας, μαζί με το ιστορικό αναπαραγωγής τους."
 
 #: ui/globals/dialog.slint
 msgid "Edit Rules"
@@ -1648,7 +1425,6 @@ msgid "Choose playlists to export."
 msgstr "Επιλέξτε λίστες για εξαγωγή."
 
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Export"
 msgstr "Εξαγωγή"
 
@@ -1672,7 +1448,6 @@ msgstr "Συλλογή"
 msgid "No track playing"
 msgstr "Δεν παίζει κομμάτι"
 
-#. Translators: a state on the station pill, not the Pause button's verb
 #: ui/globals/player.slint
 msgid "Paused"
 msgstr "Σε παύση"
@@ -1917,30 +1692,10 @@ msgid "These playlists are too large for one .zip file. Export fewer at a time."
 msgstr "Αυτές οι λίστες είναι πολύ μεγάλες για ένα αρχείο .zip. Εξαγάγετε λιγότερες κάθε φορά."
 
 #: ui/settings.slint
-msgid "{n} station added"
-msgid_plural "{n} stations added"
-msgstr[0] "Προστέθηκε {n} σταθμός"
-msgstr[1] "Προστέθηκαν {n} σταθμοί"
-
-#: ui/settings.slint
 msgid "{n} was already in your list."
 msgid_plural "{n} were already in your list."
 msgstr[0] "{n} υπήρχε ήδη στη λίστα σας."
 msgstr[1] "{n} υπήρχαν ήδη στη λίστα σας."
-
-#: ui/settings.slint
-msgid "Couldn't read any stations from the selected file(s)."
-msgstr "Δεν βρέθηκαν σταθμοί στα επιλεγμένα αρχεία."
-
-#: ui/settings.slint
-msgid "{n} station exported"
-msgid_plural "{n} stations exported"
-msgstr[0] "Εξήχθη {n} σταθμός"
-msgstr[1] "Εξήχθησαν {n} σταθμοί"
-
-#: ui/settings.slint
-msgid "Couldn't write the station list."
-msgstr "Δεν ήταν δυνατή η εγγραφή της λίστας σταθμών."
 
 #: ui/settings.slint
 msgid "Playback error"
@@ -2112,7 +1867,7 @@ msgstr "Δεν υπάρχουν αγαπημένοι καλλιτέχνες ακ
 msgid "Favorite a song and its artist appears here."
 msgstr "Πρόσθεσε ένα τραγούδι στα αγαπημένα και θα εμφανιστεί ο καλλιτέχνης του εδώ."
 
-#: ui/views/favorites/most-played-tab.slint ui/views/radio-view.slint
+#: ui/views/favorites/most-played-tab.slint
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "Δεν έχει παίξει τίποτα ακόμη"
@@ -2253,18 +2008,13 @@ msgstr "Δημιουργία λίστας από κανόνες"
 msgid "More playlist actions"
 msgstr "Περισσότερες ενέργειες λίστας"
 
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Import"
 msgstr "Εισαγωγή"
 
-#: ui/views/now-playing-view.slint ui/views/radio/tab-pills.slint
+#: ui/views/now-playing-view.slint
 msgid "Vote"
 msgstr "Ψήφος"
-
-#. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/views/now-playing-view.slint
-msgid "Station"
-msgstr "Σταθμός"
 
 #: ui/views/now-playing-view.slint
 msgid "Up Next"
@@ -2297,108 +2047,6 @@ msgstr "Η ουρά είναι άδεια"
 #: ui/views/queue-sheet.slint
 msgid "Drop to add to queue"
 msgstr "Αφήστε για προσθήκη στην ουρά"
-
-#: ui/views/radio-view.slint ui/views/radio/suggestion-pill.slint
-msgid "{n} station"
-msgid_plural "{n} stations"
-msgstr[0] "{n} σταθμός"
-msgstr[1] "{n} σταθμοί"
-
-#: ui/views/radio-view.slint
-msgid "Search stations…"
-msgstr "Αναζήτηση σταθμών…"
-
-#: ui/views/radio-view.slint
-msgid "Filter stations…"
-msgstr "Φιλτράρισμα σταθμών…"
-
-#: ui/views/radio-view.slint
-msgid "No stations kept yet"
-msgstr "Δεν έχετε αποθηκεύσει σταθμούς ακόμη"
-
-#: ui/views/radio-view.slint
-msgid "Star a station in Browse, or add one by URL."
-msgstr "Σημειώστε έναν σταθμό στην Περιήγηση ή προσθέστε έναν με URL."
-
-#: ui/views/radio-view.slint
-msgid "Stations you listen to show up here."
-msgstr "Οι σταθμοί που ακούτε εμφανίζονται εδώ."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Searching the directory…"
-msgstr "Αναζήτηση στον κατάλογο…"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Stations are coming from radio-browser.info."
-msgstr "Οι σταθμοί προέρχονται από το radio-browser.info."
-
-#: ui/views/radio/browse-tab.slint
-msgid "The station directory is unreachable"
-msgstr "Ο κατάλογος σταθμών δεν είναι προσβάσιμος"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Check your connection and try again."
-msgstr "Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Try again"
-msgstr "Δοκιμή ξανά"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "No stations matched"
-msgstr "Δεν βρέθηκαν σταθμοί"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "Try a different name, or clear a filter."
-msgstr "Δοκιμάστε άλλο όνομα ή καθαρίστε ένα φίλτρο."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Load more stations"
-msgstr "Φόρτωση περισσότερων σταθμών"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/facet-chip.slint
-msgid "Loading…"
-msgstr "Φόρτωση…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Filter…"
-msgstr "Φιλτράρισμα…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Nothing to pick from"
-msgstr "Δεν υπάρχει τίποτα προς επιλογή"
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory reached this station on its last check."
-msgstr "Ο κατάλογος προσέγγισε αυτόν τον σταθμό στον τελευταίο έλεγχο."
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory could not reach this station on its last check."
-msgstr "Ο κατάλογος δεν μπόρεσε να προσεγγίσει αυτόν τον σταθμό στον τελευταίο έλεγχο."
-
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "{} kbps and up"
-msgstr "{} kbps και άνω"
-
-#: ui/views/radio/suggestion-pill.slint
-msgid "{}: {}"
-msgstr "{}: {}"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Add Station"
-msgstr "Προσθήκη σταθμού"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Added"
-msgstr "Προστέθηκε"
-
-#: ui/views/radio/tab-pills.slint
-msgid "More station actions"
-msgstr "Περισσότερες ενέργειες σταθμού"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Edit"
-msgstr "Επεξεργασία"
 
 #: ui/views/recently-played-view.slint
 msgid "Filter recently played…"
@@ -2605,34 +2253,6 @@ msgstr "Καταγράφει επιπλέον λεπτομέρειες. Ενερ
 #: ui/views/settings/diagnostics-section.slint
 msgid "Save…"
 msgstr "Αποθήκευση…"
-
-#: ui/views/settings/discord-section.slint
-msgid "Show album artwork"
-msgstr "Εμφάνιση εξωφύλλου άλμπουμ"
-
-#: ui/views/settings/discord-section.slint
-msgid "Look up cover art online (via Deezer or iTunes) to show on the card"
-msgstr "Αναζήτηση εξωφύλλου στο διαδίκτυο (μέσω Deezer ή iTunes) για εμφάνιση στην κάρτα"
-
-#: ui/views/settings/discord-section.slint
-msgid "Hide while paused"
-msgstr "Απόκρυψη κατά την παύση"
-
-#: ui/views/settings/discord-section.slint
-msgid "Remove the card when paused instead of showing a paused marker"
-msgstr "Αφαίρεση της κάρτας κατά την παύση αντί για εμφάνιση ένδειξης παύσης"
-
-#: ui/views/settings/discord-section.slint
-msgid "Status"
-msgstr "Κατάσταση"
-
-#: ui/views/settings/discord-section.slint
-msgid "Connected to Discord"
-msgstr "Συνδεδεμένο με το Discord"
-
-#: ui/views/settings/discord-section.slint
-msgid "Discord not running"
-msgstr "Το Discord δεν εκτελείται"
 
 #: ui/views/settings/file-watching-section.slint
 msgid "File Watching"
@@ -2861,7 +2481,6 @@ msgid "Exclusive"
 msgstr "Αποκλειστική"
 
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 msgid "Not connected"
 msgstr "Μη συνδεδεμένο"
 
@@ -3079,22 +2698,6 @@ msgstr "Επιλέξτε πώς σχεδιάζει τον ήχο η οπτικο
 msgid "{} s"
 msgstr "{} δλ"
 
-#: ui/views/settings/radio-section.slint
-msgid "Hide segmented stations"
-msgstr "Απόκρυψη τμηματοποιημένων σταθμών"
-
-#: ui/views/settings/radio-section.slint
-msgid "Segmented (HLS) streams play, but take longer to start"
-msgstr "Οι τμηματοποιημένες ροές (HLS) αναπαράγονται, αλλά αργούν να ξεκινήσουν"
-
-#: ui/views/settings/radio-section.slint
-msgid "Report plays to the directory"
-msgstr "Αναφορά αναπαραγωγών στον κατάλογο"
-
-#: ui/views/settings/radio-section.slint
-msgid "An anonymous count is what orders stations by popularity"
-msgstr "Μια ανώνυμη καταμέτρηση είναι αυτή που κατατάσσει τους σταθμούς κατά δημοτικότητα"
-
 #: ui/views/settings/ratings-section.slint
 msgid "Ratings"
 msgstr "Βαθμολογίες"
@@ -3106,82 +2709,6 @@ msgstr "Αποθήκευση βαθμολογιών στα αρχεία"
 #: ui/views/settings/ratings-section.slint
 msgid "Write star ratings into each file's tags, so they survive a rescan and other players can read them."
 msgstr "Γράφει τις βαθμολογίες με αστέρια στις ετικέτες κάθε αρχείου, ώστε να διατηρούνται μετά από νέα σάρωση και να μπορούν να τις διαβάσουν άλλα προγράμματα αναπαραγωγής."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Last.fm"
-msgstr "Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to Last.fm"
-msgstr "Scrobble στο Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your Last.fm account"
-msgstr "Αναφορά κάθε αναπαραγωγής στον λογαριασμό σας στο Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to Last.fm"
-msgstr "Συγχρονισμός αγαπημένων κομματιών με το Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on Last.fm — turning this on syncs your existing favorites"
-msgstr "Σημειώστε ως αγαπημένα στο Last.fm τα κομμάτια που αγαπάτε — η ενεργοποίηση συγχρονίζει τα υπάρχοντα αγαπημένα σας"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "ListenBrainz"
-msgstr "ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to ListenBrainz"
-msgstr "Scrobble στο ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your ListenBrainz account"
-msgstr "Αναφορά κάθε αναπαραγωγής στον λογαριασμό σας στο ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to ListenBrainz"
-msgstr "Συγχρονισμός αγαπημένων κομματιών με το ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on ListenBrainz — turning this on syncs your existing favorites (needs MusicBrainz IDs)"
-msgstr "Σημειώστε ως αγαπημένα στο ListenBrainz τα κομμάτια που αγαπάτε — η ενεργοποίηση συγχρονίζει τα υπάρχοντα αγαπημένα σας (απαιτεί αναγνωριστικά MusicBrainz)"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "MusicBrainz Picard adds these IDs to your files, identifying each track by its audio."
-msgstr "Το MusicBrainz Picard προσθέτει αυτά τα αναγνωριστικά στα αρχεία σας, αναγνωρίζοντας κάθε κομμάτι από τον ήχο του."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble radio songs"
-msgstr "Scrobble τραγουδιών από το ραδιόφωνο"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Songs heard in full on a station go to your connected scrobbling services"
-msgstr "Τα τραγούδια που ακούστηκαν ολόκληρα σε έναν σταθμό στέλνονται στις συνδεδεμένες υπηρεσίες scrobbling"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connected as {}"
-msgstr "Συνδεδεμένος ως {}"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Not configured in this build"
-msgstr "Δεν έχει ρυθμιστεί σε αυτήν την έκδοση"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect Last.fm"
-msgstr "Σύνδεση Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Disconnect"
-msgstr "Αποσύνδεση"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect ListenBrainz"
-msgstr "Σύνδεση ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Turn on Last.fm or ListenBrainz above first"
-msgstr "Ενεργοποιήστε πρώτα το Last.fm ή το ListenBrainz παραπάνω"
 
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"

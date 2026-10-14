@@ -80,9 +80,8 @@ export component NowPlayingBar inherits Rectangle {
             // wrapper so the two contract together toward the cell's centre rather than both
             // anchoring left. **Only the factor is animated** — the cell re-clamps as `bar-w`
             // changes, so easing the derived sizes would wobble on every resize tick.
-            // A station is a source like any other here: the cell opens the full view for it too,
-            // so the affordance follows whichever half of the view model is filled.
-            property <bool> has-source: Player.vm.has_track || Player.vm.has_station;
+            // The cell opens the full view for a loaded track.
+            property <bool> has-source: Player.vm.has_track;
 
             property <float> press-scale: track-info-touch.pressed && track-info-cell.has-source
                 ? 0.99
@@ -143,9 +142,8 @@ export component NowPlayingBar inherits Rectangle {
                         VerticalLayout {
                             spacing: 2px;
 
-                            // Both lines come off `Player`, which owns the track-or-station
-                            // ladder and the LRM that keeps elide's `…` on the right edge for
-                            // RTL scripts.
+                            // Both lines come off `Player`, which adds the LRM that keeps elide's
+                            // `…` on the right edge for RTL scripts.
                             Text {
                                 text: Player.source-title;
                                 color: Theme.text;
@@ -160,7 +158,7 @@ export component NowPlayingBar inherits Rectangle {
                                 overflow: elide;
                             }
                             Text {
-                                // The album for a track, the station's country for a stream.
+                                // The album for a track.
                                 text: Player.source-tertiary;
                                 // All three lines are `Theme.text`; size and weight are
                                 // what separate them. Artist and album were `subtext0`
@@ -263,34 +261,8 @@ export component NowPlayingBar inherits Rectangle {
             horizontal-stretch: 2;
 
             // The bar's own fill as the mask, so it disappears against it focused or not.
-            if !Player.vm.has_station: SeekRow {
+            SeekRow {
                 seam-mask-color: WindowChrome.mantle;
-            }
-
-            // A stream has no timeline to seek within, so there is no slider and no total. What
-            // the position still means is how long this connection has been running, which is
-            // worth stating; the pill beside it carries the connection's own state.
-            if Player.vm.has_station: HorizontalLayout {
-                spacing: Theme.pad-sm;
-                alignment: center;
-
-                VerticalLayout {
-                    alignment: center;
-                    MetaChip {
-                        text: Player.live-label;
-                        fill: Theme.accent.with-alpha(0.18);
-                        label-color: Theme.accent;
-                    }
-                }
-
-                Text {
-                    text: Theme.format-duration(Player.position-ms);
-                    color: Theme.text;
-                    font-size: 11px;
-                    min-width: 40px;
-                    horizontal-alignment: left;
-                    vertical-alignment: center;
-                }
             }
         }
 

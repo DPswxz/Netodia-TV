@@ -49,15 +49,6 @@ pub enum PlayerAction {
     SetVolume(f64),
     SetSpeed(f64),
     PreloadGapless(Option<String>),
-    /// Start the live stream the backend already has staged for this station session.
-    ///
-    /// Carries neither a URL nor a reader: opening a stream is a network round trip and belongs on
-    /// the async task that started the station, not on the executor thread. `generation` is what
-    /// the backend checks the stage against, so an action that outlived its session plays nothing.
-    PlayStream {
-        generation: u64,
-        volume: f64,
-    },
     UpdatePlayCount(i64),
     UpdateSkipCount(i64),
 }
@@ -86,9 +77,6 @@ impl std::fmt::Display for PlayerAction {
             Self::SetSpeed(s) => write!(f, "speed {s:.2}"),
             Self::PreloadGapless(Some(path)) => write!(f, "preload gapless {path}"),
             Self::PreloadGapless(None) => f.write_str("clear gapless preload"),
-            // No URL: a station's stream URL can carry a session token, and this line goes into
-            // the log tail users attach to public issues.
-            Self::PlayStream { generation, .. } => write!(f, "play radio stream #{generation}"),
             Self::UpdatePlayCount(id) => write!(f, "play count +1 for track {id}"),
             Self::UpdateSkipCount(id) => write!(f, "skip count +1 for track {id}"),
         }

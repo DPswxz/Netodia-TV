@@ -4,42 +4,17 @@
 //! these — the engine's own suites, `library`'s playback tests and the now-playing ladder under
 //! `ui/` — and a `cfg(test)` item cannot cross a crate boundary. `DbPool::test_pool` is the same
 //! shape for the same reason. The cheaper fixtures each tier can spell for itself stayed
-//! `cfg(test)` beside their tests; these three could not, `RadioNowPlaying` having thirteen
-//! fields and `PlayerViewModelLight` fifteen.
+//! `cfg(test)` beside their tests; these two are shared across crate boundaries.
 
 use std::sync::Arc;
 
 use crate::player::engine::state::PlayerViewModelLight;
-use crate::player::engine::types::{RadioNowPlaying, RepeatMode};
+use crate::player::engine::types::RepeatMode;
 use melodia_core::entities::track::TrackSummary;
 
-/// A station for the transport tests, with only what they assert on filled in.
-///
-/// Four suites were spelling this out — three under `player/` and one under `library/` — so a
-/// field added to `RadioNowPlaying` broke all four the same way. The display facts are left empty
-/// deliberately: nothing below the UI layer reads them, so a fixture carrying them would suggest
-/// the transport cares.
-pub fn test_station(name: &str) -> Arc<RadioNowPlaying> {
-    Arc::new(RadioNowPlaying {
-        station_id: 42,
-        station_uuid: None,
-        name: name.to_owned(),
-        stream_url: "http://example.test/live.mp3".to_owned(),
-        artwork_path: None,
-        live_title: None,
-        buffering: false,
-        country: None,
-        tags: None,
-        homepage: None,
-        codec: None,
-        bitrate: 0,
-        play_count: 0,
-    })
-}
-
 /// A track for the suites that need one on the deck rather than a decodable file, with only the
-/// tagged fields varying. Shares [`test_station`]'s reason for existing: `TrackSummary` has
-/// seventeen columns and the two suites reading this one care about four.
+/// tagged fields varying. `TrackSummary` has seventeen columns and the suites reading this one
+/// care about four.
 pub fn test_track(title: &str, artist: Option<&str>, album: Option<&str>) -> Arc<TrackSummary> {
     Arc::new(TrackSummary {
         id: 7,
@@ -62,13 +37,11 @@ pub fn test_track(title: &str, artist: Option<&str>, album: Option<&str>) -> Arc
     })
 }
 
-/// A published view model carrying `current_track`, `radio` and the player's own `duration_ms`,
-/// which is the trio anything asking what is on the deck reads. Everything else is left at a
-/// resting value: a test that wants one sets it on the returned struct, so a field added to
-/// `PlayerViewModelLight` lands here rather than in every suite that builds one.
+/// A published view model with the track and duration fields most consumers read. Everything else
+/// is left at a resting value: a test that wants one sets it on the returned struct, so a field
+/// added to `PlayerViewModelLight` lands here rather than in every suite that builds one.
 pub fn test_view_model(
     current_track: Option<Arc<TrackSummary>>,
-    radio: Option<Arc<RadioNowPlaying>>,
     duration_ms: u64,
 ) -> PlayerViewModelLight {
     PlayerViewModelLight {
@@ -82,7 +55,6 @@ pub fn test_view_model(
         playback_speed: 1.0,
         gapless_enabled: false,
         sleep_at_track_end: false,
-        radio,
         has_next: false,
         has_previous: false,
         shuffle_enabled: false,

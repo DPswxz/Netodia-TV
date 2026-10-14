@@ -5,22 +5,14 @@ use std::sync::Arc;
 
 use super::{PlayerAction, PlayerState};
 use crate::player::engine::queue::current_index_from_i32;
-use crate::player::engine::types::{
-    PersistableQueue, PersistedPlayback, PlaybackSource, PlaybackStatus, RadioNowPlaying,
-};
+use crate::player::engine::types::{PersistableQueue, PersistedPlayback};
 use melodia_core::entities::track::TrackSummary;
 
 impl PlayerState {
     /// The snapshot `queue.json` holds, for the two save sites to write.
     ///
-    /// Takes the whole state rather than the queue alone because a station rides beside the
-    /// queue rather than in it, and both come back together at boot.
     pub fn to_persisted(&self) -> PersistedPlayback {
-        PersistedPlayback {
-            queue: self.queue.to_persistable(),
-            // A station with no row cannot be looked back up, so there is nothing to write down.
-            station_id: self.station().map(|s| s.station_id).filter(|id| *id != 0),
-        }
+        PersistedPlayback { queue: self.queue.to_persistable() }
     }
 }
 
@@ -45,27 +37,6 @@ pub fn restore_queue(
     if let Some(track) = state.queue.get_current().cloned() {
         state.duration_ms = u64::try_from(track.duration_ms.max(0)).unwrap_or(0);
         state.position_ms = u64::try_from(track.last_position.max(0)).unwrap_or(0);
-        state.source = Some(PlaybackSource::Track(track));
+        state.source = Some(track);
     }
-}
-
-/// Put the station the last session was tuned to back on the deck, over the queue
-/// [`restore_queue`] has already restored. Called from the same startup path.
-///
-/// `Paused` because that is already the one status holding a station with no connection —
-/// pausing one drops its socket, so a restart is the same shape, and
-/// `library::playback::player_play` re-opens from it. Seating the station is what evicts whatever
-/// [`restore_queue`] just put on the deck, the two being one field.
-///
-/// Returns actions, so the caller owes an `emit_and_execute`: the speed pin is a backend write,
-/// and boot is the one place a station can arrive over a rate `settings.json` restored.
-pub fn restore_station(
-    state: &mut PlayerState,
-    station: Arc<RadioNowPlaying>,
-) -> Vec<PlayerAction> {
-    state.source = Some(PlaybackSource::Station(station));
-    state.status = PlaybackStatus::Paused;
-    state.duration_ms = 0;
-    state.position_ms = 0;
-    state.pin_speed_for_station().into_iter().collect()
 }

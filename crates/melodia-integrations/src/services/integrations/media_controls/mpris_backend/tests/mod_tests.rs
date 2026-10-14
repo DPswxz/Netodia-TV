@@ -35,7 +35,6 @@ fn handle() -> (MediaControlsHandle, std_mpsc::Receiver<Emit>) {
 fn playing() -> PlayerViewModelLight {
     test_view_model(
         Some(test_track("Sunset Drive", Some("The Coastliners"), Some("Long Way Round"))),
-        None,
         214_000,
     )
 }

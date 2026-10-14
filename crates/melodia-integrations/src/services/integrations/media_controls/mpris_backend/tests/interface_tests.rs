@@ -56,9 +56,8 @@ fn position_read_at(status: Option<PlaybackStatus>) -> i64 {
 /// A recorded position outlives the playback it came from, and a stopped player that still
 /// reported it would draw a bar part way through a track that is not playing.
 #[test]
-fn nothing_playing_reads_the_start() {
+fn a_stopped_player_reads_the_start() {
     assert_eq!(position_read_at(Some(PlaybackStatus::Stopped)), 0, "stopped");
-    assert_eq!(position_read_at(Some(PlaybackStatus::Loading)), 0, "a station still connecting");
     assert_eq!(position_read_at(None), 0, "before the first sync");
 }
 
@@ -89,7 +88,7 @@ fn a_position_inside_the_track_lands_and_either_side_of_it_is_refused() {
     assert_eq!(seek_target(214_001_000, Some(LENGTH_MS)), None, "a millisecond past the end");
 }
 
-/// A live source publishes no length, so the only position left to refuse is a negative one.
+/// A source without a duration publishes no length, so only a negative position can be refused.
 #[test]
 fn a_source_with_no_length_refuses_only_a_negative_position() {
     assert_eq!(seek_target(i64::MAX, None), Some(9_223_372_036_854_775));
@@ -140,8 +139,7 @@ fn a_position_past_the_published_length_is_ignored() {
 
 // --- PlaybackStatus, LoopStatus ---------------------------------------------
 
-/// `Loading` is a station connecting, and the spec has no word for it: a panel told `Stopped`
-/// shows a play button, where one told `Playing` would advance a bar over silence.
+/// The player status maps to the corresponding MPRIS name, with no status reported as stopped.
 #[test]
 fn a_status_goes_out_under_the_spec_name_a_panel_draws() {
     let named =
@@ -150,7 +148,6 @@ fn a_status_goes_out_under_the_spec_name_a_panel_draws() {
     assert_eq!(named(Some(PlaybackStatus::Playing)), "Playing");
     assert_eq!(named(Some(PlaybackStatus::Paused)), "Paused");
     assert_eq!(named(Some(PlaybackStatus::Stopped)), "Stopped");
-    assert_eq!(named(Some(PlaybackStatus::Loading)), "Stopped", "a station connecting");
     assert_eq!(named(None), "Stopped", "before the first sync");
 }
 

@@ -1,8 +1,8 @@
 //! The lyrics directories, and the one call the app makes onto them.
 //!
 //! A caller hands over the tags it has and gets a [`LyricsAnswer`] or nothing back, learning
-//! neither which service answered nor what its wire shape was. That is `radio_browser`'s split for
-//! its reason: the response types stay private to this tree, and what crosses is a domain answer.
+//! neither which service answered nor what its wire shape was: response types stay private to this
+//! tree, and what crosses is a domain answer.
 //!
 //! **The matcher is shared and the clients are not.** [`recording`] answers "is this row the
 //! recording we are holding tags for", which is a question about tags rather than about any one

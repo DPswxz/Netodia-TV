@@ -8,7 +8,6 @@ pub mod folder;
 pub mod genre;
 pub mod ingest;
 pub mod playlist;
-pub mod radio;
 pub mod scan;
 pub mod search;
 pub mod smart_playlist;

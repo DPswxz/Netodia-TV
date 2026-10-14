@@ -180,7 +180,7 @@ export component BrowseView inherits Rectangle {
                                 vertical-scrollbar-policy: always-off;
                                 horizontal-scrollbar-policy: always-off;
                                 // A row click opens the folder, so it answers the way a
-                                // card does; argument on `views/radio/station-grid.slint`.
+                                // card does; all grid scrollers opt out of drag-to-pan.
                                 mouse-drag-pan-enabled: false;
 
                                 for folder in Browse.folders : BrowseFolderRowItem {

@@ -142,19 +142,6 @@ pub(crate) static TRACK_TAG_EDIT: Columns = Columns::new(&[
     "file_hash",
 ]);
 
-/// `ScrobbleRow`: a scrobble or love submission.
-pub(crate) static SCROBBLE_ROW: Columns = Columns::new(&[
-    "id",
-    "title",
-    "artist",
-    "album",
-    "album_artist",
-    "duration_ms",
-    "track_number",
-    "musicbrainz_track_id",
-    "musicbrainz_release_id",
-]);
-
 /// `TrackLinks`: the three ids a "Go to …" entry navigates by.
 pub(crate) static TRACK_LINKS: Columns = Columns::new(&["id", "album_id", "artist_id", "genre_id"]);
 

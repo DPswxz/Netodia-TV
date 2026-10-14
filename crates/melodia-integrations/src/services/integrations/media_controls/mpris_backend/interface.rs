@@ -129,7 +129,7 @@ impl Player {
         match self.published.lock().status {
             Some(PlaybackStatus::Playing) => "Playing",
             Some(PlaybackStatus::Paused) => "Paused",
-            Some(PlaybackStatus::Stopped | PlaybackStatus::Loading) | None => "Stopped",
+            Some(PlaybackStatus::Stopped) | None => "Stopped",
         }
     }
 
@@ -216,7 +216,7 @@ impl Player {
         let published = self.published.lock();
         match published.status {
             Some(PlaybackStatus::Playing | PlaybackStatus::Paused) => micros(published.position_ms),
-            Some(PlaybackStatus::Stopped | PlaybackStatus::Loading) | None => 0,
+            Some(PlaybackStatus::Stopped) | None => 0,
         }
     }
 
@@ -239,7 +239,7 @@ impl Player {
         let mut published = self.published.lock();
         if !published.rate_varies() {
             return Err(zbus::fdo::Error::NotSupported(
-                "a station plays at its own rate".to_owned(),
+                "the current source plays at its own rate".to_owned(),
             ));
         }
         let rate = rate.clamp(MIN_SPEED, MAX_SPEED);
@@ -248,8 +248,7 @@ impl Player {
         Ok(())
     }
 
-    /// Both bounds close on 1.0 while a station plays, which is how the spec says the rate can't
-    /// be changed.
+    /// Both bounds close on 1.0 when the current source cannot change its rate.
     #[zbus(property)]
     fn minimum_rate(&self) -> f64 {
         if self.published.lock().rate_varies() { MIN_SPEED } else { 1.0 }

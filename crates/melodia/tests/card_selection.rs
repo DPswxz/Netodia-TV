@@ -11,18 +11,16 @@ use melodia_testkit::{
     globals_declaring, stripped_sources,
 };
 
-/// The seven section leaves that hand the shared card selection back. **An equality, not a
+/// The six section leaves that hand the shared card selection back. **An equality, not a
 /// floor**: one slice quietly dropping its `clear()` is the regression, and a floor cannot see it.
 /// Browse and Tracks are deliberately absent, each keeping its row model across the leave and
-/// clearing its own `selected-ids` instead. Radio keeps its rows too, but its station cards pick
-/// in `CardSelection`, so its leave owes the clear.
-const CARD_SELECTION_LEAVES: [&str; 7] = [
+/// clearing its own `selected-ids` instead.
+const CARD_SELECTION_LEAVES: [&str; 6] = [
     "albums/callbacks/lifecycle.rs",
     "artists/callbacks/lifecycle.rs",
     "favorites/callbacks/lifecycle.rs",
     "genres/callbacks/lifecycle.rs",
     "playlists/callbacks/lifecycle.rs",
-    "radio/callbacks/lifecycle.rs",
     "recently_played/callbacks/lifecycle.rs",
 ];
 
@@ -37,11 +35,10 @@ const CARD_SELECTION_HOMES: [&str; 4] = [
 
 /// The five grids that can fit on one row, each reading the count off whichever model its mounted
 /// tab drew.
-const LONE_ROW_MOUNTS: [&str; 5] = [
+const LONE_ROW_MOUNTS: [&str; 4] = [
     "views/browse-view.slint",
     "views/favorites-view.slint",
     "views/my-library-view.slint",
-    "views/radio-view.slint",
     "views/recently-played-view.slint",
 ];
 

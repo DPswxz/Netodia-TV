@@ -1,7 +1,6 @@
 //! What the OS panel is told back.
 //!
-//! A dedupe that reads two different songs as one leaves the panel showing the previous one for
-//! as long as the station keeps playing.
+//! A dedupe that reads two different songs as one leaves the panel showing the previous one.
 
 use melodia_engine::player::engine::fixtures::{test_track, test_view_model};
 use melodia_engine::player::engine::now_playing::SourceId;
@@ -52,8 +51,8 @@ fn a_source_that_would_paint_the_same_panel_needs_no_write() {
 }
 
 /// Every field the panel draws, moved one at a time. Two of these are the defect the key was taken
-/// off the identity for: `secondary` moving is a station announcing its next song, and `title` or
-/// `album` moving is a track re-tagged in place. Both keep the id they had, so a comparison that
+/// off the identity for: the source's secondary text moving, and `title` or `album` moving on a
+/// track re-tagged in place. Both keep the id they had, so a comparison that
 /// drops one of these fields is invisible except as a panel that stops keeping up.
 #[test]
 fn each_field_the_panel_draws_is_a_write_of_its_own() {
@@ -66,7 +65,7 @@ fn each_field_the_panel_draws_is_a_write_of_its_own() {
     assert!(differs(&retitled), "a track re-tagged in place");
 
     let announced = SourceSummary { secondary: Some("Night Bus"), ..reference };
-    assert!(differs(&announced), "a station announcing its next song");
+    assert!(differs(&announced), "a source changing its secondary text");
 
     let recompiled = SourceSummary { album: Some("Singles"), ..reference };
     assert!(differs(&recompiled), "the album alone");
@@ -91,7 +90,6 @@ const NO_CHANGES: Changes = Changes {
 fn playing() -> PlayerViewModelLight {
     test_view_model(
         Some(test_track("Sunset Drive", Some("The Coastliners"), Some("Long Way Round"))),
-        None,
         214_000,
     )
 }

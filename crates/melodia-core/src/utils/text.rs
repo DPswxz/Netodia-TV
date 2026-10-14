@@ -7,8 +7,6 @@
 /// scan can leave a run of spaces behind. Both mean "there is nothing here", so both read it
 /// through one rule.
 ///
-/// `entities::radio` keeps a stricter one of its own: it rejects the empty string without
-/// trimming, so a directory value of `" "` still counts as present there.
 #[must_use]
 pub fn filled(field: Option<&str>) -> Option<&str> {
     field.map(str::trim).filter(|text| !text.is_empty())

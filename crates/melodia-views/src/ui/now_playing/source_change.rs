@@ -1,11 +1,7 @@
 //! `sinks.view_model` subscriber + the (decode + metadata fetch + write)
 //! apply step. Skipped while the view is closed; seeded on open.
 //!
-//! **Source, not track.** A station has no `current_track` from the first tick to the last, so a
-//! subscriber keyed on the track id never fires for one and the view paints an empty cover under
-//! an empty title. What moves is `PlayerViewModelLight::source`, and everything below reduces to
-//! the three things it answers: an identity to dedupe on, a path to decode, and an optional
-//! `tracks` row for the chips.
+//! Source-keyed artwork and metadata updates for the currently playing track.
 
 use std::cell::Cell;
 use std::path::Path;
@@ -62,7 +58,7 @@ pub(super) fn spawn_source_change_subscriber(
                 break;
             }
             // *Only* the source's identity: this fires on every `view_model` push — play,
-            // pause, volume, speed, and every ICY title a station announces — and acts
+            // pause, volume and speed — and acts
             // solely on a source change. Both the read and the compare happen under the
             // borrow, so a push that moved nothing allocates nothing; the guard is gone by
             // the closing brace, well before the `.await` below.
@@ -78,14 +74,6 @@ pub(super) fn spawn_source_change_subscriber(
             last_key = new_source.as_ref().map(|s| s.key.clone());
             // Regardless of visibility, so a later open can seed the artwork from it.
             np_state.current_source.borrow_mut().clone_from(&new_source);
-            // The logo is written on the far side of a decode, so until then it describes the
-            // *outgoing* station under a name and facts that have already moved. Dropped the
-            // moment it stops being true, which leaves the row tier drawing in the gap.
-            if let Some(ui) = weak.upgrade() {
-                let player = ui.global::<Player>();
-                player.set_np_station_logo(Image::default());
-                player.set_np_station_logo_size(0);
-            }
             // The decode, blur and metadata read only produce something on screen while a surface
             // renders them. Otherwise `wire_now_playing_open` or `kick_artwork` seeds on the next
             // open.
@@ -116,7 +104,6 @@ pub(super) async fn apply_source_change(
     let key = source.as_ref().map(|s| s.key.clone());
     let track = source.as_ref().and_then(|s| s.track.clone());
     let artwork_path = source.as_ref().and_then(|s| s.artwork_path.clone());
-    let is_station = matches!(key, Some(SourceKey::Station(_)));
 
     // **Kicked rather than awaited, and ahead of both reads rather than past the guard below.**
     // The lookup reaches a file and then a socket, so awaited here it put the cover, the title and
@@ -143,7 +130,7 @@ pub(super) async fn apply_source_change(
     publish_chips(&player, np_state, meta);
     write_backdrop_tiers(&ui, sample);
 
-    // The blur is the backdrop for both kinds, so it takes the same cross-fade either way.
+    // The blur is the backdrop, so it takes the same cross-fade as the cover.
     write_crossfade_slot(
         blurred,
         animate,
@@ -154,43 +141,17 @@ pub(super) async fn apply_source_change(
         |v| player.set_blur_has_image(v),
     );
 
-    // **The foreground splits by kind.** `np-cover-*` is the *track's* dual-slot cross-fade and a
-    // station has nothing to cross-fade between; what a logo needs instead is its own pixel count,
-    // so a favicon can draw as an inset card rather than be magnified across the tile. Whichever
-    // slot isn't the live one is emptied, so a hand-off between kinds can't leave both painted.
-    if is_station {
-        let logo_size = cover.as_ref().map_or(0, native_size_of);
-        player.set_np_station_logo(cover.unwrap_or_default());
-        player.set_np_station_logo_size(logo_size);
-        player.set_np_cover_has_image(false);
-        // The never-clear rule on these two is about a track *fading into* another track, where
-        // the outgoing slot has to stay painted for the duration. Nothing fades into a station,
-        // so the pair would otherwise hold a detail-tier decode, and its texture, for as long as
-        // the stream runs.
-        player.set_np_cover_a(Image::default());
-        player.set_np_cover_b(Image::default());
-    } else {
-        player.set_np_station_logo(Image::default());
-        player.set_np_station_logo_size(0);
-        write_crossfade_slot(
-            cover,
-            animate,
-            player.get_np_cover_use_a(),
-            |img| player.set_np_cover_a(img),
-            |img| player.set_np_cover_b(img),
-            |v| player.set_np_cover_use_a(v),
-            |v| player.set_np_cover_has_image(v),
-        );
-    }
+    write_crossfade_slot(
+        cover,
+        animate,
+        player.get_np_cover_use_a(),
+        |img| player.set_np_cover_a(img),
+        |img| player.set_np_cover_b(img),
+        |v| player.set_np_cover_use_a(v),
+        |v| player.set_np_cover_has_image(v),
+    );
 
     *np_state.applied_source.borrow_mut() = key;
-}
-
-/// A decoded image's own smallest side, which is what tells a tile whether it would have to
-/// magnify. `pair_from_image` only ever shrinks, so this is the source's pixel count.
-fn native_size_of(image: &Image) -> i32 {
-    let size = image.size();
-    i32::try_from(size.width.min(size.height)).unwrap_or(i32::MAX)
 }
 
 /// The eight chip columns for `track`, awaited inline — sqlx has a reactor here. Every failure arm
@@ -216,7 +177,7 @@ async fn fetch_track_meta(state: &AppState, track: Option<&Arc<TrackSummary>>) -
 /// once rather than twice halves the per-skip cost.
 ///
 /// Takes a path rather than the source, which is all it ever wanted: `ArtworkCache` is path-keyed
-/// and knows nothing about entity kinds, so a station's logo needs no tier of its own.
+/// and knows nothing about entity kinds.
 ///
 /// Every arm that isn't a decoded pair answers with an empty sample rather than a previous one:
 /// `BackdropSample::solve` reads that as "no artwork" and falls back to `Theme.accent`, the honest

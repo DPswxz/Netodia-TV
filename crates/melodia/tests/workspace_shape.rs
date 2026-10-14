@@ -62,7 +62,7 @@ fn member_manifests() -> Vec<(String, String)> {
 ///
 /// **Two shapes, because the crate prefix is not on the re-export line in either of the
 /// interesting ones.** A plain `pub use melodia_x::Thing;` spells it; a `use melodia_x::…::m;`
-/// followed by `pub use m::Thing;` does not, and that is the form `melodia-app`'s radio facade
+/// followed by `pub use m::Thing;` does not, and that is the form the app's library facade
 /// shipped — `melodia-views` reached a `melodia-net` constant through it while naming neither.
 /// So the names each file binds from a member are collected first, and a re-export whose path
 /// starts at one of them counts.

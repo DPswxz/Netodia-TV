@@ -38,11 +38,11 @@ pub fn install(ui: &AppWindow, state: &AppState) {
 pub const NAV_MY_LIBRARY: i32 = 3;
 
 /// Map a persisted `views.json` nav index onto a live one. 4–7 were Albums / Artists /
-/// Genres / Playlists and are in files in the wild; left alone they select no router
-/// branch and the user boots onto `PlaceholderView`. Anything else passes through,
+/// Genres / Playlists, and 10 was Radio; old values select no router branch and are folded
+/// back to My Library. Anything else passes through,
 /// including values outside the valid range, which the caller still has to bound.
 pub fn fold_retired_nav_index(idx: i32) -> i32 {
-    if (4..=7).contains(&idx) { NAV_MY_LIBRARY } else { idx }
+    if (4..=7).contains(&idx) || idx == 10 { NAV_MY_LIBRARY } else { idx }
 }
 
 #[cfg(test)]

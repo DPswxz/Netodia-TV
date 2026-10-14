@@ -11,19 +11,12 @@
 //! own mount, so the failure mode is a page that reads correctly in review and flashes the wrong
 //! content on every launch.
 //!
-//! **Five seeds, two sheets.** The Rust half is one contract and every seed is held against it
-//! here. The Slint half is not shared: My Library folds its four details into one
-//! `detail-restoring` predicate its own sheet declares, where Radio's three tab bodies read
-//! `Radio.restoring` directly, so each sheet is walked on its own terms.
+//! **Four seeds, one sheet.** My Library folds its four details into one `detail-restoring`
+//! predicate its own sheet declares, so each sheet is walked on its own terms.
 
-use melodia_testkit::{strip_line_comments, tab_body_branches};
+use melodia_testkit::strip_line_comments;
 
 const SHEET: &str = include_str!("../../../../melodia-ui/ui/views/my-library-view.slint");
-const RADIO_SHEET: &str = include_str!("../../../../melodia-ui/ui/views/radio-view.slint");
-
-/// The tabs Radio declares today, kept local for `radio_tests::TABS`' reason: a change to
-/// `Radio.tab-count` must not silently rewrite what this asserts.
-const RADIO_TABS: usize = 3;
 
 /// The four grid tabs, as `(tab constant, open predicate, detail global)`. Songs is absent on
 /// purpose: it drills into nothing, so it has no restore to wait for.
@@ -34,15 +27,12 @@ const DETAIL_TABS: [(&str, &str, &str); 4] = [
     ("tab-playlists", "playlist-open", "PlaylistDetail"),
 ];
 
-/// The five seeds, each named for the failure message. Radio is not a My Library tab and its
-/// flag lives on its own global, but the Rust half of the contract is the same one and it is the
-/// half a seed gets wrong.
-const SEEDS: [(&str, &str); 5] = [
+/// The four seeds, each named for the failure message.
+const SEEDS: [(&str, &str); 4] = [
     ("albums", include_str!("../albums/detail.rs")),
     ("artists", include_str!("../artists/detail.rs")),
     ("genres", include_str!("../genres/detail.rs")),
     ("playlists", include_str!("../playlists/detail.rs")),
-    ("radio", include_str!("../radio/detail.rs")),
 ];
 
 /// The sheet with its comments dropped, so prose about the fix can't satisfy a pin.
@@ -130,21 +120,3 @@ fn every_seed_lowers_the_flag_again_whatever_the_fetch_did() {
     }
 }
 
-/// Radio's Slint half: **each of the three tab bodies waits for the restore on its own.**
-///
-/// The page routes on `(tab-idx, detail-open)` and its station page is per-tab in Rust, so there
-/// is no shared predicate to hold the term once. A tab body left off it flashes its grid for the
-/// length of the fetch while the two beside it look fixed, and only on the tab the restore is
-/// landing on — which is the one the reviewer is least likely to be sitting on.
-#[test]
-fn every_radio_tab_body_waits_for_a_pending_restore() {
-    let branches = tab_body_branches(RADIO_SHEET, "Radio");
-
-    assert_eq!(branches.len(), RADIO_TABS, "expected one body branch per tab: {branches:?}");
-    for branch in branches {
-        assert!(
-            branch.contains("!Radio.restoring"),
-            "a radio tab body mounts without waiting for a restore: {branch:?}"
-        );
-    }
-}

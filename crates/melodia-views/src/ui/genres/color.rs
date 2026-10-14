@@ -1,8 +1,8 @@
 //! Deterministic per-genre tint colours.
 //!
 //! Genres have no intrinsic artwork, so each card / detail header gets a
-//! hash-derived gradient. The derivation is [`crate::ui::name_palette`]'s,
-//! shared with the station tile; this file is only the stops built on top.
+//! hash-derived gradient. The derivation is [`crate::ui::name_palette`]'s;
+//! this file defines the stops built on top.
 //!
 //! The *gradient shape* deliberately diverges from the Tauri original, which
 //! used one hue plus a fixed +30° offset at constant saturation and value —

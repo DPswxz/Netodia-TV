@@ -1,8 +1,8 @@
 //! The periodic save, which is what survives a SIGKILL.
 //!
 //! Persistence is deliberately off the `PlayerAction` list, so nothing else in the tree writes
-//! what this does: the resume position onto the row, and the queue plus the station tuned over it
-//! into `queue.json`. Every failure inside it is a warning, so a half that stops writing costs a
+//! what this does: the resume position onto the row, and the queue into `queue.json`. Every
+//! failure inside it is a warning, so a half that stops writing costs a
 //! user their place and reports nothing at all.
 
 use std::path::PathBuf;
@@ -51,11 +51,8 @@ impl Fixture {
 }
 
 /// A queue of one, over the fixture's own row.
-fn playback(station_id: Option<i64>, track_id: i64) -> PersistedPlayback {
-    PersistedPlayback {
-        queue: PersistableQueue { track_ids: vec![track_id], current_index: 0 },
-        station_id,
-    }
+fn playback(track_id: i64) -> PersistedPlayback {
+    PersistedPlayback { queue: PersistableQueue { track_ids: vec![track_id], current_index: 0 } }
 }
 
 /// The resume position, which is the only thing that puts a user back where they were after a
@@ -69,7 +66,7 @@ async fn the_snapshot_position_lands_on_the_track_row() -> TestResult {
         &fixture.queue_path,
         PlaybackSnapshot {
             track: Some((fixture.track_id, 42_000)),
-            playback: playback(None, fixture.track_id),
+            playback: playback(fixture.track_id),
         },
     )
     .await;
@@ -78,9 +75,8 @@ async fn the_snapshot_position_lands_on_the_track_row() -> TestResult {
     Ok(())
 }
 
-/// A tick can land with nothing on the deck — the queue is seated, playback is stopped, a station
-/// is tuned. The row write is guarded on a playing track and the file write is not, because what
-/// a restart owes back is the queue either way.
+/// A tick can land with nothing playing while the queue is still seated. The row write is guarded
+/// on a playing track and the file write is not, because a restart restores the queue either way.
 #[tokio::test]
 async fn a_snapshot_with_nothing_playing_still_writes_the_queue_file() -> TestResult {
     let fixture = Fixture::new().await?;
@@ -88,7 +84,7 @@ async fn a_snapshot_with_nothing_playing_still_writes_the_queue_file() -> TestRe
     persist(
         &fixture.db,
         &fixture.queue_path,
-        PlaybackSnapshot { track: None, playback: playback(None, fixture.track_id) },
+        PlaybackSnapshot { track: None, playback: playback(fixture.track_id) },
     )
     .await;
 
@@ -97,22 +93,3 @@ async fn a_snapshot_with_nothing_playing_still_writes_the_queue_file() -> TestRe
     Ok(())
 }
 
-/// The reason `queue.json` is one file rather than two. A station leaves the queue seated
-/// underneath it, so a restart owes both halves — write only the queue and the station comes back
-/// stopped with a library the user never asked to see.
-#[tokio::test]
-async fn the_station_seated_under_the_queue_is_written_with_it() -> TestResult {
-    let fixture = Fixture::new().await?;
-
-    persist(
-        &fixture.db,
-        &fixture.queue_path,
-        PlaybackSnapshot { track: None, playback: playback(Some(7), fixture.track_id) },
-    )
-    .await;
-
-    let written = fixture.written_playback()?;
-    assert_eq!(written.station_id, Some(7), "the station on the deck");
-    assert_eq!(written.queue.track_ids, [fixture.track_id], "and the queue underneath it");
-    Ok(())
-}

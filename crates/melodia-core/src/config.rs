@@ -10,18 +10,8 @@ pub struct Paths {
     pub view_state_path: PathBuf,
     pub queue_path: PathBuf,
     pub search_history_path: PathBuf,
-    pub scrobble_credentials_path: PathBuf,
-    pub scrobble_queue_path: PathBuf,
     pub artwork_dir: PathBuf,
     pub artists_dir: PathBuf,
-    /// Station logos, deliberately **not** in [`Self::artwork_dir`].
-    ///
-    /// Everything in the artwork store is derived from the user's own files and can be rebuilt by
-    /// re-scanning; a station logo came off a third-party host and cannot. Sharing one directory
-    /// made that asymmetry a hazard rather than a note — a second install sweeping the same root
-    /// against a database with no `radio_stations` table reads every logo as an orphan, which is
-    /// how two of them were deleted out from under their rows.
-    pub radio_logos_dir: PathBuf,
     /// Sheets `library::lyrics` fetched, and markers for the tracks it asked about and got
     /// nothing for.
     ///
@@ -106,11 +96,8 @@ impl Paths {
             view_state_path: data_dir.join("views.json"),
             queue_path: data_dir.join("queue.json"),
             search_history_path: data_dir.join("search_history.json"),
-            scrobble_credentials_path: data_dir.join("scrobble_credentials.json"),
-            scrobble_queue_path: data_dir.join("scrobble_queue.json"),
             artwork_dir: data_dir.join("artwork"),
             artists_dir: data_dir.join("artists"),
-            radio_logos_dir: data_dir.join("radio-logos"),
             lyrics_dir: data_dir.join("lyrics"),
             backups_dir: data_dir.join("backups"),
             logs_dir: data_dir.join("logs"),
@@ -124,7 +111,6 @@ impl Paths {
             &self.data_dir,
             &self.artwork_dir,
             &self.artists_dir,
-            &self.radio_logos_dir,
             &self.lyrics_dir,
             &self.backups_dir,
             &self.logs_dir,

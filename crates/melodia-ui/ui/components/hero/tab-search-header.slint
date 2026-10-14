@@ -29,7 +29,7 @@ export component TabSearchHeader inherits HorizontalLayout {
     in property <string> filter-placeholder;
     in property <int> blur-tick;
     // **Whether the row carries a box at all.** For a surface whose content is not a list of rows
-    // to narrow — Radio's station page is a set of facts about one stream — a box that filters
+    // to narrow, a box that filters
     // nothing is worse than no box. Collapses the cell rather than unmounting it, for two reasons
     // below: `search.min-w` has to stay readable, and the budget deliberately keeps reserving as
     // though the box were there so the bar does not re-flow when it goes.

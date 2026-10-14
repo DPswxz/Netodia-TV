@@ -351,7 +351,7 @@ fn an_unreadable_container_is_never_guessed_from_its_payload() -> Result<(), App
     Ok(())
 }
 
-/// `ListenBrainz` loves key on the recording id, and the only ids Melodia has are the ones a
+/// External music catalogs key on the recording id, and the only ids Melodia has are the ones a
 /// tagger wrote. `ID3v2` keeps it in a binary `UFID` frame rather than a text one, the format
 /// where the reader's mapping could quietly miss it.
 #[test]

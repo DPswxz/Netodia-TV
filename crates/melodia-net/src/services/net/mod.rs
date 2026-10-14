@@ -5,15 +5,10 @@
 //! **parsed** rather than prefix-tested, and a body is **streamed under a cap** rather than
 //! collected and measured afterwards.
 //!
-//! The radio and lyrics modules sit here because their directory clients are the tree's outbound
-//! HTTP consumers that are not fetchers, and radio's blocklist leads it: `radio_blocklist` names
-//! `entities::radio` and nothing else. `pacer` is beside them rather than inside either, a request
-//! floor being about a host rather than about what is asked of it.
+//! The lyrics directory client and request pacer sit here beside the shared HTTP primitives.
 
 pub mod lyrics_directory;
 pub mod pacer;
-pub mod radio_blocklist;
-pub mod radio_browser;
 
 use melodia_core::error::{AppError, describe};
 
@@ -45,12 +40,12 @@ pub fn build_http_client() -> reqwest::Client {
 ///
 /// **The parse is the check, and that is the whole point.** A `starts_with("http://")` test admits
 /// the bare scheme, which names nothing and is not a fetch anything can make — two of the four
-/// spellings this replaced did exactly that, and one of them was on the station-import path, so a
-/// line reading `http://` became a row. It also gets case for free, `Url` lowercasing the scheme
+/// spellings this replaced did exactly that, so a line reading `http://` became a bad URL. It also
+/// gets case for free, `Url` lowercasing the scheme
 /// where a prefix test has to remember to.
 ///
-/// Everything that takes a URL from outside the app goes through here: a station's website field,
-/// its logo URL, and the lines of a `.pls`/`.m3u`/`.asx` pointer.
+/// Every URL taken from outside the app goes through here, including artwork URLs and playlist
+/// entries.
 pub fn http_url(candidate: &str) -> Option<reqwest::Url> {
     let parsed = reqwest::Url::parse(candidate.trim()).ok()?;
     is_http(&parsed).then_some(parsed)
@@ -79,8 +74,7 @@ pub fn is_http(url: &reqwest::Url) -> bool {
 ///
 /// `what` is a noun phrase, capitalized as every [`read_capped`] caller passes one: it is the
 /// subject of all four messages the two halves can raise, so a refusal points at the right half of
-/// a two-request fetch. Timeout and cap are the caller's, a station's playlist and one of its
-/// segments being two orders of magnitude apart on the cap.
+/// a two-request fetch. Timeout and cap are the caller's, which can differ widely by request.
 pub async fn get_capped(
     client: &reqwest::Client,
     url: &reqwest::Url,
@@ -111,9 +105,8 @@ pub async fn get_capped(
 /// [`get_capped`] for a body that is text.
 ///
 /// `from_utf8` *moves*, where `from_utf8_lossy` on an owned `Vec` copies the lot — once per
-/// playlist per reload, for the life of a station. Lossy stays on the error arm rather than being
-/// dropped for the cheaper spelling: one Latin-1 byte in a track title should cost a replacement
-/// character, not the station.
+/// playlist per reload. Lossy stays on the error arm rather than being dropped for the cheaper
+/// spelling: one Latin-1 byte in a track title should cost a replacement character, not the playlist.
 pub async fn get_capped_text(
     client: &reqwest::Client,
     url: &reqwest::Url,

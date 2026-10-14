@@ -2,9 +2,9 @@
 //!
 //! A control a host puts in that slot is drawn inside the card's artwork square but *written*
 //! inside the host's own `EntityCard { … }` block, and Slint resolves names where they are
-//! written. So `parent` there is the card, not the square: the four station controls compiled to
-//! `card-height - …` and landed `card-height - tile-size` below where they read, with a source
-//! that reads exactly like the one that was right.
+//! written. So `parent` there is the card, not the square: a control using `card-height - …` would
+//! land `card-height - tile-size` below where it reads, with a source that reads exactly like the
+//! one that was right.
 
 use melodia_testkit::{MIN_SLINT_SOURCES, UI_DIR, blocks_named, stripped_sources};
 

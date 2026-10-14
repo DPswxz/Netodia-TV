@@ -9,18 +9,9 @@ use sqlx::AssertSqlSafe;
 use crate::database::DbPool;
 use crate::database::queries;
 use crate::database::queries::fixtures::{insert_test_track, set_test_artwork, setup_seeded_db};
-use melodia_core::entities::radio;
 use melodia_core::error::AppError;
 
 use super::{ARTWORK_COLUMNS, REFERENCED_PATHS, repoint_all};
-
-fn test_station() -> radio::NewRadioStation {
-    radio::NewRadioStation {
-        name: "Test Station".to_owned(),
-        stream_url: "http://example.invalid/stream".to_owned(),
-        ..Default::default()
-    }
-}
 
 /// Every column in the schema that stores a path into the artwork directories, restated
 /// independently of the production ledger so that dropping one from either side fails.
@@ -71,14 +62,25 @@ async fn repointing_moves_every_artwork_column_at_once() -> Result<(), AppError>
     // The seed covers tracks, albums and artists only, and the assertions below need a row in
     // every table the ledger names or `moved > 0` can't hold for the empty ones.
     queries::playlist::create_playlist(&db, "Mosaic", None).await?;
-    queries::radio::save_station(&db, &test_station()).await?;
-    queries::radio::record_logo_hit(
-        &db,
-        "https://example.invalid/logo.png",
-        OLD,
-        1_024,
-        "2026-08-24T00:00:00.000+00:00",
+    // These rows exercise references left in legacy tables from an older database version.
+    sqlx::query(
+        "INSERT INTO radio_stations (name, stream_url, date_added) VALUES (?, ?, ?)",
     )
+    .bind("Legacy station")
+    .bind("https://example.invalid/stream")
+    .bind("2026-08-24T00:00:00.000+00:00")
+    .execute(db.write())
+    .await?;
+    sqlx::query(
+        "INSERT INTO radio_logo_answers (favicon_url, artwork_path, bytes, attempts, answered_at) \
+         VALUES (?, ?, ?, ?, ?)",
+    )
+    .bind("https://example.invalid/logo.png")
+    .bind(OLD)
+    .bind(1_024_i64)
+    .bind(0_i64)
+    .bind("2026-08-24T00:00:00.000+00:00")
+    .execute(db.write())
     .await?;
 
     let mut tx = db.write().begin().await?;
@@ -129,16 +131,22 @@ async fn a_composite_referenced_only_by_a_playlist_is_still_referenced() -> Resu
     Ok(())
 }
 
-/// The station sibling of the case above, and the sharper one: a logo came off a third-party host
-/// that is often dead by the time the sweep runs, so unlike every other arm of the union there is
-/// no re-scan that can put it back.
+/// Artwork saved by an older version remains referenced after the application upgrade.
 #[tokio::test]
-async fn a_logo_referenced_only_by_a_station_is_still_referenced() -> Result<(), AppError> {
+async fn a_legacy_logo_reference_keeps_its_artwork_file() -> Result<(), AppError> {
     let db = DbPool::test_pool().await?;
     let logo = "/data/artwork/33fb807d1f1b7cbb.jpg";
 
-    let station_id = queries::radio::save_station(&db, &test_station()).await?;
-    queries::radio::set_artwork(&db, station_id, Some(logo)).await?;
+    sqlx::query(
+        "INSERT INTO radio_stations (name, stream_url, date_added, artwork_path) \
+         VALUES (?, ?, ?, ?)",
+    )
+    .bind("Legacy station")
+    .bind("https://example.invalid/stream")
+    .bind("2026-08-24T00:00:00.000+00:00")
+    .bind(logo)
+    .execute(db.write())
+    .await?;
 
     let referenced = queries::artwork::referenced_filenames(&db).await?;
 
@@ -190,7 +198,7 @@ async fn blank_and_missing_paths_contribute_nothing() -> Result<(), AppError> {
 
 // === What the scan's repair clears ===
 
-/// The four columns a library scan can fill again, the radio pair being `library::radio`'s.
+/// The four columns a library scan can fill again.
 const LIBRARY_COLUMNS: [(&str, &str); 4] = [
     ("tracks", "artwork_path"),
     ("albums", "artwork_path"),
@@ -270,21 +278,30 @@ async fn a_forgotten_custom_playlist_image_falls_back_to_the_automatic_one() -> 
     Ok(())
 }
 
-/// A station logo that went missing is fetched again by `library::radio`. Reported here, it would
-/// start a library walk with nothing to put back.
+/// Legacy artwork is excluded from the library scan's re-derivable reference set.
 #[tokio::test]
-async fn the_library_reference_set_leaves_the_radio_stores_out() -> Result<(), AppError> {
+async fn the_library_reference_set_excludes_legacy_artwork() -> Result<(), AppError> {
     let db = setup_seeded_db().await?;
-    let station_id = queries::radio::save_station(&db, &test_station()).await?;
-    queries::radio::set_artwork(&db, station_id, Some("/data/radio-logos/aaaaaaaaaaaaaaaa.png"))
-        .await?;
-    queries::radio::record_logo_hit(
-        &db,
-        "https://example.invalid/logo.png",
-        "/data/radio-logos/bbbbbbbbbbbbbbbb.png",
-        1_024,
-        "2026-08-24T00:00:00.000+00:00",
+    sqlx::query(
+        "INSERT INTO radio_stations (name, stream_url, date_added, artwork_path) \
+         VALUES (?, ?, ?, ?)",
     )
+    .bind("Legacy station")
+    .bind("https://example.invalid/stream")
+    .bind("2026-08-24T00:00:00.000+00:00")
+    .bind("/data/radio-logos/aaaaaaaaaaaaaaaa.png")
+    .execute(db.write())
+    .await?;
+    sqlx::query(
+        "INSERT INTO radio_logo_answers (favicon_url, artwork_path, bytes, attempts, answered_at) \
+         VALUES (?, ?, ?, ?, ?)",
+    )
+    .bind("https://example.invalid/logo.png")
+    .bind("/data/radio-logos/bbbbbbbbbbbbbbbb.png")
+    .bind(1_024_i64)
+    .bind(0_i64)
+    .bind("2026-08-24T00:00:00.000+00:00")
+    .execute(db.write())
     .await?;
     sqlx::query("UPDATE tracks SET artwork_path = ?").bind(PRESENT).execute(db.write()).await?;
 

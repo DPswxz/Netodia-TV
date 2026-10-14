@@ -19,8 +19,6 @@ const TRACK_COPY_ITEMS: &str =
     include_str!("../../../../melodia-ui/ui/components/track-copy-items.slint");
 const CARD_CONTEXT_MENU: &str =
     include_str!("../../../../melodia-ui/ui/components/grid/card-context-menu.slint");
-const STATION_CONTEXT_MENU: &str =
-    include_str!("../../../../melodia-ui/ui/components/grid/station-context-menu.slint");
 
 const TRACK_TOKENS: [(&str, TrackField); 5] = [
     ("title", TrackField::Title),
@@ -36,11 +34,6 @@ const ENTITY_TOKENS: [(&str, EntityField); 3] = [
     ("artist-name", EntityField::ArtistName),
 ];
 
-const STATION_TOKENS: [(&str, StationField); 3] = [
-    ("name", StationField::Name),
-    ("stream-url", StationField::StreamUrl),
-    ("website", StationField::Website),
-];
 
 /// The string literal opening each `needle` in `src`, comments dropped.
 fn literals_after(src: &str, needle: &str) -> Vec<String> {
@@ -70,9 +63,6 @@ fn every_copy_token_resolves_to_its_own_field() {
     for (token, field) in ENTITY_TOKENS {
         assert_eq!(EntityField::from_token(token), Some(field), "card token {token:?}");
     }
-    for (token, field) in STATION_TOKENS {
-        assert_eq!(StationField::from_token(token), Some(field), "station token {token:?}");
-    }
 }
 
 #[test]
@@ -80,7 +70,6 @@ fn a_token_no_menu_spells_resolves_to_nothing() {
     for token in ["", "Title", "titles", "artist_title", "file-path", "url", "homepage"] {
         assert_eq!(TrackField::from_token(token), None, "track token {token:?}");
         assert_eq!(EntityField::from_token(token), None, "card token {token:?}");
-        assert_eq!(StationField::from_token(token), None, "station token {token:?}");
     }
 }
 
@@ -98,13 +87,6 @@ fn the_card_menu_copies_only_fields_rust_parses() {
     );
 }
 
-#[test]
-fn the_station_menu_offers_exactly_the_fields_rust_parses() {
-    assert_eq!(
-        literals_after(STATION_CONTEXT_MENU, "root.copy(\""),
-        STATION_TOKENS.map(|(token, _)| token)
-    );
-}
 
 fn track(title: &str, artist: Option<&str>, album: Option<&str>) -> TrackSummary {
     Arc::unwrap_or_clone(test_track(title, artist, album))
@@ -222,39 +204,3 @@ fn a_set_with_nothing_in_the_field_copies_the_empty_string() {
     assert_eq!(lines_in_order(&[1, 2], labels, EntityField::Artist), "");
 }
 
-fn station<'a>(name: &'a str, website: Option<&'a str>) -> StationText<'a> {
-    StationText { name, stream_url: "https://example.test/live.mp3", website }
-}
-
-#[test]
-fn each_station_field_copies_its_own_text() {
-    let night = station("Night Radio", Some("https://night.example"));
-
-    let cases = [
-        (StationField::Name, "Night Radio"),
-        (StationField::StreamUrl, "https://example.test/live.mp3"),
-        (StationField::Website, "https://night.example"),
-    ];
-    for (field, expected) in cases {
-        assert_eq!(station_lines([night], field), expected, "{field:?}");
-    }
-}
-
-/// A name holds spaces of its own, so only a line break can say where one station ends.
-#[test]
-fn stations_copy_one_per_line_in_the_order_handed_over() {
-    let stations = [station("Night Radio", None), station("Day Radio", None)];
-
-    assert_eq!(station_lines(stations, StationField::Name), "Night Radio\nDay Radio");
-}
-
-#[test]
-fn a_station_with_no_website_adds_no_line() {
-    let stations = [
-        station("Night Radio", None),
-        station("Day Radio", Some("  ")),
-        station("Dawn Radio", Some("https://dawn.example")),
-    ];
-
-    assert_eq!(station_lines(stations, StationField::Website), "https://dawn.example");
-}

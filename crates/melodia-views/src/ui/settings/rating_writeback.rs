@@ -16,8 +16,8 @@ use melodia_app::state::AppState;
 use melodia_ui::{AppWindow, Settings};
 
 pub fn install(ui: &AppWindow, state: &AppState) {
-    // Seeded off the shadow rather than off `settings.json`, as `radio_settings` does: `AppState`
-    // already read the file at boot, and a second read here would answer the same question twice.
+    // Seeded off the shadow: `AppState` already read the file at boot, and a second read here
+    // would answer the same question twice.
     ui.global::<Settings>().set_write_ratings_to_tags(state.write_ratings_to_tags.get());
 
     let persist = shadow_toggle(

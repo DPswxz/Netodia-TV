@@ -26,9 +26,7 @@ use melodia_engine::player::engine::signal_path::SignalPath;
 use melodia_engine::player::engine::state::{
     PlayerStateHandle, PlayerViewModelLight, PositionTick, QueueViewModel, lock_state,
 };
-use melodia_integrations::services::integrations::discord::DiscordPresenceService;
 use melodia_integrations::services::integrations::media_controls::{self, MediaControlsHandle};
-use melodia_integrations::services::integrations::scrobble::ScrobbleService;
 use melodia_net::services::net::pacer::RequestPacer;
 use melodia_platform::services::platform::always_on_top::{self, AlwaysOnTopCapability};
 use melodia_playback::player::playback::decks::DECK_COUNT;
@@ -103,36 +101,12 @@ pub struct AppState {
     pub self_writes: Arc<SelfWrites>,
     pub always_on_top: AlwaysOnTopCapability,
     pub search_history: Arc<SearchHistoryState>,
-    /// Scrobbling service: credential/enabled shadow + durable offline queue.
-    /// Loaded at boot; the detector/submitter tasks that drive it wire in later.
-    pub scrobble: Arc<ScrobbleService>,
-    /// Discord Rich Presence: enable-flags shadow + connection-status watch,
-    /// lazily spawning a blocking IPC worker thread. Stateless (no on-disk
-    /// state); the detector task in `tasks::discord_presence` drives it.
-    pub discord: Arc<DiscordPresenceService>,
-    /// The Radio master switch, mirrored off `settings.json` at boot. A shadow
-    /// rather than a read at the decision point because every reader is on a
-    /// path a file read has no business being on: `library::radio`'s guard runs
-    /// on a tokio worker per directory call, and `boot::ui_setup` asks before
-    /// the window is shown. Every writer moves it *before* spawning the persist — the rule
-    /// [`SharedFlag`] carries — so a directory call racing the disk write sees the new answer.
-    pub radio_enabled: SharedFlag,
-    /// Whether directory results drop segmented stations, on the same terms as
-    /// [`Self::radio_enabled`]: `library::radio::search` reads it per page, on a
-    /// worker.
-    pub radio_hide_segmented: SharedFlag,
-    /// Whether playing a station reports a click back to the directory. Read on
-    /// the play path, which is already on a worker.
-    pub radio_send_clicks: SharedFlag,
-    /// Whether a song heard on a station is scrobbled, read by `tasks::scrobble`'s detector on
-    /// every title change.
-    pub radio_scrobble: SharedFlag,
-    /// Whether lyrics run at all, on [`Self::radio_enabled`]'s terms: `library::lyrics`
+    /// Whether lyrics run at all: `library::lyrics`
     /// refuses on it from a worker, and the Now Playing switch and the Settings card
     /// both write it.
     pub lyrics_enabled: SharedFlag,
     /// Whether the lyrics panel may look a sheet up online, on the same terms as
-    /// [`Self::radio_enabled`]: `library::lyrics`'s guard runs on a worker once per
+    /// `library::lyrics`'s guard runs on a worker once per
     /// track change, where a `settings.json` read would be a file read on the path a
     /// track change already pays for.
     pub lyrics_online_enabled: SharedFlag,
@@ -148,7 +122,7 @@ pub struct AppState {
     /// clone of `AppState`, which is the point: the floor is per host, not per caller.
     pub lyrics_pacer: Arc<RequestPacer>,
     /// Whether a star rating is also written into the file's own tag, on the same
-    /// terms as [`Self::radio_enabled`]: `tasks::rating_writeback` asks once per
+    /// `tasks::rating_writeback` asks once per
     /// coalesced burst, and a `settings.json` read there would be a file read on
     /// the path a rating click already paid for.
     pub write_ratings_to_tags: SharedFlag,
@@ -246,17 +220,8 @@ impl AppState {
         );
 
         let search_history = Arc::new(SearchHistoryState::init(&paths).await);
-        // Shared lazy client: one `OnceLock` seeds both `http_client()` and the
-        // scrobble service, so the app has a single connection pool built on
-        // first actual request.
+        // Shared lazy client: the TLS stack and connection pool are constructed on first use.
         let http_client = Arc::new(OnceLock::new());
-        let scrobble =
-            Arc::new(ScrobbleService::init(&paths, &settings.scrobble, http_client.clone()));
-        // Persists nothing (the application id is a compile-time constant, not a
-        // secret), so unlike scrobble it needs no `&paths` — but it shares the
-        // one `http_client` pool for the album-cover lookup.
-        let discord =
-            Arc::new(DiscordPresenceService::init(&settings.discord, http_client.clone()));
 
         let state = Self {
             paths: Arc::new(paths),
@@ -281,12 +246,6 @@ impl AppState {
             self_writes: Arc::new(SelfWrites::default()),
             always_on_top: always_on_top_capability,
             search_history,
-            scrobble,
-            discord,
-            radio_enabled: SharedFlag::new(settings.radio.radio_enabled),
-            radio_hide_segmented: SharedFlag::new(settings.radio.radio_hide_segmented),
-            radio_send_clicks: SharedFlag::new(settings.radio.radio_send_clicks),
-            radio_scrobble: SharedFlag::new(settings.radio.radio_scrobble),
             lyrics_enabled: SharedFlag::new(settings.lyrics.lyrics_enabled),
             lyrics_online_enabled: SharedFlag::new(settings.lyrics.lyrics_online_enabled),
             lyrics_romanization_shown: SharedFlag::new(settings.lyrics.lyrics_romanization_shown),
@@ -330,21 +289,13 @@ impl AppState {
     /// process lifetime. Construction is deferred out of `init` (see
     /// [`melodia_net::services::net::build_http_client`]) so the rustls TLS stack and
     /// connection pool never load at boot/idle — only the updater, the post-scan
-    /// Deezer artist-image fetch, and scrobbling pull them in. reqwest's
+    /// Deezer artist-image fetch and online lyrics lookup pull them in. reqwest's
     /// connection pool lives on the client, so callers reuse this accessor (and
-    /// `ScrobbleService`, which shares the same `OnceLock`) rather than
     /// constructing a new client per request.
     pub fn http_client(&self) -> &reqwest::Client {
         self.http_client.get_or_init(melodia_net::services::net::build_http_client)
     }
 
-    /// The still-unbuilt cell behind [`Self::http_client`], for the one consumer that has to carry
-    /// the client somewhere `AppState` doesn't reach: `PlaybackContext`, whose transport commands
-    /// re-open a paused radio station. Handing over the `OnceLock` rather than the client keeps
-    /// the construction lazy — a player that never tunes to a station still never loads rustls.
-    pub fn http_client_cell(&self) -> Arc<OnceLock<reqwest::Client>> {
-        self.http_client.clone()
-    }
 }
 
 /// Open the output the saved choice will play through. Parked under exclusive output, which claims

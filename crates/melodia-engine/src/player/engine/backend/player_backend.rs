@@ -46,13 +46,6 @@ pub trait PlayerBackend: Send + Sync {
     fn set_volume(&self, volume: f64);
     fn set_speed(&self, speed: f64);
     fn preload_gapless(&self, file_path: Option<&str>, baked_rg: TrackReplayGain);
-    /// Start the live stream staged under `generation`, hard-cutting whatever was playing.
-    ///
-    /// Takes no path and no `ReplayGain`: the stream was opened asynchronously long before this
-    /// runs (a socket has no business on the action executor's thread), and a live source carries
-    /// no per-track tags to bake. Fails when nothing is staged under that generation, which is how
-    /// a station superseded mid-connect is refused rather than played late.
-    fn play_stream(&self, generation: u64, volume: f64) -> Result<(), AppError>;
 }
 
 impl PlayerBackend for PlaybackEngine {
@@ -99,8 +92,5 @@ impl PlayerBackend for PlaybackEngine {
     }
     fn preload_gapless(&self, file_path: Option<&str>, baked_rg: TrackReplayGain) {
         self.preload_gapless(file_path, baked_rg);
-    }
-    fn play_stream(&self, generation: u64, volume: f64) -> Result<(), AppError> {
-        self.play_stream(generation, volume)
     }
 }

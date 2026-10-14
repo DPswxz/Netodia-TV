@@ -59,7 +59,7 @@ fn reseed(weak: &Weak<AppWindow>, state: &AppState, np_state: &Rc<NowPlayingStat
     // miniplayer's column; the card and the strip have no slot for it whatever they paint on.
     let wanted = np_state.renders_panel() && library::lyrics::is_enabled(state);
     let Some(track) = track.filter(|_| wanted) else {
-        // Closed, switched off, or a station, which has no words to look up. Either way the
+        // Closed, switched off, or no track to look up. Either way the
         // previous song's sheet must not sit under it.
         if ly.holding.borrow().is_some() {
             release(&ui, ly);
@@ -180,7 +180,7 @@ pub(crate) fn wire_menu(ui: &AppWindow, state: &AppState, np_state: &Rc<NowPlayi
 
 /// Say a save did not happen, where it was asked for by name.
 ///
-/// **A toast rather than a log line**, the radio vote's rule: this runs only because somebody
+/// **A toast rather than a log line**: this runs only because somebody
 /// pressed a control that says it writes to their file, and a control that quietly does nothing is
 /// worse than one that says why.
 fn report_save_failure(e: &melodia_core::error::AppError) {
@@ -189,7 +189,7 @@ fn report_save_failure(e: &melodia_core::error::AppError) {
     toast::notify(ToastKind::OperationFailed, reason);
 }
 
-/// The track on the deck, or `None` on a station or an empty queue.
+/// The track on the deck, or `None` when the queue is empty.
 fn playing_track(np_state: &NowPlayingState) -> Option<Arc<TrackSummary>> {
     np_state.current_source.borrow().as_ref().and_then(|s| s.track.clone())
 }

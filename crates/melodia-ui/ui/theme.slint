@@ -150,14 +150,12 @@ export global Theme {
     // side it hangs. Seven popups across three directories anchor on it, so it is here rather than
     // beside any one family of them: a gap differing by a pixel or two between two of them reads
     // as one being misplaced, and nothing about the source says which is the odd one. The two
-    // dropdown-shaped pickers (`settings/dropdown.slint`, `radio/facet-chip.slint`) hang at 4px
+    // dropdown-shaped pickers (`settings/dropdown.slint`) hang at 4px
     // and are outside it; folding them in moves pixels, so it is a design call and not tidying.
     out property <length> popup-gap: 8px;
 
-    // The one ink drawn on a name-hashed tile — the station monogram and the glyph beside it, on
-    // the four surfaces that paint one. Theme-independent on purpose: it is legible because
-    // `ui::radio::identity` keeps the generated stops deep, not because of anything the palette
-    // says, so a variant cannot re-tune it and lowering those floors is what would break it.
+    // The one ink drawn on a name-hashed tile and the glyph beside it. Theme-independent on
+    // purpose: it stays legible against generated stops without being re-tuned by a palette.
     out property <brush> tile-ink: #ffffff.transparentize(0.1);
 
     out property <length> pad-xs: 4px;

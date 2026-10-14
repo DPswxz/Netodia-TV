@@ -4,18 +4,17 @@ use std::sync::atomic::{AtomicU8, Ordering};
 
 use super::event_sink::PlayerSinks;
 use super::queue::QueueState;
-use super::types::{PlaybackSource, PlaybackStatus, RadioNowPlaying};
+use super::types::PlaybackStatus;
 use melodia_core::entities::track::TrackSummary;
 
 mod action;
 mod persistence;
-mod station;
 mod summary_sync;
 mod transport;
 mod view_model;
 
 pub use action::PlayerAction;
-pub use persistence::{restore_queue, restore_station};
+pub use persistence::restore_queue;
 pub use summary_sync::{any_tracked, sync_current_track_if_in, sync_track_summaries};
 pub use transport::{ReleaseDecision, play_track_inner, resume_from_stopped, stop_end_of_queue};
 pub use view_model::{PlayerViewModel, PlayerViewModelLight, PositionTick, QueueViewModel};
@@ -56,9 +55,8 @@ pub fn amplitude_to_volume(amplitude: f64) -> u32 {
 
 pub struct PlayerState {
     pub status: PlaybackStatus,
-    /// What is on the deck, and what may be done with it — see [`PlaybackSource`]. Reach for
-    /// [`Self::current_track`] and [`Self::station`] to read either half.
-    pub source: Option<PlaybackSource>,
+    /// Track currently on the deck, if any.
+    pub source: Option<Arc<TrackSummary>>,
     pub position_ms: u64,
     pub duration_ms: u64,
     pub volume: u32,
@@ -73,10 +71,6 @@ pub struct PlayerState {
     /// the UI as `sleep_at_track_end` on the light `ViewModel` so the overflow
     /// menu's sleep row auto-clears once the monitor fires and disarms it.
     pub pause_after_current_track: bool,
-    /// Which station session is current. Bumped by every transition that starts or ends one, so a
-    /// connect that finishes after the user moved on is refused rather than played late. An open
-    /// takes seconds and a click takes none, which is why this is a counter rather than a flag.
-    pub radio_generation: u64,
     pub queue: QueueState,
 }
 
@@ -93,7 +87,6 @@ impl Default for PlayerState {
             playback_speed: 1.0,
             gapless_enabled: true,
             pause_after_current_track: false,
-            radio_generation: 0,
             queue: QueueState::default(),
         }
     }
@@ -141,48 +134,14 @@ impl PlayerStateHandle {
 }
 
 impl PlayerState {
-    /// The track on the deck, or `None` when the source is a live one or there is none.
+    /// The track on the deck, if any.
     pub fn current_track(&self) -> Option<&Arc<TrackSummary>> {
-        self.source.as_ref().and_then(PlaybackSource::track)
+        self.source.as_ref()
     }
 
     /// The track on the deck, for the two writers that mutate it in place.
     pub fn current_track_mut(&mut self) -> Option<&mut Arc<TrackSummary>> {
-        self.source.as_mut().and_then(PlaybackSource::track_mut)
-    }
-
-    /// The station on the deck, including through the stretch where it is still connecting.
-    pub fn station(&self) -> Option<&Arc<RadioNowPlaying>> {
-        self.source.as_ref().and_then(PlaybackSource::station)
-    }
-
-    /// The station on the deck, for the live title and the buffering flag.
-    pub fn station_mut(&mut self) -> Option<&mut Arc<RadioNowPlaying>> {
-        self.source.as_mut().and_then(PlaybackSource::station_mut)
-    }
-
-    /// Whether the source on the deck is a live stream.
-    ///
-    /// Five things ask this rather than asking a capability, and every one of them is *about* a
-    /// station: the pause that drops its socket, the play that cannot resume from one, the stop
-    /// that forgets it, the session check, and the track that evicts it. Everywhere else the
-    /// question is what the source can do, not what it is, and asking it that way is what stops a
-    /// third kind of source being silently treated as a file.
-    fn is_radio(&self) -> bool {
-        self.station().is_some()
-    }
-
-    /// Whether what is on the deck permits `capability`.
-    ///
-    /// **An empty deck permits everything**, which is why this is `is_none_or` and not
-    /// `is_some_and`. Each caller is asking whether what is playing rules the action out, not
-    /// whether something is playing: a loaded queue with nothing on the deck still offers Next,
-    /// and gating that on a source being present silently disables it.
-    ///
-    /// Takes the capability rather than exposing one accessor per question, so a third kind of
-    /// source is a match arm on [`PlaybackSource`] and nothing here.
-    pub fn source_allows(&self, capability: fn(&PlaybackSource) -> bool) -> bool {
-        self.source.as_ref().is_none_or(capability)
+        self.source.as_mut()
     }
 }
 

@@ -2,9 +2,8 @@
 //! the action layer drives.
 //!
 //! **Everything here races something else here, and that is the reason it is one file.** The
-//! transport ops, the fade gates, the gapless stage, the deferred pause/stop and the stream stage
-//! the transport claims from each carry an argument about one of the others, over the decks lock,
-//! [`PlaybackEngine::deck_epoch`] or the generation a station is opened under, and those read as
+//! transport ops, the fade gates, the gapless stage and the deferred pause/stop
+//! carry an argument about one of the others, over the decks lock or [`PlaybackEngine::deck_epoch`], and those read as
 //! arguments only while they sit next to each other. What moved out races nothing: the lock-free
 //! DSP setters ([`controls`]), the decks' read-only answers ([`reads`]), the trait a test mocks
 //! ([`player_backend`]), and the device under the decks ([`output`]), which a transport op here
@@ -27,12 +26,8 @@ use std::time::Duration;
 
 use melodia_core::error::AppError;
 use melodia_core::error::describe;
-use parking_lot::Mutex;
-
 use melodia_audio::player::source::audio::AudioSource;
 use melodia_audio::player::source::file_decode::FileDecoder;
-use melodia_audio::player::source::prebuffer::StreamShared;
-use melodia_audio::player::source::stream_source::PreparedStream;
 use melodia_playback::player::playback::crossfade::{self, CrossfadeShared};
 use melodia_playback::player::playback::decks::{Deck, Decks, DeferredOp, lock_decks};
 use melodia_playback::player::playback::equalizer::{self, EqShared, EqSource};
@@ -106,19 +101,6 @@ pub struct PlaybackEngine {
     // seeded at boot: it stays disarmed (a no-op) until the Now-Playing view is
     // on screen, so the audio thread never fills a ring nobody reads.
     viz: Arc<VisualizerShared>,
-    // A live stream opened asynchronously and waiting for its `PlayStream` action, tagged with the
-    // station generation it was opened for. Staged rather than carried on the action because
-    // `PlayerAction` is plain `Clone + PartialEq` data and a decoder is neither — the same reason
-    // `preload_gapless` takes its decode through a side channel. Dropping a superseded stage
-    // closes its connection, so a station started while another was still connecting cancels the
-    // loser for free.
-    staged_stream: Mutex<Option<(u64, PreparedStream)>>,
-    // The cell the playing stream publishes buffering and live titles through, or `None` when the
-    // source is a local file. Doubles as the monitor's "is this a station?" test, which is why it
-    // lives here rather than being re-read off `PlayerState`. `Arc` for the reason
-    // `gapless_pending` is one: the deferred clear of a faded stop has to drop this alongside the
-    // deck contents it removes.
-    live_stream: Arc<Mutex<Option<Arc<StreamShared>>>>,
     // Only ever schedules the deferred half of a faded pause / stop.
     runtime: tokio::runtime::Handle,
 }
@@ -140,8 +122,6 @@ impl PlaybackEngine {
             rg: ReplayGainShared::new(),
             xf: CrossfadeShared::new(),
             viz: VisualizerShared::new(false),
-            staged_stream: Mutex::new(None),
-            live_stream: Arc::new(Mutex::new(None)),
             runtime,
         })
     }
@@ -173,7 +153,6 @@ impl PlaybackEngine {
         let decks = self.decks.clone();
         let deck_epoch = self.deck_epoch.clone();
         let gapless_pending = self.gapless_pending.clone();
-        let live_stream = self.live_stream.clone();
         let output = Arc::clone(&self.output.device);
         self.runtime.spawn(async move {
             tokio::time::sleep(Duration::from_millis(delay_ms)).await;
@@ -200,9 +179,6 @@ impl PlaybackEngine {
                     DeferredOp::ClearAll => {
                         guard.clear_all();
                         gapless_pending.store(false, Ordering::Release);
-                        // The faded half of a stop, so it drops the live-stream cell alongside
-                        // the source it removes — the same pairing the flag above gets.
-                        *live_stream.lock() = None;
                         output::release_exclusive(&output);
                     }
                 }
@@ -308,7 +284,6 @@ impl PlaybackEngine {
         speed: f64,
     ) {
         self.bump_epoch();
-        self.clear_live_stream();
         let mut decks = self.lock_decks();
         let fade_blocked = self.gapless_pending.load(Ordering::Acquire)
             || !self.plays_without_reopen(decoded.shape(), decoded.format());
@@ -354,85 +329,6 @@ impl PlaybackEngine {
         self.crossfade_armed.store(false, Ordering::Release);
     }
 
-    /// Playback speed while a station plays.
-    ///
-    /// Speed is a ratio on the deck's converter, so anything but 1.0 consumes the source faster or
-    /// slower than real time, and a mount arriving at exactly real time starves or overruns its
-    /// ring. Pinned rather than merely ignored, so what the deck runs at and what the transport
-    /// claims stay the same — [`super::state::PlayerState::build_station_connecting_actions`]
-    /// resets the state side to match.
-    const STREAM_SPEED: f64 = 1.0;
-
-    /// Park an opened live stream for the `PlayStream` action that follows it.
-    ///
-    /// Replacing an unclaimed stage drops it, and dropping it closes its connection — which is how
-    /// a station started while another was still connecting cancels the loser.
-    pub fn stage_stream(&self, generation: u64, prepared: PreparedStream) {
-        *self.staged_stream.lock() = Some((generation, prepared));
-    }
-
-    /// Drop the stage if it is still the one opened for `generation`.
-    ///
-    /// The transport can end a station's session between the open being started and finishing, and
-    /// the state machine then refuses the `PlayStream` that would have claimed it. Without this the
-    /// connection would stay open until some later station happened to stage over it.
-    pub fn discard_staged_stream(&self, generation: u64) {
-        let mut staged = self.staged_stream.lock();
-        if staged.as_ref().is_some_and(|(staged_generation, _)| *staged_generation == generation) {
-            *staged = None;
-        }
-    }
-
-    /// The cell a playing station publishes buffering and live titles through, or `None` when the
-    /// source is a local file. Also the playback monitor's test for which kind of source is on the
-    /// deck.
-    pub fn stream_shared(&self) -> Option<Arc<StreamShared>> {
-        self.live_stream.lock().clone()
-    }
-
-    fn clear_live_stream(&self) {
-        *self.live_stream.lock() = None;
-    }
-
-    /// Start the stream staged under `generation`, hard-cutting whatever was playing.
-    ///
-    /// Always a hard cut: a crossfade ramps between two *tracks*, and there is nothing worth
-    /// overlapping a station's first second of buffering with. The `ReplayGain` handed to
-    /// `build_source` is unity for the same reason the plan gives — a live stream carries no
-    /// per-track tags to bake.
-    pub fn play_stream(&self, generation: u64, volume: f64) -> Result<(), AppError> {
-        // Matched before it is taken: a stage belonging to some other session belongs to a *newer*
-        // one, and taking it to refuse it would close the connection that session is waiting on.
-        let mut staged = self.staged_stream.lock();
-        let claimed = staged
-            .take_if(|(staged_generation, _)| *staged_generation == generation)
-            .map(|(_, prepared)| prepared);
-        drop(staged);
-
-        let Some(prepared) = claimed else {
-            return Err(AppError::Player("No radio stream is staged for this station".to_owned()));
-        };
-        let (source, shared) = prepared.into_parts();
-
-        // Published before the deck work rather than after, so the monitor can never see a station
-        // playing with no cell to read its buffering state from.
-        *self.live_stream.lock() = Some(shared);
-        self.bump_epoch();
-        let decks = self.lock_decks();
-        // A live mount has no timeline to resume on, so its clock starts where the connection did.
-        let start = Duration::ZERO;
-        self.cut_to_source(
-            &decks,
-            source,
-            TrackReplayGain::default(),
-            volume,
-            Self::STREAM_SPEED,
-            start,
-        );
-        self.gapless_pending.store(false, Ordering::Release);
-        Ok(())
-    }
-
     /// Start `file_path` on the idle deck and cross-fade over `fade_ms` media
     /// milliseconds. The outgoing source ends itself when its ramp lands
     /// (`end_on_complete`), draining that deck — which is how
@@ -468,11 +364,9 @@ impl PlaybackEngine {
     /// Wrap an audio source in what the decks actually play: the graphic EQ, this track's baked
     /// `ReplayGain` and `deck`'s ramp cell, under a visualizer tap writing into `deck`'s own ring.
     ///
-    /// Generic over the source rather than over a reader, because a live stream reaches here as a
-    /// [`melodia_audio::player::source::prebuffer::PrebufferSource`] and a file as a
-    /// [`FileDecoder`] — the ring sits between the stream's decoder and the DSP chain, so the two
-    /// only meet at [`AudioSource`]. Everything downstream is identical, which is the point: the
-    /// EQ, the limiter and the visualizer work on a station with no code of their own.
+    /// Generic over the source rather than over a reader, so the file decoder and DSP chain meet at
+    /// [`AudioSource`]. Everything downstream is identical: EQ, limiter and visualizer all use the
+    /// same processing path.
     ///
     /// Always called with the deck the source is about to be appended to — see
     /// [`melodia_playback::player::playback::decks`] for why the two can't be split. Building the
@@ -588,7 +482,6 @@ impl PlaybackEngine {
         self.crossfade_armed.store(false, Ordering::Release);
         // Clearing the decks drops a live stream's source, whose `Drop` is what tells its feed
         // thread to close the connection; this only stops anyone still reading the cell.
-        self.clear_live_stream();
         let decks = self.lock_decks();
         decks.clear_all();
         self.gapless_pending.store(false, Ordering::Release);

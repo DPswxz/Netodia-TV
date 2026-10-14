@@ -108,8 +108,7 @@ pub enum LyricsOutcome {
 /// What a lyrics directory said about one track.
 ///
 /// The boundary between the crate that makes the request and the crate that decides what to do
-/// with it, so the service's own response shape stays private to the former, as the radio
-/// directory's does.
+/// with it, so the service's own response shape stays private to the former.
 ///
 /// **Three outcomes, not two.** A sheet, nothing, or a track the directory knows has no words at
 /// all. The last is a *positive* answer: it deserves copy that says so and it should never be

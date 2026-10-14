@@ -179,67 +179,14 @@ export global Settings {
     in property <float> output-resync-max-ms: 1000;
     callback output-resync-committed(int /* milliseconds */);
 
-    // Rust owns every property here — the `ScrobbleService` status-watch subscriber is the single
-    // writer — and the toggles route their events back to persist and refresh the shadow. Connect
-    // is opened inline from the section markup rather than through a callback, dodging Slint's
-    // recursion guard. `configured` says whether this build shipped Last.fm app keys.
-    in property <bool> scrobble-lastfm-configured;
-    in property <bool> scrobble-lastfm-connected;
-    in property <string> scrobble-lastfm-username;
-    in-out property <bool> scrobble-lastfm-enabled;
-    callback scrobble-lastfm-enabled-changed(bool);
-    callback scrobble-lastfm-disconnect();
-    // Mirror favorites to Last.fm Loved Tracks — independent of the two.
-    in-out property <bool> scrobble-lastfm-love;
-    callback scrobble-lastfm-love-changed(bool);
-    in property <bool> scrobble-listenbrainz-connected;
-    in property <string> scrobble-listenbrainz-username;
-    in-out property <bool> scrobble-listenbrainz-enabled;
-    callback scrobble-listenbrainz-enabled-changed(bool);
-    callback scrobble-listenbrainz-disconnect();
-    // Mirror favorites to ListenBrainz recording feedback.
-    in-out property <bool> scrobble-listenbrainz-love;
-    callback scrobble-listenbrainz-love-changed(bool);
-
-    // Same shape as scrobbling: the `DiscordPresenceService` status-watch subscriber is the single
-    // writer, so a Discord restart flips the status row live, and the toggles persist and refresh
-    // the shadow through `set_flags`, which starts and stops the IPC worker. No credentials — the
-    // application id is a compile-time constant, so everything fits on `Settings`.
-    in property <bool> discord-rpc-connected;
-    in-out property <bool> discord-rpc-enabled;
-    callback discord-rpc-enabled-changed(bool);
-    in-out property <bool> discord-rpc-artwork;
-    callback discord-rpc-artwork-changed(bool);
-    in-out property <bool> discord-rpc-hide-when-paused;
-    callback discord-rpc-hide-when-paused-changed(bool);
-
-    // The Radio section's master switch: the sidebar row and the index-10 router branch both
-    // read it, so flipping it mounts and unmounts the whole feature with no restart. Declared
-    // false so a settings read that fails leaves a local-only install local-only. **The gate
-    // that matters isn't either of these** — `library::radio` refuses on the Rust shadow, which
-    // is what makes "off" mean no traffic rather than a hidden row.
-    in-out property <bool> radio-enabled: false;
-    callback radio-enabled-changed(bool);
-    // The sub-toggles declare their live default here. Only the click one differs from the
-    // master's cautious `false`, describing what the feature does rather than whether it runs.
-    // Nothing in Slint reads any of them: the segment filter runs in `library::radio::search`, the
-    // click on the play path and the scrobble in `tasks::scrobble`, all off Rust shadows, so these
-    // are the control surface and not the answer.
-    in-out property <bool> radio-hide-segmented: false;
-    callback radio-hide-segmented-changed(bool);
-    in-out property <bool> radio-send-clicks: true;
-    callback radio-send-clicks-changed(bool);
-    in-out property <bool> radio-scrobble: false;
-    callback radio-scrobble-changed(bool);
-
     // Whether lyrics run at all, the Now Playing header's switch being its twin. Declared false so a
     // settings read that fails does not hand the Up Next column to a panel nobody asked for.
     in-out property <bool> lyrics-enabled: false;
     callback lyrics-enabled-changed(bool);
 
     // Whether a track carrying no words of its own may be looked up online. Declared false so a
-    // settings read that fails leaves a local-only install local-only, which is the radio switch's
-    // reason. **Nothing in Slint gates on it either**: `library::lyrics` refuses on the Rust
+    // settings read that fails leaves a local-only install local-only. **Nothing in Slint gates on
+    // it either**: `library::lyrics` refuses on the Rust
     // shadow, and this is the control surface rather than the answer. The panel reads it once, to
     // choose between "nothing found" and "the lookup is off".
     in-out property <bool> lyrics-online-enabled: false;
@@ -532,46 +479,6 @@ export global Settings {
         return @tr("These playlists are too large for one .zip file. Export fewer at a time.");
     }
 
-    // The station list's own pair. Separate msgids rather than a shared "{n} items imported":
-    // a station is not a playlist, and the skipped line has no playlist equivalent.
-    pure callback station-import-title(int /*imported*/) -> string;
-    station-import-title(imported) => {
-        return @tr("{n} station added" | "{n} stations added" % imported);
-    }
-    pure callback station-import-message(int /*skipped*/) -> string;
-    station-import-message(skipped) => {
-        // Empty where nothing was skipped, which is the ordinary import — the card drops a blank
-        // body, where an unconditional line reports "0 were already in your list."
-        return skipped > 0
-            ? @tr("{n} was already in your list." | "{n} were already in your list." % skipped)
-            : "";
-    }
-    pure callback station-import-failed-title() -> string;
-    station-import-failed-title => {
-        return @tr("Import failed");
-    }
-    pure callback station-import-failed-message() -> string;
-    station-import-failed-message => {
-        return @tr("Couldn't read any stations from the selected file(s).");
-    }
-
-    pure callback station-export-title(int /*exported*/) -> string;
-    station-export-title(exported) => {
-        return @tr("{n} station exported" | "{n} stations exported" % exported);
-    }
-    pure callback station-export-message(string /*path*/) -> string;
-    station-export-message(path) => {
-        return @tr("Saved to {}", path);
-    }
-    pure callback station-export-failed-title() -> string;
-    station-export-failed-title => {
-        return @tr("Export failed");
-    }
-    pure callback station-export-failed-message() -> string;
-    station-export-failed-message => {
-        return @tr("Couldn't write the station list.");
-    }
-
     // Titles for the generic backend-failure toasts coming through the
     // `services::toast` bridge, resolved by toast kind. The dynamic detail — a path or
     // an error message — rides on the body and is not translated.
@@ -598,10 +505,6 @@ export global Settings {
     pure callback toast-nothing-to-copy-title() -> string;
     toast-nothing-to-copy-title => {
         return @tr("Nothing to copy");
-    }
-    pure callback toast-radio-vote-title() -> string;
-    toast-radio-vote-title => {
-        return @tr("Vote not counted");
     }
     // The body is translated as well: the detail is only the refusing device's name, empty where
     // it couldn't be found. The reason is left to the Output settings, where it reads in full.

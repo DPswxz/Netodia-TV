@@ -131,8 +131,7 @@ export component MiniCaptionsRow inherits Rectangle {
                 ? Theme.kde-caption-edge-pad
                 : 0px) - root.edge-pad;
 
-            // Gone on a station, which has no track to look a sheet up for.
-            if !Player.vm.has_station: VerticalLayout {
+            VerticalLayout {
                 alignment: center;
                 MiniIconButton {
                     icon: "lyrics";

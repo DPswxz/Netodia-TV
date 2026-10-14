@@ -78,16 +78,6 @@ pub fn execute_actions<B: PlayerBackend>(
                 // is harmless — the `None` path never builds an audio source.
                 engine.preload_gapless(path.as_deref(), TrackReplayGain::default());
             }
-            PlayerAction::PlayStream { generation, volume } => {
-                // Deliberately not through `start_or_skip`: there is no file to pre-flight with
-                // `Path::exists`, and nothing to auto-skip onto — a station is one source, not a
-                // position in a queue.
-                if let Err(e) = engine.play_stream(generation, volume) {
-                    log::error!("Failed to start the radio stream: {}", describe(&e));
-                    engine.stop();
-                    enqueue_station_failure(&mut pending, player_state, sinks, generation);
-                }
-            }
             // Both no-op until `boot::tasks` installs the flusher, which it does before playback
             // can start. Nothing here writes the row itself: a `DbPool` on this side is what pins
             // the engine to sqlx.
@@ -238,23 +228,6 @@ fn toast_track_name(file_path: &str) -> String {
     Path::new(file_path)
         .file_name()
         .map_or_else(|| file_path.to_owned(), |n| n.to_string_lossy().into_owned())
-}
-
-/// Clear a station whose staged stream could not be started, so the transport doesn't sit on a
-/// `Loading` that will never resolve.
-///
-/// No toast: the only ways this fires are a stage that was never made and one made for a station
-/// the user has already moved off, neither of which is theirs to act on. A stream that failed to
-/// *open* is the user-visible case, and `library::radio` says so there.
-fn enqueue_station_failure(
-    pending: &mut Pending,
-    player_state: &PlayerStateHandle,
-    sinks: &PlayerSinks,
-    generation: u64,
-) {
-    pending.prepend(with_state_emit(player_state, sinks, |s| {
-        s.build_station_failed_actions(generation)
-    }));
 }
 
 /// Advance past a track that turned out to be unplayable (missing or

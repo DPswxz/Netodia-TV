@@ -346,8 +346,7 @@ fn toggle_window(ui_weak: &slint::Weak<AppWindow>) {
 
 /// Build a `TraySnapshot` from the latest light view-model.
 ///
-/// Through `source()`, so a station reaches the tooltip as "song — artist" (or "song — station"
-/// where the stream named no artist) without this file learning what a station is.
+/// Through `source()`, so the tooltip uses the same title and artist as the OS media controls.
 fn snapshot_from_vm(vm: Option<&PlayerViewModelLight>) -> TraySnapshot {
     let Some(vm) = vm else {
         return TraySnapshot::default();

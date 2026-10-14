@@ -3,8 +3,6 @@ import { Theme } from "../theme.slint";
 import { Visualizer } from "../globals/audio.slint";
 import { Nav, NavEnterFrom } from "../globals/nav.slint";
 import { Player } from "../globals/player.slint";
-import { Radio } from "../globals/radio.slint";
-import { ArtworkImage } from "../components/artwork-image.slint";
 import { AccentDiscButton } from "../components/now-playing/accent-disc-button.slint";
 import { AccentGlyphButton } from "../components/now-playing/accent-glyph-button.slint";
 import { MetaChipStrip } from "../components/meta-chip-strip.slint";
@@ -13,9 +11,7 @@ import { NowPlayingCover } from "../components/now-playing/now-playing-cover.sli
 import { UpNextList } from "../components/now-playing/up-next-list.slint";
 import { LyricsPanel } from "../components/now-playing/lyrics-panel.slint";
 import { Lyrics } from "../globals/lyrics.slint";
-import { StationFacts, StationHistory } from "../components/station-facts.slint";
 import { NpOverlayScrollbar } from "../components/now-playing/np-overlay-scrollbar.slint";
-import { TooltipSide } from "../components/tooltip.slint";
 import { LyricsControls } from "../components/now-playing/lyrics-controls.slint";
 import { VisualizerPicker } from "../components/now-playing/visualizer-picker.slint";
 import { VisualizerStrip } from "../components/now-playing/visualizer-strip.slint";
@@ -132,7 +128,7 @@ export component NowPlayingView inherits Rectangle {
                 }
             }
 
-            if !Player.vm.has_station: VerticalLayout {
+            VerticalLayout {
                 alignment: center;
                 AccentGlyphButton {
                     icon: Player.vm.track.is_favorite ? "favorite" : "favorite_border";
@@ -140,33 +136,6 @@ export component NowPlayingView inherits Rectangle {
                     active: Player.vm.track.is_favorite;
                     button-enabled: Player.vm.has_track;
                     clicked => { Player.toggle-favorite(); }
-                }
-            }
-
-            // **A station takes the vote in the heart's slot.** The favourite toggle acts on a
-            // `tracks` row a station has none of, so it could only ever sit there disabled; the
-            // vote is the one thing this header can offer that a stream actually answers.
-            //
-            // **Gone rather than disabled** where the directory does not know the station — a
-            // hand-typed one has no uuid to record a vote against — which is what the station
-            // page's own pill does with the same question. A permanently dead glyph is exactly
-            // what this replaced.
-            //
-            // The heart's own slot, not a new kind of control. Labelled on the station page,
-            // where three segments fit and a reader can weigh them; here there is room for one
-            // glyph, so it takes the tooltip.
-            if Player.vm.has_station && Player.vm.radio.uuid != "": VerticalLayout {
-                alignment: center;
-                AccentGlyphButton {
-                    icon: "thumb_up";
-                    tooltip-text: @tr("Vote");
-                    // Left, for the station page's own reason: this row is the panel's top edge,
-                    // so an above-pill is cut off by it. The left arm centres vertically and
-                    // clears inward over the header's own spacer.
-                    tooltip-side: TooltipSide.left;
-                    clicked => {
-                        Radio.vote(Player.vm.radio.uuid, Player.vm.radio.station_id);
-                    }
                 }
             }
 
@@ -178,10 +147,7 @@ export component NowPlayingView inherits Rectangle {
                 VisualizerPicker { }
             }
 
-            // **Gone rather than disabled on a station**, the vote's rule directly above: the
-            // column keeps its panel whatever the switch says, a stream having no track to look a
-            // sheet up for, so here it could only ever swap nothing for nothing.
-            if !Player.vm.has_station: VerticalLayout {
+            VerticalLayout {
                 alignment: center;
                 LyricsControls { }
             }
@@ -238,7 +204,7 @@ export component NowPlayingView inherits Rectangle {
                             preferred-height: root.cover-h;
                             max-height: root.cover-h;
 
-                            if !Player.vm.has_station: NowPlayingCover {
+                            NowPlayingCover {
                                 // Square at whichever axis runs out first. The width term matters
                                 // on a narrow window, where the Up Next column holds its floor and
                                 // this one can end up narrower than the tile wants to be.
@@ -247,37 +213,6 @@ export component NowPlayingView inherits Rectangle {
                                 y: 0px;
                             }
 
-                            // **`ArtworkImage`, not `NowPlayingCover`.** That component is the
-                            // *track* cross-fade, and a station has nothing to cross-fade between;
-                            // what it does need is the inset card, the monogram and the `radio`
-                            // glyph, all of which the shared tile already owns. A station logo is
-                            // routinely a favicon, so without the inset a 32 px source is magnified
-                            // across 384.
-                            //
-                            // Both arms spell `x` and `y`, which is what keeps this slot the
-                            // artwork column's only slack — see the shrink-pass note in
-                            // `.claude/rules/visualizer.md`.
-                            if Player.vm.has_station: ArtworkImage {
-                                tile-size: min(parent.height, parent.width);
-                                tile-radius: Theme.radius-lg;
-                                x: (parent.width - self.width) / 2;
-                                y: 0px;
-                                artwork-path: Player.vm.radio.artwork_path;
-                                // The row tier until the detail decode lands, the miniplayer's
-                                // ternary. The subscriber empties the large slot the moment the
-                                // source moves, so an empty one is a decode still out rather than
-                                // a station with no logo.
-                                cover: Player.np-station-logo.width > 0
-                                    ? Player.np-station-logo
-                                    : Player.vm.radio.logo_img;
-                                native-size: Player.np-station-logo-size * 1px;
-                                fallback-text: Player.vm.radio.monogram;
-                                fallback-icon: "radio";
-                                tile-bg: @linear-gradient(135deg,
-                                    Player.vm.radio.tile_color_1,
-                                    Player.vm.radio.tile_color_2);
-                                tile-icon-color: Theme.tile-ink;
-                            }
                         }
 
                         // Centred under the artwork.
@@ -373,13 +308,8 @@ export component NowPlayingView inherits Rectangle {
                 spacing: Theme.pad-sm;
 
                 Text {
-                    // A station's queue is untouched underneath it but is not what comes next,
-                    // so this column states what the station *is* instead. Lyrics take the same
-                    // slot on a track, the column being one column with three arms rather than a
-                    // place two things share.
                     // Translators: a heading in place of "Up Next", so keep it as short
-                    text: Player.vm.has_station ? @tr("Station")
-                        : Lyrics.enabled ? @tr("Lyrics")
+                    text: Lyrics.enabled ? @tr("Lyrics")
                         : @tr("Up Next");
                     // Accent-tinted like the divider under it but solid: a heading carries it at
                     // full alpha where a hairline can't. The rows below keep the list palette.
@@ -395,77 +325,13 @@ export component NowPlayingView inherits Rectangle {
                 }
 
                 // The mini-player mounts the same component with `compact: true`.
-                if !Player.vm.has_station && !Lyrics.enabled: UpNextList {
+                if !Lyrics.enabled: UpNextList {
                     vertical-stretch: 1;
                     compact: false;
                 }
 
-                // **A station keeps its panel whatever the switch says.** A stream has no track to
-                // look a sheet up for, so the switch would be offering something that could only
-                // ever be empty; what a station has instead is the description below.
-                if !Player.vm.has_station && Lyrics.enabled: LyricsPanel {
+                if Lyrics.enabled: LyricsPanel {
                     vertical-stretch: 1;
-                }
-                // **The station page's own body, on this view's palette.** What a stream has
-                // instead of a queue is a description of itself, so the two surfaces state the
-                // same facts through the same component rather than one of them inventing a
-                // second answer. No Votes row: that number comes from a directory refresh the
-                // station page runs and this column has no reason to.
-                //
-                // One scroller for the pair — the history is capped by the ring that fills it, so
-                // there is nothing to virtualize and no second scroller to nest.
-                if Player.vm.has_station: Rectangle {
-                    vertical-stretch: 1;
-
-                    station-sv := ScrollView {
-                        width: 100%;
-                        height: 100%;
-                        horizontal-scrollbar-policy: always-off;
-                        vertical-scrollbar-policy: always-off;
-                        viewport-width: self.width;
-
-                        // The station page's shape: the scroller keeps the full width so the
-                        // wheel works over the bar's lane too, and the content insets instead.
-                        VerticalLayout {
-                            spacing: Theme.pad-md;
-                            padding-right: Theme.scrollbar-slot;
-                            alignment: start;
-
-                            StationFacts {
-                                stream-url: Player.vm.radio.stream_url;
-                                homepage: Player.vm.radio.homepage;
-                                codec: Player.vm.radio.codec;
-                                bitrate: Player.vm.radio.bitrate;
-                                play-count: Player.vm.radio.play_count;
-                                // The column is a third of the panel, so the label gutter gives
-                                // ground to the values — a stream URL needs what it can get.
-                                label-width: 80px;
-                                label-color: Player.np-on-backdrop-muted;
-                                value-color: Player.np-on-backdrop;
-                                action-idle-fg: Player.np-accent-dim;
-                                action-hover-fg: Player.np-accent-bright;
-                                action-hover-bg: Player.np-accent-pill;
-                                open-homepage(url) => { Radio.open-homepage(url); }
-                            }
-
-                            if Radio.history-rows.length > 0: StationHistory {
-                                rows: Radio.history-rows;
-                                heading-color: Player.np-on-backdrop-muted;
-                                row-color: Player.np-on-backdrop;
-                            }
-                        }
-                    }
-
-                    NpOverlayScrollbar {
-                        x: parent.width - self.width;
-                        y: 0;
-                        width: Theme.scrollbar-slot;
-                        height: parent.height;
-                        visible-size: station-sv.visible-height;
-                        content-size: station-sv.viewport-height;
-                        offset: -station-sv.viewport-y;
-                        scroll-to(o) => { station-sv.viewport-y = -o; }
-                    }
                 }
             }
         }

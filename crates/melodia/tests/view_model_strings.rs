@@ -111,7 +111,6 @@ fn every_playback_status_the_sheet_branches_on_is_one_the_enum_produces() {
         PlaybackStatus::Stopped,
         PlaybackStatus::Playing,
         PlaybackStatus::Paused,
-        PlaybackStatus::Loading,
     ]
     .iter()
     .map(PlaybackStatus::as_str)

@@ -11,7 +11,7 @@
 //! also dodge the "temporary doesn't live long enough" pattern when the
 //! ctx is built inline in an `async move` block.
 
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
 use melodia_core::config::Paths;
 use melodia_engine::player::engine::backend::PlaybackEngine;
@@ -30,11 +30,6 @@ pub struct PlaybackContext {
     pub engine: Arc<PlaybackEngine>,
     pub db: DbPool,
     pub paths: Arc<Paths>,
-    /// The same lazily-built client `AppState`, scrobbling and Discord presence share, so a
-    /// station opens on the one connection pool and carries the `Melodia/<version>` User-Agent
-    /// with it. Carried here rather than passed per call because resuming a paused station is a
-    /// transport command like any other, and `player_play` has only this.
-    pub http: Arc<OnceLock<reqwest::Client>>,
 }
 
 impl PlaybackContext {
@@ -66,7 +61,6 @@ impl AppState {
             engine: self.engine.clone(),
             db: self.db.clone(),
             paths: self.paths.clone(),
-            http: self.http_client_cell(),
         }
     }
 }

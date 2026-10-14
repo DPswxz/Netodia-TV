@@ -21,7 +21,6 @@ use melodia_engine::player::engine::event_sink::PlayerSinks;
 use melodia_engine::player::engine::state::{
     PlayerAction, PlayerStateHandle, lock_state, play_track_inner, stop_end_of_queue,
 };
-use melodia_engine::player::engine::types::PlaybackSource;
 use melodia_store::database::{DbPool, queries};
 
 pub fn spawn(spawner: &TaskSpawner, state: &AppState) {
@@ -95,10 +94,7 @@ async fn reconcile_once(
     // rebuilds rows automatically.
     emit_and_execute(&**engine, player_state, sinks, |s| {
         let outcome = s.queue.prune_missing(&to_remove);
-        // A station leaves the queue seated underneath rather than playing from it, so a row
-        // going missing out of it is not a playback event at all: reacting would stop the
-        // station and take it off screen over a track it was never playing.
-        if !outcome.current_was_removed || !s.source_allows(PlaybackSource::advances_queue) {
+        if !outcome.current_was_removed {
             return Vec::new();
         }
         if let Some(track) = s.queue.get_current().cloned() {

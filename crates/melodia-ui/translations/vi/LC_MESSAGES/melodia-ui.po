@@ -15,12 +15,11 @@ msgstr ""
 msgid "Search"
 msgstr "Tìm kiếm"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Browse"
 msgstr "Duyệt"
 
 #: ui/app-window.slint ui/layout/sidebar.slint ui/views/favorites-view.slint
-#: ui/views/radio-view.slint
 msgid "Favorites"
 msgstr "Yêu thích"
 
@@ -28,7 +27,7 @@ msgstr "Yêu thích"
 msgid "My Library"
 msgstr "Thư viện của tôi"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 #: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "Đã phát gần đây"
@@ -36,11 +35,6 @@ msgstr "Đã phát gần đây"
 #: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Settings"
 msgstr "Cài đặt"
-
-#: ui/app-window.slint ui/layout/sidebar.slint
-#: ui/views/settings/radio-section.slint
-msgid "Radio"
-msgstr "Radio"
 
 #: ui/components/caption-buttons.slint
 #: ui/components/macos-titlebar-cluster.slint
@@ -81,74 +75,23 @@ msgstr "Thêm vào Yêu thích"
 msgid "Remove from Favorites"
 msgstr "Xóa khỏi Yêu thích"
 
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-msgid "Stream URL"
-msgstr "URL luồng phát"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Name (optional)"
-msgstr "Tên (không bắt buộc)"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to use the station's own name"
-msgstr "Để trống để dùng tên riêng của đài"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
-msgid "Website"
-msgstr "Trang web"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Logo URL"
-msgstr "URL logo"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to look for a logo on the website above."
-msgstr "Để trống để tìm logo trên trang web ở trên."
-
-#: ui/components/dialog/add-station-body.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/track-list/column-toggle-popup.slint
 #: ui/components/track-list/track-list-header.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "Thể loại"
 
-#: ui/components/dialog/add-station-body.slint
-msgid "Jazz, Blues"
-msgstr "Jazz, Blues"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "Country"
-msgstr "Quốc gia"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Tunisia"
-msgstr "Tunisia"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "The directory owns this station's name and stream. What it left blank is yours to fill in; leave a field empty to remove it again."
-msgstr "Danh bạ quản lý tên và luồng phát của đài này. Những gì danh bạ để trống là phần bạn có thể điền; để trống một trường để xóa lại thông tin đó."
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Checking the stream…"
-msgstr "Đang kiểm tra luồng phát…"
-
 #: ui/components/dialog/credit-editor.slint
 #: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Add"
 msgstr "Thêm"
 
 #: ui/components/dialog/dialog.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/grid/station-context-menu.slint ui/views/favorites-view.slint
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/favorites-view.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "Tên"
 
@@ -168,11 +111,7 @@ msgstr "Thêm mô tả…"
 msgid "Finish"
 msgstr "Hoàn tất"
 
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
-msgid "Open Last.fm"
-msgstr "Mở Last.fm"
-
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
+#: ui/components/dialog/dialog.slint
 msgid "Connect"
 msgstr "Kết nối"
 
@@ -304,35 +243,12 @@ msgstr "Ngăn méo tiếng"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "ReplayGain chỉ áp dụng cho các bản nhạc đã có thẻ độ lớn âm thanh. Hãy quét thư viện bằng công cụ như rsgain hoặc loudgain để thêm các thẻ này."
 
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "Click Open Last.fm to approve Melodia in your browser."
-msgstr "Nhấn Mở Last.fm để cấp quyền cho Melodia trong trình duyệt."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "After approving Melodia in your browser, click Finish."
-msgstr "Sau khi cấp quyền cho Melodia trong trình duyệt, hãy nhấn Hoàn tất."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
 #: ui/globals/player.slint
 msgid "Connecting…"
 msgstr "Đang kết nối…"
 
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "User token"
-msgstr "Mã thông báo người dùng"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Paste your ListenBrainz user token"
-msgstr "Dán mã thông báo người dùng ListenBrainz của bạn"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Find your token on your ListenBrainz profile settings page."
-msgstr "Bạn có thể tìm mã thông báo trên trang cài đặt hồ sơ ListenBrainz."
-
 #: ui/components/dialog/selectable-picker.slint
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "Chọn tất cả"
@@ -407,7 +323,6 @@ msgid "Duration (sec)"
 msgstr "Thời lượng (giây)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/station-facts.slint ui/views/radio/tab-pills.slint
 msgid "Plays"
 msgstr "Lượt phát"
 
@@ -453,7 +368,6 @@ msgid "File size (bytes)"
 msgstr "Kích thước tệp (byte)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Last played"
 msgstr "Phát lần cuối"
 
@@ -700,7 +614,6 @@ msgstr "Số"
 
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/onboarding/appearance-panel.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "Ngôn ngữ"
@@ -750,8 +663,7 @@ msgstr "Đường dẫn"
 msgid "Codec"
 msgstr "Codec"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/station-facts.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Bitrate"
 msgstr "Tốc độ bit"
 
@@ -802,10 +714,8 @@ msgid "Folder"
 msgstr "Thư mục"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/now-playing/play-button.slint
 #: ui/components/track-list/track-context-menu.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Play"
 msgstr "Phát"
 
@@ -871,8 +781,6 @@ msgid "Edit Track Information"
 msgstr "Sửa thông tin bản nhạc"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "Sao chép"
@@ -905,7 +813,6 @@ msgid "Go to Artist"
 msgstr "Đi tới nghệ sĩ"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "Bỏ chọn"
@@ -937,32 +844,6 @@ msgstr "Nghệ sĩ - Album"
 #: ui/components/grid/playlist-grid.slint
 msgid "0 tracks"
 msgstr "0 bản nhạc"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Open Website"
-msgstr "Mở trang web"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Edit…"
-msgstr "Sửa…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Recently Played…"
-msgstr "Xóa {} đài khỏi Đã phát gần đây…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Recently Played…"
-msgstr "Xóa khỏi Đã phát gần đây…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Favorites…"
-msgstr "Xóa {} đài khỏi Yêu thích…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Favorites…"
-msgstr "Xóa khỏi Yêu thích…"
 
 #: ui/components/mini-player/mini-captions.slint
 msgid "Full Player"
@@ -1251,33 +1132,9 @@ msgid "Melodia works offline. These are the parts that reach out."
 msgstr "Melodia hoạt động ngoại tuyến. Đây là những phần có kết nối ra bên ngoài."
 
 #: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Internet radio"
-msgstr "Radio trực tuyến"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Browse and play live stations from radio-browser.info"
-msgstr "Duyệt và phát các đài trực tiếp từ radio-browser.info"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/discord-section.slint
-msgid "Show the track you're playing on your Discord profile"
-msgstr "Hiện bản nhạc bạn đang phát trên hồ sơ Discord"
-
-#: ui/components/onboarding/features-panel.slint
 #: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "Khi bản nhạc không kèm lời, hỏi lrclib.net"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobbling"
-msgstr "Scrobbling"
-
-#: ui/components/onboarding/features-panel.slint
-msgid "Send what you play to Last.fm or ListenBrainz"
-msgstr "Gửi những gì bạn nghe tới Last.fm hoặc ListenBrainz"
 
 #: ui/components/onboarding/features-panel.slint
 msgid "Set Up"
@@ -1378,10 +1235,9 @@ msgstr "{} / {} tệp"
 
 #: ui/components/settings/scan-progress.slint ui/globals/dialog-forms.slint
 #: ui/globals/dialog.slint ui/views/queue-sheet.slint
-#: ui/views/radio/tab-pills.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/appearance-section.slint
 #: ui/views/settings/library-section.slint
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 #: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "Hủy"
@@ -1390,52 +1246,10 @@ msgstr "Hủy"
 msgid "Sort"
 msgstr "Sắp xếp"
 
-#: ui/components/station-facts.slint
-msgid "Stream"
-msgstr "Luồng phát"
-
-#: ui/components/station-facts.slint
-msgid "Copy stream URL"
-msgstr "Sao chép URL luồng phát"
-
-#: ui/components/station-facts.slint
-msgid "Open in your browser"
-msgstr "Mở trong trình duyệt"
-
-#: ui/components/station-facts.slint ui/views/radio/suggestion-pill.slint
-#: ui/views/radio/tab-pills.slint
-msgid "Format"
-msgstr "Định dạng"
-
-#: ui/components/station-facts.slint ui/views/radio/station-grid.slint
-msgid "{} kbps"
-msgstr "{} kbps"
-
-#: ui/components/station-facts.slint
-msgid "Votes"
-msgstr "Lượt bình chọn"
-
-#: ui/components/station-facts.slint
-msgid "{n} vote"
-msgid_plural "{n} votes"
-msgstr[0] "{n} lượt bình chọn"
-
-#: ui/components/station-facts.slint ui/globals/hero-chips.slint
+#: ui/globals/hero-chips.slint
 msgid "{n} play"
 msgid_plural "{n} plays"
 msgstr[0] "{n} lượt phát"
-
-#: ui/components/station-facts.slint
-msgid "Recently played on this station"
-msgstr "Đã phát gần đây trên đài này"
-
-#: ui/components/station-facts.slint
-msgid "Copy Title"
-msgstr "Sao chép tiêu đề"
-
-#: ui/components/station-facts.slint
-msgid "Copy Artist"
-msgstr "Sao chép nghệ sĩ"
 
 #: ui/components/track-copy-items.slint
 msgid "Artist - Title"
@@ -1514,14 +1328,6 @@ msgstr "Chưa được cấp quyền. Hãy cấp quyền cho Melodia trong trìn
 msgid "Couldn't save your credentials."
 msgstr "Không thể lưu thông tin đăng nhập."
 
-#: ui/globals/dialog-forms.slint
-msgid "Edit Station"
-msgstr "Sửa đài"
-
-#: ui/globals/dialog-forms.slint
-msgid "Station Details"
-msgstr "Chi tiết đài"
-
 #: ui/globals/dialog-forms.slint ui/globals/dialog.slint
 msgid "Save"
 msgstr "Lưu"
@@ -1533,10 +1339,6 @@ msgstr "Không thể kết nối tới địa chỉ đó. Hãy kiểm tra URL v�
 #: ui/globals/dialog-forms.slint
 msgid "That address doesn't play as audio Melodia can decode."
 msgstr "Địa chỉ đó không phát ra âm thanh mà Melodia có thể giải mã."
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't save the station."
-msgstr "Không thể lưu đài."
 
 #: ui/globals/dialog-forms.slint
 msgid "That doesn't look like a web address. It should start with https://"
@@ -1587,30 +1389,8 @@ msgid "\"{}\" will be removed from Recently Played."
 msgstr "\"{}\" sẽ bị xóa khỏi Đã phát gần đây."
 
 #: ui/globals/dialog.slint
-msgid "\"{}\" will be removed from your stations, along with its play history."
-msgstr "\"{}\" sẽ bị xóa khỏi danh sách đài của bạn, cùng với lịch sử phát của đài."
-
-#: ui/globals/dialog.slint
 msgid "\"{}\" will be removed from your favorites."
 msgstr "\"{}\" sẽ bị xóa khỏi mục yêu thích của bạn."
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from Recently Played?"
-msgid_plural "Remove {n} stations from Recently Played?"
-msgstr[0] "Xóa {n} đài khỏi Đã phát gần đây?"
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from favorites?"
-msgid_plural "Remove {n} stations from favorites?"
-msgstr[0] "Xóa {n} đài khỏi mục yêu thích?"
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from Recently Played."
-msgstr "Các đài sẽ bị xóa khỏi Đã phát gần đây."
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from your favorites. Any you added by hand are removed from your stations, along with their play history."
-msgstr "Các đài sẽ bị xóa khỏi mục yêu thích của bạn. Những đài bạn tự thêm sẽ bị xóa khỏi danh sách đài, cùng với lịch sử phát của chúng."
 
 #: ui/globals/dialog.slint
 msgid "Edit Rules"
@@ -1637,7 +1417,6 @@ msgid "Choose playlists to export."
 msgstr "Chọn danh sách phát để xuất."
 
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Export"
 msgstr "Xuất"
 
@@ -1659,7 +1438,6 @@ msgstr "Tuyển tập"
 msgid "No track playing"
 msgstr "Không có bản nhạc nào đang phát"
 
-#. Translators: a state on the station pill, not the Pause button's verb
 #: ui/globals/player.slint
 msgid "Paused"
 msgstr "Đang tạm dừng"
@@ -1900,27 +1678,9 @@ msgid "These playlists are too large for one .zip file. Export fewer at a time."
 msgstr "Các danh sách phát này quá lớn để gói vào một tệp .zip. Hãy xuất ít danh sách hơn mỗi lần."
 
 #: ui/settings.slint
-msgid "{n} station added"
-msgid_plural "{n} stations added"
-msgstr[0] "Đã thêm {n} đài"
-
-#: ui/settings.slint
 msgid "{n} was already in your list."
 msgid_plural "{n} were already in your list."
 msgstr[0] "{n} đài đã có sẵn trong danh sách của bạn."
-
-#: ui/settings.slint
-msgid "Couldn't read any stations from the selected file(s)."
-msgstr "Không thể đọc đài nào từ (các) tệp đã chọn."
-
-#: ui/settings.slint
-msgid "{n} station exported"
-msgid_plural "{n} stations exported"
-msgstr[0] "Đã xuất {n} đài"
-
-#: ui/settings.slint
-msgid "Couldn't write the station list."
-msgstr "Không thể ghi danh sách đài."
 
 #: ui/settings.slint
 msgid "Playback error"
@@ -2088,7 +1848,7 @@ msgstr "Chưa có nghệ sĩ yêu thích nào"
 msgid "Favorite a song and its artist appears here."
 msgstr "Hãy yêu thích một bài hát và nghệ sĩ của bài đó sẽ hiện ở đây."
 
-#: ui/views/favorites/most-played-tab.slint ui/views/radio-view.slint
+#: ui/views/favorites/most-played-tab.slint
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "Chưa phát gì"
@@ -2226,18 +1986,13 @@ msgstr "Tạo danh sách phát từ quy tắc"
 msgid "More playlist actions"
 msgstr "Thao tác khác với danh sách phát"
 
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Import"
 msgstr "Nhập"
 
-#: ui/views/now-playing-view.slint ui/views/radio/tab-pills.slint
+#: ui/views/now-playing-view.slint
 msgid "Vote"
 msgstr "Bình chọn"
-
-#. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/views/now-playing-view.slint
-msgid "Station"
-msgstr "Đài"
 
 #: ui/views/now-playing-view.slint
 msgid "Up Next"
@@ -2270,107 +2025,6 @@ msgstr "Hàng đợi trống"
 #: ui/views/queue-sheet.slint
 msgid "Drop to add to queue"
 msgstr "Thả để thêm vào hàng đợi"
-
-#: ui/views/radio-view.slint ui/views/radio/suggestion-pill.slint
-msgid "{n} station"
-msgid_plural "{n} stations"
-msgstr[0] "{n} đài"
-
-#: ui/views/radio-view.slint
-msgid "Search stations…"
-msgstr "Tìm đài…"
-
-#: ui/views/radio-view.slint
-msgid "Filter stations…"
-msgstr "Lọc đài…"
-
-#: ui/views/radio-view.slint
-msgid "No stations kept yet"
-msgstr "Chưa lưu đài nào"
-
-#: ui/views/radio-view.slint
-msgid "Star a station in Browse, or add one by URL."
-msgstr "Gắn sao cho một đài trong mục Duyệt, hoặc thêm đài bằng URL."
-
-#: ui/views/radio-view.slint
-msgid "Stations you listen to show up here."
-msgstr "Các đài bạn nghe sẽ hiện ở đây."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Searching the directory…"
-msgstr "Đang tìm trong danh bạ…"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Stations are coming from radio-browser.info."
-msgstr "Các đài được lấy từ radio-browser.info."
-
-#: ui/views/radio/browse-tab.slint
-msgid "The station directory is unreachable"
-msgstr "Không thể kết nối với danh bạ đài"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Check your connection and try again."
-msgstr "Hãy kiểm tra kết nối và thử lại."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Try again"
-msgstr "Thử lại"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "No stations matched"
-msgstr "Không có đài nào phù hợp"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "Try a different name, or clear a filter."
-msgstr "Hãy thử tên khác, hoặc bỏ một bộ lọc."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Load more stations"
-msgstr "Tải thêm đài"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/facet-chip.slint
-msgid "Loading…"
-msgstr "Đang tải…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Filter…"
-msgstr "Lọc…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Nothing to pick from"
-msgstr "Không có gì để chọn"
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory reached this station on its last check."
-msgstr "Danh bạ đã kết nối được với đài này ở lần kiểm tra gần nhất."
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory could not reach this station on its last check."
-msgstr "Danh bạ không kết nối được với đài này ở lần kiểm tra gần nhất."
-
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "{} kbps and up"
-msgstr "Từ {} kbps trở lên"
-
-#: ui/views/radio/suggestion-pill.slint
-msgid "{}: {}"
-msgstr "{}: {}"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Add Station"
-msgstr "Thêm đài"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Added"
-msgstr "Đã thêm"
-
-#: ui/views/radio/tab-pills.slint
-msgid "More station actions"
-msgstr "Thao tác khác với đài"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Edit"
-msgstr "Sửa"
 
 #: ui/views/recently-played-view.slint
 msgid "Filter recently played…"
@@ -2575,34 +2229,6 @@ msgstr "Ghi thêm chi tiết. Bật tùy chọn này, tái hiện sự cố rồ
 #: ui/views/settings/diagnostics-section.slint
 msgid "Save…"
 msgstr "Lưu…"
-
-#: ui/views/settings/discord-section.slint
-msgid "Show album artwork"
-msgstr "Hiện ảnh bìa album"
-
-#: ui/views/settings/discord-section.slint
-msgid "Look up cover art online (via Deezer or iTunes) to show on the card"
-msgstr "Tìm ảnh bìa trực tuyến (qua Deezer hoặc iTunes) để hiện trên thẻ"
-
-#: ui/views/settings/discord-section.slint
-msgid "Hide while paused"
-msgstr "Ẩn khi tạm dừng"
-
-#: ui/views/settings/discord-section.slint
-msgid "Remove the card when paused instead of showing a paused marker"
-msgstr "Gỡ thẻ khi tạm dừng thay vì hiện dấu tạm dừng"
-
-#: ui/views/settings/discord-section.slint
-msgid "Status"
-msgstr "Trạng thái"
-
-#: ui/views/settings/discord-section.slint
-msgid "Connected to Discord"
-msgstr "Đã kết nối với Discord"
-
-#: ui/views/settings/discord-section.slint
-msgid "Discord not running"
-msgstr "Discord chưa chạy"
 
 #: ui/views/settings/file-watching-section.slint
 msgid "File Watching"
@@ -2831,7 +2457,6 @@ msgid "Exclusive"
 msgstr "Độc quyền"
 
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 msgid "Not connected"
 msgstr "Chưa kết nối"
 
@@ -3049,22 +2674,6 @@ msgstr "Chọn cách hiển thị sóng nhạc"
 msgid "{} s"
 msgstr "{} giây"
 
-#: ui/views/settings/radio-section.slint
-msgid "Hide segmented stations"
-msgstr "Ẩn đài phát theo phân đoạn"
-
-#: ui/views/settings/radio-section.slint
-msgid "Segmented (HLS) streams play, but take longer to start"
-msgstr "Luồng phân đoạn (HLS) vẫn phát được, nhưng mất nhiều thời gian hơn để bắt đầu"
-
-#: ui/views/settings/radio-section.slint
-msgid "Report plays to the directory"
-msgstr "Báo lượt phát cho danh bạ"
-
-#: ui/views/settings/radio-section.slint
-msgid "An anonymous count is what orders stations by popularity"
-msgstr "Số lượt đếm ẩn danh này dùng để xếp hạng đài theo độ phổ biến"
-
 #: ui/views/settings/ratings-section.slint
 msgid "Ratings"
 msgstr "Đánh giá"
@@ -3076,82 +2685,6 @@ msgstr "Lưu đánh giá vào tệp"
 #: ui/views/settings/ratings-section.slint
 msgid "Write star ratings into each file's tags, so they survive a rescan and other players can read them."
 msgstr "Ghi số sao đánh giá vào thẻ của từng tệp, để không bị mất khi quét lại và các trình phát khác cũng đọc được."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Last.fm"
-msgstr "Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to Last.fm"
-msgstr "Scrobble lên Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your Last.fm account"
-msgstr "Báo mỗi lượt phát cho tài khoản Last.fm của bạn"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to Last.fm"
-msgstr "Đồng bộ bản nhạc đã thích lên Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on Last.fm — turning this on syncs your existing favorites"
-msgstr "Đánh dấu bản nhạc bạn yêu thích là \"đã thích\" trên Last.fm; bật tùy chọn này sẽ đồng bộ các mục yêu thích hiện có"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "ListenBrainz"
-msgstr "ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to ListenBrainz"
-msgstr "Scrobble lên ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your ListenBrainz account"
-msgstr "Báo mỗi lượt phát cho tài khoản ListenBrainz của bạn"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to ListenBrainz"
-msgstr "Đồng bộ bản nhạc đã thích lên ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on ListenBrainz — turning this on syncs your existing favorites (needs MusicBrainz IDs)"
-msgstr "Đánh dấu bản nhạc bạn yêu thích là \"đã thích\" trên ListenBrainz; bật tùy chọn này sẽ đồng bộ các mục yêu thích hiện có (cần ID MusicBrainz)"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "MusicBrainz Picard adds these IDs to your files, identifying each track by its audio."
-msgstr "MusicBrainz Picard thêm các ID này vào tệp của bạn, nhận diện từng bản nhạc qua âm thanh của nó."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble radio songs"
-msgstr "Scrobble bài hát từ radio"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Songs heard in full on a station go to your connected scrobbling services"
-msgstr "Bài hát được nghe trọn vẹn trên một đài sẽ được gửi tới các dịch vụ scrobble đã kết nối"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connected as {}"
-msgstr "Đã kết nối với tên {}"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Not configured in this build"
-msgstr "Chưa được cấu hình trong bản dựng này"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect Last.fm"
-msgstr "Kết nối Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Disconnect"
-msgstr "Ngắt kết nối"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect ListenBrainz"
-msgstr "Kết nối ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Turn on Last.fm or ListenBrainz above first"
-msgstr "Hãy bật Last.fm hoặc ListenBrainz ở trên trước"
 
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"

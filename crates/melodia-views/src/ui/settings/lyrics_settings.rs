@@ -23,8 +23,8 @@ use melodia_ui::{AppWindow, Lyrics, Settings};
 /// Seed the Settings card's three rows and register their handlers.
 pub fn install(ui: &AppWindow, state: &AppState) {
     let g = ui.global::<Settings>();
-    // Seeded off the shadow rather than off `settings.json`, as `radio_settings` does: `AppState`
-    // already read the file at boot, and a second read here would answer the same question twice.
+    // Seeded off the shadow: `AppState` already read the file at boot, and a second read here
+    // would answer the same question twice.
     g.set_lyrics_enabled(state.lyrics_enabled.get());
     g.set_lyrics_online_enabled(state.lyrics_online_enabled.get());
     g.set_lyrics_romanization_shown(state.lyrics_romanization_shown.get());

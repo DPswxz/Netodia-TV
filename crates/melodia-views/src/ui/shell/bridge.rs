@@ -19,8 +19,7 @@ use melodia_artwork::media::image::cover_thumbs::CoverThumbs;
 use melodia_core::entities::track::TrackSummary;
 use melodia_engine::player::engine::event_sink::PlayerSinks;
 use melodia_engine::player::engine::state::{PlayerViewModelLight, PositionTick, QueueViewModel};
-use melodia_engine::player::engine::types::RadioNowPlaying;
-use melodia_ui::{AppWindow, Player, PlayerVm, QueueVm, RadioVm, TrackSummaryRow};
+use melodia_ui::{AppWindow, Player, PlayerVm, QueueVm, TrackSummaryRow};
 
 /// Subscribe to the lightweight player `ViewModel` (status, current track,
 /// volume, `has_next/prev`). Fires on every state change; replaces the whole
@@ -57,12 +56,6 @@ pub fn spawn_view_model_subscriber(
                     &mut new_vm.track.cover_img,
                     &prev_vm.track.cover_img,
                 );
-                let logo_path = reuse_or_warm(
-                    &new_vm.radio.artwork_path,
-                    &prev_vm.radio.artwork_path,
-                    &mut new_vm.radio.logo_img,
-                    &prev_vm.radio.logo_img,
-                );
                 let new_position_ms = clamp_to_i32(vm.position_ms);
                 let new_duration_ms = clamp_to_i32(vm.duration_ms);
                 let new_progress = if vm.duration_ms > 0 {
@@ -96,15 +89,6 @@ pub fn spawn_view_model_subscriber(
                 }
                 if let Some(path) = cover_path {
                     warm_vm_cover(ui.as_weak(), &runtime, &cover_thumbs, path, VmCoverSlot::Track);
-                }
-                if let Some(path) = logo_path {
-                    warm_vm_cover(
-                        ui.as_weak(),
-                        &runtime,
-                        &cover_thumbs,
-                        path,
-                        VmCoverSlot::Station,
-                    );
                 }
             }
         }
@@ -229,51 +213,9 @@ fn reuse_or_warm(
     (new_image.size().width == 0).then(|| new_path.to_string())
 }
 
-/// Convert the station on the deck for the Slint boundary.
-///
-/// The logo is resolved exactly as [`to_slint_track`] resolves a cover — cache-only, so nothing
-/// decodes on the event loop, with [`warm_vm_cover`] filling a miss. The tile comes from
-/// `ui::radio::station_tile`, the same derivation the grid card and the station hero take theirs
-/// from, so one station cannot wear two different tiles on two pages.
-fn to_slint_radio_vm(station: &RadioNowPlaying, cover_thumbs: &CoverThumbs) -> RadioVm {
-    let tile = crate::ui::radio::station_tile(&station.name);
-    let announcement = station.announcement();
-    RadioVm {
-        station_id: clamp_i64_to_i32(station.station_id),
-        uuid: opt_shared(station.station_uuid.as_deref()),
-        name: SharedString::from(station.name.as_str()),
-        live_title: opt_shared(
-            announcement.map(|song| song.title).or(station.live_title.as_deref()),
-        ),
-        live_artist: opt_shared(announcement.map(|song| song.artist)),
-        artwork_path: opt_shared(station.artwork_path.as_deref()),
-        logo_img: cover_thumbs.get_cached_opt(station.artwork_path.as_deref()),
-        monogram: tile.monogram,
-        tile_color_1: tile.color_1,
-        tile_color_2: tile.color_2,
-        buffering: station.buffering,
-        stream_url: SharedString::from(station.stream_url.as_str()),
-        country: opt_shared(station.country.as_deref()),
-        // Trimmed and joined here rather than carried that way, so the bar's second line and a
-        // station card show the same few tags off the same rule.
-        tags: SharedString::from(crate::ui::radio::display_tags(
-            station.tags.as_deref().unwrap_or_default(),
-        )),
-        homepage: opt_shared(station.homepage.as_deref()),
-        codec: opt_shared(station.codec.as_deref()),
-        bitrate: station.bitrate,
-        play_count: station.play_count,
-    }
-}
-
-/// Which half of `Player.vm` a warm is filling. The two paths differ only in the field they guard
-/// on and the field they write, so a parallel `warm_vm_logo` would be the same round trip, the
-/// same staleness check and the same bail spelled twice.
+/// The part of `Player.vm` a background cover warm fills.
 #[derive(Clone, Copy)]
-pub enum VmCoverSlot {
-    Track,
-    Station,
-}
+pub enum VmCoverSlot { Track }
 
 /// Decode `path` into the row tier off the event loop, then write it into `Player.vm`.
 ///
@@ -304,18 +246,12 @@ pub fn warm_vm_cover(
         let _ = weak.upgrade_in_event_loop(move |ui| {
             let player = ui.global::<Player>();
             let mut vm = player.get_vm();
-            let held = match slot {
-                VmCoverSlot::Track => &vm.track.artwork_path,
-                VmCoverSlot::Station => &vm.radio.artwork_path,
-            };
+            let held = &vm.track.artwork_path;
             if held != path.as_str() {
                 return;
             }
             let image = slint::Image::from_rgb8(buffer);
-            match slot {
-                VmCoverSlot::Track => vm.track.cover_img = image,
-                VmCoverSlot::Station => vm.radio.logo_img = image,
-            }
+            vm.track.cover_img = image;
             player.set_vm(vm);
         });
     });
@@ -332,12 +268,9 @@ pub fn to_slint_player_vm(vm: &PlayerViewModelLight, cover_thumbs: &CoverThumbs)
         .as_ref()
         .map(|t| to_slint_track(t.as_ref(), cover_thumbs))
         .unwrap_or_default();
-    let radio = vm.radio.as_ref().map(|r| to_slint_radio_vm(r, cover_thumbs)).unwrap_or_default();
     PlayerVm {
         has_track: vm.current_track.is_some(),
         track,
-        has_station: vm.radio.is_some(),
-        radio,
         status: SharedString::from(vm.status),
         is_playing: vm.status == "playing",
         volume: i32::try_from(vm.volume).unwrap_or(i32::MAX),

@@ -1034,10 +1034,8 @@ fn only_a_tab_pick_records_a_history_entry() {
 /// *synchronous* body carrying neither write.
 #[test]
 fn a_history_walk_lands_the_tab_beside_the_detail_id() {
-    /// The four My Library details plus Radio's station page, which is a walkable detail on
-    /// another section entirely — the one thing `spawn_open_detail` dispatches that isn't a tab
-    /// of this page.
-    const WALKABLE_DETAILS: usize = 5;
+    /// The four details the My Library page can open from its tabs.
+    const WALKABLE_DETAILS: usize = 4;
 
     let deferred = NAV_HISTORY
         .split_once("let pending = PendingNav {")
@@ -1069,7 +1067,6 @@ fn a_history_walk_lands_the_tab_beside_the_detail_id() {
         "open_artist_with(",
         "open_genre_with(",
         "open_playlist_with(",
-        "open_station_with(",
     ] {
         assert!(
             NAV_HISTORY.contains(open),

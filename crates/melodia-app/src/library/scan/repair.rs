@@ -67,8 +67,8 @@ pub(super) async fn forget_missing(
 
 /// Starts a library reconcile when a stored cover the library names is gone, for a cache that
 /// found one missing while the app runs. The reconcile's own repair does the work; this only
-/// keeps a report about a file outside the library's columns, a station logo, from starting a
-/// walk that would find nothing to do.
+/// keeps a report about a file outside the library's columns from starting a walk that would find
+/// nothing to do.
 pub async fn restore_missing_artwork(state: &AppState) -> Result<(), AppError> {
     if !missing_references(&state.db, &state.paths).await?.is_empty() {
         super::reconcile_watched_folders(state);

@@ -35,12 +35,11 @@ const MIN_LOOKUPS: usize = 6;
 /// **An equality, not a floor**, and the count is half of it: the boot file installs two, the row
 /// tier's and the grid tier's, so a set of *files* would find it either way and the one that
 /// matters most could go missing in silence. `set_decoded_notifier` is a `OnceLock`, so that
-/// single grid install is what bumps all six grid generations; Radio's logo tier is the one card
-/// tier that stays private — its station tile reads the decoded extent — so it keeps its own.
+/// single grid install is what bumps all six grid generations.
 /// A tier whose notifier goes missing still compiles, still schedules and still decodes — it
 /// simply never tells anyone, so its cards sit on the placeholder until something unrelated
 /// dirties the binding.
-const NOTIFIER_HOMES: [(&str, usize); 2] = [("boot/ui_setup/views.rs", 2), ("ui/radio/mod.rs", 1)];
+const NOTIFIER_HOMES: [(&str, usize); 1] = [("boot/ui_setup/views.rs", 2)];
 
 /// Every repeated cover surface takes the **scheduling** lookup, and the inline one stays at its
 /// two sanctioned sites.
@@ -127,11 +126,10 @@ fn every_scheduling_tier_installs_a_notifier() {
 /// section leave could release its own. That is what `grid_prewarm::hand_back_covers` replaced. A
 /// new tier here is either a decode size nothing else draws at, or a regression — and a passing
 /// suite is the last place it would show.
-const TIER_HOMES: [(&str, &str); 5] = [
+const TIER_HOMES: [(&str, &str); 4] = [
     ("boot/ui_setup/views.rs", "the row tier, at row-tile size"),
     ("ui/grid_prewarm.rs", "the one tier every card grid draws from"),
     ("ui/queue_sheet/mod.rs", "the sheet's own, dropped on close, over the row tier's buffers"),
-    ("ui/radio/covers.rs", "logos, whose card reads the decoded extent for its layout"),
     ("ui/search/mod.rs", "the two card strips, at strip sizes of their own"),
 ];
 
@@ -174,16 +172,12 @@ fn only_the_named_cover_tiers_are_built() {
 /// What a global declares to be a surface a landed decode has to reach.
 const GENERATION_PROPERTY: &str = "property <int> covers-generation";
 
-/// The two that carry one and are **not** the shared install's to answer for, each holding a tier
-/// of its own: the queue sheet's is dropped on close and Radio's logo tier is released on leave,
-/// so `0` still means cold on both where a grid's value means nothing at all. Radio's is its own
-/// because `station-card.slint` reads the decoded *extent* for its layout.
-const PRIVATE_TIER_GLOBALS: [&str; 2] = ["Queue", "Radio"];
+/// The queue sheet carries its own generation because its tier is dropped on close.
+const PRIVATE_TIER_GLOBALS: [&str; 1] = ["Queue"];
 
 /// The three files allowed to move a `covers-generation` at all: the shared install, and the two
 /// private tiers above.
-const GENERATION_WRITERS: [&str; 3] =
-    ["boot/ui_setup/views.rs", "ui/queue_sheet/callbacks.rs", "ui/radio/covers.rs"];
+const GENERATION_WRITERS: [&str; 2] = ["boot/ui_setup/views.rs", "ui/queue_sheet/callbacks.rs"];
 
 /// The grids one notifier answers for, **derived from the globals rather than listed**: a seventh
 /// grid that reaches neither a list here nor the closure would pass a list against itself, and it

@@ -21,8 +21,6 @@ melodia-core = { path = "../melodia-core" }
 melodia-artwork = { path = "../melodia-artwork" }
 melodia-net = { path = "../melodia-net" }
 melodia-platform = { path = "../melodia-platform" }
-# `library::radio::authoring` and `library::playback` both read a station's stream facts.
-melodia-audio = { path = "../melodia-audio" }
 melodia-playback = { path = "../melodia-playback" }
 melodia-engine = { path = "../melodia-engine" }
 melodia-store = { path = "../melodia-store" }

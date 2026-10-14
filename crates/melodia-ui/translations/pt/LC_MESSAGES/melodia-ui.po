@@ -15,12 +15,11 @@ msgstr ""
 msgid "Search"
 msgstr "Pesquisar"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Browse"
 msgstr "Explorar"
 
 #: ui/app-window.slint ui/layout/sidebar.slint ui/views/favorites-view.slint
-#: ui/views/radio-view.slint
 msgid "Favorites"
 msgstr "Favoritos"
 
@@ -28,7 +27,7 @@ msgstr "Favoritos"
 msgid "My Library"
 msgstr "A minha biblioteca"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 #: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "Ouvidas recentemente"
@@ -36,11 +35,6 @@ msgstr "Ouvidas recentemente"
 #: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Settings"
 msgstr "Definições"
-
-#: ui/app-window.slint ui/layout/sidebar.slint
-#: ui/views/settings/radio-section.slint
-msgid "Radio"
-msgstr "Rádio"
 
 #: ui/components/caption-buttons.slint
 #: ui/components/macos-titlebar-cluster.slint
@@ -81,74 +75,23 @@ msgstr "Adicionar aos favoritos"
 msgid "Remove from Favorites"
 msgstr "Remover dos favoritos"
 
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-msgid "Stream URL"
-msgstr "URL da emissão"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Name (optional)"
-msgstr "Nome (opcional)"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to use the station's own name"
-msgstr "Deixe em branco para usar o nome da própria estação"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
-msgid "Website"
-msgstr "Site"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Logo URL"
-msgstr "URL do logótipo"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to look for a logo on the website above."
-msgstr "Deixe em branco para procurar um logótipo no site acima."
-
-#: ui/components/dialog/add-station-body.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/track-list/column-toggle-popup.slint
 #: ui/components/track-list/track-list-header.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "Género"
 
-#: ui/components/dialog/add-station-body.slint
-msgid "Jazz, Blues"
-msgstr "Jazz, Blues"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "Country"
-msgstr "País"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Tunisia"
-msgstr "Tunísia"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "The directory owns this station's name and stream. What it left blank is yours to fill in; leave a field empty to remove it again."
-msgstr "O nome e a emissão desta estação vêm do diretório. O que ficou em branco pode preenchê-lo; deixe um campo vazio para o voltar a remover."
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Checking the stream…"
-msgstr "A verificar a emissão…"
-
 #: ui/components/dialog/credit-editor.slint
 #: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Add"
 msgstr "Adicionar"
 
 #: ui/components/dialog/dialog.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/grid/station-context-menu.slint ui/views/favorites-view.slint
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/favorites-view.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "Nome"
 
@@ -168,11 +111,7 @@ msgstr "Adicione uma descrição…"
 msgid "Finish"
 msgstr "Concluir"
 
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
-msgid "Open Last.fm"
-msgstr "Abrir o Last.fm"
-
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
+#: ui/components/dialog/dialog.slint
 msgid "Connect"
 msgstr "Ligar"
 
@@ -305,35 +244,12 @@ msgstr "Evitar saturação"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "O ReplayGain só afeta faixas que já têm etiquetas de volume. Analise a sua biblioteca com uma ferramenta como o rsgain ou o loudgain para as adicionar."
 
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "Click Open Last.fm to approve Melodia in your browser."
-msgstr "Clique em “Abrir o Last.fm” para autorizar o Melodia no navegador."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "After approving Melodia in your browser, click Finish."
-msgstr "Depois de autorizar o Melodia no navegador, clique em “Concluir”."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
 #: ui/globals/player.slint
 msgid "Connecting…"
 msgstr "A ligar…"
 
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "User token"
-msgstr "Token de utilizador"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Paste your ListenBrainz user token"
-msgstr "Cole o seu token de utilizador do ListenBrainz"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Find your token on your ListenBrainz profile settings page."
-msgstr "O seu token está na página de definições do seu perfil no ListenBrainz."
-
 #: ui/components/dialog/selectable-picker.slint
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "Selecionar tudo"
@@ -408,7 +324,6 @@ msgid "Duration (sec)"
 msgstr "Duração (s)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/station-facts.slint ui/views/radio/tab-pills.slint
 msgid "Plays"
 msgstr "Reproduções"
 
@@ -454,7 +369,6 @@ msgid "File size (bytes)"
 msgstr "Tamanho do ficheiro (bytes)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Last played"
 msgstr "Última reprodução"
 
@@ -701,7 +615,6 @@ msgstr "Número"
 
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/onboarding/appearance-panel.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "Idioma"
@@ -751,8 +664,7 @@ msgstr "Caminho"
 msgid "Codec"
 msgstr "Codec"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/station-facts.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Bitrate"
 msgstr "Taxa de bits"
 
@@ -804,10 +716,8 @@ msgid "Folder"
 msgstr "Pasta"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/now-playing/play-button.slint
 #: ui/components/track-list/track-context-menu.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Play"
 msgstr "Reproduzir"
 
@@ -873,8 +783,6 @@ msgid "Edit Track Information"
 msgstr "Editar informações da faixa"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "Copiar"
@@ -907,7 +815,6 @@ msgid "Go to Artist"
 msgstr "Ir para o artista"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "Limpar seleção"
@@ -939,32 +846,6 @@ msgstr "Artista - Álbum"
 #: ui/components/grid/playlist-grid.slint
 msgid "0 tracks"
 msgstr "0 faixas"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Open Website"
-msgstr "Abrir site"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Edit…"
-msgstr "Editar…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Recently Played…"
-msgstr "Remover {} de Ouvidas recentemente…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Recently Played…"
-msgstr "Remover de Ouvidas recentemente…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Favorites…"
-msgstr "Remover {} dos favoritos…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Favorites…"
-msgstr "Remover dos favoritos…"
 
 #: ui/components/mini-player/mini-captions.slint
 msgid "Full Player"
@@ -1253,33 +1134,9 @@ msgid "Melodia works offline. These are the parts that reach out."
 msgstr "O Melodia funciona offline. Estas são as partes que se ligam à internet."
 
 #: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Internet radio"
-msgstr "Rádio na internet"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Browse and play live stations from radio-browser.info"
-msgstr "Explora e reproduz estações em direto do radio-browser.info"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/discord-section.slint
-msgid "Show the track you're playing on your Discord profile"
-msgstr "Mostra a faixa que está a ouvir no seu perfil do Discord"
-
-#: ui/components/onboarding/features-panel.slint
 #: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "Quando uma faixa não traz a própria letra, pede-a ao lrclib.net"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobbling"
-msgstr "Scrobbling"
-
-#: ui/components/onboarding/features-panel.slint
-msgid "Send what you play to Last.fm or ListenBrainz"
-msgstr "Envia o que ouve para o Last.fm ou o ListenBrainz"
 
 #: ui/components/onboarding/features-panel.slint
 msgid "Set Up"
@@ -1382,10 +1239,9 @@ msgstr "{} / {} ficheiros"
 
 #: ui/components/settings/scan-progress.slint ui/globals/dialog-forms.slint
 #: ui/globals/dialog.slint ui/views/queue-sheet.slint
-#: ui/views/radio/tab-pills.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/appearance-section.slint
 #: ui/views/settings/library-section.slint
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 #: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "Cancelar"
@@ -1394,54 +1250,11 @@ msgstr "Cancelar"
 msgid "Sort"
 msgstr "Ordenar"
 
-#: ui/components/station-facts.slint
-msgid "Stream"
-msgstr "Emissão"
-
-#: ui/components/station-facts.slint
-msgid "Copy stream URL"
-msgstr "Copiar URL da emissão"
-
-#: ui/components/station-facts.slint
-msgid "Open in your browser"
-msgstr "Abrir no navegador"
-
-#: ui/components/station-facts.slint ui/views/radio/suggestion-pill.slint
-#: ui/views/radio/tab-pills.slint
-msgid "Format"
-msgstr "Formato"
-
-#: ui/components/station-facts.slint ui/views/radio/station-grid.slint
-msgid "{} kbps"
-msgstr "{} kbps"
-
-#: ui/components/station-facts.slint
-msgid "Votes"
-msgstr "Votos"
-
-#: ui/components/station-facts.slint
-msgid "{n} vote"
-msgid_plural "{n} votes"
-msgstr[0] "{n} voto"
-msgstr[1] "{n} votos"
-
-#: ui/components/station-facts.slint ui/globals/hero-chips.slint
+#: ui/globals/hero-chips.slint
 msgid "{n} play"
 msgid_plural "{n} plays"
 msgstr[0] "{n} reprodução"
 msgstr[1] "{n} reproduções"
-
-#: ui/components/station-facts.slint
-msgid "Recently played on this station"
-msgstr "Passou recentemente nesta estação"
-
-#: ui/components/station-facts.slint
-msgid "Copy Title"
-msgstr "Copiar título"
-
-#: ui/components/station-facts.slint
-msgid "Copy Artist"
-msgstr "Copiar artista"
 
 #: ui/components/track-copy-items.slint
 msgid "Artist - Title"
@@ -1521,14 +1334,6 @@ msgstr "Ainda não autorizado. Autorize o Melodia no navegador e depois clique e
 msgid "Couldn't save your credentials."
 msgstr "Não foi possível guardar as suas credenciais."
 
-#: ui/globals/dialog-forms.slint
-msgid "Edit Station"
-msgstr "Editar estação"
-
-#: ui/globals/dialog-forms.slint
-msgid "Station Details"
-msgstr "Detalhes da estação"
-
 #: ui/globals/dialog-forms.slint ui/globals/dialog.slint
 msgid "Save"
 msgstr "Guardar"
@@ -1540,10 +1345,6 @@ msgstr "Não foi possível contactar esse endereço. Verifique o URL e a sua lig
 #: ui/globals/dialog-forms.slint
 msgid "That address doesn't play as audio Melodia can decode."
 msgstr "Esse endereço não reproduz áudio que o Melodia consiga descodificar."
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't save the station."
-msgstr "Não foi possível guardar a estação."
 
 #: ui/globals/dialog-forms.slint
 msgid "That doesn't look like a web address. It should start with https://"
@@ -1594,32 +1395,8 @@ msgid "\"{}\" will be removed from Recently Played."
 msgstr "“{}” será removida de Ouvidas recentemente."
 
 #: ui/globals/dialog.slint
-msgid "\"{}\" will be removed from your stations, along with its play history."
-msgstr "“{}” será removida das suas estações, juntamente com o histórico de reprodução."
-
-#: ui/globals/dialog.slint
 msgid "\"{}\" will be removed from your favorites."
 msgstr "“{}” será removida dos seus favoritos."
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from Recently Played?"
-msgid_plural "Remove {n} stations from Recently Played?"
-msgstr[0] "Remover {n} estação de Ouvidas recentemente?"
-msgstr[1] "Remover {n} estações de Ouvidas recentemente?"
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from favorites?"
-msgid_plural "Remove {n} stations from favorites?"
-msgstr[0] "Remover {n} estação dos favoritos?"
-msgstr[1] "Remover {n} estações dos favoritos?"
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from Recently Played."
-msgstr "As estações serão removidas de Ouvidas recentemente."
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from your favorites. Any you added by hand are removed from your stations, along with their play history."
-msgstr "As estações serão removidas dos seus favoritos. As que adicionou manualmente serão removidas das suas estações, juntamente com o histórico de reprodução."
 
 #: ui/globals/dialog.slint
 msgid "Edit Rules"
@@ -1646,7 +1423,6 @@ msgid "Choose playlists to export."
 msgstr "Escolha as playlists a exportar."
 
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Export"
 msgstr "Exportar"
 
@@ -1670,7 +1446,6 @@ msgstr "Compilação"
 msgid "No track playing"
 msgstr "Nenhuma faixa em reprodução"
 
-#. Translators: a state on the station pill, not the Pause button's verb
 #: ui/globals/player.slint
 msgid "Paused"
 msgstr "Em pausa"
@@ -1915,30 +1690,10 @@ msgid "These playlists are too large for one .zip file. Export fewer at a time."
 msgstr "Estas playlists são demasiado grandes para um único ficheiro .zip. Exporte menos de cada vez."
 
 #: ui/settings.slint
-msgid "{n} station added"
-msgid_plural "{n} stations added"
-msgstr[0] "{n} estação adicionada"
-msgstr[1] "{n} estações adicionadas"
-
-#: ui/settings.slint
 msgid "{n} was already in your list."
 msgid_plural "{n} were already in your list."
 msgstr[0] "{n} já estava na sua lista."
 msgstr[1] "{n} já estavam na sua lista."
-
-#: ui/settings.slint
-msgid "Couldn't read any stations from the selected file(s)."
-msgstr "Não foi possível ler nenhuma estação do(s) ficheiro(s) selecionado(s)."
-
-#: ui/settings.slint
-msgid "{n} station exported"
-msgid_plural "{n} stations exported"
-msgstr[0] "{n} estação exportada"
-msgstr[1] "{n} estações exportadas"
-
-#: ui/settings.slint
-msgid "Couldn't write the station list."
-msgstr "Não foi possível gravar a lista de estações."
 
 #: ui/settings.slint
 msgid "Playback error"
@@ -2110,7 +1865,7 @@ msgstr "Ainda sem artistas favoritos"
 msgid "Favorite a song and its artist appears here."
 msgstr "Marque uma música como favorita e o artista dela aparece aqui."
 
-#: ui/views/favorites/most-played-tab.slint ui/views/radio-view.slint
+#: ui/views/favorites/most-played-tab.slint
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "Ainda não ouviu nada"
@@ -2251,18 +2006,13 @@ msgstr "Criar uma playlist a partir de regras"
 msgid "More playlist actions"
 msgstr "Mais ações de playlist"
 
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Import"
 msgstr "Importar"
 
-#: ui/views/now-playing-view.slint ui/views/radio/tab-pills.slint
+#: ui/views/now-playing-view.slint
 msgid "Vote"
 msgstr "Votar"
-
-#. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/views/now-playing-view.slint
-msgid "Station"
-msgstr "Estação"
 
 #: ui/views/now-playing-view.slint
 msgid "Up Next"
@@ -2295,108 +2045,6 @@ msgstr "A fila está vazia"
 #: ui/views/queue-sheet.slint
 msgid "Drop to add to queue"
 msgstr "Largue para adicionar à fila"
-
-#: ui/views/radio-view.slint ui/views/radio/suggestion-pill.slint
-msgid "{n} station"
-msgid_plural "{n} stations"
-msgstr[0] "{n} estação"
-msgstr[1] "{n} estações"
-
-#: ui/views/radio-view.slint
-msgid "Search stations…"
-msgstr "Pesquisar estações…"
-
-#: ui/views/radio-view.slint
-msgid "Filter stations…"
-msgstr "Filtrar estações…"
-
-#: ui/views/radio-view.slint
-msgid "No stations kept yet"
-msgstr "Ainda sem estações guardadas"
-
-#: ui/views/radio-view.slint
-msgid "Star a station in Browse, or add one by URL."
-msgstr "Marque uma estação com uma estrela em Explorar ou adicione uma por URL."
-
-#: ui/views/radio-view.slint
-msgid "Stations you listen to show up here."
-msgstr "As estações que ouve aparecem aqui."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Searching the directory…"
-msgstr "A pesquisar no diretório…"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Stations are coming from radio-browser.info."
-msgstr "As estações vêm do radio-browser.info."
-
-#: ui/views/radio/browse-tab.slint
-msgid "The station directory is unreachable"
-msgstr "O diretório de estações está inacessível"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Check your connection and try again."
-msgstr "Verifique a sua ligação e tente novamente."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Try again"
-msgstr "Tentar novamente"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "No stations matched"
-msgstr "Nenhuma estação encontrada"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "Try a different name, or clear a filter."
-msgstr "Experimente outro nome ou remova um filtro."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Load more stations"
-msgstr "Carregar mais estações"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/facet-chip.slint
-msgid "Loading…"
-msgstr "A carregar…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Filter…"
-msgstr "Filtrar…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Nothing to pick from"
-msgstr "Nada para escolher"
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory reached this station on its last check."
-msgstr "O diretório conseguiu contactar esta estação na última verificação."
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory could not reach this station on its last check."
-msgstr "O diretório não conseguiu contactar esta estação na última verificação."
-
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "{} kbps and up"
-msgstr "{} kbps ou mais"
-
-#: ui/views/radio/suggestion-pill.slint
-msgid "{}: {}"
-msgstr "{}: {}"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Add Station"
-msgstr "Adicionar estação"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Added"
-msgstr "Adicionada"
-
-#: ui/views/radio/tab-pills.slint
-msgid "More station actions"
-msgstr "Mais ações de estação"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Edit"
-msgstr "Editar"
 
 #: ui/views/recently-played-view.slint
 msgid "Filter recently played…"
@@ -2601,34 +2249,6 @@ msgstr "Regista detalhes adicionais. Ative, reproduza o problema e depois guarde
 #: ui/views/settings/diagnostics-section.slint
 msgid "Save…"
 msgstr "Guardar…"
-
-#: ui/views/settings/discord-section.slint
-msgid "Show album artwork"
-msgstr "Mostrar capa do álbum"
-
-#: ui/views/settings/discord-section.slint
-msgid "Look up cover art online (via Deezer or iTunes) to show on the card"
-msgstr "Procura a capa online (através do Deezer ou do iTunes) para mostrar no cartão"
-
-#: ui/views/settings/discord-section.slint
-msgid "Hide while paused"
-msgstr "Ocultar em pausa"
-
-#: ui/views/settings/discord-section.slint
-msgid "Remove the card when paused instead of showing a paused marker"
-msgstr "Remove o cartão em pausa em vez de mostrar um indicador de pausa"
-
-#: ui/views/settings/discord-section.slint
-msgid "Status"
-msgstr "Estado"
-
-#: ui/views/settings/discord-section.slint
-msgid "Connected to Discord"
-msgstr "Ligado ao Discord"
-
-#: ui/views/settings/discord-section.slint
-msgid "Discord not running"
-msgstr "O Discord não está em execução"
 
 #: ui/views/settings/file-watching-section.slint
 msgid "File Watching"
@@ -2857,7 +2477,6 @@ msgid "Exclusive"
 msgstr "Exclusivo"
 
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 msgid "Not connected"
 msgstr "Não ligado"
 
@@ -3075,22 +2694,6 @@ msgstr "Escolha como o visualizador desenha o áudio"
 msgid "{} s"
 msgstr "{} s"
 
-#: ui/views/settings/radio-section.slint
-msgid "Hide segmented stations"
-msgstr "Ocultar estações segmentadas"
-
-#: ui/views/settings/radio-section.slint
-msgid "Segmented (HLS) streams play, but take longer to start"
-msgstr "As emissões segmentadas (HLS) são reproduzidas, mas demoram mais a começar"
-
-#: ui/views/settings/radio-section.slint
-msgid "Report plays to the directory"
-msgstr "Comunicar reproduções ao diretório"
-
-#: ui/views/settings/radio-section.slint
-msgid "An anonymous count is what orders stations by popularity"
-msgstr "Uma contagem anónima é o que ordena as estações por popularidade"
-
 #: ui/views/settings/ratings-section.slint
 msgid "Ratings"
 msgstr "Classificações"
@@ -3102,82 +2705,6 @@ msgstr "Guardar classificações nos ficheiros"
 #: ui/views/settings/ratings-section.slint
 msgid "Write star ratings into each file's tags, so they survive a rescan and other players can read them."
 msgstr "Grava as classificações por estrelas nas etiquetas de cada ficheiro, para que sobrevivam a uma nova análise e outros leitores as possam ler."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Last.fm"
-msgstr "Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to Last.fm"
-msgstr "Fazer scrobble no Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your Last.fm account"
-msgstr "Comunica cada reprodução à sua conta do Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to Last.fm"
-msgstr "Sincronizar faixas favoritas com o Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on Last.fm — turning this on syncs your existing favorites"
-msgstr "Marca como favoritas no Last.fm as faixas de que gosta; ativar isto sincroniza os seus favoritos atuais"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "ListenBrainz"
-msgstr "ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to ListenBrainz"
-msgstr "Fazer scrobble no ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your ListenBrainz account"
-msgstr "Comunica cada reprodução à sua conta do ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to ListenBrainz"
-msgstr "Sincronizar faixas favoritas com o ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on ListenBrainz — turning this on syncs your existing favorites (needs MusicBrainz IDs)"
-msgstr "Marca como favoritas no ListenBrainz as faixas de que gosta; ativar isto sincroniza os seus favoritos atuais (requer IDs do MusicBrainz)"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "MusicBrainz Picard adds these IDs to your files, identifying each track by its audio."
-msgstr "O MusicBrainz Picard adiciona esses IDs aos seus ficheiros, identificando cada faixa pelo áudio."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble radio songs"
-msgstr "Fazer scrobble de músicas da rádio"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Songs heard in full on a station go to your connected scrobbling services"
-msgstr "As músicas ouvidas na íntegra numa estação vão para os seus serviços de scrobbling ligados"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connected as {}"
-msgstr "Ligado como {}"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Not configured in this build"
-msgstr "Não configurado nesta versão"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect Last.fm"
-msgstr "Ligar ao Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Disconnect"
-msgstr "Desligar"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect ListenBrainz"
-msgstr "Ligar ao ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Turn on Last.fm or ListenBrainz above first"
-msgstr "Ative primeiro o Last.fm ou o ListenBrainz acima"
 
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"

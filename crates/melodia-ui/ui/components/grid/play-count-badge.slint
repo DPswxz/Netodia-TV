@@ -2,7 +2,7 @@ import { Theme } from "../../theme.slint";
 import { MaterialIcon } from "../material-icon.slint";
 
 // The play count, as every Most Played surface marks a card with it. Mounted once, by `EntityCard`,
-// so a host owes the count and never the markup: a station card passes one like any other.
+// so a host owes the count and never the markup.
 //
 // Sized to its own content. Reading the row's `preferred-width` is a derivation, not a cycle: a
 // layout reports its children's intrinsic widths and never reads back the width it is handed.

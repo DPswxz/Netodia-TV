@@ -33,8 +33,8 @@ pub fn spawn(spawner: &TaskSpawner, state: &AppState) {
     log::info!("Playback monitor started");
 }
 
-/// Write one periodic snapshot down: the resume position into the database, the queue and
-/// whatever station sits under it into `queue.json`.
+/// Write one periodic snapshot down: the resume position into the database and the queue into
+/// `queue.json`.
 ///
 /// Survives SIGKILL and a crash; the authoritative final snapshot is still `shutdown`'s on a
 /// clean exit. Both failures are warnings — the next tick writes the same thing 30 s later.

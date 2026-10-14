@@ -17,12 +17,11 @@ msgstr ""
 msgid "Search"
 msgstr "搜索"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Browse"
 msgstr "浏览"
 
 #: ui/app-window.slint ui/layout/sidebar.slint ui/views/favorites-view.slint
-#: ui/views/radio-view.slint
 msgid "Favorites"
 msgstr "收藏"
 
@@ -30,7 +29,7 @@ msgstr "收藏"
 msgid "My Library"
 msgstr "我的音乐库"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 #: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "最近播放"
@@ -38,11 +37,6 @@ msgstr "最近播放"
 #: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Settings"
 msgstr "设置"
-
-#: ui/app-window.slint ui/layout/sidebar.slint
-#: ui/views/settings/radio-section.slint
-msgid "Radio"
-msgstr "电台"
 
 #: ui/components/caption-buttons.slint
 #: ui/components/macos-titlebar-cluster.slint
@@ -83,74 +77,23 @@ msgstr "加入收藏"
 msgid "Remove from Favorites"
 msgstr "从收藏中移除"
 
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-msgid "Stream URL"
-msgstr "电台流媒体 URL"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Name (optional)"
-msgstr "名称（可选）"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to use the station's own name"
-msgstr "留空以使用电台自身的名称"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
-msgid "Website"
-msgstr "网站"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Logo URL"
-msgstr "标志图片 URL"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to look for a logo on the website above."
-msgstr "留空则尝试从上方网站获取标志图片。"
-
-#: ui/components/dialog/add-station-body.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/track-list/column-toggle-popup.slint
 #: ui/components/track-list/track-list-header.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "流派"
 
-#: ui/components/dialog/add-station-body.slint
-msgid "Jazz, Blues"
-msgstr "爵士、蓝调"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "Country"
-msgstr "国家/地区"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Tunisia"
-msgstr "突尼斯"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "The directory owns this station's name and stream. What it left blank is yours to fill in; leave a field empty to remove it again."
-msgstr "电台名称和音频流由目录提供。目录留空的内容由你填写；清空某个字段即可移除你填写的信息。"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Checking the stream…"
-msgstr "正在检查音频流…"
-
 #: ui/components/dialog/credit-editor.slint
 #: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Add"
 msgstr "添加"
 
 #: ui/components/dialog/dialog.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/grid/station-context-menu.slint ui/views/favorites-view.slint
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/favorites-view.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "名称"
 
@@ -170,11 +113,7 @@ msgstr "添加描述…"
 msgid "Finish"
 msgstr "完成"
 
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
-msgid "Open Last.fm"
-msgstr "打开 Last.fm"
-
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
+#: ui/components/dialog/dialog.slint
 msgid "Connect"
 msgstr "连接"
 
@@ -237,7 +176,6 @@ msgstr "没有可导出的播放列表"
 msgid "{n} track"
 msgid_plural "{n} tracks"
 msgstr[0] "{n} 首曲目"
-
 
 #: ui/components/dialog/export-playlist-picker.slint
 msgid "Several playlists are saved as one .zip file, which you can import directly without extracting it."
@@ -307,35 +245,12 @@ msgstr "防止削波"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "ReplayGain 仅对已有响度标签的曲目生效。可使用 rsgain 或 loudgain 等工具扫描音乐库并添加标签。"
 
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "Click Open Last.fm to approve Melodia in your browser."
-msgstr "点击“打开 Last.fm”，在浏览器中授权 Melodia。"
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "After approving Melodia in your browser, click Finish."
-msgstr "在浏览器中授权 Melodia 后，点击“完成”。"
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
 #: ui/globals/player.slint
 msgid "Connecting…"
 msgstr "正在连接…"
 
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "User token"
-msgstr "用户令牌"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Paste your ListenBrainz user token"
-msgstr "粘贴你的 ListenBrainz 用户令牌"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Find your token on your ListenBrainz profile settings page."
-msgstr "可在 ListenBrainz 个人资料设置页面找到令牌。"
-
 #: ui/components/dialog/selectable-picker.slint
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "全选"
@@ -410,7 +325,6 @@ msgid "Duration (sec)"
 msgstr "时长（秒）"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/station-facts.slint ui/views/radio/tab-pills.slint
 msgid "Plays"
 msgstr "播放次数"
 
@@ -456,7 +370,6 @@ msgid "File size (bytes)"
 msgstr "文件大小（字节）"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Last played"
 msgstr "上次播放"
 
@@ -703,7 +616,6 @@ msgstr "编号"
 
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/onboarding/appearance-panel.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "语言"
@@ -753,8 +665,7 @@ msgstr "路径"
 msgid "Codec"
 msgstr "编码格式"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/station-facts.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Bitrate"
 msgstr "比特率"
 
@@ -800,16 +711,13 @@ msgid "{n} album"
 msgid_plural "{n} albums"
 msgstr[0] "{n} 张专辑"
 
-
 #: ui/components/grid/browse-card-grid.slint
 msgid "Folder"
 msgstr "文件夹"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/now-playing/play-button.slint
 #: ui/components/track-list/track-context-menu.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Play"
 msgstr "播放"
 
@@ -875,8 +783,6 @@ msgid "Edit Track Information"
 msgstr "编辑曲目信息"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "复制"
@@ -909,7 +815,6 @@ msgid "Go to Artist"
 msgstr "前往艺人"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "清除选择"
@@ -941,32 +846,6 @@ msgstr "艺人 - 专辑"
 #: ui/components/grid/playlist-grid.slint
 msgid "0 tracks"
 msgstr "0 首曲目"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Open Website"
-msgstr "打开网站"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Edit…"
-msgstr "编辑…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Recently Played…"
-msgstr "从最近播放中移除 {} 项…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Recently Played…"
-msgstr "从最近播放中移除…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Favorites…"
-msgstr "从收藏中移除 {} 项…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Favorites…"
-msgstr "从收藏中移除…"
 
 #: ui/components/mini-player/mini-captions.slint
 msgid "Full Player"
@@ -1255,33 +1134,9 @@ msgid "Melodia works offline. These are the parts that reach out."
 msgstr "Melodia 可离线使用。以下功能会连接网络。"
 
 #: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Internet radio"
-msgstr "网络电台"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Browse and play live stations from radio-browser.info"
-msgstr "从 radio-browser.info 浏览并播放直播电台"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/discord-section.slint
-msgid "Show the track you're playing on your Discord profile"
-msgstr "在 Discord 个人资料中显示正在播放的曲目"
-
-#: ui/components/onboarding/features-panel.slint
 #: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "曲目本身没有歌词时，从 lrclib.net 获取歌词"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobbling"
-msgstr "听歌记录"
-
-#: ui/components/onboarding/features-panel.slint
-msgid "Send what you play to Last.fm or ListenBrainz"
-msgstr "将播放记录发送到 Last.fm 或 ListenBrainz"
 
 #: ui/components/onboarding/features-panel.slint
 msgid "Set Up"
@@ -1309,7 +1164,6 @@ msgstr "添加音乐所在的文件夹。Melodia 会自动检测其中的更改�
 msgid "{n} folder in your library"
 msgid_plural "{n} folders in your library"
 msgstr[0] "音乐库中有 {n} 个文件夹"
-
 
 #: ui/components/onboarding/music-panel.slint
 #: ui/views/settings/library-section.slint
@@ -1363,7 +1217,6 @@ msgid "Looking for music… {n} file found"
 msgid_plural "Looking for music… {n} files found"
 msgstr[0] "正在查找音乐…找到 {n} 个文件"
 
-
 #: ui/components/settings/scan-progress.slint
 msgid "Finishing up…"
 msgstr "正在完成…"
@@ -1384,10 +1237,9 @@ msgstr "{} / {} 个文件"
 
 #: ui/components/settings/scan-progress.slint ui/globals/dialog-forms.slint
 #: ui/globals/dialog.slint ui/views/queue-sheet.slint
-#: ui/views/radio/tab-pills.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/appearance-section.slint
 #: ui/views/settings/library-section.slint
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 #: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "取消"
@@ -1396,54 +1248,10 @@ msgstr "取消"
 msgid "Sort"
 msgstr "排序"
 
-#: ui/components/station-facts.slint
-msgid "Stream"
-msgstr "音频流"
-
-#: ui/components/station-facts.slint
-msgid "Copy stream URL"
-msgstr "复制音频流 URL"
-
-#: ui/components/station-facts.slint
-msgid "Open in your browser"
-msgstr "在浏览器中打开"
-
-#: ui/components/station-facts.slint ui/views/radio/suggestion-pill.slint
-#: ui/views/radio/tab-pills.slint
-msgid "Format"
-msgstr "格式"
-
-#: ui/components/station-facts.slint ui/views/radio/station-grid.slint
-msgid "{} kbps"
-msgstr "{} kbps"
-
-#: ui/components/station-facts.slint
-msgid "Votes"
-msgstr "投票"
-
-#: ui/components/station-facts.slint
-msgid "{n} vote"
-msgid_plural "{n} votes"
-msgstr[0] "{n} 票"
-
-
-#: ui/components/station-facts.slint ui/globals/hero-chips.slint
+#: ui/globals/hero-chips.slint
 msgid "{n} play"
 msgid_plural "{n} plays"
 msgstr[0] "{n} 次播放"
-
-
-#: ui/components/station-facts.slint
-msgid "Recently played on this station"
-msgstr "此电台的最近播放记录"
-
-#: ui/components/station-facts.slint
-msgid "Copy Title"
-msgstr "复制标题"
-
-#: ui/components/station-facts.slint
-msgid "Copy Artist"
-msgstr "复制艺人"
 
 #: ui/components/track-copy-items.slint
 msgid "Artist - Title"
@@ -1506,7 +1314,6 @@ msgid "{n} favorite"
 msgid_plural "{n} favorites"
 msgstr[0] "{n} 项收藏"
 
-
 #: ui/globals/dialog-forms.slint
 msgid "That token wasn't accepted. Check it and try again."
 msgstr "令牌无效。请检查后重试。"
@@ -1523,14 +1330,6 @@ msgstr "尚未授权。请在浏览器中授权 Melodia，然后点击“完成�
 msgid "Couldn't save your credentials."
 msgstr "无法保存凭据。"
 
-#: ui/globals/dialog-forms.slint
-msgid "Edit Station"
-msgstr "编辑电台"
-
-#: ui/globals/dialog-forms.slint
-msgid "Station Details"
-msgstr "电台详情"
-
 #: ui/globals/dialog-forms.slint ui/globals/dialog.slint
 msgid "Save"
 msgstr "保存"
@@ -1542,10 +1341,6 @@ msgstr "无法访问该地址。请检查 URL 和网络连接。"
 #: ui/globals/dialog-forms.slint
 msgid "That address doesn't play as audio Melodia can decode."
 msgstr "该地址提供的音频格式无法由 Melodia 解码。"
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't save the station."
-msgstr "无法保存电台。"
 
 #: ui/globals/dialog-forms.slint
 msgid "That doesn't look like a web address. It should start with https://"
@@ -1596,32 +1391,8 @@ msgid "\"{}\" will be removed from Recently Played."
 msgstr "“{}”将从最近播放中移除。"
 
 #: ui/globals/dialog.slint
-msgid "\"{}\" will be removed from your stations, along with its play history."
-msgstr "“{}”将从你的电台列表中移除，其播放记录也会一并删除。"
-
-#: ui/globals/dialog.slint
 msgid "\"{}\" will be removed from your favorites."
 msgstr "“{}”将从你的收藏中移除。"
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from Recently Played?"
-msgid_plural "Remove {n} stations from Recently Played?"
-msgstr[0] "从最近播放中移除 {n} 个电台？"
-
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from favorites?"
-msgid_plural "Remove {n} stations from favorites?"
-msgstr[0] "从收藏中移除 {n} 个电台？"
-
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from Recently Played."
-msgstr "这些电台将从最近播放中移除。"
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from your favorites. Any you added by hand are removed from your stations, along with their play history."
-msgstr "这些电台将从收藏中移除。手动添加的电台也会从你的电台列表中移除，播放记录也会一并删除。"
 
 #: ui/globals/dialog.slint
 msgid "Edit Rules"
@@ -1648,7 +1419,6 @@ msgid "Choose playlists to export."
 msgstr "选择要导出的播放列表。"
 
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Export"
 msgstr "导出"
 
@@ -1657,12 +1427,10 @@ msgid "{n} artist"
 msgid_plural "{n} artists"
 msgstr[0] "{n} 位艺人"
 
-
 #: ui/globals/hero-chips.slint
 msgid "{n} disc"
 msgid_plural "{n} discs"
 msgstr[0] "{n} 张碟片"
-
 
 #: ui/globals/hero-chips.slint ui/settings.slint
 msgid "Compilation"
@@ -1672,7 +1440,6 @@ msgstr "合辑"
 msgid "No track playing"
 msgstr "没有正在播放的曲目"
 
-#. Translators: a state on the station pill, not the Pause button's verb
 #: ui/globals/player.slint
 msgid "Paused"
 msgstr "已暂停"
@@ -1877,18 +1644,15 @@ msgid "{n} playlist imported"
 msgid_plural "{n} playlists imported"
 msgstr[0] "已导入 {n} 个播放列表"
 
-
 #: ui/settings.slint
 msgid "{n} track added · {} missing"
 msgid_plural "{n} tracks added · {} missing"
 msgstr[0] "已添加 {n} 首曲目，缺少 {}"
 
-
 #: ui/settings.slint
 msgid "{n} track added"
 msgid_plural "{n} tracks added"
 msgstr[0] "已添加 {n} 首曲目"
-
 
 #: ui/settings.slint
 msgid "Import failed"
@@ -1903,7 +1667,6 @@ msgid "{n} playlist exported"
 msgid_plural "{n} playlists exported"
 msgstr[0] "已导出 {n} 个播放列表"
 
-
 #: ui/settings.slint
 msgid "Export failed"
 msgstr "导出失败"
@@ -1917,30 +1680,9 @@ msgid "These playlists are too large for one .zip file. Export fewer at a time."
 msgstr "这些播放列表过大，无法放入同一个 .zip 文件。请分批导出。"
 
 #: ui/settings.slint
-msgid "{n} station added"
-msgid_plural "{n} stations added"
-msgstr[0] "已添加 {n} 个电台"
-
-
-#: ui/settings.slint
 msgid "{n} was already in your list."
 msgid_plural "{n} were already in your list."
 msgstr[0] "{} 已在你的列表中。"
-
-
-#: ui/settings.slint
-msgid "Couldn't read any stations from the selected file(s)."
-msgstr "无法从所选文件中读取任何电台。"
-
-#: ui/settings.slint
-msgid "{n} station exported"
-msgid_plural "{n} stations exported"
-msgstr[0] "已导出 {n} 个电台"
-
-
-#: ui/settings.slint
-msgid "Couldn't write the station list."
-msgstr "无法写入电台列表。"
 
 #: ui/settings.slint
 msgid "Playback error"
@@ -1996,7 +1738,6 @@ msgid "Added to {n} playlist"
 msgid_plural "Added to {n} playlists"
 msgstr[0] "已添加到 {n} 个播放列表"
 
-
 #: ui/settings.slint
 msgid "‹multiple values›"
 msgstr "‹多个值›"
@@ -2006,18 +1747,15 @@ msgid "{n} track updated"
 msgid_plural "{n} tracks updated"
 msgstr[0] "已更新 {n} 首曲目"
 
-
 #: ui/settings.slint
 msgid "{n} file failed"
 msgid_plural "{n} files failed"
 msgstr[0] "{n} 个文件失败"
 
-
 #: ui/settings.slint
 msgid "{n} file has unsupported fields"
 msgid_plural "{n} files have unsupported fields"
 msgstr[0] "{n} 个文件包含不支持的字段"
-
 
 #: ui/settings.slint
 msgid "{} can't be saved to {} files"
@@ -2112,7 +1850,7 @@ msgstr "还没有喜爱的艺人"
 msgid "Favorite a song and its artist appears here."
 msgstr "收藏一首歌曲后，其艺人会显示在这里。"
 
-#: ui/views/favorites/most-played-tab.slint ui/views/radio-view.slint
+#: ui/views/favorites/most-played-tab.slint
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "还没有播放记录"
@@ -2126,18 +1864,15 @@ msgid "{n} song"
 msgid_plural "{n} songs"
 msgstr[0] "{n} 首歌曲"
 
-
 #: ui/views/my-library-view.slint
 msgid "{n} genre"
 msgid_plural "{n} genres"
 msgstr[0] "{n} 个流派"
 
-
 #: ui/views/my-library-view.slint
 msgid "{n} playlist"
 msgid_plural "{n} playlists"
 msgstr[0] "{n} 个播放列表"
-
 
 #: ui/views/my-library-view.slint ui/views/my-library/artist-detail.slint
 #: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
@@ -2253,18 +1988,13 @@ msgstr "根据规则创建播放列表"
 msgid "More playlist actions"
 msgstr "更多播放列表操作"
 
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Import"
 msgstr "导入"
 
-#: ui/views/now-playing-view.slint ui/views/radio/tab-pills.slint
+#: ui/views/now-playing-view.slint
 msgid "Vote"
 msgstr "投票"
-
-#. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/views/now-playing-view.slint
-msgid "Station"
-msgstr "电台"
 
 #: ui/views/now-playing-view.slint
 msgid "Up Next"
@@ -2297,108 +2027,6 @@ msgstr "队列为空"
 #: ui/views/queue-sheet.slint
 msgid "Drop to add to queue"
 msgstr "拖放以加入队列"
-
-#: ui/views/radio-view.slint ui/views/radio/suggestion-pill.slint
-msgid "{n} station"
-msgid_plural "{n} stations"
-msgstr[0] "{n} 个电台"
-
-
-#: ui/views/radio-view.slint
-msgid "Search stations…"
-msgstr "搜索电台…"
-
-#: ui/views/radio-view.slint
-msgid "Filter stations…"
-msgstr "筛选电台…"
-
-#: ui/views/radio-view.slint
-msgid "No stations kept yet"
-msgstr "还没有收藏电台"
-
-#: ui/views/radio-view.slint
-msgid "Star a station in Browse, or add one by URL."
-msgstr "在“浏览”中为电台加星标，或通过 URL 添加电台。"
-
-#: ui/views/radio-view.slint
-msgid "Stations you listen to show up here."
-msgstr "你收听的电台会显示在这里。"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Searching the directory…"
-msgstr "正在搜索电台目录…"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Stations are coming from radio-browser.info."
-msgstr "电台来自 radio-browser.info。"
-
-#: ui/views/radio/browse-tab.slint
-msgid "The station directory is unreachable"
-msgstr "无法连接电台目录"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Check your connection and try again."
-msgstr "请检查网络连接后重试。"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Try again"
-msgstr "重试"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "No stations matched"
-msgstr "没有匹配的电台"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "Try a different name, or clear a filter."
-msgstr "请尝试其他名称，或清除筛选条件。"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Load more stations"
-msgstr "加载更多电台"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/facet-chip.slint
-msgid "Loading…"
-msgstr "正在加载…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Filter…"
-msgstr "筛选…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Nothing to pick from"
-msgstr "没有可选内容"
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory reached this station on its last check."
-msgstr "目录上次检查时可以访问此电台。"
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory could not reach this station on its last check."
-msgstr "目录上次检查时无法访问此电台。"
-
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "{} kbps and up"
-msgstr "{} kbps 及以上"
-
-#: ui/views/radio/suggestion-pill.slint
-msgid "{}: {}"
-msgstr "{}：{}"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Add Station"
-msgstr "添加电台"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Added"
-msgstr "已添加"
-
-#: ui/views/radio/tab-pills.slint
-msgid "More station actions"
-msgstr "更多电台操作"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Edit"
-msgstr "编辑"
 
 #: ui/views/recently-played-view.slint
 msgid "Filter recently played…"
@@ -2603,34 +2231,6 @@ msgstr "记录更多细节。启用后重现问题，再保存报告。"
 #: ui/views/settings/diagnostics-section.slint
 msgid "Save…"
 msgstr "保存…"
-
-#: ui/views/settings/discord-section.slint
-msgid "Show album artwork"
-msgstr "显示专辑封面"
-
-#: ui/views/settings/discord-section.slint
-msgid "Look up cover art online (via Deezer or iTunes) to show on the card"
-msgstr "在线查找封面（通过 Deezer 或 iTunes）并显示在卡片上"
-
-#: ui/views/settings/discord-section.slint
-msgid "Hide while paused"
-msgstr "暂停时隐藏"
-
-#: ui/views/settings/discord-section.slint
-msgid "Remove the card when paused instead of showing a paused marker"
-msgstr "暂停时移除卡片，而不是显示暂停标记"
-
-#: ui/views/settings/discord-section.slint
-msgid "Status"
-msgstr "状态"
-
-#: ui/views/settings/discord-section.slint
-msgid "Connected to Discord"
-msgstr "已连接到 Discord"
-
-#: ui/views/settings/discord-section.slint
-msgid "Discord not running"
-msgstr "Discord 未运行"
 
 #: ui/views/settings/file-watching-section.slint
 msgid "File Watching"
@@ -2859,7 +2459,6 @@ msgid "Exclusive"
 msgstr "独占"
 
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 msgid "Not connected"
 msgstr "未连接"
 
@@ -3077,22 +2676,6 @@ msgstr "选择可视化效果的音频绘制方式"
 msgid "{} s"
 msgstr "{} 秒"
 
-#: ui/views/settings/radio-section.slint
-msgid "Hide segmented stations"
-msgstr "隐藏分段电台"
-
-#: ui/views/settings/radio-section.slint
-msgid "Segmented (HLS) streams play, but take longer to start"
-msgstr "可以播放分段（HLS）音频流，但启动时间较长"
-
-#: ui/views/settings/radio-section.slint
-msgid "Report plays to the directory"
-msgstr "向目录报告播放情况"
-
-#: ui/views/settings/radio-section.slint
-msgid "An anonymous count is what orders stations by popularity"
-msgstr "匿名播放次数用于按热门程度排列电台"
-
 #: ui/views/settings/ratings-section.slint
 msgid "Ratings"
 msgstr "评分"
@@ -3104,82 +2687,6 @@ msgstr "将评分保存到文件"
 #: ui/views/settings/ratings-section.slint
 msgid "Write star ratings into each file's tags, so they survive a rescan and other players can read them."
 msgstr "将星级评分写入每个文件的标签，以便重新扫描后保留，并供其他播放器读取。"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Last.fm"
-msgstr "Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to Last.fm"
-msgstr "向 Last.fm 报告播放记录"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your Last.fm account"
-msgstr "将每次播放报告到你的 Last.fm 帐户"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to Last.fm"
-msgstr "将喜爱的曲目同步到 Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on Last.fm — turning this on syncs your existing favorites"
-msgstr "将你喜爱的曲目标记为 Last.fm 上的喜爱曲目——启用后会同步现有收藏"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "ListenBrainz"
-msgstr "ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to ListenBrainz"
-msgstr "向 ListenBrainz 报告播放记录"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your ListenBrainz account"
-msgstr "将每次播放报告到你的 ListenBrainz 帐户"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to ListenBrainz"
-msgstr "将喜爱的曲目同步到 ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on ListenBrainz — turning this on syncs your existing favorites (needs MusicBrainz IDs)"
-msgstr "将你喜爱的曲目标记为 ListenBrainz 上的喜爱曲目——启用后会同步现有收藏（需要 MusicBrainz ID）"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "MusicBrainz Picard adds these IDs to your files, identifying each track by its audio."
-msgstr "MusicBrainz Picard 会将这些 ID 添加到文件中，根据音频识别每首曲目。"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble radio songs"
-msgstr "记录电台歌曲播放"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Songs heard in full on a station go to your connected scrobbling services"
-msgstr "在电台中完整听完的歌曲会发送到你已连接的听歌记录服务"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connected as {}"
-msgstr "已连接账号：{}"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Not configured in this build"
-msgstr "此构建版本未配置"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect Last.fm"
-msgstr "连接 Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Disconnect"
-msgstr "断开连接"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect ListenBrainz"
-msgstr "连接 ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Turn on Last.fm or ListenBrainz above first"
-msgstr "请先在上方启用 Last.fm 或 ListenBrainz"
 
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"

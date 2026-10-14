@@ -308,8 +308,7 @@ pub fn source_pixels(path: &Path) -> Option<u64> {
 }
 
 /// Source pixel count past which a decode waits its turn on [`LARGE_DECODE_GATE`] — well above any
-/// real cover or station logo, for the occasional full-resolution original a user's tags carry or a
-/// host serves as a favicon.
+/// real cover, for the occasional full-resolution original a user's tags carry.
 const LARGE_SOURCE_PIXELS: u64 = 4_000_000;
 
 /// Serializes oversized decodes against each other, across every pool that runs one.
@@ -321,8 +320,6 @@ const LARGE_SOURCE_PIXELS: u64 = 4_000_000;
 ///
 /// **One gate rather than one per caller**, which is the whole reason it sits here: the peak it
 /// bounds is process RSS, and two gates would each cap their own half while the sum went unbounded.
-/// The two callers are also on different pools — covers on the rayon decode pool, station logos on
-/// tokio's blocking pool — so nothing else relates them.
 static LARGE_DECODE_GATE: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
 
 /// A guard held for the length of an oversized decode, or `None` where `pixels` is small enough to

@@ -2,8 +2,7 @@
 //!
 //! **Detached, not `open::that`**, which `waitpid`s the launcher: where `xdg-open` falls
 //! through to `$BROWSER` rather than handing off over D-Bus, that is the browser's whole
-//! lifetime, and `scrobbling_settings` awaits this call before it can offer the
-//! paste-token field. The trade is one class of failure — a launcher that *starts* and
+//! lifetime. The trade is one class of failure — a launcher that *starts* and
 //! then exits non-zero has a status only `that` is around to read, so `xdg-open`'s "no
 //! application found" is now silent.
 //!

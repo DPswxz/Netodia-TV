@@ -1,17 +1,12 @@
 //! What a queue does when the library underneath it loses a row.
 //!
 //! A delete is a hard `DELETE`, so the watcher can take a track out from under a playing queue at
-//! any moment. Three of the four answers here are the transport's and one of them is Radio's, and
-//! that last is the one nothing else would catch: a station leaves the queue seated underneath
-//! rather than playing from it, so reacting to a row going missing takes Radio off screen over a
-//! track it was never playing.
+//! any moment. The transport removes missing queue entries and moves on when the current row goes.
 
 use super::*;
 use crate::library::playback::player_play_tracks;
 use crate::state::fixtures::TestPlayback;
 use melodia_core::error::AppError;
-use melodia_engine::player::engine::fixtures::test_station;
-use melodia_engine::player::engine::state::with_state_emit;
 use melodia_engine::player::engine::types::PlaybackStatus;
 
 /// A fixture playing `count` staged files from the head, as the header Play pill starts one.
@@ -30,14 +25,6 @@ async fn delete_row(fx: &TestPlayback, id: i64) -> Result<(), AppError> {
 
 fn queued_ids(fx: &TestPlayback) -> Vec<i64> {
     lock_state(&fx.ctx.player_state).queue.tracks.iter().map(|t| t.id).collect()
-}
-
-/// Seat a station over the queue the way a tune does, connecting and then connected.
-fn tune_in(fx: &TestPlayback, name: &str) {
-    with_state_emit(&fx.ctx.player_state, &fx.ctx.sinks, |s| {
-        let (generation, _connecting) = s.build_station_connecting_actions(test_station(name));
-        s.build_station_connected_actions(generation);
-    });
 }
 
 /// The base case. A queue holding an id no row answers offers the user a track that cannot be
@@ -85,24 +72,6 @@ async fn the_last_surviving_entry_going_missing_clears_the_deck() -> Result<(), 
     assert!(state.queue.tracks.is_empty());
     assert!(state.source.is_none(), "a cleared queue has to clear what the bar is drawing");
     assert_eq!(state.status, PlaybackStatus::Stopped);
-    Ok(())
-}
-
-/// The guard, and the reason it is not enough to ask whether the current entry was removed. A
-/// station is playing over the queue, not out of it, so the queue losing its current entry is a
-/// library event and not a playback one — reacting stops the station the user is listening to.
-#[tokio::test]
-async fn a_station_is_not_stopped_by_a_row_going_missing_under_it() -> Result<(), AppError> {
-    let (fx, ids) = playing(2).await?;
-    tune_in(&fx, "Test Station");
-    delete_row(&fx, ids[0]).await?;
-
-    reconcile_once(&fx.ctx.db, &fx.ctx.player_state, &fx.ctx.sinks, &fx.ctx.engine).await?;
-
-    assert_eq!(queued_ids(&fx), ids[1..], "the queue underneath still loses the row");
-    let state = lock_state(&fx.ctx.player_state);
-    assert!(state.station().is_some(), "the station has to still be on the deck");
-    assert_eq!(state.status, PlaybackStatus::Playing, "and playing over the queue");
     Ok(())
 }
 

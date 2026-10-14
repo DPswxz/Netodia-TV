@@ -28,11 +28,10 @@ use slint::{ComponentHandle, Weak};
 use crate::ui::my_library::{
     self, MyLibraryTab, NAV_MY_LIBRARY, persist_tab, tab_from_index, tab_of_section,
 };
-use crate::ui::radio::NAV_RADIO;
 use crate::ui::view_tag;
 use melodia_app::state::AppState;
 use melodia_core::error::{AppResult, describe};
-use melodia_ui::{AppWindow, Dialog, MyLibrary, Nav, NavEnterFrom, Queue, Radio};
+use melodia_ui::{AppWindow, Dialog, MyLibrary, Nav, NavEnterFrom, Queue};
 
 const HISTORY_CAP: usize = 24;
 
@@ -110,23 +109,6 @@ impl NavHistory {
         self.entries.get(self.cursor).copied()
     }
 
-    /// Drop every entry for a section the user can no longer reach, pulling the cursor
-    /// back past the ones that fell before it.
-    ///
-    /// Switching Radio off is the only caller, and it is what actually moves the user off
-    /// nav 10: the row and the router branch both go, but the walk would still land there
-    /// on a panel with nothing mounted in it. Cheaper than teaching every replay to
-    /// re-check whether its destination still exists.
-    pub fn forget_section(&mut self, section: i32) {
-        let dropped_before_cursor =
-            self.entries.iter().take(self.cursor + 1).filter(|e| e.section == section).count();
-        self.entries.retain(|e| e.section != section);
-        self.cursor = self
-            .cursor
-            .saturating_sub(dropped_before_cursor)
-            .min(self.entries.len().saturating_sub(1));
-    }
-
     pub fn set_suppress(&mut self, on: bool) {
         self.suppress = on;
     }
@@ -165,18 +147,7 @@ impl Default for NavHistory {
 /// [`my_library::detail_id_for`] — which takes the tab rather than reading the mounted one
 /// precisely so this caller can ask about a *recorded* entry's tab.
 ///
-/// **Radio's detail is walkable only where it has a row.** A browsed station is a directory
-/// answer with a shelf life and `id == 0`, so there is nothing for a later replay to reopen
-/// it by; the walk steps over it to the tab it was opened from, which is where the station
-/// still is.
 fn current_detail_id_for(ui: &AppWindow, section: i32, tab: i32) -> Option<i64> {
-    if section == NAV_RADIO {
-        let g = ui.global::<Radio>();
-        return g
-            .get_detail_open()
-            .then(|| i64::from(g.get_detail_station().id))
-            .filter(|id| crate::ui::radio::station_has_row(*id));
-    }
     if section != NAV_MY_LIBRARY {
         return None;
     }
@@ -350,13 +321,6 @@ impl PendingNav {
 }
 
 fn invoke_close_detail(ui: &AppWindow, section: i32, tab: i32) {
-    if section == NAV_RADIO {
-        let g = ui.global::<Radio>();
-        if g.get_detail_open() {
-            g.invoke_close_detail();
-        }
-        return;
-    }
     if section != NAV_MY_LIBRARY {
         return;
     }
@@ -389,7 +353,7 @@ fn spawn_open_detail(
     direction: NavEnterFrom,
     pending: Option<PendingNav>,
 ) {
-    if section != NAV_MY_LIBRARY && section != NAV_RADIO {
+    if section != NAV_MY_LIBRARY {
         return;
     }
     // `weak` is consumed by whichever `open_*_with` runs; `ReplayOpen::fallback` is what is
@@ -401,17 +365,6 @@ fn spawn_open_detail(
         fallback: ui.as_weak(),
         label,
     };
-    if section == NAV_RADIO {
-        // Only a kept station is ever recorded, so the id is the whole handle: `StationRef::is_kept`
-        // splits on it, and `open_station_with` fills the uuid in off the row it resolves.
-        let station = crate::ui::radio::StationRef { id, uuid: String::new() };
-        let handle = nav().handles().radio.lock().clone();
-        spawn_open(state, handle, replay("open_station"), move |s, ru| async move {
-            let hook = pending_hook(pending);
-            crate::ui::radio::open_station_with(&s, &ru, weak, station, direction, hook).await
-        });
-        return;
-    }
     match tab_from_index(&ui.global::<MyLibrary>(), tab) {
         MyLibraryTab::Songs => {}
         MyLibraryTab::Albums => {
@@ -525,7 +478,6 @@ pub struct SectionHandles {
     pub artists: Mutex<Option<Arc<crate::ui::artists::ArtistsUi>>>,
     pub genres: Mutex<Option<Arc<crate::ui::genres::GenresUi>>>,
     pub playlists: Mutex<Option<Arc<crate::ui::playlists::PlaylistsUi>>>,
-    pub radio: Mutex<Option<Arc<crate::ui::radio::RadioUi>>>,
 }
 
 /// Everything browser-style navigation needs, owned by the view layer.

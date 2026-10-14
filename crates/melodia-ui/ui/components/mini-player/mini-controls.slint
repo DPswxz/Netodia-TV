@@ -175,19 +175,11 @@ export component MiniTimeline inherits HorizontalLayout {
         horizontal-stretch: 1;
         alignment: center;
 
-        if !Player.vm.has_station: SeekRow {
+        SeekRow {
             label-color: root.label-color;
             fill-color: root.fill-color;
             track-color: root.track-color;
             seam-mask-color: root.seam-mask-color;
-        }
-        if Player.vm.has_station: HorizontalLayout {
-            alignment: center;
-            MetaChip {
-                text: Player.live-label;
-                fill: root.chip-fill;
-                label-color: root.chip-label;
-            }
         }
     }
 

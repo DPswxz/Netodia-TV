@@ -48,7 +48,7 @@ pub async fn load_json_or_default<T: DeserializeOwned + Default>(path: &Path) ->
 /// `settings.json` is every flag struct flattened. One level for the same reason: that is where
 /// its settings sit, and a value nested deeper resets with the field holding it.
 ///
-/// Logs which fields went and never what they held, a scrobbler's session key being among the
+/// Logs which fields went and never what they held, a credential being among the
 /// files read here.
 fn parse_resetting_unreadable<T: DeserializeOwned + Default>(content: &str, path: &Path) -> T {
     if let Ok(parsed) = serde_json::from_str(content) {

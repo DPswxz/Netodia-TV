@@ -47,7 +47,7 @@ enum FetchOutcome {
     Refused(String),
 }
 
-/// Deezer's ceiling is 50 requests per 5 s per IP, and the Discord presence path
+/// Deezer's ceiling is 50 requests per 5 s per IP, and the artist image path
 /// spends from the same budget over the same client. Five at a time a beat apart
 /// stays well under it while still clearing a first-launch backlog quickly — but
 /// only for one pass at a time, which is what [`PASS_IN_FLIGHT`] is for.

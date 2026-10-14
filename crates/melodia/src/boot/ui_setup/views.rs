@@ -11,7 +11,7 @@ use melodia_views::ui;
 use slint::ComponentHandle;
 
 /// The per-view handles `install_views` hands back for the wiring
-/// [`super::install_ui`] owns: the initial fetches, the playlist and station import/export pills
+/// [`super::install_ui`] owns: the initial fetches, the playlist import/export pills
 /// (which need the notifications stack), and the `cover_thumbs` consumers.
 ///
 /// Only handles a *caller* reads live here. `BrowseUi` / `FavoritesUi` /
@@ -26,7 +26,6 @@ pub struct UiHandles {
     pub artists_ui: Arc<ui::artists::ArtistsUi>,
     pub genres_ui: Arc<ui::genres::GenresUi>,
     pub playlists_ui: Arc<ui::playlists::PlaylistsUi>,
-    pub radio_ui: Arc<ui::radio::RadioUi>,
 }
 
 /// Resolve every `TrackListRowItem` thumbnail — all track tables, all views —
@@ -52,8 +51,7 @@ fn install_row_covers(app: &AppWindow, cover_thumbs: &Arc<image::cover_thumbs::C
 /// the seven tiers that used to sit in six view files (Favorites held two) share it now. Bumping a
 /// generation whose page isn't mounted is a property write with no bindings to dirty, so answering
 /// for all six globals costs nothing and saves the tier having to know which grid asked. Slint
-/// globals share no trait to be generic over, hence the list. Radio is absent because its logo
-/// tier is its own.
+/// globals share no trait to be generic over, hence the list.
 fn install_grid_covers(app: &AppWindow) {
     ui::cover_generation::notify_on_decode(ui::grid_prewarm::tier(), app, |app| {
         macro_rules! repaint {
@@ -90,21 +88,17 @@ pub fn install_views(
     // `.claude/rules/ui-patterns.md` for what that costs.
     //
     // The Favorites *tab* seeds down beside the detail views instead, needing
-    // the `favorites_ui` handle; My Library's and Radio's need none.
+    // the `favorites_ui` handle; My Library's needs none.
     if let Some(vs) = startup_view_state {
         // 4–7 were Albums / Artists / Genres / Playlists — a `views.json`
         // written by a released build still holds them, and they route nowhere.
-        // 10 routes only while Radio is switched on, so the two folds compose:
-        // they answer different questions and neither belongs inside the other.
-        let idx = ui::radio::fold_disabled_nav_index(
-            ui::my_library::fold_retired_nav_index(vs.last_nav_index),
-            state.radio_enabled.get(),
-        );
+        // 10 was Radio; old sessions land on My Library just like the retired
+        // standalone library sections.
+        let idx = ui::my_library::fold_retired_nav_index(vs.last_nav_index);
         if (0..=services::view_state::MAX_NAV_INDEX).contains(&idx) {
             app.global::<Nav>().set_selected_index(idx);
         }
         ui::my_library::seed_tab(app, vs.my_library_tab);
-        ui::radio::seed_tab(app, vs.radio_tab);
     }
 
     ui::callbacks::wire_all(app, state);
@@ -137,7 +131,6 @@ pub fn install_views(
     let playlists_ui = ui::playlists::install(cx);
     ui::favorites::install(cx, &artists_ui);
     ui::recently_played::install(cx);
-    let radio_ui = ui::radio::install(cx);
     let search_ui = ui::search::install(cx, &albums_ui, &artists_ui);
 
     // Every track-list view's right-click "Go to Album/Artist/Genre", after all
@@ -150,7 +143,6 @@ pub fn install_views(
     *ui::nav_history::nav().handles().artists.lock() = Some(artists_ui.clone());
     *ui::nav_history::nav().handles().genres.lock() = Some(genres_ui.clone());
     *ui::nav_history::nav().handles().playlists.lock() = Some(playlists_ui.clone());
-    *ui::nav_history::nav().handles().radio.lock() = Some(radio_ui.clone());
 
     // The five persisted-detail reopens stay adjacent here rather than folding
     // into each slice's `install`, because the history seed below depends on
@@ -160,7 +152,6 @@ pub fn install_views(
     ui::artists::seed_detail_from_settings(app, state, &artists_ui);
     ui::genres::seed_detail_from_settings(app, state, &genres_ui);
     ui::playlists::seed_detail_from_settings(app, state, &playlists_ui);
-    ui::radio::seed_detail_from_settings(app, state, &radio_ui);
 
     // Seed the nav-history with the boot view, so Mouse-4 has a target after the
     // first sidebar click — otherwise a boot landing on a section with no
@@ -183,21 +174,18 @@ pub fn install_views(
     ui::callbacks::wire_now_playing_favorite(app, state, row_flags);
     ui::callbacks::wire_now_playing_rating(app, state, row_flags);
     // Retune the cover tiers to the real display. One call for every card grid, they all draw
-    // the same card at the same size; Genres has no cover at all and Radio has its own tier.
+    // the same card at the same size; Genres has no cover at all.
     //
     // **Deferred to the event loop, because this runs long before
     // `app.show()`**: inline, `with_winit_window` finds no window and the tier
     // silently keeps its construction fallback, while `scale_factor` answers 1.0
     // until the window is on a monitor and serves a `HiDPI` display the 1×
     // decode size. The closure's `Arc` clones keep the handles this scope drops.
-    let (tune_rows, tune_radio) = (cover_thumbs.clone(), radio_ui.clone());
+    let tune_rows = cover_thumbs.clone();
     let weak = app.as_weak();
     let retune = move || {
         let Some(app) = weak.upgrade() else { return };
         ui::grid_prewarm::tune_for_display(&app);
-        // Radio's logo tier is the one card tier that isn't the shared one — see its own
-        // `covers` module for why — so it still tunes itself.
-        ui::radio::tune_cache_for_display(&app, &tune_radio);
         // The row tier is the other shared one and owes the same post-show read.
         tune_rows.set_thumb_size(image::cover_thumbs::row_cover_size(f64::from(
             app.window().scale_factor(),
@@ -216,7 +204,7 @@ pub fn install_views(
 
     // The four handles not returned are deliberately dropped here — see
     // `UiHandles`.
-    UiHandles { cover_thumbs, tracks_ui, albums_ui, artists_ui, genres_ui, playlists_ui, radio_ui }
+    UiHandles { cover_thumbs, tracks_ui, albums_ui, artists_ui, genres_ui, playlists_ui }
 }
 
 /// Every Settings section, plus the notifications stack. The updater's Slint
@@ -236,9 +224,6 @@ pub fn install_library_settings_and_friends(
     ui::replaygain::install_replaygain(app, state);
     ui::visualizer::install_visualizer(app, state);
     ui::sleep_timer::install_sleep_timer(app, state);
-    ui::settings::scrobbling_settings::install_scrobbling(app, state);
-    ui::settings::discord_settings::install_discord(app, state);
-    ui::settings::radio_settings::install_radio(app, state);
     ui::settings::lyrics_settings::install(app, state);
     let notifications = ui::shell::notifications::install(app);
     ui::settings::file_watching::install(app, state, &notifications);

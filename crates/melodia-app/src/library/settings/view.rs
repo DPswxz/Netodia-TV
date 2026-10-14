@@ -136,14 +136,6 @@ pub fn set_my_library_tab(paths: &Paths, tab: i32) -> Result<(), AppError> {
     })
 }
 
-/// Persist the Radio page's active tab. Same contract again — `Radio.tab-idx` is two-way bound
-/// to its tab bar.
-pub fn set_radio_tab(paths: &Paths, tab: i32) -> Result<(), AppError> {
-    services::view_state::mutate_view_state(paths, move |s| {
-        s.radio_tab = tab;
-    })
-}
-
 /// Persist the visible-column list for `view_id` into `views.json`'s `view_columns`. `columns` is
 /// the currently *visible* ids in display order. Serialized through `mutate_view_state` to avoid
 /// the read-then-write race when multiple views save concurrently.

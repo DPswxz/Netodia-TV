@@ -52,15 +52,6 @@ pub fn spawn_background_tasks(
     // Batches `play_count` / `skip_count` UPDATEs so a fast skip burst is one
     // write. Before any playback can fire an `UpdatePlayCount`.
     tasks::play_count_flusher::spawn(spawner, state.db.clone(), state.stats_changed.clone());
-    // Watches the view-model/position seam, enqueues qualifying plays and
-    // drains the durable queue. Inert until a provider is connected.
-    tasks::scrobble::spawn(spawner, state);
-    // Projects the view-model into a Discord activity card. Inert until enabled;
-    // started here when it already is, so the card connects while idle rather
-    // than on the first track.
-    tasks::discord_presence::spawn(spawner, state);
-    state.discord.start_if_enabled();
-
     // OS media-control events drive the same `library::*` paths the UI does,
     // keeping MPRIS / SMTC in lockstep with it.
     if let Some(rx) = channels.media_control_rx.take() {
@@ -76,19 +67,15 @@ pub fn spawn_background_tasks(
     }
 }
 
-/// Restore the persisted queue and the station over it from disk (best-effort; missing file is OK).
+/// Restore the persisted queue from disk (best-effort; missing file is OK).
 pub fn restore_persisted_playback(runtime: &tokio::runtime::Runtime, state: &AppState) {
     if let Err(e) = runtime.block_on(library::queue::restore_persisted_playback(state)) {
         log::warn!("Failed to restore persisted playback: {}", describe(&e));
     }
 }
 
-/// With "Resume on Startup" on and a restored source, play here so the
-/// first frame paints `Playing` and the deck is already decoding.
-///
-/// A restored station goes through the same call and comes back the way it went away — as a
-/// re-open, since `player_play` routes a paused station to `resume_station`. That one is a
-/// network round trip rather than a decode, so the first frame paints `Connecting…` instead.
+/// With "Resume on Startup" on and a restored queue, play here so the first frame paints
+/// `Playing` and the deck is already decoding.
 pub fn maybe_resume_on_startup(
     state: &AppState,
     startup_settings: Option<&services::settings::SettingsData>,

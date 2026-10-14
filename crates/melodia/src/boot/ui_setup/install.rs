@@ -73,7 +73,6 @@ fn install_shell(
     // These three wire here rather than inside their slices because their
     // completion toasts need the `Rc<NotificationsUi>`.
     ui::playlists::wire_files(app, state, &views.playlists_ui, &notifications);
-    ui::radio::wire_files(app, state, &views.radio_ui, &notifications);
     ui::callbacks::wire_tags(app, state, &notifications);
 
     match ui::appearance::install(app, state) {
@@ -109,12 +108,6 @@ fn install_player_surfaces(app: &AppWindow, state: &AppState, views: &UiHandles)
         .map_err(|e| AppError::io("queue subscriber", e))?;
     ui::shell::bridge::spawn_position_subscriber(weak.clone(), &state.position_tx)
         .map_err(|e| AppError::io("position subscriber", e))?;
-    // Reads the same view model as the first of those, for the ICY titles a station announces.
-    // Beside them rather than inside `radio::install`, so every subscription to a player channel
-    // is spawned in one place.
-    ui::radio::install_history(weak, &views.radio_ui, &state.sinks)
-        .map_err(|e| AppError::io("station history subscriber", e))?;
-
     match ui::queue_sheet::install(app, state, &views.cover_thumbs) {
         Ok(h) => ui::window_chrome::set_queue_sheet_open(h.is_open),
         Err(e) => log::warn!("queue_sheet::install: {}", describe(&e)),

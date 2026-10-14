@@ -9,8 +9,7 @@ use melodia_testkit::rust_sources;
 
 /// An error carried as a `String` keeps its message and drops its cause, which is the whole of
 /// what `error::describe` walks. Nothing in the Rust tree needs to: `AppError` reaches
-/// everywhere, and where it cannot (`radio_blocklist::source` is `include!`d into `build.rs`, so
-/// it may name no `crate::` path) the answer is a local type implementing `std::error::Error`.
+/// everywhere; the answer is a local type implementing `std::error::Error`.
 /// The rule is violable from any file and costs nothing to break, so a walk is what holds it.
 #[test]
 fn no_result_carries_its_error_as_a_string() {

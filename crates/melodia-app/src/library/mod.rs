@@ -29,8 +29,6 @@ pub mod playback;
 pub mod playlist_files;
 pub mod playlists;
 pub mod queue;
-pub mod radio;
-pub mod radio_files;
 pub mod ratings;
 pub mod recently_played;
 pub mod scan;

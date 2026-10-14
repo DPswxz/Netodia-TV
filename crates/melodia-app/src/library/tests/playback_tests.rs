@@ -10,7 +10,6 @@
 use super::*;
 use crate::services::settings::{SettingsData, read_settings, write_settings};
 use crate::state::fixtures::TestPlayback;
-use melodia_engine::player::engine::fixtures::test_station;
 use melodia_engine::player::engine::state::{MAX_SPEED, MIN_SPEED, PlayerState};
 
 fn make_summary(id: i64, duration_ms: i64) -> Arc<TrackSummary> {
@@ -48,14 +47,6 @@ async fn playing(count: usize) -> Result<(TestPlayback, Vec<i64>), AppError> {
     let ids = fx.stage_playable(count).await?;
     player_play_tracks(&fx.ctx, ids.clone(), None).await?;
     Ok((fx, ids))
-}
-
-/// Seat a station the way a tune does, connecting and then connected.
-fn tune_in(fx: &TestPlayback, name: &str) {
-    seat(fx, |s| {
-        let (generation, _connecting) = s.build_station_connecting_actions(test_station(name));
-        s.build_station_connected_actions(generation);
-    });
 }
 
 // --- resolve_start_slot ---
@@ -348,21 +339,11 @@ async fn the_bit_perfect_reset_takes_a_software_volume_and_the_speed_to_unity()
 
 // --- session flags ---
 
-/// A live source has no track end, so the monitor would never fire the flag and the sleep row
-/// would sit reading "Track end" over a timer that can only be cancelled.
 #[tokio::test]
-async fn the_sleep_timer_arms_over_a_track_and_is_refused_over_a_station() -> Result<(), AppError> {
+async fn the_sleep_timer_can_be_set_for_the_current_track() -> Result<(), AppError> {
     let (fx, _ids) = playing(1).await?;
     player_set_pause_at_track_end(&fx.ctx, true)?;
     assert!(lock_state(&fx.ctx.player_state).pause_after_current_track);
-
-    let station = TestPlayback::empty().await?;
-    tune_in(&station, "Example FM");
-    player_set_pause_at_track_end(&station.ctx, true)?;
-    assert!(
-        !lock_state(&station.ctx.player_state).pause_after_current_track,
-        "a station has no track end for the monitor to disarm on"
-    );
     Ok(())
 }
 
@@ -470,117 +451,5 @@ async fn every_crossfade_door_reaches_the_setting_it_names() -> Result<(), AppEr
     assert!(settings.manual);
     assert!(settings.skip_same_album);
     assert!(settings.fade_on_pause);
-    Ok(())
-}
-
-// --- radio transport routing ---
-
-/// Pausing a station drops its connection, so the play half of a toggle is a fresh open rather
-/// than a `Resume` — a network round trip the state machine cannot do under its lock. This
-/// predicate is what routes it, shared with `player_play` so the two can't disagree.
-#[test]
-fn only_a_paused_station_routes_to_a_reopen() {
-    assert!(needs_station_reopen(PlaybackStatus::Paused, true));
-    assert!(!needs_station_reopen(PlaybackStatus::Playing, true), "already connected");
-    assert!(!needs_station_reopen(PlaybackStatus::Loading, true), "already connecting");
-    assert!(!needs_station_reopen(PlaybackStatus::Stopped, true), "a stop forgets the station");
-    assert!(!needs_station_reopen(PlaybackStatus::Paused, false), "a paused track just resumes");
-}
-
-#[tokio::test]
-async fn toggling_a_playing_station_pauses_it_by_dropping_the_connection() -> Result<(), AppError> {
-    let fx = TestPlayback::empty().await?;
-    tune_in(&fx, "Example FM");
-
-    player_toggle_play_pause(&fx.ctx)?;
-
-    {
-        let state = lock_state(&fx.ctx.player_state);
-        assert_eq!(state.status, PlaybackStatus::Paused);
-        assert!(state.station().is_some(), "the station stays on screen");
-    }
-
-    // The toggle routes through `resume_station` the same way `player_play` does, or the play half
-    // would `Resume` a socket that pausing already closed.
-    player_toggle_play_pause(&fx.ctx)?;
-
-    assert_eq!(lock_state(&fx.ctx.player_state).status, PlaybackStatus::Loading, "a fresh open");
-    Ok(())
-}
-
-/// A connect still in flight is cancelled rather than resumed: the session generation moves, so
-/// the stream it opens is refused when it arrives.
-#[tokio::test]
-async fn toggling_a_connecting_station_cancels_the_connect() -> Result<(), AppError> {
-    let fx = TestPlayback::empty().await?;
-    let generation = seat(&fx, |s| {
-        let (generation, _connecting) =
-            s.build_station_connecting_actions(test_station("Example FM"));
-        generation
-    });
-
-    player_toggle_play_pause(&fx.ctx)?;
-
-    let mut state = lock_state(&fx.ctx.player_state);
-    assert_eq!(state.status, PlaybackStatus::Paused);
-    assert_eq!(
-        state.build_station_connected_actions(generation),
-        vec![],
-        "the session the connect was opened under is gone"
-    );
-    Ok(())
-}
-
-/// The half of a resume that happens under the emit lock. The open itself is a socket and belongs
-/// with the radio suites; what has to be atomic with the predicate is the session moving, since a
-/// `Stop` landing in the gap would be undone by a connect already decided on.
-#[tokio::test]
-async fn play_over_a_paused_station_re_opens_it_rather_than_resuming() -> Result<(), AppError> {
-    let fx = TestPlayback::empty().await?;
-    tune_in(&fx, "Example FM");
-    seat(&fx, |s| s.build_pause_actions(0));
-
-    player_play(&fx.ctx)?;
-
-    assert_eq!(
-        lock_state(&fx.ctx.player_state).status,
-        PlaybackStatus::Loading,
-        "a paused station re-opens; a Resume would play a socket that is already closed"
-    );
-    Ok(())
-}
-
-/// What the Radio switch owes when it goes off, and what it must not do to a library track. The
-/// check is inside the state lock so a read-then-stop pair cannot stop a track that started in
-/// between.
-#[tokio::test]
-async fn stopping_the_station_forgets_it_and_hands_the_queue_back() -> Result<(), AppError> {
-    let (fx, ids) = playing(2).await?;
-    tune_in(&fx, "Example FM");
-
-    player_stop_station(&fx.ctx)?;
-
-    let state = lock_state(&fx.ctx.player_state);
-    assert!(state.station().is_none());
-    assert_eq!(state.status, PlaybackStatus::Stopped);
-    assert_eq!(
-        state.queue.tracks.iter().map(|t| t.id).collect::<Vec<_>>(),
-        ids,
-        "the queue was left untouched underneath, which is what the transport falls back to"
-    );
-    Ok(())
-}
-
-#[tokio::test]
-async fn stopping_the_station_with_no_station_leaves_a_track_playing() -> Result<(), AppError> {
-    let (fx, _ids) = playing(2).await?;
-
-    player_stop_station(&fx.ctx)?;
-
-    assert_eq!(
-        lock_state(&fx.ctx.player_state).status,
-        PlaybackStatus::Playing,
-        "the Radio switch going off is not a transport stop"
-    );
     Ok(())
 }

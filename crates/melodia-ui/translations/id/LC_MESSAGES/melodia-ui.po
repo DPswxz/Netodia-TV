@@ -15,12 +15,11 @@ msgstr ""
 msgid "Search"
 msgstr "Cari"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Browse"
 msgstr "Jelajahi"
 
 #: ui/app-window.slint ui/layout/sidebar.slint ui/views/favorites-view.slint
-#: ui/views/radio-view.slint
 msgid "Favorites"
 msgstr "Favorit"
 
@@ -28,7 +27,7 @@ msgstr "Favorit"
 msgid "My Library"
 msgstr "Pustaka Saya"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/radio-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
 #: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "Terakhir Diputar"
@@ -36,11 +35,6 @@ msgstr "Terakhir Diputar"
 #: ui/app-window.slint ui/layout/sidebar.slint
 msgid "Settings"
 msgstr "Pengaturan"
-
-#: ui/app-window.slint ui/layout/sidebar.slint
-#: ui/views/settings/radio-section.slint
-msgid "Radio"
-msgstr "Radio"
 
 #: ui/components/caption-buttons.slint
 #: ui/components/macos-titlebar-cluster.slint
@@ -81,74 +75,23 @@ msgstr "Tambahkan ke Favorit"
 msgid "Remove from Favorites"
 msgstr "Hapus dari Favorit"
 
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-msgid "Stream URL"
-msgstr "URL stream"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Name (optional)"
-msgstr "Nama (opsional)"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to use the station's own name"
-msgstr "Biarkan kosong untuk memakai nama stasiun itu sendiri"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
-msgid "Website"
-msgstr "Situs web"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Logo URL"
-msgstr "URL logo"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Leave blank to look for a logo on the website above."
-msgstr "Biarkan kosong untuk mencari logo di situs web di atas."
-
-#: ui/components/dialog/add-station-body.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/track-list/column-toggle-popup.slint
 #: ui/components/track-list/track-list-header.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "Genre"
 
-#: ui/components/dialog/add-station-body.slint
-msgid "Jazz, Blues"
-msgstr "Jazz, Blues"
-
-#: ui/components/dialog/add-station-body.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "Country"
-msgstr "Negara"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Tunisia"
-msgstr "Tunisia"
-
-#: ui/components/dialog/add-station-body.slint
-msgid "The directory owns this station's name and stream. What it left blank is yours to fill in; leave a field empty to remove it again."
-msgstr "Nama dan stream stasiun ini dikelola oleh direktori. Kolom yang dibiarkannya kosong boleh Anda isi; kosongkan kolom untuk menghapusnya lagi."
-
-#: ui/components/dialog/add-station-body.slint
-msgid "Checking the stream…"
-msgstr "Memeriksa stream…"
-
 #: ui/components/dialog/credit-editor.slint
 #: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Add"
 msgstr "Tambah"
 
 #: ui/components/dialog/dialog.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/grid/station-context-menu.slint ui/views/favorites-view.slint
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/favorites-view.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "Nama"
 
@@ -168,11 +111,7 @@ msgstr "Tambahkan deskripsi…"
 msgid "Finish"
 msgstr "Selesai"
 
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
-msgid "Open Last.fm"
-msgstr "Buka Last.fm"
-
-#: ui/components/dialog/dialog.slint ui/views/settings/scrobbling-section.slint
+#: ui/components/dialog/dialog.slint
 msgid "Connect"
 msgstr "Hubungkan"
 
@@ -304,35 +243,12 @@ msgstr "Cegah clipping"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "ReplayGain hanya berlaku untuk lagu yang sudah memiliki tag kenyaringan. Pindai pustaka Anda dengan alat seperti rsgain atau loudgain untuk menambahkannya."
 
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "Click Open Last.fm to approve Melodia in your browser."
-msgstr "Klik Buka Last.fm untuk menyetujui Melodia di peramban Anda."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-msgid "After approving Melodia in your browser, click Finish."
-msgstr "Setelah menyetujui Melodia di peramban Anda, klik Selesai."
-
-#: ui/components/dialog/scrobble-lastfm-body.slint
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
 #: ui/globals/player.slint
 msgid "Connecting…"
 msgstr "Menghubungkan…"
 
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "User token"
-msgstr "Token pengguna"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Paste your ListenBrainz user token"
-msgstr "Tempelkan token pengguna ListenBrainz Anda"
-
-#: ui/components/dialog/scrobble-listenbrainz-body.slint
-msgid "Find your token on your ListenBrainz profile settings page."
-msgstr "Token Anda ada di halaman pengaturan profil ListenBrainz."
-
 #: ui/components/dialog/selectable-picker.slint
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "Pilih semua"
@@ -407,7 +323,6 @@ msgid "Duration (sec)"
 msgstr "Durasi (detik)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/station-facts.slint ui/views/radio/tab-pills.slint
 msgid "Plays"
 msgstr "Jumlah putar"
 
@@ -453,7 +368,6 @@ msgid "File size (bytes)"
 msgstr "Ukuran berkas (byte)"
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Last played"
 msgstr "Terakhir diputar"
 
@@ -700,7 +614,6 @@ msgstr "Nomor"
 
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/onboarding/appearance-panel.slint ui/settings.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
 #: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "Bahasa"
@@ -750,8 +663,7 @@ msgstr "Jalur"
 msgid "Codec"
 msgstr "Codec"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/station-facts.slint
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Bitrate"
 msgstr "Bitrate"
 
@@ -802,10 +714,8 @@ msgid "Folder"
 msgstr "Folder"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/now-playing/play-button.slint
 #: ui/components/track-list/track-context-menu.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Play"
 msgstr "Putar"
 
@@ -871,8 +781,6 @@ msgid "Edit Track Information"
 msgstr "Edit Informasi Lagu"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
-#: ui/components/station-facts.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "Salin"
@@ -905,7 +813,6 @@ msgid "Go to Artist"
 msgstr "Buka Artis"
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/grid/station-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "Hapus pilihan"
@@ -937,32 +844,6 @@ msgstr "Artis - Album"
 #: ui/components/grid/playlist-grid.slint
 msgid "0 tracks"
 msgstr "0 lagu"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Open Website"
-msgstr "Buka Situs Web"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Edit…"
-msgstr "Edit…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Recently Played…"
-msgstr "Hapus {} dari Terakhir Diputar…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Recently Played…"
-msgstr "Hapus dari Terakhir Diputar…"
-
-#. Translators: `{}` is how many stations are selected
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove {} from Favorites…"
-msgstr "Hapus {} dari Favorit…"
-
-#: ui/components/grid/station-context-menu.slint
-msgid "Remove from Favorites…"
-msgstr "Hapus dari Favorit…"
 
 #: ui/components/mini-player/mini-captions.slint
 msgid "Full Player"
@@ -1251,33 +1132,9 @@ msgid "Melodia works offline. These are the parts that reach out."
 msgstr "Melodia bekerja secara offline. Inilah bagian-bagian yang terhubung ke luar."
 
 #: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Internet radio"
-msgstr "Radio internet"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/radio-section.slint
-msgid "Browse and play live stations from radio-browser.info"
-msgstr "Jelajahi dan putar stasiun siaran langsung dari radio-browser.info"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/discord-section.slint
-msgid "Show the track you're playing on your Discord profile"
-msgstr "Tampilkan lagu yang sedang Anda putar di profil Discord Anda"
-
-#: ui/components/onboarding/features-panel.slint
 #: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "Jika lagu tidak menyertakan liriknya sendiri, minta dari lrclib.net"
-
-#: ui/components/onboarding/features-panel.slint
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobbling"
-msgstr "Scrobbling"
-
-#: ui/components/onboarding/features-panel.slint
-msgid "Send what you play to Last.fm or ListenBrainz"
-msgstr "Kirim yang Anda putar ke Last.fm atau ListenBrainz"
 
 #: ui/components/onboarding/features-panel.slint
 msgid "Set Up"
@@ -1378,10 +1235,9 @@ msgstr "{} / {} berkas"
 
 #: ui/components/settings/scan-progress.slint ui/globals/dialog-forms.slint
 #: ui/globals/dialog.slint ui/views/queue-sheet.slint
-#: ui/views/radio/tab-pills.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/appearance-section.slint
 #: ui/views/settings/library-section.slint
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 #: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "Batal"
@@ -1390,52 +1246,10 @@ msgstr "Batal"
 msgid "Sort"
 msgstr "Urutkan"
 
-#: ui/components/station-facts.slint
-msgid "Stream"
-msgstr "Stream"
-
-#: ui/components/station-facts.slint
-msgid "Copy stream URL"
-msgstr "Salin URL stream"
-
-#: ui/components/station-facts.slint
-msgid "Open in your browser"
-msgstr "Buka di peramban Anda"
-
-#: ui/components/station-facts.slint ui/views/radio/suggestion-pill.slint
-#: ui/views/radio/tab-pills.slint
-msgid "Format"
-msgstr "Format"
-
-#: ui/components/station-facts.slint ui/views/radio/station-grid.slint
-msgid "{} kbps"
-msgstr "{} kbps"
-
-#: ui/components/station-facts.slint
-msgid "Votes"
-msgstr "Suara"
-
-#: ui/components/station-facts.slint
-msgid "{n} vote"
-msgid_plural "{n} votes"
-msgstr[0] "{n} suara"
-
-#: ui/components/station-facts.slint ui/globals/hero-chips.slint
+#: ui/globals/hero-chips.slint
 msgid "{n} play"
 msgid_plural "{n} plays"
 msgstr[0] "{n} kali diputar"
-
-#: ui/components/station-facts.slint
-msgid "Recently played on this station"
-msgstr "Baru diputar di stasiun ini"
-
-#: ui/components/station-facts.slint
-msgid "Copy Title"
-msgstr "Salin Judul"
-
-#: ui/components/station-facts.slint
-msgid "Copy Artist"
-msgstr "Salin Artis"
 
 #: ui/components/track-copy-items.slint
 msgid "Artist - Title"
@@ -1514,14 +1328,6 @@ msgstr "Belum disetujui. Setujui Melodia di peramban Anda, lalu klik Selesai."
 msgid "Couldn't save your credentials."
 msgstr "Tidak dapat menyimpan kredensial Anda."
 
-#: ui/globals/dialog-forms.slint
-msgid "Edit Station"
-msgstr "Edit Stasiun"
-
-#: ui/globals/dialog-forms.slint
-msgid "Station Details"
-msgstr "Detail Stasiun"
-
 #: ui/globals/dialog-forms.slint ui/globals/dialog.slint
 msgid "Save"
 msgstr "Simpan"
@@ -1533,10 +1339,6 @@ msgstr "Tidak dapat menjangkau alamat itu. Periksa URL dan koneksi Anda."
 #: ui/globals/dialog-forms.slint
 msgid "That address doesn't play as audio Melodia can decode."
 msgstr "Alamat itu tidak memutar audio yang dapat didekode Melodia."
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't save the station."
-msgstr "Tidak dapat menyimpan stasiun."
 
 #: ui/globals/dialog-forms.slint
 msgid "That doesn't look like a web address. It should start with https://"
@@ -1587,30 +1389,8 @@ msgid "\"{}\" will be removed from Recently Played."
 msgstr "\"{}\" akan dihapus dari Terakhir Diputar."
 
 #: ui/globals/dialog.slint
-msgid "\"{}\" will be removed from your stations, along with its play history."
-msgstr "\"{}\" akan dihapus dari stasiun Anda, beserta riwayat putarnya."
-
-#: ui/globals/dialog.slint
 msgid "\"{}\" will be removed from your favorites."
 msgstr "\"{}\" akan dihapus dari favorit Anda."
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from Recently Played?"
-msgid_plural "Remove {n} stations from Recently Played?"
-msgstr[0] "Hapus {n} stasiun dari Terakhir Diputar?"
-
-#: ui/globals/dialog.slint
-msgid "Remove {n} station from favorites?"
-msgid_plural "Remove {n} stations from favorites?"
-msgstr[0] "Hapus {n} stasiun dari favorit?"
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from Recently Played."
-msgstr "Stasiun tersebut akan dihapus dari Terakhir Diputar."
-
-#: ui/globals/dialog.slint
-msgid "The stations will be removed from your favorites. Any you added by hand are removed from your stations, along with their play history."
-msgstr "Stasiun tersebut akan dihapus dari favorit Anda. Stasiun yang Anda tambahkan secara manual akan dihapus dari stasiun Anda, beserta riwayat putarnya."
 
 #: ui/globals/dialog.slint
 msgid "Edit Rules"
@@ -1637,7 +1417,6 @@ msgid "Choose playlists to export."
 msgstr "Pilih playlist yang akan diekspor."
 
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
-#: ui/views/radio/tab-pills.slint
 msgid "Export"
 msgstr "Ekspor"
 
@@ -1659,7 +1438,6 @@ msgstr "Kompilasi"
 msgid "No track playing"
 msgstr "Tidak ada lagu yang diputar"
 
-#. Translators: a state on the station pill, not the Pause button's verb
 #: ui/globals/player.slint
 msgid "Paused"
 msgstr "Dijeda"
@@ -1900,27 +1678,9 @@ msgid "These playlists are too large for one .zip file. Export fewer at a time."
 msgstr "Playlist ini terlalu besar untuk satu berkas .zip. Ekspor lebih sedikit sekaligus."
 
 #: ui/settings.slint
-msgid "{n} station added"
-msgid_plural "{n} stations added"
-msgstr[0] "{n} stasiun ditambahkan"
-
-#: ui/settings.slint
 msgid "{n} was already in your list."
 msgid_plural "{n} were already in your list."
 msgstr[0] "{n} sudah ada di daftar Anda."
-
-#: ui/settings.slint
-msgid "Couldn't read any stations from the selected file(s)."
-msgstr "Tidak dapat membaca stasiun apa pun dari berkas yang dipilih."
-
-#: ui/settings.slint
-msgid "{n} station exported"
-msgid_plural "{n} stations exported"
-msgstr[0] "{n} stasiun diekspor"
-
-#: ui/settings.slint
-msgid "Couldn't write the station list."
-msgstr "Tidak dapat menulis daftar stasiun."
 
 #: ui/settings.slint
 msgid "Playback error"
@@ -2088,7 +1848,7 @@ msgstr "Belum ada artis favorit"
 msgid "Favorite a song and its artist appears here."
 msgstr "Jadikan lagu sebagai favorit, dan artisnya akan muncul di sini."
 
-#: ui/views/favorites/most-played-tab.slint ui/views/radio-view.slint
+#: ui/views/favorites/most-played-tab.slint
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "Belum ada yang diputar"
@@ -2226,18 +1986,13 @@ msgstr "Buat playlist dari aturan"
 msgid "More playlist actions"
 msgstr "Tindakan playlist lainnya"
 
-#: ui/views/my-library/tab-pills.slint ui/views/radio/tab-pills.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Import"
 msgstr "Impor"
 
-#: ui/views/now-playing-view.slint ui/views/radio/tab-pills.slint
+#: ui/views/now-playing-view.slint
 msgid "Vote"
 msgstr "Beri suara"
-
-#. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/views/now-playing-view.slint
-msgid "Station"
-msgstr "Stasiun"
 
 #: ui/views/now-playing-view.slint
 msgid "Up Next"
@@ -2270,107 +2025,6 @@ msgstr "Antrean kosong"
 #: ui/views/queue-sheet.slint
 msgid "Drop to add to queue"
 msgstr "Lepaskan untuk menambahkan ke antrean"
-
-#: ui/views/radio-view.slint ui/views/radio/suggestion-pill.slint
-msgid "{n} station"
-msgid_plural "{n} stations"
-msgstr[0] "{n} stasiun"
-
-#: ui/views/radio-view.slint
-msgid "Search stations…"
-msgstr "Cari stasiun…"
-
-#: ui/views/radio-view.slint
-msgid "Filter stations…"
-msgstr "Saring stasiun…"
-
-#: ui/views/radio-view.slint
-msgid "No stations kept yet"
-msgstr "Belum ada stasiun yang disimpan"
-
-#: ui/views/radio-view.slint
-msgid "Star a station in Browse, or add one by URL."
-msgstr "Beri bintang pada stasiun di Jelajahi, atau tambahkan lewat URL."
-
-#: ui/views/radio-view.slint
-msgid "Stations you listen to show up here."
-msgstr "Stasiun yang Anda dengarkan akan muncul di sini."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Searching the directory…"
-msgstr "Mencari di direktori…"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Stations are coming from radio-browser.info."
-msgstr "Stasiun berasal dari radio-browser.info."
-
-#: ui/views/radio/browse-tab.slint
-msgid "The station directory is unreachable"
-msgstr "Direktori stasiun tidak dapat dijangkau"
-
-#: ui/views/radio/browse-tab.slint
-msgid "Check your connection and try again."
-msgstr "Periksa koneksi Anda lalu coba lagi."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Try again"
-msgstr "Coba lagi"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "No stations matched"
-msgstr "Tidak ada stasiun yang cocok"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/kept-stations-tab.slint
-msgid "Try a different name, or clear a filter."
-msgstr "Coba nama lain, atau hapus filter."
-
-#: ui/views/radio/browse-tab.slint
-msgid "Load more stations"
-msgstr "Muat stasiun lainnya"
-
-#: ui/views/radio/browse-tab.slint ui/views/radio/facet-chip.slint
-msgid "Loading…"
-msgstr "Memuat…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Filter…"
-msgstr "Saring…"
-
-#: ui/views/radio/facet-chip.slint
-msgid "Nothing to pick from"
-msgstr "Tidak ada yang bisa dipilih"
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory reached this station on its last check."
-msgstr "Direktori berhasil menjangkau stasiun ini pada pemeriksaan terakhir."
-
-#: ui/views/radio/station-detail.slint
-msgid "The directory could not reach this station on its last check."
-msgstr "Direktori tidak dapat menjangkau stasiun ini pada pemeriksaan terakhir."
-
-#: ui/views/radio/suggestion-pill.slint ui/views/radio/tab-pills.slint
-msgid "{} kbps and up"
-msgstr "{} kbps ke atas"
-
-#: ui/views/radio/suggestion-pill.slint
-msgid "{}: {}"
-msgstr "{}: {}"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Add Station"
-msgstr "Tambah Stasiun"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Added"
-msgstr "Ditambahkan"
-
-#: ui/views/radio/tab-pills.slint
-msgid "More station actions"
-msgstr "Tindakan stasiun lainnya"
-
-#: ui/views/radio/tab-pills.slint
-msgid "Edit"
-msgstr "Edit"
 
 #: ui/views/recently-played-view.slint
 msgid "Filter recently played…"
@@ -2575,34 +2229,6 @@ msgstr "Catat detail tambahan. Aktifkan ini, ulangi masalahnya, lalu simpan lapo
 #: ui/views/settings/diagnostics-section.slint
 msgid "Save…"
 msgstr "Simpan…"
-
-#: ui/views/settings/discord-section.slint
-msgid "Show album artwork"
-msgstr "Tampilkan sampul album"
-
-#: ui/views/settings/discord-section.slint
-msgid "Look up cover art online (via Deezer or iTunes) to show on the card"
-msgstr "Cari sampul secara online (melalui Deezer atau iTunes) untuk ditampilkan di kartu"
-
-#: ui/views/settings/discord-section.slint
-msgid "Hide while paused"
-msgstr "Sembunyikan saat dijeda"
-
-#: ui/views/settings/discord-section.slint
-msgid "Remove the card when paused instead of showing a paused marker"
-msgstr "Hapus kartu saat dijeda alih-alih menampilkan penanda jeda"
-
-#: ui/views/settings/discord-section.slint
-msgid "Status"
-msgstr "Status"
-
-#: ui/views/settings/discord-section.slint
-msgid "Connected to Discord"
-msgstr "Terhubung ke Discord"
-
-#: ui/views/settings/discord-section.slint
-msgid "Discord not running"
-msgstr "Discord tidak berjalan"
 
 #: ui/views/settings/file-watching-section.slint
 msgid "File Watching"
@@ -2831,7 +2457,6 @@ msgid "Exclusive"
 msgstr "Eksklusif"
 
 #: ui/views/settings/output-section.slint
-#: ui/views/settings/scrobbling-section.slint
 msgid "Not connected"
 msgstr "Tidak terhubung"
 
@@ -3049,22 +2674,6 @@ msgstr "Pilih cara visualizer menggambar audio"
 msgid "{} s"
 msgstr "{} dtk"
 
-#: ui/views/settings/radio-section.slint
-msgid "Hide segmented stations"
-msgstr "Sembunyikan stasiun tersegmentasi"
-
-#: ui/views/settings/radio-section.slint
-msgid "Segmented (HLS) streams play, but take longer to start"
-msgstr "Stream tersegmentasi (HLS) dapat diputar, tetapi lebih lama untuk mulai"
-
-#: ui/views/settings/radio-section.slint
-msgid "Report plays to the directory"
-msgstr "Laporkan pemutaran ke direktori"
-
-#: ui/views/settings/radio-section.slint
-msgid "An anonymous count is what orders stations by popularity"
-msgstr "Hitungan anonim inilah yang mengurutkan stasiun berdasarkan popularitas"
-
 #: ui/views/settings/ratings-section.slint
 msgid "Ratings"
 msgstr "Rating"
@@ -3076,82 +2685,6 @@ msgstr "Simpan rating ke berkas"
 #: ui/views/settings/ratings-section.slint
 msgid "Write star ratings into each file's tags, so they survive a rescan and other players can read them."
 msgstr "Tulis rating bintang ke tag setiap berkas, agar tetap ada setelah pemindaian ulang dan dapat dibaca pemutar lain."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Last.fm"
-msgstr "Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to Last.fm"
-msgstr "Scrobble ke Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your Last.fm account"
-msgstr "Laporkan setiap pemutaran ke akun Last.fm Anda"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to Last.fm"
-msgstr "Sinkronkan lagu yang disukai ke Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on Last.fm — turning this on syncs your existing favorites"
-msgstr "Tandai lagu yang Anda sukai sebagai loved di Last.fm — mengaktifkan ini akan menyinkronkan favorit Anda yang sudah ada"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "ListenBrainz"
-msgstr "ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble to ListenBrainz"
-msgstr "Scrobble ke ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Report each play to your ListenBrainz account"
-msgstr "Laporkan setiap pemutaran ke akun ListenBrainz Anda"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Sync loved tracks to ListenBrainz"
-msgstr "Sinkronkan lagu yang disukai ke ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Mark tracks you love as loved on ListenBrainz — turning this on syncs your existing favorites (needs MusicBrainz IDs)"
-msgstr "Tandai lagu yang Anda sukai sebagai loved di ListenBrainz — mengaktifkan ini akan menyinkronkan favorit Anda yang sudah ada (memerlukan ID MusicBrainz)"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "MusicBrainz Picard adds these IDs to your files, identifying each track by its audio."
-msgstr "MusicBrainz Picard menambahkan ID ini ke berkas Anda, dengan mengenali setiap lagu dari audionya."
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Scrobble radio songs"
-msgstr "Scrobble lagu radio"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Songs heard in full on a station go to your connected scrobbling services"
-msgstr "Lagu yang didengarkan sampai habis di sebuah stasiun dikirim ke layanan scrobbling yang terhubung"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connected as {}"
-msgstr "Terhubung sebagai {}"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Not configured in this build"
-msgstr "Tidak dikonfigurasi dalam build ini"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect Last.fm"
-msgstr "Hubungkan Last.fm"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Disconnect"
-msgstr "Putuskan"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Connect ListenBrainz"
-msgstr "Hubungkan ListenBrainz"
-
-#: ui/views/settings/scrobbling-section.slint
-msgid "Turn on Last.fm or ListenBrainz above first"
-msgstr "Aktifkan Last.fm atau ListenBrainz di atas terlebih dahulu"
 
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"

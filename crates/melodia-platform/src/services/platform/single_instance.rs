@@ -9,7 +9,7 @@
 //! file; [`serve`] starts accepting only once there is a window to raise.
 //! Connections wait in the listen backlog in between, so nothing is lost.
 //!
-//! Blocking `std` sockets on a dedicated thread, as `services::integrations::discord::ipc`
+//! Blocking `std` sockets on a dedicated thread
 //! runs its transport: the claim predates the runtime, and a parked
 //! `spawn_blocking` task would hold one of the 32 slots `main()` caps at. The
 //! accept thread only accepts — reading a connection is [`spawn_reader`]'s, for
@@ -351,7 +351,7 @@ fn read_payload(mut stream: Stream) -> io::Result<Vec<String>> {
     Ok(decode_paths(&payload))
 }
 
-/// `[u32 LE length][NUL-separated lossy UTF-8 paths]`, `services::integrations::discord::ipc`'s
+/// `[u32 LE length][NUL-separated lossy UTF-8 paths]`,
 /// framing.
 ///
 /// A declared length rather than reading to EOF, because EOF means closing the

@@ -25,9 +25,6 @@ melodia-artwork = { path = "../melodia-artwork" }
 melodia-platform = { path = "../melodia-platform" }
 melodia-playback = { path = "../melodia-playback" }
 melodia-engine = { path = "../melodia-engine" }
-# The Settings page drives the Last.fm and ListenBrainz connect flows and reads
-# Discord's status inline, so this edge is real rather than routed through a facade.
-melodia-integrations = { path = "../melodia-integrations" }
 melodia-app = { path = "../melodia-app" }
 melodia-ui = { path = "../melodia-ui" }
 

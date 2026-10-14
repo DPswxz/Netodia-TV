@@ -37,12 +37,11 @@ Six theme families, light and dark variants, configurable accents, and Material 
   </tr>
 </table>
 
-### Internet Radio and Settings
+### Settings
 
 <table>
   <tr>
-    <td width="50%"><img src="assets/screenshots/radio-browse.png" alt="Radio browse view"><br><sub><b>Internet Radio</b>: a worldwide directory, narrowed by country, language, genre, codec, or bitrate. Off until you switch it on, under Settings ▸ Services ▸ Radio.</sub></td>
-    <td width="50%"><img src="assets/screenshots/settings.png" alt="Settings on the Interface tab"><br><sub><b>Settings</b>: five tabs and a search box, here on the theme, variant, accent, and backdrop.</sub></td>
+    <td><img src="assets/screenshots/settings.png" alt="Settings on the Interface tab"><br><sub><b>Settings</b>: five tabs and a search box, here on the theme, variant, accent, and backdrop.</sub></td>
   </tr>
 </table>
 
@@ -71,11 +70,11 @@ Shrink the window past a threshold and the full UI collapses into a compact mini
 - Content hashing (BLAKE3), so a moved or renamed file keeps its play counts, favorites, and place in the queue
 - Full-text search (SQLite FTS5) over tracks, albums, artists, and genres, and over the people credited on a track, so a composer or a producer reaches their work: accent-insensitive, relevance-ranked, with a top-result card and recent history. The filter box on every list searches the same fields
 - **My Library** gathers everything into one page with five tabs (Songs, Albums, Artists, Genres, Playlists); opening an entity grows the tab band into its banner rather than navigating away
-- Favorites and Recently Played, each a hero banner over sortable lists and browsable card grids
+- Favorites and Recently Played, each a hero banner over sortable lists and browsable card grids. Recently Played stays local to the library and is not sent to an external listening-history service
 - Browse by folder, as a detailed list or a grid of cards
 - Star ratings, play and skip counts, natural sort, resizable and toggleable columns
 - Multi-selection on every library list and card grid: tick one to start, then a click anywhere on a row or card adds the next and shift-click takes a range. Right-click acts on the whole set, from queueing it to editing its tags; `Esc` clears it
-- Copy from any right-click menu: a song's title, artist, album, "Artist - Title" or file path, an album's name and artist, or a station's name, stream URL or website. A selection copies one line per item, in the order it was picked, and the queue's in queue order
+- Copy from any right-click menu: a song's title, artist, album, "Artist - Title" or file path, or an album's name and artist. A selection copies one line per item, in the order it was picked, and the queue's in queue order
 - Tag editing for one track or many at once, cover art included, written straight back to the files. A track's artists, its genres and the ten studio credits (composer, lyricist, conductor, performer, producer and the rest) are each an editable list rather than one text box, beside the rest of what a file can carry: work and movement, key, mood, ISRC, and the release's own label, catalog number, barcode and medium
 - Manual and smart playlists, the latter rule-based and resolved live; `.m3u8` import and export, several at once as a single `.zip` that imports back without extracting, drag-and-drop import and reordering
 - A database backup before every schema migration, three kept
@@ -115,16 +114,6 @@ Shrink the window past a threshold and the full UI collapses into a compact mini
 - A bilingual sheet's translation is drawn under the words it glosses
 - **Look up again** when a sheet matched the wrong recording, **Save to file** to write the one on screen into the track's own tag, and **Edit lyrics…** when it is nearly right and a stamp needs typing. The Edit Tags dialog offers the same sheet above its Lyrics field
 
-### Internet Radio
-- **Off until you switch it on**, under Settings ▸ Services ▸ Radio. Nothing contacts the directory until you do
-- A worldwide directory (**radio-browser.info**, no account and no API key) narrowed by country, language, genre, codec, or bitrate
-- Your own stream URLs, checked at the dialog rather than at the first click; `.pls`, `.m3u`, and `.asx` resolve to the audio behind them
-- Live titles reach the player bar, Now Playing, your desktop's media controls, and Discord, with buffering and reconnection handled underneath
-- Favorites, Recently Played, station pages, cached logos, and playlist-file import and export
-- Station cards select like any other card on all three tabs, with a right-click menu to play one, star or copy one or many, and to edit or remove the stations you keep
-- The titles a station has announced this session, listed under it and copyable from a right-click, artist and title apart where the line splits
-- Segmented (HLS) stations play like any other
-
 ### Themes
 Six families, each with light and dark variants and configurable accents: **Catppuccin** (Latte, Frappé, Macchiato, Mocha), **Material 3**, **GNOME Adwaita**, **KDE Breeze**, **Windows Fluent**, and **macOS**. System dark/light is followed automatically, KDE color schemes are read from `kdeglobals`, and Material You derives a palette from the current artwork in seven color styles. Headers paint an aurora of the album's own colors by default, or a blurred cover instead. The titlebar is custom and transparent, with native decorations available, and KDE opens on its native one. A first launch picks the desktop's own theme too: Windows Fluent, KDE Breeze and GNOME Adwaita follow the system's light or dark mode, and any other desktop starts on Catppuccin Mocha.
 
@@ -134,8 +123,6 @@ MP3, FLAC, M4A/M4B (AAC and ALAC), raw AAC (`.aac`), Ogg Vorbis (`.ogg`, `.oga`)
 Seventeen locales (English, German, French, Spanish, Turkish, Greek, Italian, Brazilian Portuguese, European Portuguese, Dutch, Polish, Indonesian, Russian, Ukrainian, Hungarian, Vietnamese, Simplified Chinese), switchable at runtime with no restart.
 
 ### System integration
-- Scrobbling to **Last.fm** and **ListenBrainz**, each independently, with loved-track sync that catches your existing favorites up on connect, and a durable offline queue. A ListenBrainz love needs the track's MusicBrainz recording ID in its tags
-- **Discord Rich Presence** (off by default): title, artist, album, and optionally a cover looked up on Deezer, sent to your running Discord client. Nothing leaves the machine while it is off
 - OS media controls (MPRIS2 on Linux, SMTC on Windows) and media keys
 - A system-tray icon with playback controls, on by default, and an optional close-to-tray; both under Settings ▸ Interface
 - A daily update check, named on first run and switchable under Settings ▸ Updates. It asks GitHub for a signed manifest and nothing else; package-managed installs skip it entirely
@@ -274,13 +261,6 @@ directory of your choosing.
 ([winit#1881]), wired by `Cargo.toml`'s `[patch.crates-io]`. A fresh clone builds with no setup;
 dropping the patch costs only that drag-and-drop.
 
-Last.fm scrobbling needs an [API application](https://www.last.fm/api/account/create)'s key and
-shared secret, which identify the app rather than any account. They are read at compile time from
-`LASTFM_API_KEY` / `LASTFM_SHARED_SECRET`, so nothing secret lives in the repo; for local builds,
-copy `.env.example` to `.env` and `build.rs` bakes them in. A build without them is fully
-functional, ListenBrainz included, and the Last.fm Connect button reports "not configured in this
-build". A fork wanting its own Discord presence sets `MELODIA_DISCORD_APP_ID`.
-
 [winit#1881]: https://github.com/rust-windowing/winit/issues/1881
 
 ## Architecture
@@ -307,9 +287,8 @@ Everything lives under the OS application-data directory, `~/.local/share/Melodi
 | File / folder | Purpose |
 |---------------|---------|
 | `melodia.db` | The music library (SQLite, WAL + FTS5) |
-| `settings.json`, `views.json`, `queue.json` | Preferences, per-view UI state, and the queue with the station tuned over it |
-| `scrobble_*.json` | Last.fm session key and ListenBrainz token (`0600` on Unix), plus the offline queue |
-| `artwork/`, `artists/`, `radio-logos/` | Cached album, artist, and station images. A deleted cover is put back from your music files on the next scan |
+| `settings.json`, `views.json`, `queue.json` | Preferences, per-view UI state, and the track queue |
+| `artwork/`, `artists/` | Cached album and artist images. A deleted cover is put back from your music files on the next scan |
 | `lyrics/` | Sheets the online lookup found, and a marker for the tracks it found none for |
 | `backups/` | Database copies taken before each schema migration |
 | `logs/` | Rolling logs and crash reports |
@@ -359,8 +338,7 @@ Built on the work of the [Slint](https://slint.dev/),
 [SQLx](https://github.com/launchbadge/sqlx) projects, the
 [Catppuccin](https://catppuccin.com/) palette, and
 [Material Foundation](https://m3.material.io/)'s color utilities, along with the many other crates
-listed in `Cargo.toml`. The station directory is [radio-browser.info](https://www.radio-browser.info)
-(CC0 data, no account), and the lyrics directory is [LRCLIB](https://lrclib.net) (also no account).
+listed in `Cargo.toml`. The lyrics directory is [LRCLIB](https://lrclib.net) (no account).
 Romanization is [uroman-rs](https://github.com/stellanomia/uroman-rs) for most scripts and
 [kakasi](https://github.com/Theta-Dev/kakasi) for Japanese.
 

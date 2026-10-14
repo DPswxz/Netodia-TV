@@ -7,8 +7,6 @@
 //!    decodes and blurs the source's artwork off-thread through
 //!    [`crate::ui::now_playing_artwork`] — *only while the view is open*, one decode yielding
 //!    both — into the *inactive* `Player.blur-img-{a,b}` slot, then flips `Player.blur-use-a`.
-//!    A station's logo runs the same path: the tier is keyed on a path and knows nothing about
-//!    entity kinds.
 //! 2. **Technical-metadata chips**, off the same subscriber's `TrackMeta` fetch.
 //! 3. **"Up Next" list.** A `sinks.queue` subscriber rebuilds `NowPlaying.up-next-rows`
 //!    and resets `slide-phase` only when the current track actually changed.
@@ -59,11 +57,6 @@ type Hook = Box<dyn Fn()>;
 pub(crate) const UP_NEXT_N: usize = 20;
 
 /// What the view's artwork, backdrop tiers and chips describe.
-///
-/// One type for both kinds of source, because every consumer in this module asks the same three
-/// questions: has it moved, what is there to decode, and is there a `tracks` row behind it. A
-/// station answers the last with `None` — chips come off an eight-column projection of a row it
-/// does not have.
 #[derive(Clone)]
 pub(super) struct NowPlayingSource {
     pub(super) key: SourceKey,
@@ -73,13 +66,9 @@ pub(super) struct NowPlayingSource {
 
 /// The identity a repaint dedupes on.
 ///
-/// **A station is its stream URL and nothing else.** Its announced title moves several times an
-/// hour and changes none of what this module produces — the labels are Slint bindings on
-/// `Player.vm` — so folding the title in would re-decode the same logo per song.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) enum SourceKey {
     Track(i64),
-    Station(String),
 }
 
 impl SourceKey {
@@ -90,7 +79,6 @@ impl SourceKey {
         match (held, id) {
             (None, None) => true,
             (Some(Self::Track(held)), Some(SourceId::Track(id))) => *held == id,
-            (Some(Self::Station(held)), Some(SourceId::Station(url))) => held == url,
             _ => false,
         }
     }
@@ -100,13 +88,9 @@ impl NowPlayingSource {
     /// Project a published view model, or `None` when nothing is on the deck.
     pub(super) fn from_vm(vm: &PlayerViewModelLight) -> Option<Self> {
         let source = vm.source()?;
-        // The row comes off the same arm as the key rather than off `vm` beside it: `source` has
-        // already settled which half wins, and reading `current_track` independently is what would
-        // hand the chips a `tracks` row under a station.
-        let (key, track) = match source.id {
-            SourceId::Track(id) => (SourceKey::Track(id), vm.current_track.clone()),
-            SourceId::Station(stream_url) => (SourceKey::Station(stream_url.to_owned()), None),
-        };
+        let SourceId::Track(id) = source.id;
+        let key = SourceKey::Track(id);
+        let track = vm.current_track.clone();
         Some(Self { key, track, artwork_path: source.artwork_path.map(str::to_owned) })
     }
 }
@@ -276,8 +260,8 @@ fn release_artwork_off_thread(state: &AppState, np_artwork: &Arc<NowPlayingArtwo
 /// Hands back the lyrics sheet and checks the store's bounds, once the caller knows no panel is left.
 ///
 /// The sheet and its offset table are the whole of what a panel pinned, the model being the larger
-/// half. The store is pruned beside them for the radio logo cache's reason: a mounted panel with
-/// lyrics on is the only thing that writes to it, so the last one going is when it stops growing.
+/// half. A mounted panel with lyrics on is the only thing that writes to the store, so the last one
+/// going is when it stops growing.
 /// Now Playing's close and the miniplayer's exit can each be that one.
 pub(crate) fn release_lyrics(ui: &AppWindow, state: &AppState, np_state: &NowPlayingState) {
     lyrics::release(ui, &np_state.lyrics);

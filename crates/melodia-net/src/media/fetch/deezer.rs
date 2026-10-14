@@ -155,7 +155,7 @@ struct DeezerAlbum {
 }
 
 /// Searches the Deezer API for an album and returns the 500×500 `cover_big` URL
-/// if found. Used for Discord Rich Presence, which fetches the URL server-side,
+/// if found. Used for artist image enrichment, which fetches the URL server-side,
 /// so this only passes the string along — no download, no disk cache.
 pub async fn search_album_cover(
     client: &reqwest::Client,

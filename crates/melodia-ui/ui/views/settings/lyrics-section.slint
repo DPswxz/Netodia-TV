@@ -5,11 +5,10 @@ import { SettingRow } from "../../components/settings/setting-row.slint";
 import { ToggleSwitch } from "../../components/settings/toggle-switch.slint";
 
 // The switch that turns lyrics on, the one that lets the panel reach the network, and the one that
-// decides how it draws a line. The lookup's description names lrclib.net for the radio master
-// row's reason: a user deciding to stay local is entitled to know who would be contacted. Search
-// visibility follows `radio-section.slint`.
+// decides how it draws a line. The lookup's description names lrclib.net so users know who would
+// be contacted. Search visibility follows the section's own Settings binding.
 //
-// **Unlike Radio's, the two rows under the master stay put while it is off.** Both are defaults a
+// **The two rows under the master stay put while it is off.** Both are defaults a
 // user sets before turning lyrics on, and neither does anything until then. Every switch here is
 // also in Now Playing, the master as the header's switch and the other two in its lyrics menu, each
 // being two things: a default worth finding in Settings, and the one you reach for the moment it

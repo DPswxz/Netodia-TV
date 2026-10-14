@@ -29,8 +29,8 @@ const FACADE_TESTS: &str = "tests";
 /// Read off the directory rather than named, so an arm nobody has written yet is covered the day
 /// it lands. Comments go because prose about the rule reads exactly like a violation of it.
 ///
-/// **`tests/` is dropped, and both pins below need it dropped.** Unlike `library::radio`, whose
-/// floor this was copied from, this facade holds its unit tests inside itself, and there are
+/// **`tests/` is dropped, and both pins below need it dropped.** This facade holds its unit tests
+/// inside itself, and there are
 /// enough of them to clear the floor on their own, so the whole of what the pins read could be
 /// deleted under it. It also decides what the count below is a count *of*, a test naming the
 /// setting not being a second reader of it.
@@ -59,8 +59,8 @@ fn facade_source() -> String {
 ///
 /// An equality rather than a floor, and it fails in both directions on purpose: a second door
 /// reading the setting for itself takes the count to two, and deleting the one that enforces it
-/// takes the count to zero. `library::radio` carries the same pin because a hand-rolled second
-/// copy is exactly what happened there.
+/// takes the count to zero. A hand-rolled second copy would make the setting's enforcement
+/// ambiguous.
 #[test]
 fn the_lyrics_switch_is_read_in_one_place() {
     let source = facade_source();
@@ -78,7 +78,7 @@ fn the_lyrics_switch_is_read_in_one_place() {
 #[test]
 fn the_one_reading_of_the_switch_is_the_seam_itself() {
     let source = facade_source();
-    // `"\n}\n"` and `map_or("")`, `library::radio`'s spelling: a bare `"\n}"` closes on `\n})` and
+    // `"\n}\n"` and `map_or("")`: a bare `"\n}"` closes on `\n})` and
     // `\n};` too, and falling back to the rest of the corpus would let any naming downstream of the
     // seam satisfy the assertion below. Both make this fail open, which is the one direction a pin
     // may not fail.
@@ -119,8 +119,8 @@ const CALLER_TREE: &str = "library/lyrics/";
 /// private today. That is why the module is not simply called `lyrics`, which every file on both
 /// sides of the seam contains already.
 ///
-/// **Each of the two exemptions is asserted to still match**, `library::radio`'s shape: an
-/// exemption that has stopped matching is not a spent one, it is a hole that reads as coverage —
+/// **Each of the two exemptions is asserted to still match**: an exemption that has stopped
+/// matching is not a spent one, it is a hole that reads as coverage —
 /// a moved declaration pre-authorises whatever takes its path next, and a facade that has stopped
 /// naming the client leaves this walking an empty set and passing.
 #[test]
@@ -277,16 +277,15 @@ fn nothing_in_the_lyrics_panel_watches_a_property() {
     );
 }
 
-/// The three arms are each other's negations, and the heading is a fourth spelling of the same
-/// decision. A pair that stops agreeing mounts two panels into one slot or none at all.
+/// The two arms are each other's negations. A pair that stops agreeing mounts both panels or
+/// leaves the column empty.
 #[test]
 fn the_now_playing_column_mounts_exactly_one_arm() {
     let source = melodia_testkit::code_tokens(NOW_PLAYING_VIEW);
 
     let arms = [
-        "if !Player.vm.has_station && !Lyrics.enabled: UpNextList {",
-        "if !Player.vm.has_station && Lyrics.enabled: LyricsPanel {",
-        "if Player.vm.has_station: Rectangle {",
+        "if !Lyrics.enabled: UpNextList {",
+        "if Lyrics.enabled: LyricsPanel {",
     ];
     for arm in arms {
         assert_eq!(
@@ -295,15 +294,6 @@ fn the_now_playing_column_mounts_exactly_one_arm() {
             "the column's arms have to stay one apiece, and `{arm}` is not"
         );
     }
-
-    // The heading names whichever arm is up, so it has to branch on the same two properties in
-    // the same order. Read the other way round it labels a station panel "Lyrics".
-    let station_at = source.find("Player.vm.has_station ? @tr(\"Station\")");
-    let lyrics_at = source.find("Lyrics.enabled ? @tr(\"Lyrics\")");
-    assert!(
-        matches!((station_at, lyrics_at), (Some(station), Some(lyrics)) if station < lyrics),
-        "the column heading must test the station before the lyrics switch, as the mounts do"
-    );
 }
 
 /// **The bar's lane is one number and the panel spells it three times.**

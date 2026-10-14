@@ -38,7 +38,7 @@ async fn get_from(server: &TestServer) -> Result<Vec<u8>, AppError> {
 // ---- what may be fetched ----
 
 /// The parse is the check. A prefix test admits the bare scheme, which names no host and is not a
-/// fetch anything can make; on the station-import path a line reading `http://` became a row.
+/// fetch anything can make; accepting only a URL prefix would still admit a hostless URL.
 #[test]
 fn a_url_from_outside_the_app_is_parsed_rather_than_pattern_matched() {
     let cases = [
@@ -158,8 +158,7 @@ async fn a_non_success_status_is_refused_and_says_which_one() -> TestResult {
     Ok(())
 }
 
-/// One Latin-1 byte in a station's track title should cost a replacement character, not the
-/// station.
+/// One Latin-1 byte in a text response should cost a replacement character, not an error.
 #[tokio::test]
 async fn a_text_body_that_is_not_utf8_comes_back_lossy_rather_than_failing() -> TestResult {
     let server = TestServer::start(|_| TestResponse::ok(vec![b'A', 0xFF, b'B']))?;

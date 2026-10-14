@@ -3,7 +3,6 @@
 use std::rc::Rc;
 use std::time::Duration;
 
-use crate::ui::settings::settings_page::{self, SettingsTab};
 use melodia_app::library;
 use melodia_app::state::AppState;
 use melodia_ui::{AppWindow, Onboarding, Settings, Theme};
@@ -11,7 +10,6 @@ use slint::ComponentHandle;
 
 pub(super) fn wire(ui: &AppWindow, state: &AppState, deferred: Rc<super::DeferredOnce>) {
     wire_dismiss(ui, state, deferred);
-    wire_open_services(ui);
     wire_run_again(ui, state);
 }
 
@@ -24,16 +22,6 @@ fn wire_run_again(ui: &AppWindow, state: &AppState) {
         if let Some(ui) = weak.upgrade() {
             super::open(&ui, &state);
         }
-    });
-}
-
-/// Land on Settings ▸ Services and close the card.
-fn wire_open_services(ui: &AppWindow) {
-    let weak = ui.as_weak();
-    ui.global::<Onboarding>().on_open_services(move || {
-        let Some(ui) = weak.upgrade() else { return };
-        settings_page::open_on(&ui, SettingsTab::Services);
-        ui.global::<Onboarding>().invoke_dismiss();
     });
 }
 

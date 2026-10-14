@@ -1,5 +1,4 @@
-//! Everything that opens a socket: the shared HTTP primitives, the four artwork and logo
-//! fetchers, the radio directory client and the blocklist in front of it.
+//! Everything that opens a socket: shared HTTP primitives and the artwork and lyrics fetchers.
 //!
 //! `http_url` and `read_capped` are the two primitives every fetch shares, and the reason this
 //! is a crate rather than a directory: a URL from outside the app is *parsed* rather than

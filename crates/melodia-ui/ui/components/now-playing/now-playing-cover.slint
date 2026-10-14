@@ -10,9 +10,8 @@ import { MaterialIcon } from "../material-icon.slint";
 // the whole fade rather than blinking to an empty frame. With no artwork both
 // slots fade to 0 and the placeholder comes in.
 //
-// Two sites clear one where no fade can be reading it: a move to a station, which this component
-// is not mounted for (`ui::now_playing::source_change`), and `NowPlayingState::release_artwork`,
-// which empties the unshown slot `dur-med` after the last surface stops drawing the pair.
+// `NowPlayingState::release_artwork` clears the unshown slot `dur-med` after the last surface stops
+// drawing the pair.
 export component NowPlayingCover inherits Rectangle {
     in property <length> tile-size;
 

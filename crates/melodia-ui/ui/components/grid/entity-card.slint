@@ -13,9 +13,6 @@ export component EntityCard inherits Rectangle {
     in property <image> cover;
     in property <string> title;
     in property <string> subtitle;
-    // A third line, for a card whose tile sits above three. Empty on every other host, and the
-    // dimmest of the three: a card that wants two lines says nothing and gets the layout it had.
-    in property <string> subtitle2;
     in property <length> card-width: 180px;
     in property <length> card-height: 226px;
     // The Artists grid's avatar mode: the tile takes a radius of half its size, the text staying
@@ -23,13 +20,6 @@ export component EntityCard inherits Rectangle {
     in property <bool> circular: false;
     // Artists passes `"person"`; everything else takes the default.
     in property <string> fallback-icon: "music-note";
-    // Initials to draw instead of the glyph, for a host whose entities have no shared icon worth
-    // repeating across a page. Both fall through to `ArtworkImage`, which prefers the text.
-    in property <string> fallback-text;
-    // What the stored image would draw at 1:1, for a source too small to fill the tile. `0px`
-    // means "assume it fills", which is `ArtworkImage`'s own default and every host's answer but
-    // the one drawing favicons.
-    in property <length> native-size: 0px;
 
     // The tile's chrome. The Genres grid overrides both, painting its per-genre name-hashed
     // gradient and tinting the fallback glyph against it.
@@ -45,9 +35,8 @@ export component EntityCard inherits Rectangle {
     // adding buttons, and a card that shipped some would land them over every host's.
     in property <bool> show-overlay-actions: false;
 
-    // Hover on any control the *host* owns, OR'd into `card-hovered` below. Usually the ones in
-    // the overlay slot, but not only: a station card folds in its star too, which sits beside the
-    // card and takes the pointer off `touch` just the same.
+    // Hover on any control the *host* owns, OR'd into `card-hovered` below. A control in the
+    // overlay slot takes the pointer off `touch` just the same.
     // A component cannot read `has-hover` off its `@children`, so the host that named those
     // buttons is the only thing that can answer, and without the answer the fill and the zoom
     // drop out while the pointer is on one of them.
@@ -88,8 +77,7 @@ export component EntityCard inherits Rectangle {
     // higher-z TouchArea captures the pointer, so hovering any nested button flips that
     // false and the fill, the zoom and the overlay would all drop out while the user is
     // aiming at one — which is what `overlay-hovered` is for.
-    // `out`, so a host placing a control *beside* the card rather than in the overlay slot can
-    // ride the same answer — the star on a station card is the one such control.
+    // `out`, so a host placing a control beside the card can ride the same answer too.
     // The box is this card's own child rather than the host's, so it folds itself in here
     // instead of going back out through `overlay-hovered`.
     out property <bool> card-hovered:
@@ -121,8 +109,7 @@ export component EntityCard inherits Rectangle {
     animate box-t { duration: Theme.dur-fast; easing: ease-in-out; }
 
     // The artwork square, published because a host positioning against it must not re-derive the
-    // formula: a station card sizes its favicon's 1:1 estimate off this, and a padding change here
-    // would otherwise skew that silently.
+    // formula, so a padding change here does not silently skew a host's layout.
     out property <length> tile-size: root.card-width - 2 * Theme.pad-sm;
     // Where the selection box ends, in the overlay slot's frame, for a host stacking a control
     // under the corner it takes. Published for `tile-size`'s reason: the box's size is this
@@ -178,8 +165,6 @@ export component EntityCard inherits Rectangle {
                 tile-radius: root.circular ? root.tile-size / 2 : Theme.radius-md;
                 cover-scale: root.card-hovered ? root.cover-scale-hover : 1.0;
                 fallback-icon: root.fallback-icon;
-                fallback-text: root.fallback-text;
-                native-size: root.native-size;
                 tile-bg: root.tile-bg;
                 tile-icon-color: root.tile-icon-color;
                 fade: root.fade;
@@ -201,13 +186,6 @@ export component EntityCard inherits Rectangle {
                     font-size: Theme.font-size-sm;
                     overflow: elide;
                     visible: root.subtitle != "";
-                }
-                Text {
-                    text: "‎" + root.subtitle2;
-                    color: Theme.overlay1.transparentize(1.0 - root.fade);
-                    font-size: Theme.font-size-sm;
-                    overflow: elide;
-                    visible: root.subtitle2 != "";
                 }
             }
 

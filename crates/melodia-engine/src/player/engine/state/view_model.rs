@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::PlayerState;
 use crate::player::engine::queue::current_index_to_i32;
-use crate::player::engine::types::{PlaybackSource, RadioNowPlaying, RepeatMode};
+use crate::player::engine::types::RepeatMode;
 use melodia_core::entities::track::TrackSummary;
 
 /// Lightweight event for 500ms position ticks — avoids serializing the full queue.
@@ -37,7 +37,6 @@ pub struct PlayerViewModel {
     pub playback_speed: f64,
     pub gapless_enabled: bool,
     pub sleep_at_track_end: bool,
-    pub radio: Option<Arc<RadioNowPlaying>>,
     pub queue_tracks: Vec<Arc<TrackSummary>>,
     pub queue_index: i32,
     pub shuffle_enabled: bool,
@@ -63,10 +62,6 @@ pub struct PlayerViewModelLight {
     pub playback_speed: f64,
     pub gapless_enabled: bool,
     pub sleep_at_track_end: bool,
-    /// The station playing, when the source is a live one. `current_track` is `None` throughout,
-    /// so a surface reads whichever of the two is `Some` rather than a flag saying which to trust.
-    /// Its `buffering` is where the spinner comes from.
-    pub radio: Option<Arc<RadioNowPlaying>>,
     pub has_next: bool,
     pub has_previous: bool,
     /// Copied from the queue, as `has_next` is, so an OS media panel reads them off the model it
@@ -96,12 +91,11 @@ impl PlayerState {
     }
 
     fn has_next(&self) -> bool {
-        self.source_allows(PlaybackSource::advances_queue) && self.queue.peek_next().is_some()
+        self.queue.peek_next().is_some()
     }
 
     fn has_previous(&self) -> bool {
-        self.source_allows(PlaybackSource::advances_queue)
-            && !self.queue.play_order.is_empty()
+        !self.queue.play_order.is_empty()
             && (self.queue.current_index.is_some_and(|ci| ci > 0) || self.queue.repeat_mode.wraps())
     }
 
@@ -122,7 +116,6 @@ impl PlayerState {
             playback_speed: self.playback_speed,
             gapless_enabled: self.gapless_enabled,
             sleep_at_track_end: self.pause_after_current_track,
-            radio: self.station().cloned(),
             queue_tracks: self.queue.tracks_in_play_order(),
             queue_index: current_index_to_i32(self.queue.current_index),
             shuffle_enabled: self.queue.shuffle_enabled,
@@ -145,7 +138,6 @@ impl PlayerState {
             playback_speed: self.playback_speed,
             gapless_enabled: self.gapless_enabled,
             sleep_at_track_end: self.pause_after_current_track,
-            radio: self.station().cloned(),
             has_next: self.has_next(),
             has_previous: self.has_previous(),
             shuffle_enabled: self.queue.shuffle_enabled,

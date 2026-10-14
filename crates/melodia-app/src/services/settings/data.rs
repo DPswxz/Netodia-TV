@@ -12,8 +12,7 @@ use super::playback::{
     CrossfadeFlags, EqualizerFlags, OutputFlags, PlaybackFlags, QueueFlags, ReplayGainFlags,
     VisualizerFlags,
 };
-use super::services::{LyricsFlags, RadioFlags};
-use melodia_core::entities::integrations::{DiscordFlags, ScrobbleFlags};
+use super::services::LyricsFlags;
 use melodia_core::entities::locale::{DEFAULT_LOCALE, SUPPORTED_LOCALES};
 use melodia_core::themes::{self, SYSTEM_VARIANT_ID, ThemeDef};
 use melodia_platform::services::platform::desktop::{
@@ -168,12 +167,6 @@ pub struct SettingsData {
     #[serde(flatten)]
     pub tray: TrayFlags,
     #[serde(flatten)]
-    pub scrobble: ScrobbleFlags,
-    #[serde(flatten)]
-    pub discord: DiscordFlags,
-    #[serde(flatten)]
-    pub radio: RadioFlags,
-    #[serde(flatten)]
     pub lyrics: LyricsFlags,
     #[serde(flatten)]
     pub library: LibraryFlags,
@@ -232,9 +225,6 @@ impl Default for SettingsData {
             queue: QueueFlags::default(),
             window: WindowFlags::first_launch(desktop),
             tray: TrayFlags::default(),
-            scrobble: ScrobbleFlags::default(),
-            discord: DiscordFlags::default(),
-            radio: RadioFlags::default(),
             lyrics: LyricsFlags::default(),
             library: LibraryFlags::default(),
             layout: LayoutFlags::first_launch(desktop),

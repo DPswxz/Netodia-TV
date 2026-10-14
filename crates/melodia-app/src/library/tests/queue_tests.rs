@@ -236,14 +236,8 @@ fn a_repeat_request_lands_on_the_mode_it_names_rather_than_the_next_one() {
     );
 }
 
-// --- The restart -----------------------------------------------------------
-//
-// `queue.json` holds the queue and the station over it in one file, because a station leaves the
-// queue seated underneath and a restart owes both. What `melodia-engine` pins is that the two
-// survive the file; what these pin is the half above it — which ids still resolve, and what
-// shuffle and repeat come back as.
+// --- Queue restore ---------------------------------------------------------
 
-use melodia_engine::player::engine::fixtures::test_station;
 use melodia_engine::player::engine::types::PersistableQueue;
 use melodia_store::database::queries::fixtures::insert_test_track;
 use tempfile::TempDir;
@@ -251,26 +245,12 @@ use tempfile::TempDir;
 use crate::services::settings::read_settings;
 use crate::state::fixtures::seeded_root_with;
 
-fn persisted(
-    track_ids: Vec<i64>,
-    current_index: i32,
-    station_id: Option<i64>,
-) -> PersistedPlayback {
-    PersistedPlayback { queue: PersistableQueue { track_ids, current_index }, station_id }
+fn persisted(track_ids: Vec<i64>, current_index: i32) -> PersistedPlayback {
+    PersistedPlayback { queue: PersistableQueue { track_ids, current_index } }
 }
 
-fn plan_of(
-    persisted: Option<PersistedPlayback>,
-    summaries: Vec<Arc<TrackSummary>>,
-    station: Option<Arc<RadioNowPlaying>>,
-) -> RestorePlan {
-    RestorePlan {
-        persisted,
-        summaries,
-        station,
-        repeat_mode: RepeatMode::Off,
-        shuffle_enabled: false,
-    }
+fn plan_of(persisted: Option<PersistedPlayback>, summaries: Vec<Arc<TrackSummary>>) -> RestorePlan {
+    RestorePlan { persisted, summaries, repeat_mode: RepeatMode::Off, shuffle_enabled: false }
 }
 
 /// A data directory with `settings.json` already written, since `mutate_settings_with` reads
@@ -283,68 +263,27 @@ fn seeded_paths(shuffle_enabled: bool) -> Result<(TempDir, Arc<Paths>), AppError
     Ok((tmp, Arc::new(paths)))
 }
 
-// The four corners of what the file can carry, per the cross-the-flags rule: queue and station
-// are independent, and each combination is a session someone actually had.
-
 #[test]
-fn a_queue_with_no_station_restores_as_a_queue() {
+fn a_saved_queue_restores_as_a_queue() {
     let mut state = PlayerState::default();
-
     let actions = apply_restore(
         &mut state,
-        plan_of(Some(persisted(vec![1, 2], 0, None)), vec![make_summary(1), make_summary(2)], None),
+        plan_of(Some(persisted(vec![1, 2], 0)), vec![make_summary(1), make_summary(2)]),
     );
 
-    assert!(actions.is_empty(), "no station means nothing for the deck to do");
+    assert!(actions.is_empty());
     assert_eq!(state.queue.tracks.len(), 2);
     assert_eq!(state.current_track().map(|t| t.id), Some(1));
-    assert!(state.station().is_none());
-}
-
-#[test]
-fn a_station_with_no_queue_restores_as_a_station() {
-    let mut state = PlayerState::default();
-
-    let _actions = apply_restore(
-        &mut state,
-        plan_of(Some(persisted(vec![], 0, Some(42))), vec![], Some(test_station("Example FM"))),
-    );
-
-    assert!(state.queue.tracks.is_empty());
-    assert_eq!(state.station().map(|s| s.name.as_str()), Some("Example FM"));
-    assert!(state.current_track().is_none());
-}
-
-/// The pair the single file exists for. A restore that seated only one of these is the loss the
-/// user cannot get back by rescanning.
-#[test]
-fn a_station_over_a_queue_restores_both() {
-    let mut state = PlayerState::default();
-
-    let _actions = apply_restore(
-        &mut state,
-        plan_of(
-            Some(persisted(vec![1, 2], 1, Some(42))),
-            vec![make_summary(1), make_summary(2)],
-            Some(test_station("Example FM")),
-        ),
-    );
-
-    assert_eq!(state.station().map(|s| s.name.as_str()), Some("Example FM"));
-    assert_eq!(state.queue.tracks.len(), 2, "the queue is seated under the station");
-    assert_eq!(state.queue.current_index, Some(1), "and at the row it was left on");
-    assert!(state.current_track().is_none(), "the station holds the deck");
 }
 
 #[test]
 fn a_first_launch_with_no_file_restores_nothing() {
     let mut state = PlayerState::default();
 
-    let actions = apply_restore(&mut state, plan_of(None, vec![], None));
+    let actions = apply_restore(&mut state, plan_of(None, vec![]));
 
     assert!(actions.is_empty());
     assert!(state.queue.tracks.is_empty());
-    assert!(state.station().is_none());
     assert!(state.current_track().is_none());
 }
 
@@ -378,13 +317,9 @@ async fn ids_whose_rows_are_gone_drop_out_of_the_restore() -> Result<(), AppErro
     queries::folder::insert_folder(&db, "/music", true).await?;
     let kept = insert_test_track(&db, "/music/kept.mp3", "Kept", "Artist", "Album", "Rock").await?;
 
-    let plan = plan_restore(&db, &paths, Some(persisted(vec![kept, 9_999], 0, None)), None).await?;
+    let plan = plan_restore(&db, &paths, Some(persisted(vec![kept, 9_999], 0))).await?;
 
-    assert_eq!(
-        plan.summaries.iter().map(|s| s.id).collect::<Vec<_>>(),
-        vec![kept],
-        "a row that went away is not a restore that fails"
-    );
+    assert_eq!(plan.summaries.iter().map(|s| s.id).collect::<Vec<_>>(), vec![kept]);
     Ok(())
 }
 
@@ -398,24 +333,24 @@ async fn a_restored_queue_turns_shuffle_off_in_the_state_and_in_the_file() -> Re
     queries::folder::insert_folder(&db, "/music", true).await?;
     let id = insert_test_track(&db, "/music/a.mp3", "A", "Artist", "Album", "Rock").await?;
 
-    let plan = plan_restore(&db, &paths, Some(persisted(vec![id], 0, None)), None).await?;
+    let plan = plan_restore(&db, &paths, Some(persisted(vec![id], 0))).await?;
 
-    assert!(!plan.shuffle_enabled, "a restored queue comes back unshuffled");
-    assert!(!read_settings(&paths)?.queue.shuffle_enabled, "and the file agrees");
-    assert_eq!(plan.repeat_mode, RepeatMode::All, "repeat is not shuffle's business");
+    assert!(!plan.shuffle_enabled);
+    assert!(!read_settings(&paths)?.queue.shuffle_enabled);
+    assert_eq!(plan.repeat_mode, RepeatMode::All);
     Ok(())
 }
 
-/// The other side of that flag. With nothing restored there is no unknown original order to
-/// protect, so the user's own setting stands.
+/// With nothing restored there is no unknown original order to protect, so the user's setting
+/// stands.
 #[tokio::test]
 async fn a_restore_with_no_tracks_leaves_the_shuffle_setting_alone() -> Result<(), AppError> {
     let (_tmp, paths) = seeded_paths(true)?;
     let db = DbPool::test_pool().await?;
 
-    let plan = plan_restore(&db, &paths, None, None).await?;
+    let plan = plan_restore(&db, &paths, None).await?;
 
-    assert!(plan.shuffle_enabled, "nothing was restored, so nothing was overridden");
+    assert!(plan.shuffle_enabled);
     assert!(read_settings(&paths)?.queue.shuffle_enabled);
     Ok(())
 }

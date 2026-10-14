@@ -345,9 +345,7 @@ export component MiniPlayerView inherits Rectangle {
         // Both arms are shared with the full-screen view, and `up_next.rs` keeps the list's rows
         // fed while mini is up.
         //
-        // **Two arms rather than three**: a station keeps Up Next here, where the full view swaps
-        // in a panel describing the stream. There is no room for that panel under the artwork, and
-        // the queue underneath a station is still what the controls above act on.
+        // Lyrics and Up Next share this space. The selected panel follows the lyrics setting.
         //
         // **Its preferred height is its floor on purpose.** The shrink pass takes height from every
         // row with room between the two, so a panel asking for more would give ground alongside
@@ -362,7 +360,7 @@ export component MiniPlayerView inherits Rectangle {
             // **Clipped here**, Up Next clipping itself: the sheet's empty state is centred on the
             // panel rather than inside its scroller, so a panel shorter than the message would
             // paint it over the timeline.
-            if !Player.vm.has_station && Lyrics.enabled: LyricsPanel {
+            if Lyrics.enabled: LyricsPanel {
                 clip: true;
                 vertical-stretch: 1;
                 compact: true;
@@ -373,7 +371,7 @@ export component MiniPlayerView inherits Rectangle {
                 bar-on-backdrop: root.on-backdrop;
                 bar-recolor-duration: root.recolor;
             }
-            if Player.vm.has_station || !Lyrics.enabled: UpNextList {
+            if !Lyrics.enabled: UpNextList {
                 vertical-stretch: 1;
                 compact: true;
                 ink: root.ink;

@@ -15,7 +15,6 @@
 
 pub mod about;
 pub mod diagnostics;
-pub mod discord_settings;
 pub mod file_watching;
 pub mod library_settings;
 pub mod locale;
@@ -23,9 +22,7 @@ pub mod lyrics_settings;
 pub mod motion;
 pub mod output_settings;
 pub mod playback_settings;
-pub mod radio_settings;
 pub mod rating_writeback;
-pub mod scrobbling_settings;
 pub mod settings_page;
 pub mod signal_path;
 pub mod updater_settings;

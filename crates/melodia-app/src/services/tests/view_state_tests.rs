@@ -107,18 +107,12 @@ fn test_view_sort_in_view_state() -> Result<(), AppError> {
     Ok(())
 }
 
-// Both halves of the nav-index bound now sit in `crates/melodia/tests/cross_tier.rs`: the write
-// clamp is this crate's and the read guard the binary's, and no crate can `include_str!` both.
-// What stays here is the round trip itself, which needs neither.
-
-/// A `views.json` naming Radio comes back naming Radio.
+/// The last supported section index survives a `views.json` round trip.
 #[test]
 fn the_top_of_the_range_survives_a_views_json_round_trip() -> Result<(), AppError> {
-    let vs =
-        ViewStateData { last_nav_index: MAX_NAV_INDEX, radio_tab: 2, ..ViewStateData::default() };
+    let vs = ViewStateData { last_nav_index: MAX_NAV_INDEX, ..ViewStateData::default() };
     let json = serde_json::to_string(&vs).map_err(|e| json_err(&e))?;
     let back: ViewStateData = serde_json::from_str(&json).map_err(|e| json_err(&e))?;
     assert_eq!(back.last_nav_index, MAX_NAV_INDEX);
-    assert_eq!(back.radio_tab, 2);
     Ok(())
 }

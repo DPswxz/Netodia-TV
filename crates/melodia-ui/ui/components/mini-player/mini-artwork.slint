@@ -12,16 +12,8 @@ import { SourceArtwork } from "../now-playing/source-artwork.slint";
 export component MiniArtwork inherits SourceArtwork {
     private property <bool> large: MiniPlayer.layout != MiniLayout.strip;
 
-    // Everything else about the tile is the shared track-or-station split. A station's large slot
-    // is its own, `np-cover-*` being the track cross-fade.
-    cover: Player.vm.has_station
-        ? (root.large && Player.np-station-logo.width > 0
-            ? Player.np-station-logo
-            : Player.vm.radio.logo_img)
-        : (root.large && Player.np-cover-has-image
+    // The large slot is the track cross-fade artwork.
+    cover: root.large && Player.np-cover-has-image
             ? (Player.np-cover-use-a ? Player.np-cover-a : Player.np-cover-b)
-            : Player.vm.track.cover_img);
-    // Written together with the slot above, so a `0` here means the row-tier fallback is what's
-    // drawing and there is nothing to measure.
-    native-size: root.large ? Player.np-station-logo-size * 1px : 0px;
+              : Player.vm.track.cover_img;
 }

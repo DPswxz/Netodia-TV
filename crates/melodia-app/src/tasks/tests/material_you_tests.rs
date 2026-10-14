@@ -54,7 +54,7 @@ impl Coordinator {
         let mut track = Arc::unwrap_or_clone(test_track("Song", None, None));
         track.artwork_path = Some(cover.to_string_lossy().into_owned());
         let (view_model_tx, view_model_rx) =
-            watch::channel(Some(test_view_model(Some(Arc::new(track)), None, 200_000)));
+            watch::channel(Some(test_view_model(Some(Arc::new(track)), 200_000)));
 
         Ok(Self {
             os_state: Arc::new(RwLock::new(os)),

@@ -1,8 +1,7 @@
 //! `CopyActions`, the Copy entries the row and card menus offer.
 //!
 //! Each parses its field, resolves the text off the event loop through `library::clipboard`, and
-//! lands it through [`crate::ui::clipboard::write`]. Stations copy through `Radio` instead, the
-//! radio slice owning the caches they resolve from.
+//! lands it through [`crate::ui::clipboard::write`].
 
 use std::future::Future;
 

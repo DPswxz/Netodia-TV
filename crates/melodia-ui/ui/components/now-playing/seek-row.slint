@@ -7,9 +7,7 @@ import { SliderTrack } from "../slider-track.slint";
 // would drift on it: it follows the thumb through a drag and holds a committed
 // seek until the engine reports it, the same two readings the track's own value takes.
 //
-// A stream has no timeline, so every host mounts this behind `!Player.vm.has_station` and puts its
-// own station row in the slot. Nothing here carries a `changed` handler, which is what makes that
-// branch safe to drop.
+// This timeline is fed one-way from the player; slider writes go only to the seek callback.
 //
 // **Every colour is an input**, `MetaChip`'s idiom: the bar paints on its mantle and the miniplayer
 // on either its chrome or the artwork backdrop, easing between the two from outside. Nothing here

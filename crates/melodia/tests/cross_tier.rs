@@ -52,18 +52,14 @@ fn every_cover_tier_decodes_within_the_store_cap() {
 }
 
 /// **The persisted nav index has to survive a round trip at the top of its range**, and until
-/// Phase 4 of the radio work it did not: `set_last_nav_index` clamped writes to `0..=9` and
-/// `install_views` guarded reads with the same literal, so a Radio index was rewritten as
-/// Settings on the way out *and* dropped on the way in. Neither half is visible from the other,
-/// which is why both now read `MAX_NAV_INDEX` and why this pins the bound against the section
-/// that actually sits at the top of it.
+/// The persisted nav index has to survive a round trip at the top of its range. `set_last_nav_index`
+/// and `install_views` both read `MAX_NAV_INDEX`, which must stay aligned with the highest section.
 #[test]
 fn the_nav_bound_reaches_the_highest_section_that_routes() {
     assert_eq!(
         melodia_app::services::view_state::MAX_NAV_INDEX,
-        melodia_views::ui::radio::NAV_RADIO,
-        "Radio is the highest index `nav.slint` routes, so the bound is its index — a section \
-         added above it moves both"
+        9,
+        "Settings is the highest remaining navigation index"
     );
 }
 

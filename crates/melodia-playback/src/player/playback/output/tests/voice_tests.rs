@@ -453,7 +453,7 @@ fn a_gapless_seam_at_another_rate_renders_exactly_like_the_unsplit_source() {
 }
 
 /// A source's own `sample_rate` is what the clock divides by, so it has to follow the source rather
-/// than the device — otherwise a 24 kHz station reads back at half its elapsed time.
+/// than the device — otherwise a 24 kHz input reads back at half its elapsed time.
 #[test]
 fn the_clock_follows_the_source_rate_not_the_device_rate() {
     let (voice, mut pull) = pair(mono(48_000));

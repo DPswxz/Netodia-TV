@@ -21,20 +21,15 @@ use crate::utils::event_bridge::EventBridge;
 /// importing UI types and the consumer maps each kind to a translated string.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToastKind {
-    /// A track failed to decode or open, or a radio station could not be reached or stopped
-    /// broadcasting. The music stopping is otherwise invisible, so this is always surfaced.
+    /// A track failed to decode or open. The music stopping is otherwise invisible, so this is
+    /// always surfaced.
     PlaybackFailed,
     /// A user-initiated backend operation failed — folder scan, file import, settings
     /// save.
     OperationFailed,
-    /// A vote for a radio station did not reach the directory, most often because it was
-    /// cast again inside the ten minutes the server deduplicates over. Surfaced rather
-    /// than logged because a vote happens only when somebody presses a button that says
-    /// so, and a control that quietly does nothing is worse than one that says why.
-    RadioVote,
     /// A sheet the panel resolved was written into the track's own lyrics tag. Informational and
-    /// auto-dismissing, and surfaced rather than logged for the reason the radio vote is: it
-    /// happens only when somebody presses a control that says so, and this one rewrites a file.
+    /// auto-dismissing, and surfaced rather than logged because it only happens when somebody
+    /// presses a control that says so, and this one rewrites a file.
     LyricsSaved,
     /// A Copy entry put its text on the clipboard. The copy itself is invisible, so this is the
     /// only sign it landed; auto-dismissing, and carrying no detail so the copied text is never
@@ -44,9 +39,6 @@ pub enum ToastKind {
     /// album with no artist. Said rather than skipped, the menu having closed on a click that
     /// otherwise did nothing visible.
     NothingToCopy,
-    /// The retroactive loved-tracks backfill queued existing favorites after a love
-    /// toggle or a connect. Informational, auto-dismissing.
-    LoveSync,
     /// A restart the user asked for couldn't relaunch the app, so it stayed up instead
     /// of exiting into nothing. The setting is already persisted, so this is an
     /// instruction rather than a failure report: it sticks, and it is the one kind

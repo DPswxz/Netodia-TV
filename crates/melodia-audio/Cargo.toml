@@ -5,7 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Decode and the source kinds that can feed Melodia's playback chain"
+description = "Audio decoding for Melodia's playback chain"
 publish = false
 
 [lib]
@@ -15,19 +15,9 @@ doctest = false
 # tiers stayed apart is that neither manifest names the other's third-party dependency.
 [dependencies]
 melodia-core = { path = "../melodia-core" }
-# The four HTTP primitives the live trio and HLS take: `is_http`, `is_http_url`, `get_capped`
-# and `get_capped_text`.
-melodia-net = { path = "../melodia-net" }
-
 symphonia.workspace = true
 # The Opus decoder `player::source::opus` registers, which Symphonia has none of.
 opus-pure.workspace = true
-reqwest.workspace = true
-stream-download.workspace = true
-icy-metadata.workspace = true
-tokio.workspace = true
-# The `CancellationToken` stream-download hands out, which `stall_watch` holds.
-tokio-util.workspace = true
 parking_lot.workspace = true
 # `SeekError`, the one error in this crate that is its own type rather than `AppError`.
 thiserror.workspace = true
@@ -38,9 +28,6 @@ melodia-testkit = { path = "../melodia-testkit" }
 # The decode tests build tagged fixtures and write them into a throwaway directory.
 lofty.workspace = true
 tempfile.workspace = true
-# The stall watch's suite walks its timeout on a paused clock, which only `test-util` supplies;
-# `cargo test -p melodia-audio` unifies no feature from another member.
-tokio = { workspace = true, features = ["test-util"] }
 
 [lints]
 workspace = true
