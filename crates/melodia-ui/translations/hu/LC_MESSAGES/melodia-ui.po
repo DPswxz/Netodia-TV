@@ -1706,10 +1706,6 @@ msgid "Something went wrong"
 msgstr "Hiba történt"
 
 #: ui/settings.slint
-msgid "Loved tracks"
-msgstr "Kedvelt számok"
-
-#: ui/settings.slint
 msgid "Lyrics saved"
 msgstr "Dalszöveg mentve"
 

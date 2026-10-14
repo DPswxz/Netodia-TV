@@ -1704,10 +1704,6 @@ msgid "Something went wrong"
 msgstr "Une erreur s'est produite"
 
 #: ui/settings.slint
-msgid "Loved tracks"
-msgstr "Titres favoris"
-
-#: ui/settings.slint
 msgid "Lyrics saved"
 msgstr "Paroles enregistrées"
 

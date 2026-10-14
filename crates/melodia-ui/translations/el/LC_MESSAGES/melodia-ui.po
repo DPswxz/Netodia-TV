@@ -1706,10 +1706,6 @@ msgid "Something went wrong"
 msgstr "Κάτι πήγε στραβά"
 
 #: ui/settings.slint
-msgid "Loved tracks"
-msgstr "Αγαπημένα κομμάτια"
-
-#: ui/settings.slint
 msgid "Lyrics saved"
 msgstr "Οι στίχοι αποθηκεύτηκαν"
 

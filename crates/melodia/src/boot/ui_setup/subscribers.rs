@@ -194,16 +194,6 @@ pub fn install_toast_bridge(
                         },
                     );
                 }
-                ToastKind::LoveSync => {
-                    notifications.show_auto_dismiss(
-                        NotificationParams::plain(
-                            NotificationVariant::Info,
-                            g.invoke_toast_love_sync_title(),
-                            detail.into(),
-                        ),
-                        6000,
-                    );
-                }
                 // A file the user asked to have written. Auto-dismissing: the sheet is the one
                 // they were already looking at, so the toast confirms rather than reports.
                 ToastKind::LyricsSaved => {

@@ -1717,10 +1717,6 @@ msgid "Something went wrong"
 msgstr "Щось пішло не так"
 
 #: ui/settings.slint
-msgid "Loved tracks"
-msgstr "Улюблені треки"
-
-#: ui/settings.slint
 msgid "Lyrics saved"
 msgstr "Текст збережено"
 

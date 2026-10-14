@@ -1693,10 +1693,6 @@ msgid "Something went wrong"
 msgstr "发生错误"
 
 #: ui/settings.slint
-msgid "Loved tracks"
-msgstr "喜爱的曲目"
-
-#: ui/settings.slint
 msgid "Lyrics saved"
 msgstr "歌词已保存"
 

@@ -1712,10 +1712,6 @@ msgid "Something went wrong"
 msgstr "Bir şeyler ters gitti"
 
 #: ui/settings.slint
-msgid "Loved tracks"
-msgstr "Beğenilen parçalar"
-
-#: ui/settings.slint
 msgid "Lyrics saved"
 msgstr "Şarkı sözleri kaydedildi"
 

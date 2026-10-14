@@ -1691,10 +1691,6 @@ msgid "Something went wrong"
 msgstr "Terjadi kesalahan"
 
 #: ui/settings.slint
-msgid "Loved tracks"
-msgstr "Lagu yang disukai"
-
-#: ui/settings.slint
 msgid "Lyrics saved"
 msgstr "Lirik disimpan"
 

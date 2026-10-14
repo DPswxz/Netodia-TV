@@ -1691,10 +1691,6 @@ msgid "Something went wrong"
 msgstr "Đã xảy ra lỗi"
 
 #: ui/settings.slint
-msgid "Loved tracks"
-msgstr "Bản nhạc đã thích"
-
-#: ui/settings.slint
 msgid "Lyrics saved"
 msgstr "Đã lưu lời bài hát"
 
