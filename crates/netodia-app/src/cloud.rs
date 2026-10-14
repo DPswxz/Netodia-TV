@@ -3,10 +3,13 @@
 //! This module is the application boundary for login and session lifetime. Views receive typed
 //! account state and never see cookies, device credentials, or raw HTTP responses.
 
+use std::future::Future;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use netodia_core::entities::cloud::{Account, Quality, StreamTicket};
+use netodia_core::entities::cloud::{
+    Account, Album, Artist, Lyrics, Playlist, Quality, SearchKind, SearchResult, Song, StreamTicket,
+};
 use netodia_core::error::{AppError, AppResult};
 use netodia_net::netease::Client;
 pub use netodia_net::netease::QrStatus;
@@ -106,14 +109,174 @@ impl CloudService {
     /// Resolve a short-lived CDN ticket under the current account task generation. Session changes
     /// cancel the HTTP future before its result can reach a player.
     pub async fn stream_ticket(&self, song_id: i64, quality: Quality) -> AppResult<StreamTicket> {
-        if song_id <= 0 {
-            return Err(AppError::Validation("歌曲 ID 无效".to_owned()));
+        validate_id("歌曲", song_id)?;
+        self.public_request(self.client.stream(song_id, quality)).await
+    }
+
+    pub async fn discover(&self) -> AppResult<Vec<Playlist>> {
+        self.public_request(self.client.discover()).await
+    }
+
+    pub async fn charts(&self) -> AppResult<Vec<Playlist>> {
+        self.public_request(self.client.charts()).await
+    }
+
+    pub async fn search(
+        &self,
+        keywords: &str,
+        kind: SearchKind,
+        offset: u64,
+    ) -> AppResult<SearchResult> {
+        if keywords.trim().is_empty() {
+            return Err(AppError::Validation("搜索内容不能为空".to_owned()));
         }
-        self.ensure_guest().await?;
+        if keywords.chars().count() > 200 {
+            return Err(AppError::Validation("搜索内容不能超过 200 个字符".to_owned()));
+        }
+        self.public_request(self.client.search(keywords.trim(), kind, offset)).await
+    }
+
+    pub async fn songs(&self, ids: &[i64]) -> AppResult<Vec<Song>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        validate_ids("歌曲", ids)?;
+        self.public_request(self.client.songs(ids)).await
+    }
+
+    pub async fn playlist(&self, id: i64) -> AppResult<(Playlist, Vec<Song>)> {
+        validate_id("歌单", id)?;
+        self.public_request(self.client.playlist(id)).await
+    }
+
+    pub async fn album(&self, id: i64) -> AppResult<(Album, Vec<Song>)> {
+        validate_id("专辑", id)?;
+        self.public_request(self.client.album(id)).await
+    }
+
+    pub async fn artist(&self, id: i64) -> AppResult<(Artist, Vec<Song>)> {
+        validate_id("歌手", id)?;
+        self.public_request(self.client.artist(id)).await
+    }
+
+    pub async fn lyrics(&self, song_id: i64) -> AppResult<Lyrics> {
+        validate_id("歌曲", song_id)?;
+        self.public_request(self.client.lyrics(song_id)).await
+    }
+
+    pub async fn daily(&self) -> AppResult<Vec<Song>> {
+        self.private_request(self.client.daily()).await
+    }
+
+    pub async fn fm(&self) -> AppResult<Vec<Song>> {
+        self.private_request(self.client.fm()).await
+    }
+
+    pub async fn fm_trash(&self, song_id: i64) -> AppResult<()> {
+        validate_id("歌曲", song_id)?;
+        self.private_request(self.client.fm_trash(song_id)).await
+    }
+
+    pub async fn user_playlists(&self, offset: u64) -> AppResult<Vec<Playlist>> {
+        let (account, cancellation) = self.account_snapshot()?;
+        self.account_request_in_generation(
+            self.client.user_playlists(account.id, offset),
+            cancellation,
+        )
+        .await
+    }
+
+    pub async fn liked_ids(&self) -> AppResult<Vec<i64>> {
+        let (account, cancellation) = self.account_snapshot()?;
+        self.account_request_in_generation(self.client.liked_ids(account.id), cancellation).await
+    }
+
+    pub async fn like(&self, song_id: i64, liked: bool) -> AppResult<()> {
+        validate_id("歌曲", song_id)?;
+        self.private_request(self.client.like(song_id, liked)).await
+    }
+
+    pub async fn saved_albums(&self, offset: u64) -> AppResult<Vec<Album>> {
+        self.private_request(self.client.saved_albums(offset)).await
+    }
+
+    pub async fn saved_artists(&self, offset: u64) -> AppResult<Vec<Artist>> {
+        self.private_request(self.client.saved_artists(offset)).await
+    }
+
+    pub async fn subscribe_playlist(&self, id: i64, subscribe: bool) -> AppResult<()> {
+        validate_id("歌单", id)?;
+        self.private_request(self.client.subscribe_playlist(id, subscribe)).await
+    }
+
+    pub async fn subscribe_album(&self, id: i64, subscribe: bool) -> AppResult<()> {
+        validate_id("专辑", id)?;
+        self.private_request(self.client.subscribe_album(id, subscribe)).await
+    }
+
+    pub async fn subscribe_artist(&self, id: i64, subscribe: bool) -> AppResult<()> {
+        validate_id("歌手", id)?;
+        self.private_request(self.client.subscribe_artist(id, subscribe)).await
+    }
+
+    fn require_account(&self) -> AppResult<Account> {
+        self.status().account.ok_or_else(|| AppError::network_msg("请先登录网易云账号"))
+    }
+
+    fn account_snapshot(&self) -> AppResult<(Account, CancellationToken)> {
+        // Capture the account's cancellation generation before reading its identity. A transition
+        // cancels that generation before publishing signed-out state, so a request carrying the
+        // previous uid can never slip through under a newly installed account.
         let cancellation = self.account_tasks_token();
+        let account = self.require_account()?;
+        if cancellation.is_cancelled() {
+            return Err(AppError::network_msg("网易云请求已取消"));
+        }
+        Ok((account, cancellation))
+    }
+
+    async fn public_request<T>(
+        &self,
+        request: impl Future<Output = netodia_net::netease::Result<T>>,
+    ) -> AppResult<T> {
+        self.ensure_guest().await?;
+        self.account_request(request).await
+    }
+
+    async fn private_request<T>(
+        &self,
+        request: impl Future<Output = netodia_net::netease::Result<T>>,
+    ) -> AppResult<T> {
+        let cancellation = self.account_tasks_token();
+        self.require_account()?;
+        self.account_request_in_generation(request, cancellation).await
+    }
+
+    async fn account_request<T>(
+        &self,
+        request: impl Future<Output = netodia_net::netease::Result<T>>,
+    ) -> AppResult<T> {
+        let cancellation = self.account_tasks_token();
+        self.account_request_in_generation(request, cancellation).await
+    }
+
+    async fn account_request_in_generation<T>(
+        &self,
+        request: impl Future<Output = netodia_net::netease::Result<T>>,
+        cancellation: CancellationToken,
+    ) -> AppResult<T> {
+        if cancellation.is_cancelled() {
+            return Err(AppError::network_msg("网易云请求已取消"));
+        }
         tokio::select! {
-            () = cancellation.cancelled() => Err(AppError::network_msg("网易云播放请求已取消")),
-            result = self.client.stream(song_id, quality) => result.map_err(Into::into),
+            () = cancellation.cancelled() => Err(AppError::network_msg("网易云请求已取消")),
+            result = request => {
+                if cancellation.is_cancelled() {
+                    Err(AppError::network_msg("网易云请求已取消"))
+                } else {
+                    result.map_err(Into::into)
+                }
+            },
         }
     }
 
@@ -243,10 +406,10 @@ impl CloudService {
 
     async fn begin_transition(&self) {
         self.account_tasks.read().cancel();
+        self.publish(None, None, self.status().remember_available);
         *self.account_tasks.write() = CancellationToken::new();
         self.client.clear_session().await;
         self.guest_initialized.store(false, Ordering::Release);
-        self.publish(None, None, self.status().remember_available);
     }
 
     async fn begin_login(&self) {
@@ -287,6 +450,18 @@ impl CloudService {
     fn publish(&self, account: Option<Account>, notice: Option<String>, remember_available: bool) {
         let generation = self.status.borrow().generation.wrapping_add(1);
         self.status.send_replace(SessionStatus { account, remember_available, notice, generation });
+    }
+}
+
+fn validate_id(label: &str, id: i64) -> AppResult<()> {
+    if id <= 0 { Err(AppError::Validation(format!("{label} ID 无效"))) } else { Ok(()) }
+}
+
+fn validate_ids(label: &str, ids: &[i64]) -> AppResult<()> {
+    if ids.iter().any(|id| *id <= 0) {
+        Err(AppError::Validation(format!("{label} ID 无效")))
+    } else {
+        Ok(())
     }
 }
 
@@ -338,6 +513,68 @@ mod tests {
     use super::*;
 
     const DEVICE_ID: &str = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123";
+
+    fn service_for_test() -> CloudService {
+        let http = reqwest::Client::new();
+        let (status, _) =
+            watch::channel(SessionStatus { remember_available: true, ..SessionStatus::default() });
+        CloudService {
+            client: Client::new(http.clone()),
+            http,
+            pending_restore: Arc::new(Mutex::new(None)),
+            status,
+            transition: Arc::new(Mutex::new(())),
+            account_tasks: Arc::new(parking_lot::RwLock::new(CancellationToken::new())),
+            guest_initialized: Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    #[tokio::test]
+    async fn private_requests_require_login_before_polling_the_network_future() {
+        let service = service_for_test();
+        let polled = Arc::new(AtomicBool::new(false));
+        let future_polled = polled.clone();
+
+        let result = service
+            .private_request(async move {
+                future_polled.store(true, Ordering::Release);
+                Ok::<(), netodia_net::netease::Error>(())
+            })
+            .await;
+
+        assert!(result.is_err());
+        assert!(!polled.load(Ordering::Acquire));
+    }
+
+    #[tokio::test]
+    async fn public_inputs_are_validated_without_initializing_a_guest_session() {
+        let service = service_for_test();
+
+        assert!(matches!(
+            service.search("  ", SearchKind::Songs, 0).await,
+            Err(AppError::Validation(_))
+        ));
+        assert!(matches!(service.songs(&[1, 0]).await, Err(AppError::Validation(_))));
+        assert!(!service.guest_initialized.load(Ordering::Acquire));
+    }
+
+    #[tokio::test]
+    async fn cancelled_account_generation_does_not_poll_a_request() {
+        let service = service_for_test();
+        service.account_tasks_token().cancel();
+        let polled = Arc::new(AtomicBool::new(false));
+        let future_polled = polled.clone();
+
+        let result = service
+            .account_request(async move {
+                future_polled.store(true, Ordering::Release);
+                Ok::<(), netodia_net::netease::Error>(())
+            })
+            .await;
+
+        assert!(result.is_err());
+        assert!(!polled.load(Ordering::Acquire));
+    }
 
     #[test]
     fn saved_session_round_trips_without_changing_cookie_pairs() -> Result<(), serde_json::Error> {

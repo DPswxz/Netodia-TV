@@ -395,9 +395,9 @@ impl Client {
             for song in &mut songs {
                 song.privilege = privileges.iter().find(|p| p.id == song.id).cloned();
             }
-            // Detail responses may reorder IDs; queue order is the caller's order.
-            let mut map = songs.into_iter().map(|s| (s.id, s)).collect::<BTreeMap<_, _>>();
-            all.extend(batch.iter().filter_map(|id| map.remove(id)));
+            // Detail responses may reorder IDs; restore the caller's order and preserve repeated
+            // entries (playlists can contain the same song more than once).
+            all.extend(reorder_songs(batch, songs));
         }
         Ok(all)
     }
@@ -536,6 +536,11 @@ impl Client {
     }
 }
 
+fn reorder_songs(ids: &[i64], songs: Vec<Song>) -> Vec<Song> {
+    let map = songs.into_iter().map(|song| (song.id, song)).collect::<BTreeMap<_, _>>();
+    ids.iter().filter_map(|id| map.get(id).cloned()).collect()
+}
+
 fn chrono_millis() -> u128 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -617,5 +622,19 @@ mod tests {
         let valid = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123";
         assert!(Client::with_device_id(http.clone(), valid).is_ok());
         assert!(Client::with_device_id(http, valid.to_ascii_lowercase()).is_err());
+    }
+
+    #[test]
+    fn reordered_song_details_keep_requested_order_and_repetitions() {
+        let result = reorder_songs(
+            &[9, 4, 9, 15],
+            vec![
+                Song { id: 4, name: "four".into(), ..Song::default() },
+                Song { id: 9, name: "nine".into(), ..Song::default() },
+            ],
+        );
+        assert_eq!(result.iter().map(|song| song.id).collect::<Vec<_>>(), [9, 4, 9]);
+        assert_eq!(result[0].name, "nine");
+        assert_eq!(result[2].name, "nine");
     }
 }
