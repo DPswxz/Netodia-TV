@@ -19,10 +19,7 @@ import { SongsSection } from "search/songs-section.slint";
 // Floating, it costs only the inset the body reserves, and with no `TouchArea` of its own
 // everything beside the pill stays clickable.
 //
-// Both strips match through their own tracks as well as by name, so a query reaching only track
-// metadata still fills them — and with them the Top Result, which ranks over those two plus genres.
-// **There is no Genres strip**: a genre is a *route*, so it surfaces as the Top Result card. An
-// album or artist card stamps `*Detail.origin-nav-index` **before** flipping `Nav.selected-index`.
+// Search results come from NetEase's song endpoint; recent queries remain local to the app.
 export component SearchView inherits Rectangle {
     // The `edited` bump; this Timer commits after the keystrokes go quiet and writes
     // `applied` to halt itself — the Tracks / Favorites throttle shape.
@@ -184,7 +181,7 @@ export component SearchView inherits Rectangle {
             alignment: center;
             search-bar := SearchBar {
                 text <=> Search.query;
-                placeholder: @tr("Search your library…");
+                placeholder: @tr("Search");
                 blur-trigger: Search.blur-search-tick;
                 input-width: 420px;
                 edited(t) => {

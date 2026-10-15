@@ -187,8 +187,27 @@ pub fn apply_row_favorite(weak: &Weak<AppWindow>, id: i64, fav: bool) {
     });
 }
 
+/// Cloud search IDs cross Slint as decimal strings; compare that exact ID instead of the clamped
+/// 32-bit `id` used by local track-list actions.
+pub fn apply_cloud_row_favorite(weak: &Weak<AppWindow>, id: i64, fav: bool) {
+    let key = id.to_string();
+    let _ = weak.upgrade_in_event_loop(move |ui| {
+        crate::ui::model_patch::patch_rows_where(
+            &ui.global::<Search>().get_tracks(),
+            "Search cloud favorite",
+            |row: &mut UiTrackListRow| {
+                if row.remote_id.as_str() != key {
+                    return false;
+                }
+                row.is_favorite = fav;
+                true
+            },
+        );
+    });
+}
+
 /// Toggle the `loading` flag on the Slint side. Used by `kick_search`
-/// to surface the "Searching…" line through the FTS round-trip.
+/// to surface the "Searching…" line through the network request.
 pub fn set_loading_on_ui(weak: &Weak<AppWindow>, on: bool) {
     let weak = weak.clone();
     let _ = slint::invoke_from_event_loop(move || {

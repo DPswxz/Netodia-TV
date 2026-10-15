@@ -1,4 +1,4 @@
-//! Search fetch flow: debounced commit → FTS+LIKE round-trip → stale-token
+//! Search fetch flow: debounced commit → NetEase song search → stale-token
 //! guard → cover prewarm → apply. Plus the 2-second delayed history-add
 //! scheduler.
 //!
@@ -17,12 +17,13 @@ use super::SearchUi;
 use super::apply::{apply_results_to_slint, clear_results_on_ui, set_loading_on_ui};
 use netodia_app::library;
 use netodia_app::state::AppState;
+use netodia_core::entities::cloud::{SearchKind, Song};
 use netodia_core::entities::search::SearchResults;
 use netodia_core::error::{AppResult, describe};
 use netodia_ui::{AppWindow, Search};
 
-/// Bump the fetch token, run `search_all`, and (if the token is still
-/// current after the SQL resolves) apply the result to the Slint
+/// Bump the fetch token, search NetEase for songs, and (if the token is still
+/// current after the request resolves) apply the result to the Slint
 /// models. A newer keystroke that supersedes this one will have moved
 /// the token, and the post-fetch check drops the stale UI write.
 ///
@@ -44,7 +45,21 @@ pub async fn kick_search(
     }
     set_loading_on_ui(weak, true);
 
-    let results = library::search::search_all(&state.db, trimmed.clone()).await?;
+    let cloud_results = match state.cloud.search(&trimmed, SearchKind::Songs, 0).await {
+        Ok(results) => results,
+        Err(error) => {
+            if search_ui.fetch_token.load(Ordering::Relaxed) == my_token {
+                set_loading_on_ui(weak, false);
+            }
+            return Err(error);
+        }
+    };
+    let results = SearchResults {
+        tracks: cloud_results.songs.into_iter().map(|song| cloud_song_row(song, state)).collect(),
+        albums: Vec::new(),
+        artists: Vec::new(),
+        genres: Vec::new(),
+    };
 
     let token_now = search_ui.fetch_token.load(Ordering::Relaxed);
     if token_now != my_token {
@@ -75,6 +90,37 @@ pub async fn kick_search(
     // remembering; a fast typo isn't.
     schedule_history_add(state, search_ui, weak, query);
     Ok(())
+}
+
+/// Adapt NetEase search songs to the shared track-list projection. The empty local path and the
+/// exact remote ID keep cloud results out of SQLite while letting the standard row renderer fetch
+/// their remote artwork and cloud playback callbacks handle activation.
+fn cloud_song_row(song: Song, state: &AppState) -> netodia_core::entities::track::TrackListRow {
+    let artist = song.artist_names();
+    let artwork_path =
+        song.album.cover_url.filter(|url| crate::ui::remote_covers::is_remote_artwork_url(url));
+    netodia_core::entities::track::TrackListRow {
+        id: song.id,
+        file_path: String::new(),
+        file_name: song.name.clone(),
+        title: song.name,
+        artist: (!artist.is_empty()).then_some(artist),
+        album_artist: None,
+        album: (!song.album.name.is_empty()).then_some(song.album.name),
+        genre: None,
+        track_number: None,
+        disc_number: None,
+        year: None,
+        duration_ms: i64::try_from(song.duration_ms).unwrap_or(i64::MAX),
+        artwork_path,
+        is_favorite: state.cloud.cached_is_liked(song.id).unwrap_or(false),
+        rating: 0,
+        album_id: (song.album.id > 0).then_some(song.album.id),
+        artist_id: song.artists.first().map(|artist| artist.id),
+        genre_id: None,
+        date_added: String::new(),
+        sort_key: None,
+    }
 }
 
 /// Warm every result surface's covers off-thread before the apply. Returns

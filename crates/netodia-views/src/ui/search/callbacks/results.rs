@@ -19,6 +19,7 @@ use crate::ui::track_list_view::view_id;
 use netodia_app::library;
 use netodia_app::services::settings::ViewSort;
 use netodia_app::state::AppState;
+use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, Search};
 
 /// Wire the cross-tab open / Top Result / row-action / sort / selection
@@ -35,6 +36,7 @@ pub(super) fn wire(
     wire_open_artist(ui, state, artists_ui);
     wire_open_top_result(ui);
     wire_play_row(ui, state);
+    wire_cloud_rows(ui, state, search_ui);
     wire_queue_actions(&g, state, collect_track_ids);
     wire_row_flags(ui, state, search_ui);
     wire_sort(ui, state, search_ui);
@@ -108,6 +110,70 @@ fn wire_play_row(ui: &AppWindow, state: &AppState) {
         let Some(ui) = weak.upgrade() else { return };
         let ids = model_track_ids(&ui.global::<Search>().get_tracks());
         play_displayed(&s, view_id::SEARCH, ids, track_id, idx);
+    });
+}
+
+/// Cloud search rows keep their exact NetEase IDs and start the current result set through the
+/// buffered cloud playback path.
+fn wire_cloud_rows(ui: &AppWindow, state: &AppState, search_ui: &Arc<SearchUi>) {
+    let s = state.clone();
+    let su = search_ui.clone();
+    ui.global::<Search>().on_play_cloud_row(move |remote_id, _index| {
+        let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
+            return;
+        };
+        let ids = su
+            .state()
+            .last_results
+            .lock()
+            .as_ref()
+            .map(|results| results.tracks.iter().map(|track| track.id).collect::<Vec<_>>())
+            .unwrap_or_default();
+        if ids.is_empty() || !ids.contains(&song_id) {
+            return;
+        }
+        let s = s.clone();
+        s.runtime.clone().spawn(async move {
+            let (volume, speed) = {
+                let player = lock_state(&s.player_state);
+                (player.effective_volume(), player.playback_speed)
+            };
+            if let Err(error) =
+                s.cloud_playback.play_queue(&ids, song_id, false, volume, speed).await
+            {
+                log::warn!(
+                    "search::play_cloud_song({song_id}): {}",
+                    netodia_core::error::describe(&error)
+                );
+            }
+        });
+    });
+
+    let s = state.clone();
+    let su = search_ui.clone();
+    let weak = ui.as_weak();
+    ui.global::<Search>().on_toggle_cloud_favorite(move |remote_id, liked| {
+        let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else {
+            return;
+        };
+        let s = s.clone();
+        let su = su.clone();
+        let weak = weak.clone();
+        s.runtime.clone().spawn(async move {
+            let generation = s.cloud.status().generation;
+            if let Err(error) = s.cloud.like(song_id, liked).await {
+                log::warn!(
+                    "search::set_cloud_favorite({song_id}): {}",
+                    netodia_core::error::describe(&error)
+                );
+                return;
+            }
+            if s.cloud.status().generation != generation {
+                return;
+            }
+            su.flip_favorite(song_id, liked);
+            apply::apply_cloud_row_favorite(&weak, song_id, liked);
+        });
     });
 }
 

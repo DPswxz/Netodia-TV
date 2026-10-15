@@ -1,26 +1,13 @@
-//! The Search page: a query-driven mixed-results view over one
-//! `library::search::search_all` per debounced keystroke.
+//! The Search page: a query-driven list of NetEase songs over one cloud search per debounced
+//! keystroke.
 //!
-//! **Top Result** is a single featured card ranked by
-//! `top_result::compute_top_result`. A genre can win it but has no strip of its
-//! own — it is a route to a page, not a row of things to browse. **Songs** is a
-//! `TrackList` showing a compact prefix by default; "Show all" swaps to the
-//! whole backend result off the cached `last_results`, with no DB round-trip.
-//! The **Albums and Artists strips** match through their own tracks as well as
-//! by name, so a query reaching only track metadata still fills them rather than
-//! leaving the page a lone Songs list with no Top Result. **Recent searches**
-//! show only on an empty box, and a committed query joins them only after a
-//! pause, so a brief hesitation mid-typing doesn't pollute the list.
+//! **Songs** is a cloud-aware `TrackList` showing a compact prefix by default; "Show all" swaps to
+//! the whole fetched result off the cached `last_results`, with no second network request. Recent
+//! searches show only on an empty box, and a committed query joins them only after a pause.
 //!
-//! Cache discipline is `src/ui/favorites`': per-strip `CoverThumbs` LRUs
-//! released on section leave. There is deliberately **no**
-//! `library_changed` subscriber — Search is query-driven, and a scan
-//! completing mid-query must not swap results out from under the user.
-//! That argument is about *refetching*, so a row edit is covered the other
-//! way: [`SearchUi::flip_favorite`] and its rating sibling patch the cached
-//! row, with `apply::apply_row_*` patching the one on screen. With neither,
-//! the page is the only track list that is neither optimistic nor subscribed,
-//! and the pip stays stale until the next commit.
+//! Results stay query-driven rather than refreshing under the user. A cloud favorite change patches
+//! the cached row and the one on screen so sorting or expanding the result doesn't restore stale
+//! state.
 
 mod apply;
 mod callbacks;
