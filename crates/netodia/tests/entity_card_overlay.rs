@@ -8,9 +8,9 @@
 
 use netodia_testkit::{MIN_SLINT_SOURCES, UI_DIR, blocks_named, stripped_sources};
 
-/// What a host writes to open the slot, and how the walk below finds the hosts rather than naming
-/// them — a third one is covered the day it is written.
-const OPENS_THE_SLOT: &str = "show-overlay-actions: true;";
+/// What a host writes to bind the slot's visibility, and how the walk below finds the hosts rather
+/// than naming them — a third one is covered the day it is written.
+const OPENS_THE_SLOT: &str = "show-overlay-actions:";
 
 /// The component the pins below read. [`blocks_named`] takes the name followed by `{`, so the
 /// card's own `EntityCard inherits Rectangle {` declaration is not a mount.

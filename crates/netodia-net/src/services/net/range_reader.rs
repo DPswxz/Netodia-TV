@@ -14,7 +14,7 @@ use reqwest::header::{CONTENT_RANGE, RANGE};
 
 const CHUNK_BYTES: u64 = 64 * 1024;
 const MAX_SPOOL_BYTES: u64 = 1024 * 1024 * 1024;
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
+const REQUEST_TIMEOUT: Duration = Duration::from_mins(1);
 
 /// A sanitized failure from an HTTP media source. It deliberately omits the URL, which may contain
 /// a signed CDN token.
