@@ -147,7 +147,15 @@ fn start_qr_login(weak: Weak<AppWindow>, state: AppState, controller: QrLoginCon
         let svg = match login_qr_svg(&key) {
             Ok(svg) => svg,
             Err(error) => {
-                set_qr_state(&weak, &controller, generation, 6, false, None, Some(error));
+                set_qr_state(
+                    &weak,
+                    &controller,
+                    generation,
+                    6,
+                    false,
+                    None,
+                    Some(error.to_string()),
+                );
                 controller.finish(generation);
                 return;
             }
@@ -236,9 +244,9 @@ fn set_qr_state(
     });
 }
 
-fn login_qr_svg(key: &str) -> Result<String, String> {
+fn login_qr_svg(key: &str) -> Result<String, qrcode::types::QrError> {
     let url = format!("https://music.163.com/login?codekey={key}");
-    let code = QrCode::new(url.as_bytes()).map_err(|error| error.to_string())?;
+    let code = QrCode::new(url.as_bytes())?;
     Ok(code
         .render::<svg::Color>()
         .min_dimensions(240, 240)
