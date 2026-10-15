@@ -54,11 +54,11 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
                 })
             })
             .await;
-            if let Err(error) = saved
-                .map_err(|error| describe(&error))
-                .and_then(|result| result.map_err(|error| describe(&error)))
+            if let Err(description) = saved
+                .map_err(|join_error| describe(&join_error))
+                .and_then(|result| result.map_err(|persist_error| describe(&persist_error)))
             {
-                log::warn!("library category persistence: {error}");
+                log::warn!("library category persistence: {description}");
             }
             if let Err(error) = fetch_grid(&s, &pu, weak).await {
                 log::warn!("library category: {}", describe(&error));
