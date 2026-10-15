@@ -67,6 +67,7 @@ pub struct CloudPlayback {
     sinks: Arc<PlayerSinks>,
     quality: Arc<RwLock<Quality>>,
     queue_generation: Arc<AtomicU64>,
+    pending_queue_playback_generation: Arc<AtomicU64>,
 }
 
 impl CloudPlayback {
@@ -100,6 +101,7 @@ impl CloudPlayback {
             sinks,
             quality: Arc::new(RwLock::new(Quality::default())),
             queue_generation: Arc::new(AtomicU64::new(0)),
+            pending_queue_playback_generation: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -126,6 +128,12 @@ impl CloudPlayback {
 
     pub fn queue_generation(&self) -> u64 {
         self.queue_generation.load(Ordering::Acquire)
+    }
+
+    /// Reports whether the stopped player is waiting for a queued cloud track to load.
+    pub fn is_queue_track_loading(&self) -> bool {
+        let generation = self.pending_queue_playback_generation.load(Ordering::Acquire);
+        generation != 0 && self.engine.is_playback_request_current(generation)
     }
 
     /// A delayed roaming refill must not append to a playlist selected in the meantime.
@@ -162,7 +170,7 @@ impl CloudPlayback {
                 return;
             }
             if queue_generation.is_some()
-                && (state.status == PlaybackStatus::Stopped
+                && ((state.status == PlaybackStatus::Stopped && !self.is_queue_track_loading())
                     || state.source.as_ref().is_none_or(|track| !track.file_path.is_empty()))
             {
                 return;
@@ -508,11 +516,18 @@ impl ExternalTrackPlayback for CloudQueuePlaybackHandler {
             state.status = PlaybackStatus::Stopped;
         });
         let generation = self.playback.engine.reserve_playback_request();
+        self.playback.pending_queue_playback_generation.store(generation, Ordering::Release);
         let playback = self.playback.clone();
         self.runtime.spawn(async move {
-            if let Err(error) =
-                playback.play_queued_track(song_id, volume, speed, generation, keep_paused).await
-            {
+            let result =
+                playback.play_queued_track(song_id, volume, speed, generation, keep_paused).await;
+            let _ = playback.pending_queue_playback_generation.compare_exchange(
+                generation,
+                0,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            );
+            if let Err(error) = result {
                 log::warn!(
                     "cloud queue track {song_id}: {}",
                     netodia_core::error::describe(&error)

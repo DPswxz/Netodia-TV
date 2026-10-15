@@ -83,7 +83,8 @@ async fn run_inner(
         let (seed, current_id) = {
             let player = lock_state(&state.player_state);
             if state.cloud_playback.queue_generation() != generation
-                || player.status == PlaybackStatus::Stopped
+                || (player.status == PlaybackStatus::Stopped
+                    && !state.cloud_playback.is_queue_track_loading())
                 || player.source.as_ref().is_none_or(|track| !track.file_path.is_empty())
             {
                 return Ok(());
