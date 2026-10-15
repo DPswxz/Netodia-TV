@@ -246,7 +246,12 @@ use crate::services::settings::read_settings;
 use crate::state::fixtures::seeded_root_with;
 
 fn persisted(track_ids: Vec<i64>, current_index: i32) -> PersistedPlayback {
-    PersistedPlayback { queue: PersistableQueue { track_ids, current_index } }
+    PersistedPlayback {
+        queue: PersistableQueue { track_ids, current_index },
+        playlist_tracks: Vec::new(),
+        playlist_current_index: -1,
+        current_position_ms: None,
+    }
 }
 
 fn plan_of(persisted: Option<PersistedPlayback>, summaries: Vec<Arc<TrackSummary>>) -> RestorePlan {

@@ -52,7 +52,12 @@ impl Fixture {
 
 /// A queue of one, over the fixture's own row.
 fn playback(track_id: i64) -> PersistedPlayback {
-    PersistedPlayback { queue: PersistableQueue { track_ids: vec![track_id], current_index: 0 } }
+    PersistedPlayback {
+        queue: PersistableQueue { track_ids: vec![track_id], current_index: 0 },
+        playlist_tracks: Vec::new(),
+        playlist_current_index: -1,
+        current_position_ms: None,
+    }
 }
 
 /// The resume position, which is the only thing that puts a user back where they were after a

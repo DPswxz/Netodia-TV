@@ -254,6 +254,57 @@ impl CloudPlayback {
             .unwrap_or_else(|| AppError::Queue("云端播放列表没有可播放的歌曲".to_owned())))
     }
 
+    /// True when a cloud track was restored from disk and has no decoded source on the engine.
+    /// A normal pause with an active deck must continue through the ordinary transport path.
+    pub fn restored_cloud_track_waiting(&self) -> bool {
+        let paused_cloud_track = {
+            let state = lock_state(&self.player_state);
+            state.status == PlaybackStatus::Paused
+                && state.source.as_ref().is_some_and(|track| track.file_path.is_empty())
+        };
+        paused_cloud_track && !self.engine.holds_source()
+    }
+
+    /// Resolve and play the restored cloud queue from its saved track and position. The queue
+    /// itself was loaded synchronously from `queue.json`, so this only fetches a fresh stream.
+    pub async fn resume_restored_queue(&self) -> AppResult<()> {
+        let (song_id, position_ms, volume, speed) = {
+            let state = lock_state(&self.player_state);
+            let Some(track) = state.current_track().filter(|track| track.file_path.is_empty())
+            else {
+                return Ok(());
+            };
+            (track.id, state.position_ms, state.effective_volume(), state.playback_speed)
+        };
+        if !self.restored_cloud_track_waiting() {
+            return Ok(());
+        }
+
+        self.engine.stop();
+        with_state_emit(&self.player_state, &self.sinks, |state| {
+            state.status = PlaybackStatus::Stopped;
+        });
+        let generation = self.engine.reserve_playback_request();
+        self.pending_queue_playback_generation.store(generation, Ordering::Release);
+        let result = self
+            .play_queued_track(
+                song_id,
+                volume,
+                speed,
+                generation,
+                false,
+                Some(Duration::from_millis(position_ms)),
+            )
+            .await;
+        let _ = self.pending_queue_playback_generation.compare_exchange(
+            generation,
+            0,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        );
+        result
+    }
+
     /// Install the app-side resolver used when normal queue behavior selects a cloud track.
     pub fn external_track_handler(
         &self,
@@ -519,8 +570,9 @@ impl ExternalTrackPlayback for CloudQueuePlaybackHandler {
         self.playback.pending_queue_playback_generation.store(generation, Ordering::Release);
         let playback = self.playback.clone();
         self.runtime.spawn(async move {
-            let result =
-                playback.play_queued_track(song_id, volume, speed, generation, keep_paused).await;
+            let result = playback
+                .play_queued_track(song_id, volume, speed, generation, keep_paused, None)
+                .await;
             let _ = playback.pending_queue_playback_generation.compare_exchange(
                 generation,
                 0,
@@ -548,6 +600,7 @@ impl CloudPlayback {
         speed: f64,
         generation: u64,
         keep_paused: bool,
+        start_position: Option<Duration>,
     ) -> AppResult<()> {
         let attempts = lock_state(&self.player_state).queue.len().max(1);
         let mut song_id = first_song_id;
@@ -559,7 +612,7 @@ impl CloudPlayback {
                     quality: self.quality(),
                     volume,
                     speed,
-                    start_position: None,
+                    start_position: if attempt == 0 { start_position } else { None },
                     generation,
                     keep_paused,
                     queue_update: QueueUpdate::Preserve,

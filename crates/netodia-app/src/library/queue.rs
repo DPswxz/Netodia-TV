@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::services::settings::{mutate_settings, mutate_settings_with};
@@ -8,10 +9,11 @@ use netodia_core::entities::track::TrackSummary;
 use netodia_core::error::{AppError, AppResult};
 use netodia_engine::player::engine::actions::emit_and_execute;
 use netodia_engine::player::engine::event_sink::PlayerSinks;
+use netodia_engine::player::engine::queue::current_index_to_i32;
 use netodia_engine::player::engine::state::{
     PlayerAction, PlayerState, PlayerStateHandle, play_track_inner, restore_queue, with_state_emit,
 };
-use netodia_engine::player::engine::types::{PersistedPlayback, RepeatMode};
+use netodia_engine::player::engine::types::{PersistableQueue, PersistedPlayback, RepeatMode};
 use netodia_store::database::{DbPool, queries};
 
 use super::import::{ImportFilesResult, import_and_summarize};
@@ -329,8 +331,9 @@ struct RestorePlan {
     shuffle_enabled: bool,
 }
 
-/// Resolve `queue.json`'s ids against the library and settle shuffle and repeat against
-/// `settings.json`.
+/// Resolve the cached playlist against the library and settle shuffle and repeat against
+/// `settings.json`. Local tracks refresh from SQLite so moved files are honored; cloud entries
+/// come directly from the disk snapshot because they have no local database row.
 ///
 /// `repeat_mode` and `shuffle_enabled` come from `settings.json`, not `queue.json`. A restored
 /// non-empty queue forces shuffle off because `original_order` isn't persisted — left on,
@@ -341,14 +344,7 @@ async fn plan_restore(
     paths: &Arc<Paths>,
     persisted: Option<PersistedPlayback>,
 ) -> AppResult<RestorePlan> {
-    let summaries: Vec<Arc<TrackSummary>> = match persisted.as_ref() {
-        Some(p) => queries::track::get_track_summaries_by_ids(db, &p.queue.track_ids)
-            .await?
-            .into_iter()
-            .map(Arc::new)
-            .collect(),
-        None => Vec::new(),
-    };
+    let (persisted, summaries) = resolve_persisted_playlist(db, persisted).await?;
 
     // One FS round-trip, all under the same `MUTATE_LOCK` so no writer
     // interleaves between the read and the conditional rewrite.
@@ -366,6 +362,74 @@ async fn plan_restore(
     .map_err(|e| AppError::io("restore_persisted_playback join", e))??;
 
     Ok(RestorePlan { persisted, summaries, repeat_mode, shuffle_enabled })
+}
+
+/// Resolve a saved queue while preserving its exact order and current row. Older `queue.json`
+/// files have only local database ids, so they keep using the original restore path.
+async fn resolve_persisted_playlist(
+    db: &DbPool,
+    persisted: Option<PersistedPlayback>,
+) -> AppResult<(Option<PersistedPlayback>, Vec<Arc<TrackSummary>>)> {
+    let Some(mut persisted) = persisted else {
+        return Ok((None, Vec::new()));
+    };
+    if persisted.playlist_tracks.is_empty() {
+        let summaries = queries::track::get_track_summaries_by_ids(db, &persisted.queue.track_ids)
+            .await?
+            .into_iter()
+            .map(Arc::new)
+            .collect();
+        return Ok((Some(persisted), summaries));
+    }
+
+    let local_ids: Vec<i64> = persisted
+        .playlist_tracks
+        .iter()
+        .filter(|track| !track.file_path.is_empty())
+        .map(|track| track.id)
+        .collect();
+    let local_by_id: HashMap<i64, Arc<TrackSummary>> =
+        queries::track::get_track_summaries_by_ids(db, &local_ids)
+            .await?
+            .into_iter()
+            .map(|track| (track.id, Arc::new(track)))
+            .collect();
+
+    let mut summaries = Vec::with_capacity(persisted.playlist_tracks.len());
+    let mut old_to_new = Vec::with_capacity(persisted.playlist_tracks.len());
+    for track in &persisted.playlist_tracks {
+        let resolved = if track.file_path.is_empty() {
+            Some(Arc::new(track.clone()))
+        } else {
+            local_by_id.get(&track.id).cloned()
+        };
+        old_to_new.push(resolved.as_ref().map(|_| summaries.len()));
+        if let Some(track) = resolved {
+            summaries.push(track);
+        }
+    }
+
+    let old_current = usize::try_from(persisted.playlist_current_index).ok();
+    let selected_current = old_current.and_then(|index| old_to_new.get(index).copied().flatten());
+    let remapped_current = selected_current
+        .or_else(|| {
+            old_current.and_then(|index| {
+                old_to_new.iter().skip(index.saturating_add(1)).find_map(|index| *index)
+            })
+        })
+        .or_else(|| old_current.and_then(|_| summaries.len().checked_sub(1)));
+
+    if let (Some(index), Some(position_ms)) = (selected_current, persisted.current_position_ms) {
+        let mut current = (*summaries[index]).clone();
+        current.last_position = i64::try_from(position_ms).unwrap_or(i64::MAX);
+        summaries[index] = Arc::new(current);
+    }
+
+    let track_ids: Vec<i64> = summaries.iter().map(|track| track.id).collect();
+    let current_index = current_index_to_i32(remapped_current);
+    persisted.queue = PersistableQueue { track_ids, current_index };
+    persisted.playlist_current_index = current_index;
+    Ok((Some(persisted), summaries))
 }
 
 /// Seat a [`RestorePlan`].

@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use super::PlayerState;
-use crate::player::engine::queue::current_index_from_i32;
+use crate::player::engine::queue::{current_index_from_i32, current_index_to_i32};
 use crate::player::engine::types::{PersistableQueue, PersistedPlayback, PlaybackStatus};
 use netodia_core::entities::track::TrackSummary;
 
@@ -20,7 +20,22 @@ impl PlayerState {
         } else {
             self.queue.to_persistable()
         };
-        PersistedPlayback { queue }
+        let mut playlist_tracks: Vec<TrackSummary> =
+            self.queue.tracks_in_play_order().iter().map(|track| (**track).clone()).collect();
+        let current_index = current_index_to_i32(self.queue.current_index);
+        let current_position_ms = self.source.as_ref().map(|_| self.position_ms);
+        if let (Some(index), Some(position_ms)) =
+            (usize::try_from(current_index).ok(), current_position_ms)
+            && let Some(track) = playlist_tracks.get_mut(index)
+        {
+            track.last_position = i64::try_from(position_ms).unwrap_or(i64::MAX);
+        }
+        PersistedPlayback {
+            queue,
+            playlist_tracks,
+            playlist_current_index: current_index,
+            current_position_ms,
+        }
     }
 }
 

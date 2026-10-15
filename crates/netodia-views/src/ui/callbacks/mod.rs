@@ -240,13 +240,20 @@ pub fn wire_all(ui: &AppWindow, state: &AppState) {
 
 /// Play/pause, next, previous, stop, the volume commit, mute, shuffle and repeat.
 fn wire_transport(player: &Player<'_>, state: &AppState) {
-    wire_sync_pb!(
-        player,
-        on_play_pause,
-        state,
-        "play_pause",
-        library::playback::player_toggle_play_pause
-    );
+    let s = state.clone();
+    player.on_play_pause(move || {
+        let s = s.clone();
+        s.runtime.clone().spawn(async move {
+            let result = if s.cloud_playback.restored_cloud_track_waiting() {
+                s.cloud_playback.resume_restored_queue().await
+            } else {
+                library::playback::player_toggle_play_pause(&s.playback_ctx())
+            };
+            if let Err(error) = result {
+                log::warn!("play_pause: {}", netodia_core::error::describe(&error));
+            }
+        });
+    });
     wire_sync_pb!(player, on_next, state, "next", library::playback::player_next);
     wire_sync_pb!(player, on_previous, state, "previous", library::playback::player_previous);
     wire_sync_pb!(player, on_stop, state, "stop", library::playback::player_stop);

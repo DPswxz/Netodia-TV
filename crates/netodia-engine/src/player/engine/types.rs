@@ -1,3 +1,4 @@
+use netodia_core::entities::track::TrackSummary;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -47,11 +48,30 @@ pub struct PersistableQueue {
     pub current_index: i32,
 }
 
-/// What `queue.json` holds: the persisted queue. Flattening preserves its existing on-disk shape.
+/// What `queue.json` holds: the ordered last-played playlist, plus the legacy local-id queue
+/// fields. Flattening preserves the existing on-disk shape for older versions.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PersistedPlayback {
     #[serde(flatten)]
     pub queue: PersistableQueue,
+    /// Full track rows in play order. This keeps cloud playlists and the visible queue available
+    /// at startup even when the browse view refreshes from the network.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub playlist_tracks: Vec<TrackSummary>,
+    /// Index into `playlist_tracks`; `-1` means the saved list has no current track.
+    #[serde(default = "no_current_track", skip_serializing_if = "is_no_current_track")]
+    pub playlist_current_index: i32,
+    /// Exact position at the last playback snapshot, including cloud tracks that have no DB row.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub current_position_ms: Option<u64>,
+}
+
+fn no_current_track() -> i32 {
+    -1
+}
+
+fn is_no_current_track(index: &i32) -> bool {
+    *index == -1
 }
 
 #[cfg(test)]
