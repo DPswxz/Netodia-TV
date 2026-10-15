@@ -21,6 +21,7 @@ use netodia_app::services::settings;
 use netodia_app::state::AppState;
 use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
+use netodia_core::utils::toast::{self, ToastKind};
 use netodia_playback::player::playback::crossfade;
 use netodia_ui::{AppWindow, Settings};
 
@@ -93,7 +94,17 @@ pub fn install_playback_settings(ui: &AppWindow, state: &AppState) {
     let state_quality = state.clone();
     ui.global::<Settings>().on_cloud_quality_changed(move |token| {
         let quality = Quality::from_level(token.as_str());
-        state_quality.cloud_playback.set_quality(quality);
+        // `change_quality` pauses the current cloud deck synchronously, then fetches and opens
+        // the replacement source on the runtime. It resumes from the captured position only
+        // after the new source has been handed to the engine.
+        let change = state_quality.cloud_playback.change_quality(quality);
+        state_quality.runtime.spawn(async move {
+            if let Err(error) = change.await {
+                let detail = format!("音质切换失败，播放已暂停：{}", describe(&error));
+                log::warn!("cloud quality change: {detail}");
+                toast::notify(ToastKind::OperationFailed, detail);
+            }
+        });
         state_quality.persist_blocking("persist cloud_quality", move |paths| {
             library::settings::set_cloud_quality(paths, quality)
         });

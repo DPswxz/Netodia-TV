@@ -1,6 +1,7 @@
 //! Joins typed `NetEase` stream tickets to the native decoder and output engine.
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -111,6 +112,71 @@ impl CloudPlayback {
 
     pub fn set_quality(&self, quality: Quality) {
         *self.quality.write() = quality;
+    }
+
+    /// Apply a quality choice immediately and prepare the current cloud track for a source swap.
+    /// The current deck is paused synchronously before the returned future starts resolving the
+    /// replacement stream, so the old quality cannot continue playing during the request.
+    pub fn change_quality(
+        &self,
+        quality: Quality,
+    ) -> impl Future<Output = AppResult<CloudPlaybackResult>> + Send + 'static {
+        let request = if self.quality() == quality {
+            None
+        } else {
+            self.set_quality(quality);
+            self.pause_for_quality_change()
+        };
+        let playback = self.clone();
+        async move {
+            match request {
+                Some(request) => playback.play_reserved(request).await,
+                None => Ok(CloudPlaybackResult { started: false, trial: false }),
+            }
+        }
+    }
+
+    /// Pause the active cloud source and capture its exact heard position before any await. A
+    /// paused player remains paused after the replacement loads; a playing player resumes on it.
+    fn pause_for_quality_change(&self) -> Option<ReservedPlayback> {
+        let _exec = self.player_state.lock_exec();
+        let state = lock_state(&self.player_state);
+        let track = state.current_track()?;
+        if !track.file_path.is_empty()
+            || !matches!(state.status, PlaybackStatus::Playing | PlaybackStatus::Paused)
+        {
+            return None;
+        }
+
+        let song_id = track.id;
+        let volume = state.effective_volume();
+        let speed = state.playback_speed;
+        let was_paused = state.status == PlaybackStatus::Paused;
+        let position_ms = if self.engine.holds_source() {
+            self.engine.query_heard_position()
+        } else {
+            state.position_ms
+        }
+        .min(state.duration_ms.saturating_sub(500));
+        drop(state);
+
+        self.engine.pause();
+        let generation = self.engine.reserve_playback_request();
+        with_state_emit(&self.player_state, &self.sinks, |state| {
+            state.status = PlaybackStatus::Paused;
+            state.position_ms = position_ms;
+        });
+
+        Some(ReservedPlayback {
+            song_id,
+            quality: self.quality(),
+            volume,
+            speed,
+            start_position: Some(Duration::from_millis(position_ms)),
+            generation,
+            keep_paused: was_paused,
+            queue_update: QueueUpdate::Preserve,
+        })
     }
 
     pub fn account_status(&self) -> SessionStatus {
