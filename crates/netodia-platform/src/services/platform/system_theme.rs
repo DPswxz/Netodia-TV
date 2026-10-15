@@ -263,19 +263,6 @@ fn rgb_is_light((r, g, b): (u8, u8, u8)) -> bool {
     is_light_hex((u32::from(r) << 16) | (u32::from(g) << 8) | u32::from(b))
 }
 
-/// `XDG_DATA_HOME`, then each of `XDG_DATA_DIRS` under the spec's default. The spec calls a relative
-/// entry invalid, and joined it would resolve against the working directory.
-fn xdg_data_dirs() -> Vec<PathBuf> {
-    let system = std::env::var_os("XDG_DATA_DIRS")
-        .filter(|dirs| !dirs.is_empty())
-        .unwrap_or_else(|| "/usr/local/share:/usr/share".into());
-    dirs::data_dir()
-        .into_iter()
-        .chain(std::env::split_paths(&system))
-        .filter(|dir| dir.is_absolute())
-        .collect()
-}
-
 /// How far a light scheme's `surface0` sits from the view background toward the text. Its own knob
 /// because the settings cards, dialogs and tooltips all paint that slot, and a light scheme gives
 /// them no colour of its own to take.

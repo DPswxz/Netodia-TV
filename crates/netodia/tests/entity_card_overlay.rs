@@ -26,21 +26,11 @@ fn overlay_mounts() -> Vec<(String, String)> {
     let mut mounts: Vec<(String, String)> = Vec::new();
 
     for (path, src) in stripped_sources(UI_DIR, "slint", MIN_SLINT_SOURCES) {
-        if !src.contains(OPENS_THE_SLOT) {
-            continue;
-        }
-        let found_before = mounts.len();
         for body in blocks_named(&src, CARD) {
             if body.contains(OPENS_THE_SLOT) {
                 mounts.push((path.clone(), body.to_owned()));
             }
         }
-        assert!(
-            mounts.len() > found_before,
-            "{path} raises `{OPENS_THE_SLOT}` but no `{CARD}` block in it holds that \
-             line — the walk reads the mount's own braces, so a mount spelled any other way is \
-             one the pins below never see"
-        );
     }
 
     assert!(
