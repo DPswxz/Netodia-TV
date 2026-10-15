@@ -39,6 +39,20 @@ pub fn cover_request_url(source: &str) -> Option<reqwest::Url> {
     Some(url)
 }
 
+/// Fetch a bounded cover body for the view layer without exposing its network response.
+pub async fn fetch_cover_bytes(
+    client: &reqwest::Client,
+    source: &str,
+    max_bytes: usize,
+) -> Option<Vec<u8>> {
+    let url = cover_request_url(source)?;
+    let response = client.get(url).send().await.ok()?.error_for_status().ok()?;
+    let max_bytes = u64::try_from(max_bytes).ok()?;
+    let bytes =
+        netodia_net::services::net::read_capped(response, "Cover image", max_bytes).await.ok()?;
+    (!bytes.is_empty()).then_some(bytes)
+}
+
 /// UI-safe account state. The credential and the session cookie intentionally have no public
 /// representation in this type.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

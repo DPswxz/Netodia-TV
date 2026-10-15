@@ -9,7 +9,6 @@ use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use futures_util::StreamExt;
 use lru::LruCache;
 use parking_lot::Mutex;
 use slint::{Image, Rgb8Pixel, SharedPixelBuffer};
@@ -142,23 +141,7 @@ pub fn is_remote_artwork_url(source: &str) -> bool {
 
 /// Fetch a bounded image body for an in-memory consumer such as the curated hero collage.
 pub(crate) async fn fetch_image_bytes(client: &reqwest::Client, url: &str) -> Option<Vec<u8>> {
-    let url = parsed_http_url(url)?;
-    let response = client.get(url).send().await.ok()?.error_for_status().ok()?;
-    let max_bytes = u64::try_from(MAX_SOURCE_BYTES).ok()?;
-    if response.content_length().is_some_and(|length| length > max_bytes) {
-        return None;
-    }
-
-    let mut stream = response.bytes_stream();
-    let mut bytes = Vec::new();
-    while let Some(chunk) = stream.next().await {
-        let chunk = chunk.ok()?;
-        if bytes.len().saturating_add(chunk.len()) > MAX_SOURCE_BYTES {
-            return None;
-        }
-        bytes.extend_from_slice(&chunk);
-    }
-    (!bytes.is_empty()).then_some(bytes)
+    netodia_app::cloud::fetch_cover_bytes(client, url, MAX_SOURCE_BYTES).await
 }
 
 fn parsed_http_url(source: &str) -> Option<reqwest::Url> {
