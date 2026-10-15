@@ -28,6 +28,8 @@ export component MyLibraryTabPills inherits Rectangle {
     in property <bool> artist-open;
     in property <bool> genre-open;
     in property <bool> playlist-open;
+    // Local authoring actions cannot create or edit account playlists.
+    in property <bool> local-playlist-actions: false;
 
     HorizontalLayout {
         alignment: end;
@@ -197,9 +199,9 @@ export component MyLibraryTabPills inherits Rectangle {
             clip: true;
             min-width: 0px;
             preferred-width: MyLibrary.tab-idx == MyLibrary.tab-playlists
-                && !root.playlist-open ? pl.preferred-width : 0px;
+                && !root.playlist-open && root.local-playlist-actions ? pl.preferred-width : 0px;
             max-width: MyLibrary.tab-idx == MyLibrary.tab-playlists
-                && !root.playlist-open ? pl.preferred-width : 0px;
+                && !root.playlist-open && root.local-playlist-actions ? pl.preferred-width : 0px;
 
             pl := ActionPill {
                 // Fills the Dialog inline rather than hopping through Rust: a synchronous

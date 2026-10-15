@@ -4,6 +4,7 @@
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 
 use slint::{ComponentHandle, Model, ModelRc, VecModel, Weak};
 
@@ -14,7 +15,7 @@ use crate::ui::grid_rows::chunk_rows;
 use crate::ui::row_match;
 use crate::ui::util::len_as_i32;
 use netodia_app::state::AppState;
-use netodia_core::entities::cloud::Playlist as CloudPlaylist;
+use netodia_core::entities::cloud::{MusicLibraryCategory, Playlist as CloudPlaylist};
 use netodia_core::entities::playlist::PlaylistStats;
 use netodia_core::error::{AppResult, describe};
 use netodia_ui::{
@@ -50,6 +51,8 @@ async fn fetch_grid_inner(
     weak: Weak<AppWindow>,
 ) -> AppResult<()> {
     let account_generation = state.cloud.status().generation;
+    let request = playlists_ui.grid_request.fetch_add(1, Ordering::AcqRel).wrapping_add(1);
+    let category = playlists_ui.category();
     let empty = Arc::new(GridData::new(Vec::new()));
     {
         let _gate = playlists_ui.section.gate();
@@ -58,21 +61,32 @@ async fn fetch_grid_inner(
     }
     let playlists_ui_for_clear = playlists_ui.clone();
     let _ = weak.upgrade_in_event_loop(move |ui| {
+        if !playlists_ui_for_clear.grid_request_current(request) {
+            return;
+        }
         rebuild_grid(&ui, &playlists_ui_for_clear);
         update_flat_rows(&ui, &playlists_ui_for_clear);
         set_cloud_state(&ui, true, None, -1);
     });
 
-    let playlists = match fetch_saved_playlists(state).await {
+    let playlists = match fetch_saved_playlists(state, category).await {
         Ok(playlists) => playlists,
         Err(error) => {
-            if state.cloud.status().generation != account_generation {
+            if state.cloud.status().generation != account_generation
+                || !playlists_ui.grid_request_current(request)
+            {
                 playlists_ui.mark_dirty();
                 return Ok(());
             }
             let playlists_ui = playlists_ui.clone();
             let message = describe(&error);
+            let cloud = state.cloud.clone();
             let _ = weak.upgrade_in_event_loop(move |ui| {
+                if !playlists_ui.grid_request_current(request)
+                    || cloud.status().generation != account_generation
+                {
+                    return;
+                }
                 rebuild_grid(&ui, &playlists_ui);
                 update_flat_rows(&ui, &playlists_ui);
                 set_cloud_state(&ui, false, Some(message), 0);
@@ -80,7 +94,9 @@ async fn fetch_grid_inner(
             return Err(error);
         }
     };
-    if state.cloud.status().generation != account_generation {
+    if state.cloud.status().generation != account_generation
+        || !playlists_ui.grid_request_current(request)
+    {
         playlists_ui.mark_dirty();
         return Ok(());
     }
@@ -88,18 +104,29 @@ async fn fetch_grid_inner(
     let data = Arc::new(GridData::new(playlists));
     {
         let _gate = playlists_ui.section.gate();
+        if !playlists_ui.grid_request_current(request) {
+            return Ok(());
+        }
         *playlists_ui.grid.data.lock() = data;
         *playlists_ui.grid.index_cache.lock() = None;
     }
 
     grid_prewarm::prewarm_off_thread(playlists_ui, PlaylistsUi::prewarm_visible_covers).await;
-    if state.cloud.status().generation != account_generation {
+    if state.cloud.status().generation != account_generation
+        || !playlists_ui.grid_request_current(request)
+    {
         playlists_ui.mark_dirty();
         return Ok(());
     }
 
     let playlists_ui = playlists_ui.clone();
+    let cloud = state.cloud.clone();
     let _ = weak.upgrade_in_event_loop(move |ui| {
+        if !playlists_ui.grid_request_current(request)
+            || cloud.status().generation != account_generation
+        {
+            return;
+        }
         rebuild_grid(&ui, &playlists_ui);
         update_flat_rows(&ui, &playlists_ui);
         let count = ui.global::<Playlists>().get_total_count();
@@ -108,13 +135,16 @@ async fn fetch_grid_inner(
     Ok(())
 }
 
-async fn fetch_saved_playlists(state: &AppState) -> AppResult<Vec<PlaylistStats>> {
+async fn fetch_saved_playlists(
+    state: &AppState,
+    category: MusicLibraryCategory,
+) -> AppResult<Vec<PlaylistStats>> {
     const PAGE_SIZE: u64 = 30;
     const MAX_OFFSET: u64 = 100_000;
     let mut offset = 0_u64;
     let mut playlists = Vec::new();
     loop {
-        let (page, more) = state.cloud.saved_playlists_page(offset).await?;
+        let (page, more) = state.cloud.library_playlists_page(category, offset).await?;
         playlists.extend(page);
         if !more || offset >= MAX_OFFSET {
             break;
@@ -305,7 +335,17 @@ fn sort_playlist_indices(indices: &mut [usize], data: &GridData, field: &str, di
         "name" => indices.sort_by_cached_key(|&i| data.keys[i].name_lc.clone()),
         // "updated" and anything unrecognised fall through to the default
         // (most-recently-updated first).
-        _ => indices.sort_by_cached_key(|&i| data.playlists[i].updated_at.clone()),
+        _ => {
+            // Cloud rows have no update timestamp: equal keys must retain the server's order.
+            if dir == "desc" {
+                indices.sort_by_cached_key(|&i| {
+                    std::cmp::Reverse(data.playlists[i].updated_at.clone())
+                });
+            } else {
+                indices.sort_by_cached_key(|&i| data.playlists[i].updated_at.clone());
+            }
+            return;
+        }
     }
     if dir == "desc" {
         indices.reverse();

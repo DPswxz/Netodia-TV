@@ -9,8 +9,8 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use netodia_core::entities::cloud::{
-    Account, Album, Artist, LikedSong, Lyrics, Playlist, Quality, RecentSong, SearchKind,
-    SearchResult, Song, StreamTicket,
+    Account, Album, Artist, DAILY_PLAYLIST_ID, LikedSong, Lyrics, MusicLibraryCategory, Playlist,
+    Quality, RecentSong, RoamingMode, SearchKind, SearchResult, Song, StreamTicket,
 };
 use netodia_core::error::{AppError, AppResult};
 use netodia_net::netease::Client;
@@ -185,6 +185,63 @@ impl CloudService {
         self.private_request(self.client.daily()).await
     }
 
+    /// Daily recommendations use the same detail surface as ordinary remote playlists.
+    pub async fn library_playlist(&self, id: i64) -> AppResult<(Playlist, Vec<Song>)> {
+        if id != DAILY_PLAYLIST_ID {
+            return self.saved_playlist(id).await;
+        }
+        let songs = self.daily().await?;
+        let playlist = Playlist {
+            id,
+            name: "每日推荐".to_owned(),
+            track_count: u64::try_from(songs.len()).unwrap_or(u64::MAX),
+            cover_url: songs.first().and_then(|song| song.album.cover_url.clone()),
+            ..Playlist::default()
+        };
+        Ok((playlist, songs))
+    }
+
+    pub async fn recommendations(&self) -> AppResult<Vec<Playlist>> {
+        self.private_request(self.client.recommendations()).await
+    }
+
+    /// Fetch a roaming batch using an actual `NetEase` song ID as its seed.
+    pub async fn roaming_songs(
+        &self,
+        mode: RoamingMode,
+        seed: Option<i64>,
+    ) -> AppResult<Vec<Song>> {
+        match mode {
+            RoamingMode::Personal => self.fm().await,
+            RoamingMode::Similar => {
+                let id = seed.ok_or_else(|| {
+                    AppError::Validation("请先播放一首歌曲，再开启相似歌曲".to_owned())
+                })?;
+                validate_id("歌曲", id)?;
+                self.private_request(self.client.similar_songs(id)).await
+            }
+            RoamingMode::Heart => {
+                let (account, cancellation) = self.account_snapshot()?;
+                self.account_request_in_generation(
+                    async {
+                        let playlist_id = self.client.liked_playlist_id(account.id).await?;
+                        let liked = self.client.liked_ids(account.id).await?;
+                        let liked_seed =
+                            seed.filter(|id| liked.contains(id)).or_else(|| liked.first().copied());
+                        let Some(liked_seed) = liked_seed else {
+                            return Ok(Vec::new());
+                        };
+                        self.client
+                            .intelligence(liked_seed, playlist_id, seed.unwrap_or(liked_seed))
+                            .await
+                    },
+                    cancellation,
+                )
+                .await
+            }
+        }
+    }
+
     pub async fn fm(&self) -> AppResult<Vec<Song>> {
         self.private_request(self.client.fm()).await
     }
@@ -215,6 +272,28 @@ impl CloudService {
             cancellation,
         )
         .await
+    }
+
+    pub async fn library_playlists_page(
+        &self,
+        category: MusicLibraryCategory,
+        offset: u64,
+    ) -> AppResult<(Vec<Playlist>, bool)> {
+        match category {
+            MusicLibraryCategory::Collected => self.saved_playlists_page(offset).await,
+            MusicLibraryCategory::Created => {
+                let (account, cancellation) = self.account_snapshot()?;
+                self.account_request_in_generation(
+                    self.client.created_playlists_page(account.id, offset),
+                    cancellation,
+                )
+                .await
+            }
+            MusicLibraryCategory::Recommendations => {
+                self.recommendations().await.map(|items| (items, false))
+            }
+            MusicLibraryCategory::Roaming => Ok((Vec::new(), false)),
+        }
     }
 
     pub async fn liked_ids(&self) -> AppResult<Vec<i64>> {

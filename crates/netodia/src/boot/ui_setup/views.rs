@@ -8,7 +8,7 @@ use netodia_app::services::track_artwork::CachedCoverUrl;
 use netodia_app::state::AppState;
 use netodia_artwork::media::image;
 use netodia_core::error::describe;
-use netodia_ui::{AppWindow, Nav};
+use netodia_ui::{AppWindow, MyLibrary, Nav, Playlists};
 use netodia_views::ui;
 use slint::ComponentHandle;
 
@@ -192,6 +192,12 @@ pub fn install_views(
             app.global::<Nav>().set_selected_index(idx);
         }
         ui::my_library::seed_tab(app, vs.my_library_tab);
+        // The visible library now opens on account playlists; legacy tabs remain drill targets.
+        let library = app.global::<MyLibrary>();
+        library.set_tab_idx(library.get_tab_playlists());
+        let playlists = app.global::<Playlists>();
+        playlists
+            .set_category(vs.music_library_category.clamp(0, playlists.get_category_count() - 1));
     }
 
     ui::callbacks::wire_all(app, state);

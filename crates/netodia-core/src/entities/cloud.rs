@@ -2,6 +2,38 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Library categories share one playlist grid and detail surface.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum MusicLibraryCategory {
+    #[default]
+    Collected,
+    Created,
+    Recommendations,
+    Roaming,
+}
+
+impl MusicLibraryCategory {
+    pub const fn from_index(index: i32) -> Self {
+        match index {
+            1 => Self::Created,
+            2 => Self::Recommendations,
+            3 => Self::Roaming,
+            _ => Self::Collected,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RoamingMode {
+    Personal,
+    Heart,
+    Similar,
+}
+
+/// Synthetic identity outside `NetEase`'s entity range, preserving the shared detail's ID contract.
+pub const DAILY_PLAYLIST_ID: i64 = 9_000_000_000_000_001;
+pub const PERSONAL_RADAR_ID: i64 = 3_136_952_023;
+
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Artist {
     pub id: i64,

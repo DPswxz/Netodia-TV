@@ -1,5 +1,5 @@
-// The My Library page at nav index 3: five tabs over what used to be five sidebar entries, 4–7
-// retired. Holds only what the *page* owns — the five views keep their own globals. A tab switch is
+// Internal surfaces for My Library at nav index 3. The visible four account categories are owned
+// by Playlists; these legacy indices also serve cross-section detail navigation. A surface switch is
 // a section switch, `SectionActiveGate` mounting once per tab at `index: 3`, so the page needs no
 // `covers-generation` machinery. **No `detail-open` here** — it would make this the second globals
 // file to import siblings; `views/my-library-view.slint` derives it privately.

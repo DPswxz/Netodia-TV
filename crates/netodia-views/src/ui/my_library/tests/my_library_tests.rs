@@ -103,19 +103,24 @@ fn tab_count_matches_the_tabs_slint_declares() {
         "`MyLibraryTab` needs one variant per tab the global declares"
     );
 
-    // The labels have to stay an inline `[@tr(…), …]` literal — a Rust-seeded
-    // `[string]` renders untranslated — and the icons array has to match it 1:1.
+    // The four account categories share Playlists; the five old routes remain drill targets.
+    let categories = include_str!("../../../../../netodia-ui/ui/globals/playlists.slint");
+    let visible_count = categories
+        .split_once("category-count:")
+        .and_then(|(_, rest)| rest.split(';').next())
+        .and_then(|value| value.trim().parse::<usize>().ok());
+    assert_eq!(visible_count, Some(4));
     let labels = sheet_array("labels");
     assert_eq!(
         labels.matches("@tr(").count(),
-        count,
+        visible_count.unwrap_or_default(),
         "the tab bar's `labels` array must be an inline literal carrying one `@tr(…)` per \
          tab: {labels:?}",
     );
     let icons = sheet_array("icons");
     assert_eq!(
         icons.matches('"').count(),
-        count * 2,
+        visible_count.unwrap_or_default() * 2,
         "the tab bar's `icons` array must carry one glyph per tab: {icons:?}",
     );
 

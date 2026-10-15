@@ -81,6 +81,7 @@ fn wire_close(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>)
     let weak = ui.as_weak();
     ui.global::<PlaylistDetail>().on_close_detail(move || {
         let Some(ui) = weak.upgrade() else { return };
+        pu.detail_request.fetch_add(1, std::sync::atomic::Ordering::AcqRel);
         ui.global::<PlaylistDetail>().set_cloud_collection(false);
         track_detail::forget_closed(&ui, &s, &*pu, &ui.global::<PlaylistDetail>());
 

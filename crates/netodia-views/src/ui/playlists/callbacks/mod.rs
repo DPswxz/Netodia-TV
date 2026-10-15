@@ -15,6 +15,7 @@
 //! The Add-to-Playlist picker, opener included, is [`files`]'s.
 
 mod artwork;
+mod categories;
 mod crud;
 mod detail;
 mod files;
@@ -43,6 +44,7 @@ use netodia_ui::AppWindow;
 /// pairing, rather than two statements a boot-file reorder could separate. `wire_all` still has to
 /// have run before it.
 pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
+    categories::wire(ui, state, playlists_ui);
     grid::wire(ui, state, playlists_ui);
     detail::wire(ui, state, playlists_ui);
     row_cover::wire(ui, playlists_ui);

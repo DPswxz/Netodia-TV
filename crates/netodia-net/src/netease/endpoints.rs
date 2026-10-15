@@ -42,6 +42,11 @@ pub const SONGS: Endpoint<'static> = Endpoint::read("/api/v3/song/detail", Weapi
 pub const STREAM: Endpoint<'static> = Endpoint::read("/api/song/enhance/player/url/v1", Xeapi);
 pub const LYRIC: Endpoint<'static> = Endpoint::read("/api/song/lyric", Eapi);
 pub const DAILY: Endpoint<'static> = Endpoint::read("/api/v3/discovery/recommend/songs", Weapi);
+pub const RECOMMENDATIONS: Endpoint<'static> =
+    Endpoint::read("/api/v1/discovery/recommend/resource", Weapi);
+pub const INTELLIGENCE: Endpoint<'static> =
+    Endpoint::read("/api/playmode/intelligence/list", Weapi);
+pub const SIMILAR_SONGS: Endpoint<'static> = Endpoint::read("/api/v1/discovery/simiSong", Weapi);
 pub const FM: Endpoint<'static> = Endpoint::read("/api/v1/radio/get", Weapi);
 pub const FM_TRASH: Endpoint<'static> = Endpoint::write("/api/radio/trash/add", Weapi);
 pub const USER_PLAYLISTS: Endpoint<'static> = Endpoint::read("/api/user/playlist", Weapi);

@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
 use netodia_audio::player::source::audio::AudioSource;
@@ -65,6 +66,7 @@ pub struct CloudPlayback {
     player_state: Arc<PlayerStateHandle>,
     sinks: Arc<PlayerSinks>,
     quality: Arc<RwLock<Quality>>,
+    queue_generation: Arc<AtomicU64>,
 }
 
 impl CloudPlayback {
@@ -97,6 +99,7 @@ impl CloudPlayback {
             player_state,
             sinks,
             quality: Arc::new(RwLock::new(Quality::default())),
+            queue_generation: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -118,6 +121,24 @@ impl CloudPlayback {
 
     /// Queue cloud songs without querying the local library or narrowing their IDs.
     pub async fn enqueue(&self, song_ids: &[i64], play_next: bool) -> AppResult<()> {
+        self.enqueue_in_generation(song_ids, play_next, None).await
+    }
+
+    pub fn queue_generation(&self) -> u64 {
+        self.queue_generation.load(Ordering::Acquire)
+    }
+
+    /// A delayed roaming refill must not append to a playlist selected in the meantime.
+    pub async fn enqueue_roaming(&self, song_ids: &[i64], generation: u64) -> AppResult<()> {
+        self.enqueue_in_generation(song_ids, false, Some(generation)).await
+    }
+
+    async fn enqueue_in_generation(
+        &self,
+        song_ids: &[i64],
+        play_next: bool,
+        queue_generation: Option<u64>,
+    ) -> AppResult<()> {
         if song_ids.is_empty() {
             return Ok(());
         }
@@ -137,6 +158,15 @@ impl CloudPlayback {
             })
             .collect();
         with_state_emit(&self.player_state, &self.sinks, |state| {
+            if queue_generation.is_some_and(|expected| self.queue_generation() != expected) {
+                return;
+            }
+            if queue_generation.is_some()
+                && (state.status == PlaybackStatus::Stopped
+                    || state.source.as_ref().is_none_or(|track| !track.file_path.is_empty()))
+            {
+                return;
+            }
             queue_cloud_tracks(&mut state.queue, tracks, play_next);
         });
         Ok(())
@@ -155,6 +185,7 @@ impl CloudPlayback {
         if song_ids.is_empty() {
             return Err(AppError::Queue("云端播放列表没有歌曲".to_owned()));
         }
+        self.queue_generation.fetch_add(1, Ordering::AcqRel);
         let generation = self.engine.reserve_playback_request();
         let songs = self.cloud.songs(song_ids).await?;
         if !self.engine.is_playback_request_current(generation) {
@@ -268,6 +299,7 @@ impl CloudPlayback {
         speed: f64,
         start_position: Option<Duration>,
     ) -> AppResult<CloudPlaybackResult> {
+        self.queue_generation.fetch_add(1, Ordering::AcqRel);
         let generation = self.engine.reserve_playback_request();
         self.play_reserved(ReservedPlayback {
             song_id,

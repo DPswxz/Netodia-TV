@@ -4,6 +4,8 @@ import { PlaylistGrid } from "../../components/grid/playlist-grid.slint";
 import { GridEmptyState } from "../../components/grid/grid-empty-state.slint";
 import { OverlayScrollbar } from "../../components/overlay-scrollbar.slint";
 import { ActionPill, PillButton } from "../../components/action-pill.slint";
+import { LibraryEntryCard } from "entry-card.slint";
+import { RoamingTab } from "roaming-tab.slint";
 
 // NetEase collections are read-only in this first release. The shared grid provides the same
 // cover cards as the rest of the app while its local edit actions stay disabled.
@@ -12,11 +14,39 @@ export component MyLibraryPlaylistsTab inherits Rectangle {
     in property <length> card-h;
     in property <length> row-h;
     in property <length> gap;
+    property <length> entries-height: Playlists.category == 2 ? 172px : 0px;
+
+    if Playlists.category == 2: VerticalLayout {
+        x: Theme.pad-lg;
+        y: Theme.pad-md;
+        width: parent.width - 2 * Theme.pad-lg - Theme.scrollbar-slot;
+        height: root.entries-height - Theme.pad-md;
+        spacing: Theme.pad-md;
+        HorizontalLayout {
+            spacing: Theme.pad-md;
+            LibraryEntryCard {
+                title: @tr("Daily recommendations");
+                subtitle: @tr("Playlist");
+                icon: "playlist_play";
+                activated => { Playlists.open-special(0); }
+            }
+            LibraryEntryCard {
+                title: @tr("Personal radar");
+                subtitle: @tr("Playlist");
+                icon: "auto_awesome";
+                activated => { Playlists.open-special(1); }
+            }
+        }
+        Text { text: @tr("Recommended playlists"); color: Theme.text; font-weight: 600; }
+    }
+
+    if Playlists.category == 3: RoamingTab { width: 100%; height: 100%; }
 
     grid := PlaylistGrid {
-        y: Theme.pad-md;
+        y: root.entries-height + Theme.pad-md;
         width: 100%;
-        height: parent.height - Theme.pad-md;
+        height: max(0px, parent.height - root.entries-height - Theme.pad-md);
+        visible: Playlists.category != 3;
         rows: Playlists.grid-rows;
         card-width: root.card-w;
         card-height: root.card-h;
@@ -33,16 +63,16 @@ export component MyLibraryPlaylistsTab inherits Rectangle {
         request-cover(p, g) => { Playlists.request-cover(p, g) }
     }
 
-    if Playlists.cloud-loading: Text {
+    if Playlists.cloud-loading && Playlists.category != 3: Text {
         x: Theme.pad-lg;
-        y: Theme.pad-lg;
-        text: @tr("Loading collected playlists…");
+        y: root.entries-height + Theme.pad-lg;
+        text: @tr("Loading…");
         color: Theme.subtext0;
     }
 
-    if Playlists.cloud-error != "": VerticalLayout {
+    if Playlists.cloud-error != "" && Playlists.category != 3: VerticalLayout {
         x: Theme.pad-lg;
-        y: Theme.pad-lg;
+        y: root.entries-height + Theme.pad-lg;
         width: parent.width - 2 * Theme.pad-lg;
         spacing: Theme.pad-md;
         Text {
@@ -54,24 +84,30 @@ export component MyLibraryPlaylistsTab inherits Rectangle {
             PillButton {
                 icon: "refresh";
                 text: @tr("Retry");
-                clicked => { Playlists.retry-cloud(); }
+                clicked => {
+                    if (Playlists.retry-special >= 0) { Playlists.open-special(Playlists.retry-special); }
+                    else { Playlists.retry-cloud(); }
+                }
             }
         }
     }
 
     if !Playlists.cloud-loading && Playlists.cloud-error == ""
-        && Playlists.total-count == 0: GridEmptyState {
+        && Playlists.total-count == 0 && Playlists.category != 3: GridEmptyState {
+        y: root.entries-height;
+        height: max(0px, parent.height - root.entries-height);
         icon: "queue_music";
-        title: @tr("No collected playlists yet");
-        body: @tr("Playlists you collect on NetEase will appear here.");
+        title: Playlists.category == 0 ? @tr("No collected playlists yet") : @tr("No playlists yet");
+        body: Playlists.category == 0 ? @tr("Playlists you collect on NetEase will appear here.") : "";
     }
 
     OverlayScrollbar {
         horizontal: false;
         x: parent.width - self.width;
-        y: Theme.pad-md;
+        y: root.entries-height + Theme.pad-md;
         width: Theme.scrollbar-slot;
-        height: parent.height - Theme.pad-md;
+        height: max(0px, parent.height - root.entries-height - Theme.pad-md);
+        visible: Playlists.category != 3;
         visible-size: grid.v-visible-height;
         content-size: grid.v-viewport-height;
         offset: grid.v-offset;

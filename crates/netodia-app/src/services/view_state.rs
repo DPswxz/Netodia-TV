@@ -53,6 +53,7 @@ pub struct ViewStateData {
     pub favorites_tab: i32,
     pub recently_played_tab: i32,
     pub my_library_tab: i32,
+    pub music_library_category: i32,
 }
 
 impl Default for ViewStateData {
@@ -70,6 +71,7 @@ impl Default for ViewStateData {
             favorites_tab: 0,
             recently_played_tab: 0,
             my_library_tab: 0,
+            music_library_category: 0,
         }
     }
 }

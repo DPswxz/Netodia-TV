@@ -69,7 +69,7 @@ Shrink the window past a threshold and the full UI collapses into a compact mini
 - Parallel folder scanning, live folder watching, and incremental re-scans
 - Content hashing (BLAKE3), so a moved or renamed file keeps its play counts, favorites, and place in the queue
 - Full-text search (SQLite FTS5) over tracks, albums, artists, and genres, and over the people credited on a track, so a composer or a producer reaches their work: accent-insensitive, relevance-ranked, with a top-result card and recent history. The filter box on every list searches the same fields
-- **My Library** gathers everything into one page with five tabs (Songs, Albums, Artists, Genres, Playlists); opening an entity grows the tab band into its banner rather than navigating away
+- **My Library** groups NetEase music into Collected Playlists, Created Playlists, Recommendations (Daily Recommendations, Personal Radar, and recommended playlists), and Infinite Roaming (Personal Roaming, Heart Mode, and Similar Songs). Roaming refills the queue automatically; opening a playlist grows the tab band into its banner.
 - Favorites and Recently Played, each a hero banner over sortable lists and browsable card grids. Recently Played stays local to the library and is not sent to an external listening-history service
 - Browse by folder, as a detailed list or a grid of cards
 - Play and skip counts, natural sort, resizable and toggleable columns

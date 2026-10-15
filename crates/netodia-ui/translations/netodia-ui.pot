@@ -11,7 +11,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app-window.slint ui/layout/sidebar.slint
+#: ui/app-window.slint ui/layout/sidebar.slint ui/views/search-view.slint
 msgid "Search"
 msgstr ""
 
@@ -75,14 +75,6 @@ msgstr ""
 msgid "Remove from Favorites"
 msgstr ""
 
-#: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/dialog/tag-editor-body.slint
-#: ui/components/track-list/column-toggle-popup.slint
-#: ui/components/track-list/track-list-header.slint ui/settings.slint
-#: ui/views/search/top-result-card.slint
-msgid "Genre"
-msgstr ""
-
 #: ui/components/dialog/credit-editor.slint
 #: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
 msgid "Add"
@@ -90,7 +82,6 @@ msgstr ""
 
 #: ui/components/dialog/dialog.slint
 #: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/views/favorites-view.slint
 #: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr ""
@@ -105,14 +96,6 @@ msgstr ""
 
 #: ui/components/dialog/dialog.slint
 msgid "Add a description…"
-msgstr ""
-
-#: ui/components/dialog/dialog.slint
-msgid "Finish"
-msgstr ""
-
-#: ui/components/dialog/dialog.slint
-msgid "Connect"
 msgstr ""
 
 #: ui/components/dialog/equalizer-body.slint
@@ -244,10 +227,6 @@ msgstr ""
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr ""
 
-#: ui/globals/player.slint
-msgid "Connecting…"
-msgstr ""
-
 #: ui/components/dialog/selectable-picker.slint
 #: ui/components/grid/card-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
@@ -256,6 +235,10 @@ msgstr ""
 
 #: ui/components/dialog/selectable-picker.slint
 msgid "{} selected"
+msgstr ""
+
+#: ui/components/dialog/smart-playlist-editor-body.slint
+msgid "Saved rule"
 msgstr ""
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
@@ -299,6 +282,14 @@ msgid "Credits"
 msgstr ""
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
+msgid "Genre"
+msgstr ""
+
+#: ui/components/dialog/smart-playlist-editor-body.slint
 #: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "ISRC"
 msgstr ""
@@ -337,11 +328,6 @@ msgstr ""
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
 msgid "Bitrate (kbps)"
-msgstr ""
-
-#: ui/components/dialog/smart-playlist-editor-body.slint
-#: ui/components/now-playing/overflow-menu.slint ui/settings.slint
-msgid "Rating"
 msgstr ""
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
@@ -469,10 +455,6 @@ msgid "most recently played"
 msgstr ""
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
-msgid "highest rated"
-msgstr ""
-
-#: ui/components/dialog/smart-playlist-editor-body.slint
 msgid "random"
 msgstr ""
 
@@ -502,6 +484,10 @@ msgstr ""
 
 #: ui/components/dialog/smart-playlist-editor-body.slint
 msgid "tracks by"
+msgstr ""
+
+#: ui/components/dialog/smart-playlist-editor-body.slint
+msgid "Saved order"
 msgstr ""
 
 #: ui/components/dialog/tag-editor-body.slint ui/settings.slint
@@ -549,7 +535,7 @@ msgid "Replace…"
 msgstr ""
 
 #: ui/components/dialog/tag-editor-body.slint
-#: ui/components/settings/folder-row.slint ui/globals/dialog.slint
+#: ui/components/settings/folder-row.slint
 #: ui/views/settings/library-section.slint
 msgid "Remove"
 msgstr ""
@@ -558,6 +544,7 @@ msgstr ""
 msgid "Details"
 msgstr ""
 
+#. Translators: a heading in place of "Up Next", so keep it as short
 #: ui/components/dialog/tag-editor-body.slint
 #: ui/components/now-playing/lyrics-menu.slint ui/settings.slint
 #: ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
@@ -717,12 +704,13 @@ msgstr ""
 
 #: ui/components/grid/card-context-menu.slint
 #: ui/components/now-playing/play-button.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Play"
 msgstr ""
 
 #: ui/components/grid/card-context-menu.slint
-#: ui/components/now-playing/overflow-menu.slint ui/views/favorites-view.slint
+#: ui/components/now-playing/overflow-menu.slint
 #: ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint
 #: ui/views/settings/overflow-menu-section.slint
 msgid "Shuffle"
@@ -735,6 +723,7 @@ msgid "Play {} Next"
 msgstr ""
 
 #: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Play Next"
 msgstr ""
@@ -746,6 +735,7 @@ msgid "Add {} to Queue"
 msgstr ""
 
 #: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Add to Queue"
 msgstr ""
@@ -783,6 +773,7 @@ msgid "Edit Track Information"
 msgstr ""
 
 #: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr ""
@@ -944,6 +935,22 @@ msgid "End of track"
 msgstr ""
 
 #: ui/components/now-playing/flyout-presets.slint
+msgid "Standard · 128 kbps"
+msgstr ""
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Higher · 192 kbps"
+msgstr ""
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Very high · 320 kbps"
+msgstr ""
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Lossless · FLAC"
+msgstr ""
+
+#: ui/components/now-playing/flyout-presets.slint
 msgid "Bars"
 msgstr ""
 
@@ -1050,6 +1057,26 @@ msgid "ReplayGain"
 msgstr ""
 
 #: ui/components/now-playing/overflow-menu.slint
+msgid "Audio quality"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Standard"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Higher"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Lossless"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Very high"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
 #: ui/views/settings/overflow-menu-section.slint
 msgid "Repeat"
 msgstr ""
@@ -1139,10 +1166,6 @@ msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr ""
 
 #: ui/components/onboarding/features-panel.slint
-msgid "Set Up"
-msgstr ""
-
-#: ui/components/onboarding/features-panel.slint
 #: ui/views/settings/update-section.slint
 msgid "Check for updates automatically"
 msgstr ""
@@ -1198,6 +1221,7 @@ msgid "Skip"
 msgstr ""
 
 #: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "Back"
 msgstr ""
 
@@ -1237,9 +1261,8 @@ msgstr ""
 msgid "{} / {} files"
 msgstr ""
 
-#: ui/components/settings/scan-progress.slint ui/globals/dialog-forms.slint
-#: ui/globals/dialog.slint ui/views/queue-sheet.slint
-#: ui/views/settings/appearance-section.slint
+#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint
+#: ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint
 #: ui/views/settings/library-section.slint
 #: ui/views/settings/output-section.slint
 #: ui/views/settings/window-chrome-section.slint
@@ -1250,18 +1273,17 @@ msgstr ""
 msgid "Sort"
 msgstr ""
 
-#: ui/globals/hero-chips.slint
-msgid "{n} play"
-msgid_plural "{n} plays"
-msgstr[0] ""
-msgstr[1] ""
-
 #: ui/components/track-copy-items.slint
 msgid "Artist - Title"
 msgstr ""
 
 #: ui/components/track-copy-items.slint
 msgid "File Path"
+msgstr ""
+
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
+msgid "Remove from Queue"
 msgstr ""
 
 #: ui/components/track-list/column-toggle-popup.slint
@@ -1304,10 +1326,6 @@ msgstr ""
 msgid "Remove {} from Queue"
 msgstr ""
 
-#: ui/components/track-list/track-context-menu.slint
-msgid "Remove from Queue"
-msgstr ""
-
 #: ui/components/track-list/track-list-row.slint
 msgid "Unknown album"
 msgstr ""
@@ -1318,44 +1336,16 @@ msgid_plural "{n} favorites"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/globals/dialog-forms.slint
-msgid "That token wasn't accepted. Check it and try again."
-msgstr ""
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't reach the service. Check your connection and try again."
-msgstr ""
-
-#: ui/globals/dialog-forms.slint
-msgid "Not approved yet. Approve Netodia in your browser, then click Finish."
-msgstr ""
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't save your credentials."
-msgstr ""
-
-#: ui/globals/dialog-forms.slint ui/globals/dialog.slint
-msgid "Save"
-msgstr ""
-
-#: ui/globals/dialog-forms.slint
-msgid "Couldn't reach that address. Check the URL and your connection."
-msgstr ""
-
-#: ui/globals/dialog-forms.slint
-msgid "That address doesn't play as audio Netodia can decode."
-msgstr ""
-
-#: ui/globals/dialog-forms.slint
-msgid "That doesn't look like a web address. It should start with https://"
-msgstr ""
-
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
 msgstr ""
 
 #: ui/globals/dialog.slint
 msgid "Create"
+msgstr ""
+
+#: ui/globals/dialog.slint
+msgid "Save"
 msgstr ""
 
 #: ui/globals/dialog.slint
@@ -1380,22 +1370,6 @@ msgstr ""
 
 #: ui/globals/dialog.slint
 msgid "The playlists and their track order will be removed. The tracks themselves stay in your library."
-msgstr ""
-
-#: ui/globals/dialog.slint
-msgid "Remove from Recently Played?"
-msgstr ""
-
-#: ui/globals/dialog.slint
-msgid "Remove from favorites?"
-msgstr ""
-
-#: ui/globals/dialog.slint
-msgid "\"{}\" will be removed from Recently Played."
-msgstr ""
-
-#: ui/globals/dialog.slint
-msgid "\"{}\" will be removed from your favorites."
 msgstr ""
 
 #: ui/globals/dialog.slint
@@ -1438,25 +1412,18 @@ msgid_plural "{n} discs"
 msgstr[0] ""
 msgstr[1] ""
 
+#: ui/globals/hero-chips.slint
+msgid "{n} play"
+msgid_plural "{n} plays"
+msgstr[0] ""
+msgstr[1] ""
+
 #: ui/globals/hero-chips.slint ui/settings.slint
 msgid "Compilation"
 msgstr ""
 
 #: ui/globals/player.slint
 msgid "No track playing"
-msgstr ""
-
-#: ui/globals/player.slint
-msgid "Paused"
-msgstr ""
-
-#: ui/globals/player.slint
-msgid "Buffering…"
-msgstr ""
-
-#. Translators: a short pill in place of a track's seek bar
-#: ui/globals/player.slint
-msgid "LIVE"
 msgstr ""
 
 #: ui/globals/player.slint
@@ -1690,12 +1657,6 @@ msgid "These playlists are too large for one .zip file. Export fewer at a time."
 msgstr ""
 
 #: ui/settings.slint
-msgid "{n} was already in your list."
-msgid_plural "{n} were already in your list."
-msgstr[0] ""
-msgstr[1] ""
-
-#: ui/settings.slint
 msgid "Playback error"
 msgstr ""
 
@@ -1713,10 +1674,6 @@ msgstr ""
 
 #: ui/settings.slint
 msgid "Nothing to copy"
-msgstr ""
-
-#: ui/settings.slint
-msgid "Vote not counted"
 msgstr ""
 
 #: ui/settings.slint
@@ -1789,6 +1746,10 @@ msgid "Movement Total"
 msgstr ""
 
 #: ui/settings.slint
+msgid "Rating"
+msgstr ""
+
+#: ui/settings.slint
 msgid "Couldn't save tags"
 msgstr ""
 
@@ -1825,32 +1786,12 @@ msgid "List view"
 msgstr ""
 
 #: ui/views/favorites-view.slint ui/views/recently-played-view.slint
-msgid "Filter most played…"
-msgstr ""
-
-#: ui/views/favorites-view.slint ui/views/my-library-view.slint
-msgid "Filter artists…"
-msgstr ""
-
-#: ui/views/favorites-view.slint
-msgid "Filter favorites…"
-msgstr ""
-
-#: ui/views/favorites-view.slint
-msgid "Favorite Artists"
-msgstr ""
-
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
-msgid "Most Played"
-msgstr ""
-
-#: ui/views/favorites-view.slint ui/views/my-library-view.slint
-#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
+#: ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr ""
 
 #: ui/views/favorites-view.slint
-msgid "No favorites yet"
+msgid "Filter favorites…"
 msgstr ""
 
 #: ui/views/favorites/artists-tab.slint
@@ -1861,6 +1802,35 @@ msgstr ""
 msgid "Favorite a song and its artist appears here."
 msgstr ""
 
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Top songs"
+msgstr ""
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/my-library/roaming-tab.slint
+msgid "Loading…"
+msgstr ""
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/recently-played/songs-tab.slint
+msgid "Retry"
+msgstr ""
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "No tracks available"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+msgid "Loading favorites…"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+msgid "No NetEase favorites yet"
+msgstr ""
+
 #: ui/views/favorites/most-played-tab.slint
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
@@ -1868,6 +1838,14 @@ msgstr ""
 
 #: ui/views/favorites/most-played-tab.slint
 msgid "Play one of your favorites and it will show up here."
+msgstr ""
+
+#: ui/views/my-library-view.slint ui/views/my-library/playlists-tab.slint
+msgid "Recommended playlists"
+msgstr ""
+
+#: ui/views/my-library-view.slint
+msgid "Infinite roaming"
 msgstr ""
 
 #: ui/views/my-library-view.slint
@@ -1888,21 +1866,16 @@ msgid_plural "{n} playlists"
 msgstr[0] ""
 msgstr[1] ""
 
-#: ui/views/my-library-view.slint ui/views/my-library/artist-detail.slint
-#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
-msgid "Albums"
-msgstr ""
-
-#: ui/views/my-library-view.slint ui/views/search-view.slint
-msgid "Artists"
+#: ui/views/my-library-view.slint
+msgid "Collected playlists"
 msgstr ""
 
 #: ui/views/my-library-view.slint
-msgid "Genres"
+msgid "Created playlists"
 msgstr ""
 
 #: ui/views/my-library-view.slint
-msgid "Playlists"
+msgid "Recommendations"
 msgstr ""
 
 #: ui/views/my-library-view.slint
@@ -1915,6 +1888,10 @@ msgstr ""
 
 #: ui/views/my-library-view.slint
 msgid "Filter albums…"
+msgstr ""
+
+#: ui/views/my-library-view.slint
+msgid "Filter artists…"
 msgstr ""
 
 #: ui/views/my-library-view.slint
@@ -1932,6 +1909,11 @@ msgstr ""
 #: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint
 #: ui/views/my-library/genres-tab.slint
 msgid "Add a music folder in Settings to start building your library."
+msgstr ""
+
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
+msgid "Albums"
 msgstr ""
 
 #: ui/views/my-library/artists-tab.slint
@@ -1959,7 +1941,27 @@ msgid "Drag music files here, or add tracks via any track's overflow menu."
 msgstr ""
 
 #: ui/views/my-library/playlist-detail.slint
+msgid "This NetEase playlist has no available tracks."
+msgstr ""
+
+#: ui/views/my-library/playlist-detail.slint
 msgid "Drop files to add to this playlist"
+msgstr ""
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "Daily recommendations"
+msgstr ""
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "Playlist"
+msgstr ""
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "Personal radar"
+msgstr ""
+
+#: ui/views/my-library/playlists-tab.slint
+msgid "No collected playlists yet"
 msgstr ""
 
 #: ui/views/my-library/playlists-tab.slint
@@ -1967,7 +1969,35 @@ msgid "No playlists yet"
 msgstr ""
 
 #: ui/views/my-library/playlists-tab.slint
-msgid "Click \"+ New Playlist\" to create one."
+msgid "Playlists you collect on NetEase will appear here."
+msgstr ""
+
+#: ui/views/my-library/roaming-tab.slint
+msgid "Personal roaming"
+msgstr ""
+
+#: ui/views/my-library/roaming-tab.slint
+msgid "Personal FM"
+msgstr ""
+
+#: ui/views/my-library/roaming-tab.slint
+msgid "Heart mode"
+msgstr ""
+
+#: ui/views/my-library/roaming-tab.slint
+msgid "Liked Songs"
+msgstr ""
+
+#: ui/views/my-library/roaming-tab.slint
+msgid "Similar songs"
+msgstr ""
+
+#: ui/views/my-library/roaming-tab.slint
+msgid "Now Playing"
+msgstr ""
+
+#: ui/views/my-library/roaming-tab.slint
+msgid "Stop"
 msgstr ""
 
 #: ui/views/my-library/tab-pills.slint
@@ -2007,10 +2037,6 @@ msgid "Import"
 msgstr ""
 
 #: ui/views/now-playing-view.slint
-msgid "Vote"
-msgstr ""
-
-#: ui/views/now-playing-view.slint
 msgid "Up Next"
 msgstr ""
 
@@ -2043,19 +2069,27 @@ msgid "Drop to add to queue"
 msgstr ""
 
 #: ui/views/recently-played-view.slint
+msgid "Filter most played…"
+msgstr ""
+
+#: ui/views/recently-played-view.slint
 msgid "Filter recently played…"
+msgstr ""
+
+#: ui/views/recently-played-view.slint
+msgid "Most Played"
 msgstr ""
 
 #: ui/views/recently-played-view.slint
 msgid "No recently played tracks"
 msgstr ""
 
-#: ui/views/recently-played/songs-tab.slint
-msgid "Loading NetEase history…"
-msgstr ""
-
 #: ui/views/recently-played/most-played-tab.slint
 msgid "Play something and it will show up here."
+msgstr ""
+
+#: ui/views/recently-played/songs-tab.slint
+msgid "Loading NetEase history…"
 msgstr ""
 
 #: ui/views/search-view.slint
@@ -2063,7 +2097,7 @@ msgid "Searching…"
 msgstr ""
 
 #: ui/views/search-view.slint
-msgid "Search your library…"
+msgid "Artists"
 msgstr ""
 
 #: ui/views/search/no-results.slint
@@ -2325,6 +2359,106 @@ msgstr ""
 
 #: ui/views/settings/motion-section.slint
 msgid "Open with the library already on screen, instead of fading and sliding it into place. A detail page you left open still expands into view once it loads."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "NetEase account"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "NetEase Music account"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in to NetEase Music"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Connect an account to use personal recommendations, collections and playback permissions"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Country code"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Phone number"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Email"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Password"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "The system credential store is unavailable. This session will end when Netodia closes."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign out"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Phone"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Enter your phone number"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Enter your password"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Enter your email address"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Refresh code"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Connecting…"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Generating QR code…"
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Scanned. Confirm login on your phone."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code expired. Refresh to try again."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Login successful."
+msgstr ""
+
+#: ui/views/settings/netease-account-section.slint
+msgid "Could not start QR login."
 msgstr ""
 
 #: ui/views/settings/output-section.slint
@@ -2694,18 +2828,6 @@ msgstr ""
 msgid "{} s"
 msgstr ""
 
-#: ui/views/settings/ratings-section.slint
-msgid "Ratings"
-msgstr ""
-
-#: ui/views/settings/ratings-section.slint
-msgid "Save ratings to files"
-msgstr ""
-
-#: ui/views/settings/ratings-section.slint
-msgid "Write star ratings into each file's tags, so they survive a rescan and other players can read them."
-msgstr ""
-
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"
 msgstr ""
@@ -2896,180 +3018,4 @@ msgstr ""
 
 #: ui/views/settings/window-chrome-section.slint
 msgid "Changing the system tray icon requires restarting Netodia. Restart now?"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "NetEase account"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "NetEase Music account"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Sign in to NetEase Music"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Connect an account to use personal recommendations, collections and playback permissions"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Phone"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Email"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Country code"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Phone number"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Password"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Enter your phone number"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Enter your password"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Enter your email address"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Sign in"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Sign out"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "The system credential store is unavailable. This session will end when Netodia closes."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Connecting…"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "QR code"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scan this code with the NetEase Music app"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Generating QR code…"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scan this code with the NetEase Music app."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scanned. Confirm login on your phone."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "QR code expired. Refresh to try again."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Login successful."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Could not start QR login."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Refresh code"
-msgstr ""
-
-#: ui/views/favorites/cloud-favorites-songs-tab.slint
-msgid "Remove from favorites"
-msgstr ""
-
-#: ui/views/favorites/cloud-favorites-songs-tab.slint
-msgid "Loading favorites…"
-msgstr ""
-
-#: ui/views/favorites/cloud-favorites-songs-tab.slint
-msgid "No NetEase favorites yet"
-msgstr ""
-
-#: ui/views/favorites/cloud-favorites-songs-tab.slint ui/views/my-library/playlists-tab.slint
-msgid "Retry"
-msgstr ""
-
-#: ui/views/my-library/playlists-tab.slint
-msgid "Loading collected playlists…"
-msgstr ""
-
-#: ui/views/my-library/playlists-tab.slint
-msgid "No collected playlists yet"
-msgstr ""
-
-#: ui/views/my-library/playlists-tab.slint
-msgid "Playlists you collect on NetEase will appear here."
-msgstr ""
-
-#: ui/components/now-playing/overflow-menu.slint
-msgid "Audio quality"
-msgstr ""
-
-#: ui/components/now-playing/overflow-menu.slint
-msgid "Standard"
-msgstr ""
-
-#: ui/components/now-playing/overflow-menu.slint
-msgid "Higher"
-msgstr ""
-
-#: ui/components/now-playing/overflow-menu.slint
-msgid "Lossless"
-msgstr ""
-
-#: ui/components/now-playing/overflow-menu.slint
-msgid "Very high"
-msgstr ""
-
-#: ui/components/now-playing/flyout-presets.slint
-msgid "Standard · 128 kbps"
-msgstr ""
-
-#: ui/components/now-playing/flyout-presets.slint
-msgid "Higher · 192 kbps"
-msgstr ""
-
-#: ui/components/now-playing/flyout-presets.slint
-msgid "Very high · 320 kbps"
-msgstr ""
-
-#: ui/components/now-playing/flyout-presets.slint
-msgid "Lossless · FLAC"
-msgstr ""
-
-#: ui/components/dialog/smart-playlist-editor-body.slint
-msgid "Saved rule"
-msgstr ""
-
-#: ui/components/dialog/smart-playlist-editor-body.slint
-msgid "Saved order"
-msgstr ""
-
-#: ui/views/my-library/playlist-detail.slint
-msgid "This NetEase playlist has no available tracks."
 msgstr ""

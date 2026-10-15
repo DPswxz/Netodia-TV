@@ -4,6 +4,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 
 use slint::{ComponentHandle, SharedString, Weak};
 
@@ -67,7 +68,7 @@ async fn fetch_playlist_detail(
     playlist_id: i64,
 ) -> AppResult<(PlaylistStats, Vec<RsTrackListRow>)> {
     let ((playlist, songs), liked_ids) =
-        tokio::try_join!(state.cloud.saved_playlist(playlist_id), state.cloud.liked_ids(),)?;
+        tokio::try_join!(state.cloud.library_playlist(playlist_id), state.cloud.liked_ids(),)?;
     let liked_ids: HashSet<i64> = liked_ids.into_iter().collect();
     let thumbnail_path =
         playlists_ui.grid_stats_by_id(playlist_id).and_then(|stats| stats.thumbnail_path);
@@ -171,6 +172,7 @@ where
     F: FnOnce(&AppWindow) + Send + 'static,
 {
     let account_generation = state.cloud.status().generation;
+    let request = playlists_ui.detail_request.fetch_add(1, Ordering::AcqRel).wrapping_add(1);
     let (detail, mut tracks) = fetch_playlist_detail(state, playlists_ui, playlist_id).await?;
 
     // `fetch_playlist_detail` returns tracks in playlist position order — capture that as the
@@ -186,7 +188,9 @@ where
         detail.thumbnail_path.clone(),
     )
     .await;
-    if state.cloud.status().generation != account_generation {
+    if state.cloud.status().generation != account_generation
+        || playlists_ui.detail_request.load(Ordering::Acquire) != request
+    {
         return Err(netodia_core::error::AppError::network_msg("网易云账号已切换，歌单加载已取消"));
     }
 
@@ -212,7 +216,9 @@ where
     let playlists_ui = playlists_ui.clone();
     let cloud = state.cloud.clone();
     let _ = weak.upgrade_in_event_loop(move |ui| {
-        if cloud.status().generation != account_generation {
+        if cloud.status().generation != account_generation
+            || playlists_ui.detail_request.load(Ordering::Acquire) != request
+        {
             return;
         }
         let g = ui.global::<PlaylistDetail>();

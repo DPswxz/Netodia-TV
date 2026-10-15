@@ -15,6 +15,10 @@ use tokio::sync::{Mutex, RwLock};
 use super::endpoints::{self as ep, Endpoint, Protocol};
 use super::{Error, Result, crypto};
 
+#[cfg(test)]
+#[path = "tests/library_tests.rs"]
+mod library_tests;
+
 const ANDROID_UA: &str = "NeteaseMusic/9.5.61.260802021928(9005061);Dalvik/2.1.0 (Linux; U; Android 12; HBN-AL00 Build/cd737a2.0)";
 const WEAPI_UA: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0";
 const EAPI_UA: &str = "NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)";
@@ -546,6 +550,60 @@ impl Client {
         let body = self.request(ep::DAILY, json!({"afresh":false})).await?;
         decode(body["data"]["dailySongs"].clone())
     }
+
+    pub async fn recommendations(&self) -> Result<Vec<Playlist>> {
+        field(self.request(ep::RECOMMENDATIONS, json!({})).await?, "recommend")
+    }
+
+    pub async fn intelligence(
+        &self,
+        song_id: i64,
+        playlist_id: i64,
+        start_music_id: i64,
+    ) -> Result<Vec<Song>> {
+        let body = self
+            .request(
+                ep::INTELLIGENCE,
+                json!({
+                    "songId": song_id, "playlistId": playlist_id, "startMusicId": start_music_id,
+                    "type": "fromPlayOne", "count": 20
+                }),
+            )
+            .await?;
+        decode_intelligence_songs(&body)
+    }
+
+    pub async fn similar_songs(&self, song_id: i64) -> Result<Vec<Song>> {
+        field(
+            self.request(ep::SIMILAR_SONGS, json!({"songid": song_id, "limit": 30, "offset": 0}))
+                .await?,
+            "songs",
+        )
+    }
+
+    pub async fn liked_playlist_id(&self, uid: i64) -> Result<i64> {
+        let body = self
+            .request(
+                ep::USER_PLAYLISTS,
+                json!({"uid":uid,"offset":0,"limit":30,"includeVideo":false}),
+            )
+            .await?;
+        decode_liked_playlist_id(&body)
+    }
+
+    pub async fn created_playlists_page(
+        &self,
+        uid: i64,
+        offset: u64,
+    ) -> Result<(Vec<Playlist>, bool)> {
+        let body = self
+            .request(
+                ep::USER_PLAYLISTS,
+                json!({"uid":uid,"offset":offset,"limit":30,"includeVideo":false}),
+            )
+            .await?;
+        decode_created_playlists(&body, uid)
+    }
     pub async fn fm(&self) -> Result<Vec<Song>> {
         field(self.request(ep::FM, json!({})).await?, "data")
     }
@@ -669,17 +727,27 @@ fn decode<T: DeserializeOwned>(body: Value) -> Result<T> {
 }
 
 fn decode_saved_playlists(body: &Value, uid: i64) -> Result<(Vec<Playlist>, bool)> {
+    decode_playlist_page(body, |playlist| {
+        playlist["creator"]["userId"].as_i64().is_none_or(|owner| owner != uid)
+    })
+}
+
+fn decode_created_playlists(body: &Value, uid: i64) -> Result<(Vec<Playlist>, bool)> {
+    decode_playlist_page(body, |playlist| playlist["creator"]["userId"].as_i64() == Some(uid))
+}
+
+fn decode_intelligence_songs(body: &Value) -> Result<Vec<Song>> {
+    let entries = body["data"].as_array().ok_or(Error::InvalidResponse)?;
+    entries.iter().map(|entry| decode(entry["songInfo"].clone())).collect()
+}
+
+fn decode_playlist_page(
+    body: &Value,
+    include: impl Fn(&Value) -> bool,
+) -> Result<(Vec<Playlist>, bool)> {
     let raw = body["playlist"].as_array().ok_or(Error::InvalidResponse)?;
     let page_len = raw.len();
-    let collected = raw
-        .iter()
-        .filter(|playlist| {
-            // `/user/playlist` returns both the user's own playlists and subscriptions.
-            // The application library represents saved playlists, so omit the former.
-            playlist["creator"]["userId"].as_i64().is_none_or(|owner| owner != uid)
-        })
-        .cloned()
-        .collect::<Vec<_>>();
+    let collected = raw.iter().filter(|playlist| include(playlist)).cloned().collect::<Vec<_>>();
     let playlists = decode(Value::Array(collected))?;
     let more = body["more"].as_bool().unwrap_or(page_len >= 30);
     Ok((playlists, more))

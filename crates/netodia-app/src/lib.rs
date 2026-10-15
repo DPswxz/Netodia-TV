@@ -11,6 +11,7 @@
 
 pub mod cloud;
 pub mod cloud_playback;
+pub mod cloud_roaming;
 pub mod library;
 pub mod services;
 pub mod state;

@@ -1263,6 +1263,11 @@ Favorites (nav 2), Recently Played (nav 8) and My Library (nav 3) share one cont
 block first; each page's section below is deltas only.** The nav-index map is in the root
 `CLAUDE.md`.
 
+My Library's visible account categories live in `Playlists.category`, persisted separately as
+`music_library_category`. They share the playlist grid and detail; `MyLibrary.tab-*` still routes
+the legacy cross-section detail targets. Its bar's two arrays therefore match
+`Playlists.category-count`, while section gates still follow `MyLibrary.tab-idx`.
+
 - **`<Page>.tab-count` is the sole definition of how many tabs exist.** Rust clamps the persisted
   index through `clamp_tab`, never its own const, and a per-page test `include_str!`s the `.slint`
   to pin the number against the `tab-*` constants, the body branches and both inline `@tr` arrays.

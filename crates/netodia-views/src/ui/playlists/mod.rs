@@ -28,6 +28,7 @@ mod state;
 
 use std::rc::Rc;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicI32, AtomicU64, Ordering};
 
 use parking_lot::Mutex;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
@@ -39,6 +40,7 @@ use crate::ui::track_detail::DetailCache;
 use crate::ui::util::{clamp_i64_to_i32, opt_shared};
 use crate::ui::view_ctx::ViewCtx;
 use netodia_artwork::media::image::cover_thumbs::CoverThumbs;
+use netodia_core::entities::cloud::MusicLibraryCategory;
 use netodia_core::entities::playlist::PlaylistStats;
 use netodia_ui::{
     AppWindow, PlaylistDetail, PlaylistGridRow as UiPlaylistGridRow, PlaylistRow as UiPlaylistRow,
@@ -77,6 +79,7 @@ pub fn install(cx: ViewCtx<'_>) -> Arc<PlaylistsUi> {
     install_models(cx.app);
     let playlists_ui =
         Arc::new(PlaylistsUi::new(cx.cover_thumbs.clone(), detail_artwork::blur_spec(cx.app)));
+    playlists_ui.category.store(cx.app.global::<Playlists>().get_category(), Ordering::Release);
     callbacks::wire(cx.app, cx.state, &playlists_ui);
     playlists_ui
 }
@@ -85,6 +88,11 @@ pub fn install(cx: ViewCtx<'_>) -> Arc<PlaylistsUi> {
 /// the UI callbacks (`callbacks::wire`) and the async fetchers. Mirrors
 /// `AlbumsUi` field-for-field.
 pub struct PlaylistsUi {
+    category: AtomicI32,
+    grid_request: AtomicU64,
+    detail_request: AtomicU64,
+    roaming_request: AtomicU64,
+    roaming_cancel: Mutex<tokio_util::sync::CancellationToken>,
     grid: PlaylistGridState,
     detail: PlaylistDetailState,
     /// Row-tier cache — shared with Tracks / Browse — backs the
@@ -102,6 +110,11 @@ pub struct PlaylistsUi {
 impl PlaylistsUi {
     fn new(cover_thumbs: Arc<CoverThumbs>, hero_blur: Option<BlurSpec>) -> Self {
         Self {
+            category: AtomicI32::new(0),
+            grid_request: AtomicU64::new(0),
+            detail_request: AtomicU64::new(0),
+            roaming_request: AtomicU64::new(0),
+            roaming_cancel: Mutex::new(tokio_util::sync::CancellationToken::new()),
             grid: PlaylistGridState {
                 data: Mutex::new(Arc::new(GridData::new(Vec::new()))),
                 index_cache: Mutex::new(None),
@@ -116,8 +129,19 @@ impl PlaylistsUi {
         }
     }
 
+    fn category(&self) -> MusicLibraryCategory {
+        MusicLibraryCategory::from_index(self.category.load(Ordering::Acquire))
+    }
+
+    fn grid_request_current(&self, request: u64) -> bool {
+        self.grid_request.load(Ordering::Acquire) == request
+    }
+
     /// Drop the account-scoped grid and detail rows before another session is published.
     pub(crate) fn clear_account_data(&self) {
+        self.grid_request.fetch_add(1, Ordering::AcqRel);
+        self.detail_request.fetch_add(1, Ordering::AcqRel);
+        self.roaming_cancel.lock().cancel();
         crate::ui::window_chrome::set_current_playlist_id(-1);
         self.detail_artwork.clear();
         let _gate = self.section.gate();

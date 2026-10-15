@@ -1,0 +1,46 @@
+import { Theme } from "../../theme.slint";
+import { MaterialIcon } from "../../components/material-icon.slint";
+
+export component LibraryEntryCard inherits Rectangle {
+    in property <string> title;
+    in property <string> subtitle;
+    in property <string> icon;
+    in property <bool> active;
+    callback activated();
+
+    min-height: 124px;
+    border-radius: 16px;
+    background: touch.has-hover ? Theme.surface1 : Theme.surface0;
+    border-width: root.active ? 2px : 0px;
+    border-color: Theme.accent;
+    accessible-role: button;
+    accessible-label: root.title;
+    accessible-action-default => { root.activated(); }
+
+    HorizontalLayout {
+        padding: Theme.pad-lg;
+        spacing: Theme.pad-md;
+        VerticalLayout {
+            alignment: center;
+            MaterialIcon { name: root.icon; icon-size: 36px; icon-color: Theme.accent; }
+        }
+        VerticalLayout {
+            alignment: center;
+            spacing: Theme.pad-xs;
+            Text { text: root.title; color: Theme.text; font-size: Theme.font-size-lg; font-weight: 600; overflow: elide; }
+            Text { text: root.subtitle; color: Theme.subtext0; font-size: Theme.font-size-sm; wrap: word-wrap; }
+        }
+        VerticalLayout {
+            alignment: center;
+            MaterialIcon { name: "play_arrow"; icon-size: 24px; icon-color: Theme.accent; }
+        }
+    }
+    touch := TouchArea { mouse-cursor: pointer; clicked => { root.activated(); } }
+    focus := FocusScope {
+        key-pressed(event) => {
+            if (event.text == " " || event.text == "\n") { root.activated(); return accept; }
+            return reject;
+        }
+    }
+    forward-focus: focus;
+}

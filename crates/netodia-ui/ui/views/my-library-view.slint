@@ -23,7 +23,8 @@ import { ArtistDetailBody } from "my-library/artist-detail.slint";
 import { GenreDetailBody } from "my-library/genre-detail.slint";
 import { PlaylistDetailBody } from "my-library/playlist-detail.slint";
 
-// My Library: five tabs over the views that used to be five sidebar entries. This file is the mount
+// My Library's four account categories share the playlist surface. Legacy detail drill targets
+// retain their internal indices. This file is the mount
 // sheet — the band, the grid geometry the four card tabs share, which body is on screen, and the
 // two tooltip frames the band and the pills publish anchors for.
 //
@@ -89,7 +90,9 @@ export component MyLibraryView inherits Rectangle {
     // owned by `latch-count`, which is unguarded so `init` can take ownership on a page mounting
     // straight onto a grid. The guard is at the two call sites and is `!detail-open`.
     property <string> live-count:
-        MyLibrary.tab-idx == MyLibrary.tab-songs
+        MyLibrary.tab-idx == MyLibrary.tab-playlists && Playlists.category == 2 ? @tr("Recommended playlists")
+        : MyLibrary.tab-idx == MyLibrary.tab-playlists && Playlists.category == 3 ? @tr("Infinite roaming")
+        : MyLibrary.tab-idx == MyLibrary.tab-songs
             ? (Tracks.total-count >= 0
                 ? @tr("{n} song" | "{n} songs" % Tracks.total-count) : "")
         : MyLibrary.tab-idx == MyLibrary.tab-albums
@@ -232,19 +235,20 @@ export component MyLibraryView inherits Rectangle {
     VerticalLayout {
         band := LibraryTabBand {
             // Inline literals: `@tr` folds msgids at codegen, so a Rust-seeded `[string]`
-            // renders untranslated. Order matches `MyLibrary.tab-*`.
-            tab-labels: [@tr("Playlists"), @tr("Songs"), @tr("Albums"), @tr("Artists"), @tr("Genres")];
-            tab-icons: ["playlist_play", "music_note", "album", "person", "theater_comedy"];
-            tab-idx <=> MyLibrary.tab-idx;
+            // renders untranslated. Order matches MusicLibraryCategory::from_index.
+            tab-labels: [@tr("Collected playlists"), @tr("Created playlists"), @tr("Recommendations"), @tr("Infinite roaming")];
+            tab-icons: ["favorite", "playlist_play", "auto_awesome", "shuffle"];
+            tab-idx <=> Playlists.category;
             // The bodies read the direction off `band.tab-enter-from`, never through
             // `Nav.pending-enter-from` — that global belongs to the sidebar's own
             // transition, and a write here would leave a stale `right`/`left` for
             // whichever *page* mounts next.
-            tab-selected(i) => { MyLibrary.tab-changed(i); }
+            tab-selected(i) => { Playlists.category-changed(i); }
 
             filter <=> MyLibrary.filter;
             blur-tick: MyLibrary.blur-search-tick;
             search-edited(t) => { root.filter-tick-pending += 1; }
+            search-shown: Playlists.category != 3 || root.detail-open;
 
             // The **latched** sentence, not the live ternary — see `live-count` above for
             // what a drill does to a line that re-reads the arriving tab mid-fade. Every

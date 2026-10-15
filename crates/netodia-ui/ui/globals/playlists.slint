@@ -4,6 +4,16 @@ import { PlaylistRow, PlaylistGridRow, TrackListRow, TrackColumns } from "../mod
 // and `apply-filter` re-derives `grid-rows` with no DB hit. Sorted by most-recently-updated and
 // staying that way — the view exposes no sort UI.
 export global Playlists {
+    // Account categories share the grid and detail; MyLibrary's old indices remain drill targets.
+    out property <int> category-count: 4;
+    in-out property <int> category: 0;
+    callback category-changed(int);
+    callback open-special(int);
+    callback start-roaming(int);
+    callback stop-roaming();
+    in-out property <int> roaming-mode: -1;
+    in-out property <bool> roaming-loading: false;
+    in-out property <string> roaming-error;
     in-out property <[PlaylistGridRow]> grid-rows;
     // The flat list behind the Add-to-Playlist submenu, kept in step with `grid-rows` so the
     // submenu always lists every playlist in display order.
@@ -12,6 +22,7 @@ export global Playlists {
     in-out property <int> total-count: -1;      // pre-filter playlist count
     in-out property <bool> cloud-loading: false;
     in-out property <string> cloud-error;
+    in-out property <int> retry-special: -1;
     in-out property <int> columns: 4;           // view-computed; always >= 1
     in-out property <string> filter;
     in-out property <string> sort-field: "updated"; // "name" | "track_count" | "updated"
