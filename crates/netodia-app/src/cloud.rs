@@ -13,8 +13,7 @@ use netodia_core::entities::cloud::{
     Quality, RecentSong, RoamingMode, SearchKind, SearchResult, Song, StreamTicket,
 };
 use netodia_core::error::{AppError, AppResult};
-use netodia_net::netease::Client;
-pub use netodia_net::netease::QrStatus;
+use netodia_net::netease::{Client, QrStatus as NetEaseQrStatus};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, watch};
 use tokio_util::sync::CancellationToken;
@@ -25,6 +24,15 @@ const SESSION_VERSION: u8 = 1;
 const COVER_SIZE: &str = "512y512";
 type LikedIdsCache = Arc<parking_lot::RwLock<Option<(i64, u64, HashSet<i64>)>>>;
 type RecentSongsCache = Arc<parking_lot::RwLock<Option<(i64, u64, Vec<RecentSong>)>>>;
+
+/// QR sign-in progress exposed to the application and view layers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum QrStatus {
+    Expired,
+    Waiting,
+    Confirming,
+    Authorized,
+}
 
 /// Returns a bounded NetEase image URL while leaving other HTTP artwork sources intact.
 pub fn cover_request_url(source: &str) -> Option<reqwest::Url> {
@@ -595,7 +603,12 @@ impl CloudService {
 
     pub async fn check_qr_login(&self, key: &str) -> AppResult<QrStatus> {
         let _guard = self.transition.lock().await;
-        let result = self.client.qr_check(key).await?;
+        let result = match self.client.qr_check(key).await? {
+            NetEaseQrStatus::Expired => QrStatus::Expired,
+            NetEaseQrStatus::Waiting => QrStatus::Waiting,
+            NetEaseQrStatus::Confirming => QrStatus::Confirming,
+            NetEaseQrStatus::Authorized => QrStatus::Authorized,
+        };
         if result == QrStatus::Authorized {
             let account = self.client.account().await?;
             self.complete_login(account).await?;
