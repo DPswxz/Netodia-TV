@@ -364,7 +364,7 @@ io_other_error              = "warn"
 winit = { path = "winit" }
 
 [profile.release]
-lto = "thin"
+lto = "fat"
 codegen-units = 1
 panic = "abort"
 # DWARF is most of the size win; symbols stay because `strip = true` leaves panic
