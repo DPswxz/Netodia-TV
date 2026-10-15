@@ -35,11 +35,8 @@ const CARD_SELECTION_HOMES: [&str; 4] = [
 
 /// The three grids that can fit on one row, each reading the count off whichever model its mounted
 /// tab drew.
-const LONE_ROW_MOUNTS: [&str; 3] = [
-    "views/browse-view.slint",
-    "views/my-library-view.slint",
-    "views/recently-played-view.slint",
-];
+const LONE_ROW_MOUNTS: [&str; 3] =
+    ["views/browse-view.slint", "views/my-library-view.slint", "views/recently-played-view.slint"];
 
 /// The queue sheet owns Escape for as long as it is up and clears its own selection on the first
 /// press, so joining the dispatcher would put a second arm in front of that one.
