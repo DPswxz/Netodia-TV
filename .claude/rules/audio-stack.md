@@ -91,7 +91,7 @@ half. What lives here is what crosses them.
 
 `source/stream_source.rs` and `source/prebuffer.rs` argue their own designs; what lives here is what crosses
 modules. The half outside the stack — the facade, the off switch, the station tables — is
-`.claude/rules/radio.md`.
+`docs/plans/RETIRED_RADIO_DESIGN.md`, which records the retired radio design.
 
 - **The network may never touch the audio callback thread** (`docs/adr/`). The mixer pulls `AudioSource::next()` inside the cpal data callback, so a blocking socket read stalls the whole block, local tracks included, for as long as the network is wedged. The ring decouples them: its feed thread fills, `PrebufferSource` pops without blocking, and a dry ring **yields silence rather than ending** — `Some(0.0)`, never `None`, since ending the source would tear the deck down on a stall the connection is about to recover from.
 - **A deck converts each source from the rate *it* reports, and the bug that fact retired was only visible on the *second* station.** rodio built one converter per voice out of whichever source reached the deck first, rebuilt only at a span boundary, so a source answering `None` to `current_span_len` pinned every station after the first to the first one's rate for the life of the process. That method is gone with the mechanism; the property is not, and `crates/netodia/tests/stream_rate.rs` still plays two `PrebufferSource`s at different rates through one deck on a device-free mixer and reads the rate back off a square wave. It has to be read there: below the mixer every sample the source handed over was correct and in order, which is why no unit test on the source could ever see it.

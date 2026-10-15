@@ -1,37 +1,7 @@
----
-paths:
-  - crates/netodia-views/src/ui/radio/**/*.rs
-  - crates/netodia-app/src/library/radio/**/*.rs
-  - crates/netodia-app/src/library/radio_files.rs
-  - crates/netodia-net/src/services/net/radio_browser/**/*.rs
-  - crates/netodia-audio/src/player/source/stream_source.rs
-  - crates/netodia-audio/src/player/source/prebuffer.rs
-  - crates/netodia-audio/src/player/source/stream_decode.rs
-  - crates/netodia-net/src/media/fetch/station_logo.rs
-  - crates/netodia-artwork/src/media/image/logo_tile.rs
-  - crates/netodia-core/src/entities/radio.rs
-  - crates/netodia-store/src/database/queries/radio.rs
-  - crates/netodia-app/src/tasks/radio_logo_cache.rs
-  - crates/netodia-app/src/library/settings/radio.rs
-  - crates/netodia-views/src/ui/settings/radio_settings.rs
-  - crates/netodia-ui/ui/globals/radio.slint
-  - crates/netodia-ui/ui/components/station-facts.slint
-  - crates/netodia-ui/ui/views/radio-view.slint
-  - crates/netodia-ui/ui/views/radio/browse-tab.slint
-  - crates/netodia-ui/ui/views/radio/kept-stations-tab.slint
-  - crates/netodia-ui/ui/views/radio/station-detail.slint
-  - crates/netodia-ui/ui/views/radio/station-card.slint
-  - crates/netodia-ui/ui/views/radio/station-grid.slint
-  - crates/netodia-ui/ui/components/grid/station-context-menu.slint
-  - crates/netodia-ui/ui/views/radio/facet-chip.slint
-  - crates/netodia-ui/ui/views/radio/suggestion-pill.slint
-  - crates/netodia-ui/ui/views/radio/tab-pills.slint
-  - crates/netodia-ui/ui/views/settings/radio-section.slint
-  - crates/netodia-ui/ui/components/dialog/add-station-body.slint
-  - migrations/20260820000000_radio_stations.sql
----
-
 # Internet radio
+
+Retired design note. The radio feature was removed from the application; this file preserves its
+previous architecture for reference and is no longer an active path-scoped rule.
 
 The couplings no single file can hold: an off switch enforced one place and observable from four,
 two tables the artwork sweep has to know about, a stream whose prohibitions and dependency pins

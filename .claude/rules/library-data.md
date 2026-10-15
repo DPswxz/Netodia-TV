@@ -12,7 +12,6 @@ paths:
   - migrations/**/*.sql
   - crates/netodia-ui/ui/components/dialog/smart-playlist-editor-body.slint
   - crates/netodia-ui/ui/components/dialog/tag-editor-body.slint
-  - crates/netodia-ui/ui/components/star-rating.slint
 ---
 
 # The library — scan, projections, and the write-through paths
