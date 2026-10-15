@@ -14,10 +14,9 @@ use std::path::Path;
 use netodia_app::services::updater::manifest::SUPPORTED_MANIFEST_SCHEMA;
 use netodia_testkit::{REPO_ROOT, strip_line_comments};
 
-/// One artifact-signing call plus the two that sign a manifest. An equality rather than a floor:
-/// a fourth signing workflow added without the fields is exactly the regression, and a floor
-/// would wave it through.
-const SIGNING_INVOCATIONS: usize = 3;
+/// One artifact-signing call and one release-manifest signing call. An equality rather than a
+/// floor: any new caller must pass the same fields, and a removed caller must update this contract.
+const SIGNING_INVOCATIONS: usize = 2;
 
 /// Ten from `format_key`, twelve from the script. Equalities so that adding a platform has to be
 /// done on both sides at once rather than on whichever one the change started in.
@@ -54,7 +53,7 @@ fn workflows() -> Vec<(String, String)> {
     // Counted rather than skipped: a workflow that fails to read is one this walk would otherwise
     // clear without looking at.
     assert!(unreadable.is_empty(), "unreadable workflows: {unreadable:?}");
-    assert!(found.len() >= SIGNING_INVOCATIONS, "only {} workflows found", found.len());
+    assert!(!found.is_empty(), "no workflows found under `{}`", dir.display());
     found.sort();
     found
 }
@@ -85,8 +84,8 @@ fn platform_keys(src: &str) -> BTreeSet<String> {
 }
 
 /// `minisign.rs` parses `version=` out of every signature and `manifest=` out of the manifest's,
-/// and refuses the install when either is missing. The tokens are produced three workflows away
-/// and nothing else asks whether the two vocabularies still match.
+/// and refuses the install when either is missing. The release workflow produces both tokens and
+/// nothing else asks whether the two vocabularies still match.
 #[test]
 fn every_signature_carries_the_trusted_comment_fields_the_client_parses() {
     let mut comments = Vec::new();
@@ -119,8 +118,8 @@ fn every_signature_carries_the_trusted_comment_fields_the_client_parses() {
         comments.iter().filter(|(_, c)| c.contains("file={file}")).collect();
 
     // `manifest=true` is the domain separation that stops an artifact signature being swapped into
-    // the manifest's slot; both the draft-time build and the post-publish refresh owe it.
-    assert_eq!(manifests.len(), 2, "expected two manifest signatures, got {manifests:?}");
+    // the manifest's slot; the release workflow's manifest signature owes it.
+    assert_eq!(manifests.len(), 1, "expected one manifest signature, got {manifests:?}");
     assert_eq!(artifacts.len(), 1, "expected one artifact signature, got {artifacts:?}");
     let (name, artifact) = artifacts[0];
     assert!(
@@ -129,7 +128,7 @@ fn every_signature_carries_the_trusted_comment_fields_the_client_parses() {
     );
 }
 
-/// The `-t` flag itself lives in the composite action all three callers delegate to, so the
+/// The `-t` flag itself lives in the composite action both callers delegate to, so the
 /// fields above reach a signature only while this step still passes them. `-SH` is the other half:
 /// a signature that isn't prehashed can't be verified as the artifact streams, and the client
 /// rejects it outright.
