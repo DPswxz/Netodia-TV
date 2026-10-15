@@ -513,10 +513,7 @@ impl Client {
 
     pub async fn stream(&self, id: i64, quality: Quality) -> Result<StreamTicket> {
         let body = self
-            .request(
-                ep::STREAM,
-                json!({"ids":format!("[{id}]"),"level":quality.level(),"encodeType":"flac"}),
-            )
+            .request(ep::STREAM, json!({"ids":format!("[{id}]"),"br":quality.bitrate()}))
             .await?;
         let row = body["data"]
             .as_array()

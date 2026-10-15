@@ -1,6 +1,23 @@
-use super::{decode_created_playlists, decode_intelligence_songs, decode_saved_playlists};
+use super::{decode_created_playlists, decode_intelligence_songs, decode_saved_playlists, ep};
 use crate::netease::Result;
+use crate::netease::endpoints::Protocol;
+use netodia_core::entities::cloud::Quality;
 use serde_json::json;
+
+#[test]
+fn stream_quality_uses_yesplaymusic_bitrates() {
+    assert_eq!(ep::STREAM.path, "/api/song/enhance/player/url");
+    assert_eq!(ep::STREAM.protocol, Protocol::Weapi);
+    for (quality, bitrate) in [
+        (Quality::Standard, 128_000),
+        (Quality::Higher, 192_000),
+        (Quality::Exhigh, 320_000),
+        (Quality::Lossless, 350_000),
+        (Quality::Hires, 999_000),
+    ] {
+        assert_eq!(quality.bitrate(), bitrate);
+    }
+}
 
 #[test]
 fn created_and_collected_pages_partition_account_playlists() -> Result<()> {
