@@ -60,6 +60,8 @@ export component TrackListRowItem inherits Rectangle {
     property <bool> selecting: root.view-selected-ids.length > 0;
     // Shift as it stood on the press the pick is about to complete; see `touch.clicked`.
     property <bool> press-shift;
+    property <length> press-link-x;
+    property <length> press-link-y;
     // Disk-only Browse rows arrive `enabled == false` — dimmed, and swallowing every
     // interaction: row body, # checkbox, favourite button and right-click menu alike.
     property <bool> enabled: root.row-data.enabled;
@@ -70,6 +72,34 @@ export component TrackListRowItem inherits Rectangle {
     // macOS Light and sat exactly on it under two other light variants. The whole list, header
     // included, is on this one rung, and hierarchy comes from size and weight instead.
     property <brush> ink: (root.playing ? Theme.accent : Theme.text).transparentize(1.0 - root.fade);
+    // These IDs are local library keys. Cloud rows carry remote service IDs and keep their normal
+    // play-on-click behavior instead of treating those IDs as local detail targets.
+    property <bool> artist-link-enabled: !root.cloud-row && root.enabled
+        && root.row-data.artist_id > 0 && root.view-context != "artist-detail";
+    property <bool> album-link-enabled: !root.cloud-row && root.enabled
+        && root.row-data.album_id > 0 && root.view-context != "album-detail";
+    property <bool> artist-link-hovered: root.artist-link-enabled && root.columns.show_artist
+        && touch.has-hover
+        && touch.mouse-x >= root.layout.artist_x
+        && touch.mouse-x < root.layout.artist_x + min(root.layout.artist_w, artist-cell.label-width)
+        && touch.mouse-y >= (touch.height - artist-cell.label-height) / 2
+        && touch.mouse-y < (touch.height + artist-cell.label-height) / 2;
+    property <bool> album-link-hovered: root.album-link-enabled && root.columns.show_album
+        && touch.has-hover
+        && touch.mouse-x >= root.layout.album_x
+        && touch.mouse-x < root.layout.album_x + min(root.layout.album_w, album-cell.label-width)
+        && touch.mouse-y >= (touch.height - album-cell.label-height) / 2
+        && touch.mouse-y < (touch.height + album-cell.label-height) / 2;
+    property <bool> artist-link-pressed: root.artist-link-enabled && root.columns.show_artist
+        && root.press-link-x >= root.layout.artist_x
+        && root.press-link-x < root.layout.artist_x + min(root.layout.artist_w, artist-cell.label-width)
+        && root.press-link-y >= (touch.height - artist-cell.label-height) / 2
+        && root.press-link-y < (touch.height + artist-cell.label-height) / 2;
+    property <bool> album-link-pressed: root.album-link-enabled && root.columns.show_album
+        && root.press-link-x >= root.layout.album_x
+        && root.press-link-x < root.layout.album_x + min(root.layout.album_w, album-cell.label-width)
+        && root.press-link-y >= (touch.height - album-cell.label-height) / 2
+        && root.press-link-y < (touch.height + album-cell.label-height) / 2;
 
     // Drives context-menu entry visibility (no "Go to Album" inside Album Detail, "Remove from
     // Playlist" only in Playlist Detail) and the current-playlist exclusion in the Add-to-Playlist
@@ -214,7 +244,7 @@ export component TrackListRowItem inherits Rectangle {
             mouse-cursor:
                 root.enable-drag && self.pressed && root.drag-started
                     ? grabbing
-                    : default;
+                    : (root.artist-link-hovered || root.album-link-hovered ? pointer : default);
             // A row-body click picks only once the view holds a selection, so the first pick is
             // the box's and an idle list can't select by accident. **On `clicked`** rather than
             // the release: this row's favourite toggle and star strip are the worked example in
@@ -223,8 +253,14 @@ export component TrackListRowItem inherits Rectangle {
             clicked => {
                 if (root.enabled && root.cloud-row && root.single-click-play) {
                     root.clicked-row();
-                } else if (!root.cloud-row && root.enabled && root.selecting && !root.drag-started) {
-                    root.pick(root.press-shift);
+                } else if (!root.cloud-row && root.enabled && !root.drag-started) {
+                    if (root.artist-link-pressed) {
+                        root.go-to-artist(root.row-data.artist_id);
+                    } else if (root.album-link-pressed) {
+                        root.go-to-album(root.row-data.album_id);
+                    } else if (root.selecting) {
+                        root.pick(root.press-shift);
+                    }
                 }
             }
             // Still plays while a selection is live: the two clicks pick and unpick, so the set
@@ -241,6 +277,8 @@ export component TrackListRowItem inherits Rectangle {
                 // the press that armed it.
                 if (ev.kind == PointerEventKind.down && ev.button == PointerEventButton.left) {
                     root.press-shift = ev.modifiers.shift;
+                    root.press-link-x = self.mouse-x;
+                    root.press-link-y = self.mouse-y;
                 }
                 if (ev.kind == PointerEventKind.up && ev.button == PointerEventButton.left) {
                     root.request-blur-search();
@@ -423,7 +461,8 @@ export component TrackListRowItem inherits Rectangle {
 
             // Uniform elide-with-LRM cells; year and length are structurally different and stay
             // inline below.
-            if root.columns.show_artist: DataCell {
+            artist-cell := DataCell {
+                visible: root.columns.show_artist;
                 x: root.layout.artist_x;
                 y: 0;
                 width: root.layout.artist_w;
@@ -434,9 +473,10 @@ export component TrackListRowItem inherits Rectangle {
                 text-content: root.row-data.artist != ""
                     ? root.row-data.artist
                     : @tr("Unknown artist");
-                ink: root.ink;
+                ink: root.artist-link-hovered ? Theme.accent : root.ink;
             }
-            if root.columns.show_album: DataCell {
+            album-cell := DataCell {
+                visible: root.columns.show_album;
                 x: root.layout.album_x;
                 y: 0;
                 width: root.layout.album_w;
@@ -444,7 +484,7 @@ export component TrackListRowItem inherits Rectangle {
                 text-content: root.row-data.album != ""
                     ? root.row-data.album
                     : @tr("Unknown album");
-                ink: root.ink;
+                ink: root.album-link-hovered ? Theme.accent : root.ink;
             }
             if root.columns.show_genre: DataCell {
                 x: root.layout.genre_x;
