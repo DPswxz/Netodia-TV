@@ -237,17 +237,16 @@ fn clamp_stars_bounds_both_ends_of_the_strip() {
     assert_eq!(clamp_stars(MAX_STARS + 1), MAX_STARS);
 }
 
-/// [`MAX_STARS`] is the scale every conversion here divides by, and the strip that draws it spells
-/// its own count as a loop bound. Nothing else holds the two together, so a sixth star added to
-/// the markup would silently leave every percentage reading one star short.
+/// [`MAX_STARS`] is the scale every conversion here divides by. Keep the Rust boundary conversion
+/// and both Slint track-model fields on the same range.
 #[test]
-fn the_strip_draws_exactly_max_stars_glyphs() {
-    const STRIP: &str = include_str!("../../../../../netodia-ui/ui/components/star-rating.slint");
+fn slint_models_share_the_star_rating_range() {
+    const MODELS: &str = include_str!("../../../../../netodia-ui/ui/models.slint");
 
-    let needle = format!("for i in {MAX_STARS}:");
-    assert!(
-        netodia_testkit::strip_line_comments(STRIP).contains(&needle),
-        "`star-rating.slint` no longer draws {MAX_STARS} glyphs — `{needle}` is gone, so the \
-         markup and `MAX_STARS` have parted company"
+    let needle = format!("// 0–{MAX_STARS}, 0 = unrated");
+    assert_eq!(
+        MODELS.matches(&needle).count(),
+        2,
+        "Slint must declare both track-model ratings on the 0–{MAX_STARS} scale"
     );
 }

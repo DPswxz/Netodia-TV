@@ -70,6 +70,8 @@ fn no_current_track() -> i32 {
     -1
 }
 
+// Serde's `skip_serializing_if` contract takes `&T`, even when the value is a small integer.
+#[allow(clippy::trivially_copy_pass_by_ref)]
 fn is_no_current_track(index: &i32) -> bool {
     *index == -1
 }

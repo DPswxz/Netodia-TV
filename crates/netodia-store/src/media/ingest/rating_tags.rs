@@ -20,7 +20,7 @@
 use lofty::prelude::ItemKey;
 use lofty::tag::{Tag, TagType};
 
-/// The top of the scale, matching the strip `crates/netodia-ui/ui/components/star-rating.slint` draws.
+/// The top of the scale, matching the 0–5 rating range in the Slint track models.
 pub const MAX_STARS: i32 = 5;
 
 /// One star's worth of the 0–100 scale Vorbis comments and the MP4 `rate` atom carry.
