@@ -2597,14 +2597,6 @@ msgid "Visual effect on the play button while music is playing"
 msgstr "Οπτικό εφέ στο κουμπί αναπαραγωγής όσο παίζει η μουσική"
 
 #: ui/views/settings/playback-section.slint
-msgid "Resume on Startup"
-msgstr "Συνέχιση κατά την εκκίνηση"
-
-#: ui/views/settings/playback-section.slint
-msgid "Automatically resume the last track from where you left off when the app starts"
-msgstr "Συνέχισε αυτόματα το τελευταίο κομμάτι από εκεί που σταμάτησες όταν ξεκινά η εφαρμογή"
-
-#: ui/views/settings/playback-section.slint
 msgid "Overlap the end of one track with the start of the next"
 msgstr "Επικάλυψε το τέλος ενός κομματιού με την αρχή του επόμενου"
 

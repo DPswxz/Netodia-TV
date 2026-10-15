@@ -2602,14 +2602,6 @@ msgid "Visual effect on the play button while music is playing"
 msgstr "Müzik çalarken çal düğmesindeki görsel efekt"
 
 #: ui/views/settings/playback-section.slint
-msgid "Resume on Startup"
-msgstr "Başlangıçta Devam Et"
-
-#: ui/views/settings/playback-section.slint
-msgid "Automatically resume the last track from where you left off when the app starts"
-msgstr "Uygulama başladığında son parçayı kaldığın yerden otomatik olarak devam ettir"
-
-#: ui/views/settings/playback-section.slint
 msgid "Overlap the end of one track with the start of the next"
 msgstr "Bir parçanın sonunu sonraki parçanın başıyla üst üste bindir"
 

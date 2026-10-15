@@ -2575,14 +2575,6 @@ msgid "Visual effect on the play button while music is playing"
 msgstr "Hiệu ứng hình ảnh trên nút phát khi đang phát nhạc"
 
 #: ui/views/settings/playback-section.slint
-msgid "Resume on Startup"
-msgstr "Tiếp tục phát khi khởi động"
-
-#: ui/views/settings/playback-section.slint
-msgid "Automatically resume the last track from where you left off when the app starts"
-msgstr "Tự động phát tiếp bản nhạc cuối cùng từ chỗ bạn dừng khi ứng dụng khởi động"
-
-#: ui/views/settings/playback-section.slint
 msgid "Overlap the end of one track with the start of the next"
 msgstr "Chồng phần cuối của bản nhạc này lên phần đầu của bản tiếp theo"
 

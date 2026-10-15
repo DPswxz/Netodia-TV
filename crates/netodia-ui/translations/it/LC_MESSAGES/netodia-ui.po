@@ -2594,14 +2594,6 @@ msgid "Visual effect on the play button while music is playing"
 msgstr "Effetto visivo sul pulsante di riproduzione durante la musica"
 
 #: ui/views/settings/playback-section.slint
-msgid "Resume on Startup"
-msgstr "Riprendi all'avvio"
-
-#: ui/views/settings/playback-section.slint
-msgid "Automatically resume the last track from where you left off when the app starts"
-msgstr "Riprende automaticamente l'ultimo brano dal punto in cui l'hai lasciato all'avvio dell'app"
-
-#: ui/views/settings/playback-section.slint
 msgid "Overlap the end of one track with the start of the next"
 msgstr "Sovrappone la fine di un brano all'inizio del successivo"
 

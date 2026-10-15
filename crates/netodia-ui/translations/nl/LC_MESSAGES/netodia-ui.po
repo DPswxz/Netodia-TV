@@ -2594,14 +2594,6 @@ msgid "Visual effect on the play button while music is playing"
 msgstr "Visueel effect op de afspeelknop terwijl er muziek speelt"
 
 #: ui/views/settings/playback-section.slint
-msgid "Resume on Startup"
-msgstr "Hervatten bij opstarten"
-
-#: ui/views/settings/playback-section.slint
-msgid "Automatically resume the last track from where you left off when the app starts"
-msgstr "Het laatste nummer automatisch hervatten waar je was gebleven wanneer de app start"
-
-#: ui/views/settings/playback-section.slint
 msgid "Overlap the end of one track with the start of the next"
 msgstr "Laat het einde van een nummer overlappen met het begin van het volgende"
 

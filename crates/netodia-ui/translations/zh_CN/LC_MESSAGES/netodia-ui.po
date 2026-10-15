@@ -2575,14 +2575,6 @@ msgid "Visual effect on the play button while music is playing"
 msgstr "播放音乐时播放按钮的视觉效果"
 
 #: ui/views/settings/playback-section.slint
-msgid "Resume on Startup"
-msgstr "启动时继续播放"
-
-#: ui/views/settings/playback-section.slint
-msgid "Automatically resume the last track from where you left off when the app starts"
-msgstr "应用启动时自动从上次停止的位置继续播放最后一首曲目"
-
-#: ui/views/settings/playback-section.slint
 msgid "Overlap the end of one track with the start of the next"
 msgstr "让一首曲目的结尾与下一首的开头重叠"
 

@@ -39,8 +39,8 @@ const MIN_PLURALS: usize = 10;
 /// Floor under the msgids a translator note sits on in the tree, loose for [`MIN_MSGIDS`]' reason.
 const MIN_NOTES: usize = 20;
 
-/// The three weights `app-window.slint` imports. A floor so a weight added later is checked with
-/// no edit here, and tight so one dropping out of the walk is not missed.
+/// The three Vazirmatn weights `app-window.slint` imports. A floor so a weight added later is
+/// checked with no edit here, and tight so one dropping out of the walk is not missed.
 const MIN_TEXT_FACES: usize = 3;
 
 const RUN_THE_SCRIPT: &str = "run scripts/update-translations.sh";
@@ -296,15 +296,20 @@ fn catalogues() -> Vec<(&'static str, Vec<Entry>)> {
         .collect()
 }
 
-/// The faces UI text is set in: what the font build writes under `vazirmatn/`. The icon faces
-/// beside it draw ligatures, not the catalogues' text.
-fn text_faces() -> (Vec<PathBuf>, Vec<PathBuf>) {
+/// The faces UI text is set in. The icon faces draw ligatures, not the catalogues' text.
+fn text_faces() -> (Vec<PathBuf>, Vec<PathBuf>, Vec<PathBuf>) {
     let (fonts, unreadable) = font_sources();
-    let faces = fonts
-        .into_iter()
+    let vazirmatn = fonts
+        .iter()
         .filter(|path| path.parent().is_some_and(|dir| dir.ends_with("vazirmatn")))
+        .cloned()
         .collect();
-    (faces, unreadable)
+    let noto_sans_sc = fonts
+        .iter()
+        .filter(|path| path.file_name().is_some_and(|name| name == "NotoSansSC-VF.ttf"))
+        .cloned()
+        .collect();
+    (vazirmatn, noto_sans_sc, unreadable)
 }
 
 /// Every character a locale can set from a catalogue, English's from the template, each with the
@@ -348,32 +353,61 @@ fn missing_glyphs(
         .collect()
 }
 
-/// [`missing_glyphs`] over every bundled text face, asserting the walk found each weight the UI
-/// sets text in and that each one read and parsed.
+/// The family selected for a locale. Chinese uses Noto Sans SC; every other locale, and English
+/// source text that can appear as a fallback, uses Vazirmatn.
+fn characters_for_text_face<'a>(
+    characters: &BTreeMap<char, BTreeSet<&'a str>>,
+    noto_sans_sc: bool,
+) -> BTreeMap<char, BTreeSet<&'a str>> {
+    characters
+        .iter()
+        .filter_map(|(character, locales)| {
+            let selected: BTreeSet<_> = locales
+                .iter()
+                .copied()
+                .filter(|locale| {
+                    if noto_sans_sc {
+                        *locale == DEFAULT_LOCALE || *locale == "zh_CN"
+                    } else {
+                        *locale != "zh_CN"
+                    }
+                })
+                .collect();
+            (!selected.is_empty()).then_some((*character, selected))
+        })
+        .collect()
+}
+
+/// [`missing_glyphs`] over every selected text face, asserting the walk found each family and
+/// weight and that each face read and parsed.
 fn missing_from_text_faces(characters: &BTreeMap<char, BTreeSet<&str>>) -> Vec<String> {
-    let (faces, unwalkable) = text_faces();
+    let (vazirmatn, noto_sans_sc, unwalkable) = text_faces();
     assert!(unwalkable.is_empty(), "unreadable font directories: {unwalkable:?}");
     assert!(
-        faces.len() >= MIN_TEXT_FACES,
-        "only {} text faces found under vazirmatn/, so the check covers fewer weights than the \
+        vazirmatn.len() >= MIN_TEXT_FACES,
+        "only {} Vazirmatn faces found under vazirmatn/, so the check covers fewer weights than the \
          UI sets text in",
-        faces.len()
+        vazirmatn.len()
     );
+    assert!(!noto_sans_sc.is_empty(), "the Noto Sans SC face selected for zh_CN was not found");
 
     let mut unreadable = Vec::new();
     let mut missing = Vec::new();
-    for path in &faces {
-        let face_name = rel_path(REPO_ROOT, path);
-        let data = match fs::read(path) {
-            Ok(data) => data,
-            Err(e) => {
-                unreadable.push(format!("{face_name}: {e}"));
-                continue;
+    for (faces, noto) in [(&vazirmatn, false), (&noto_sans_sc, true)] {
+        let selected = characters_for_text_face(characters, noto);
+        for path in faces {
+            let face_name = rel_path(REPO_ROOT, path);
+            let data = match fs::read(path) {
+                Ok(data) => data,
+                Err(e) => {
+                    unreadable.push(format!("{face_name}: {e}"));
+                    continue;
+                }
+            };
+            match Face::parse(&data, 0) {
+                Ok(face) => missing.extend(missing_glyphs(&face, &selected, &face_name)),
+                Err(e) => unreadable.push(format!("{face_name}: {e}")),
             }
-        };
-        match Face::parse(&data, 0) {
-            Ok(face) => missing.extend(missing_glyphs(&face, characters, &face_name)),
-            Err(e) => unreadable.push(format!("{face_name}: {e}")),
         }
     }
     assert!(unreadable.is_empty(), "text faces that won't read or parse: {unreadable:?}");
@@ -816,22 +850,21 @@ fn the_shipped_catalogues_are_exactly_the_supported_locales_but_english() {
     );
 }
 
-/// Every character a shipped locale sets, English included, has a glyph in each bundled text face.
+/// Every character a shipped locale sets has a glyph in the bundled face selected for that locale.
 ///
 /// One the faces lack is drawn from whatever face the OS falls back to, whose taller line box sets
 /// the label off-centre in every pill and row, and nothing is drawn at all where the OS has no such
 /// face. A Latin machine shows none of it, which is how the Greek catalogue shipped with nearly
-/// every string in a fallback face. A locale whose alphabet the faces lack fails here until it has
-/// a row in `scripts/patch_vazirmatn.py`'s `LANGUAGE_LETTERS` and the faces are rebuilt.
+/// every string in a fallback face. A locale whose alphabet Vazirmatn lacks fails here until it
+/// has a row in `scripts/patch_vazirmatn.py`'s `LANGUAGE_LETTERS` and the faces are rebuilt;
+/// `zh_CN` selects Noto Sans SC instead.
 #[test]
 fn every_character_a_locale_sets_is_in_the_bundled_faces() {
     let missing = missing_from_text_faces(&shipped_characters());
 
     assert!(
         missing.is_empty(),
-        "these characters fall back to an OS face, off-centre wherever there is one and missing \
-         where there isn't. Add the language's letters to `LANGUAGE_LETTERS` in \
-         scripts/patch_vazirmatn.py and re-run it: {missing:#?}"
+        "the selected bundled text family lacks characters used by a locale: {missing:#?}"
     );
 }
 
