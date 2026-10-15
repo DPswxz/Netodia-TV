@@ -688,18 +688,16 @@ async fn download_cover(
     dir: &std::path::Path,
 ) -> Option<String> {
     const MAX_BYTES: u64 = 1_048_576;
-    if !matches!(reqwest::Url::parse(url).ok()?.scheme(), "https" | "http") {
-        return None;
-    }
-    let response = http.get(url).send().await.ok()?.error_for_status().ok()?;
-    if response.content_length().is_some_and(|length| length > MAX_BYTES) {
-        return None;
-    }
-    let bytes = response.bytes().await.ok()?;
-    if u64::try_from(bytes.len()).ok()? > MAX_BYTES {
-        return None;
-    }
-    let bytes = bytes.to_vec();
+    let url = crate::cloud::cover_request_url(url)?;
+    let bytes = netodia_net::services::net::get_capped(
+        http,
+        &url,
+        "NetEase cover",
+        Duration::from_secs(30),
+        MAX_BYTES,
+    )
+    .await
+    .ok()?;
     let dir = dir.to_path_buf();
     tokio::task::spawn_blocking(move || {
         netodia_artwork::media::image::artwork::store_image(&bytes, "jpg", &dir)

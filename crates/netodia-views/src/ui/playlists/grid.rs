@@ -215,16 +215,7 @@ async fn cache_playlist_covers(
 }
 
 async fn download_cover(client: &reqwest::Client, url: &str, dir: &Path) -> Option<String> {
-    const MAX_BYTES: u64 = 1_048_576;
-    let response = client.get(url).send().await.ok()?.error_for_status().ok()?;
-    if response.content_length().is_some_and(|length| length > MAX_BYTES) {
-        return None;
-    }
-    let bytes = response.bytes().await.ok()?;
-    if u64::try_from(bytes.len()).ok()? > MAX_BYTES {
-        return None;
-    }
-    let bytes = bytes.to_vec();
+    let bytes = crate::ui::remote_covers::fetch_image_bytes(client, url).await?;
     let dir = dir.to_path_buf();
     tokio::task::spawn_blocking(move || {
         netodia_artwork::media::image::artwork::store_image(&bytes, "jpg", &dir)

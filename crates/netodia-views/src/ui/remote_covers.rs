@@ -162,8 +162,7 @@ pub(crate) async fn fetch_image_bytes(client: &reqwest::Client, url: &str) -> Op
 }
 
 fn parsed_http_url(source: &str) -> Option<reqwest::Url> {
-    let url = reqwest::Url::parse(source.trim()).ok()?;
-    (matches!(url.scheme(), "http" | "https") && url.host_str().is_some()).then_some(url)
+    netodia_app::cloud::cover_request_url(source)
 }
 
 fn decode_thumbnail(bytes: &[u8]) -> Option<SharedPixelBuffer<Rgb8Pixel>> {

@@ -489,7 +489,10 @@ impl Client {
     pub async fn album(&self, id: i64) -> Result<(Album, Vec<Song>)> {
         let path = format!("/api/v1/album/{id}");
         let body = self.request_path(&path, json!({})).await?;
-        Ok((field(body.clone(), "album")?, field(body, "songs")?))
+        let album: Album = field(body.clone(), "album")?;
+        let mut songs: Vec<Song> = field(body, "songs")?;
+        fill_album_covers(&album, &mut songs);
+        Ok((album, songs))
     }
 
     pub async fn artist(&self, id: i64) -> Result<(Artist, Vec<Song>)> {
@@ -697,6 +700,14 @@ impl Client {
         )
         .await?;
         Ok(())
+    }
+}
+
+fn fill_album_covers(album: &Album, songs: &mut [Song]) {
+    for song in songs {
+        if song.album.id == album.id && song.album.cover_url.as_deref().is_none_or(str::is_empty) {
+            song.album.cover_url.clone_from(&album.cover_url);
+        }
     }
 }
 
@@ -953,6 +964,29 @@ mod tests {
         assert_eq!(result.iter().map(|song| song.id).collect::<Vec<_>>(), [9, 4, 9]);
         assert_eq!(result[0].name, "nine");
         assert_eq!(result[2].name, "nine");
+    }
+
+    #[test]
+    fn album_detail_supplies_missing_song_covers_without_overwriting_other_albums() {
+        let album = Album {
+            id: 7,
+            cover_url: Some("https://p1.music.126.net/album.jpg".into()),
+            ..Album::default()
+        };
+        let mut songs = vec![
+            Song { album: Album { id: 7, ..Album::default() }, ..Song::default() },
+            Song {
+                album: Album { id: 7, cover_url: Some("existing.jpg".into()), ..Album::default() },
+                ..Song::default()
+            },
+            Song { album: Album { id: 8, ..Album::default() }, ..Song::default() },
+        ];
+
+        fill_album_covers(&album, &mut songs);
+
+        assert_eq!(songs[0].album.cover_url, album.cover_url);
+        assert_eq!(songs[1].album.cover_url.as_deref(), Some("existing.jpg"));
+        assert_eq!(songs[2].album.cover_url, None);
     }
 
     #[test]
