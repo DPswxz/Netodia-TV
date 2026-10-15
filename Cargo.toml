@@ -15,9 +15,8 @@ resolver = "3"
 members = ["crates/*"]
 exclude = ["winit"]
 
-# Inherited by every package. Four toolchain-less scrapes (`release-prepare.yml`,
-# `build-{rpm,appimage,tarball}.sh`) anchor on this table by name and take the
-# first `version = ` inside it, so that entry stays first.
+# Inherited by every package. The release workflow and `build-{rpm,appimage,tarball}.sh`
+# scrape this table by name and take the first `version = ` inside it, so that entry stays first.
 [workspace.package]
 version = "0.1.0"
 edition = "2024"

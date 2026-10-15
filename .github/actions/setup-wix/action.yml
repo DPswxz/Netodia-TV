@@ -44,11 +44,8 @@ runs:
     # `taiki-e/install-action` once 0.4.0 lands. The cache wrapper keys on
     # tool+git+rev, so the source build only runs on a miss.
     #
-    # `rev:` below is the only spelling of that commit. `release-prepare.yml`
-    # preflights that it still resolves by scraping this file rather than
-    # restating it, upstream orphaning the commit being the failure this pin has
-    # to survive and a second copy being how the preflight ends up checking a
-    # different SHA than the one that gets installed.
+    # Keep the source revision here as the sole pin. If it is ever changed, check
+    # that the commit remains reachable on the upstream repository before merging.
     - name: Install cargo-wix (pinned to PR #295 — modern WiX v4+ support, unreleased on crates.io)
       uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
       with:

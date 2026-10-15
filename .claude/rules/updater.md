@@ -12,7 +12,6 @@ paths:
   - scripts/build-tarball.sh
   - scripts/install-linux.sh
   - .github/workflows/release*.yml
-  - .github/workflows/refresh-manifest.yml
   - .github/actions/build-manifest/action.yml
   - .github/actions/minisign-sign/action.yml
 ---
@@ -102,21 +101,13 @@ from `main.rs` without ever opening this file.
   trusted comment is a **domain-separation tag**. Fail-closed — missing or invalid sig →
   `AppError::Validation`. CI: `minisign -SHm latest.json -t "version=$VERSION manifest=true"`.
 
-- **The manifest is built twice, and the second build is the one users read.** `release-publish.yml`
-  builds `latest.json` while the release is still a draft, so its `notes_short` is GitHub's
-  `--generate-notes` text; `refresh-manifest.yml` fires on draft→published, re-reads the now-final
-  (author-edited) body, and rebuilds + re-signs + re-uploads the manifest and `SHA256SUMS.txt`.
-  `version` / `manifest_schema_version` / `critical` / `pub_date` are carried over from the
-  published manifest verbatim, so a refresh changes the notes and nothing else — `pub_date` in
-  particular must not bump. **`workflow_dispatch` with a `tag` input refreshes retroactively**,
-  which is the recovery path when the job fails: the release keeps the draft-time manifest,
-  complete and correctly signed, merely stale in its notes. **Both callers reach the script through
-  `.github/actions/build-manifest`, which argues why**, and both hand it an `--artifacts`
-  directory **holding installable artifacts and their `.minisig` siblings and nothing else** — the
-  script `SystemExit`s on anything it can't classify, which is why a rebuild's non-artifact inputs
-  are staged in `$RUNNER_TEMP`. Staging the published
-  `latest.json` in `artifacts/` alongside them is what broke v0.9.0's refresh on the first publish
-  after that guard landed.
+- **The manifest is built once after a Release is published.** `release.yml` reads the final
+  release body, builds and signs `latest.json`, then uploads it with `SHA256SUMS.txt` and the
+  signed packages. The manifest therefore uses the author-edited notes on the first run. A
+  `workflow_dispatch` builds packages for download as Actions artifacts and does not change a
+  Release or its manifest. `.github/actions/build-manifest` receives an `--artifacts` directory
+  holding installable artifacts and their `.minisig` siblings and nothing else — the script
+  `SystemExit`s on anything it cannot classify.
 
 - **Manifest schema gate + critical-release flag** (`crates/netodia-app/src/services/updater/manifest.rs`).
   `manifest_schema_version: u32` (default 1) — `check.rs` returns `Verdict::UnsupportedSchema`
@@ -127,19 +118,20 @@ from `main.rs` without ever opening this file.
 
 ## Release matrix
 
-- **Build provenance attestation.** `release-build.yml` runs `actions/attest-build-provenance` (v4,
+- **Build provenance attestation.** `release.yml` runs `actions/attest-build-provenance` (v4,
   SHA-pinned) in every slot, needing `id-token: write` + `attestations: write`. Verify with
   `gh attestation verify <file> --repo KenanSalar/Netodia`. Upstream now calls v4 a thin wrapper
   over `actions/attest` and points new work at that directly — worth folding in next time this line
   is touched.
 
-- **aarch64 builds alongside x86_64** (Linux + Windows): the 10 matrix slots `release.yml`
-  declares, 5 × x86_64 + 5 × aarch64 (`ubuntu-24.04-arm`/`windows-11-arm`).
-  **`build-latest-json.py`'s `PLATFORM_PATTERNS` is downstream of `release-build.yml`'s
+- **aarch64 builds alongside x86_64** (Linux + Windows): the 12 matrix slots `release.yml`
+  declares, 6 × x86_64 + 6 × aarch64 (`ubuntu-24.04-arm`/`windows-11-arm`).
+  Each architecture ships Linux tarball/AppImage/RPM/DEB and Windows MSI/portable ZIP.
+  **`build-latest-json.py`'s `PLATFORM_PATTERNS` is downstream of `release.yml`'s
   packaging steps and the `scripts/build-*.sh` they call, and must move with them.**
   Every pattern pins an explicit arch token, so the two arch groups are disjoint and the
   aarch64-first ordering is readability rather than disambiguation — that ordering existed for
-  cargo-deb's native `_arm64.deb`, which carries no leading-arch token, and `release-build.yml`
+  cargo-deb's native `_arm64.deb`, which carries no leading-arch token, and `release.yml`
   renames the deb to the `netodia-<tag>-<arch>.deb` scheme every other slot produces so its
   `netodia-*.deb` globs match. The table was left on the old name and **v0.8.0 shipped with no deb
   entry at all** while both signed `.deb` files sat on the release, leaving deb clients on

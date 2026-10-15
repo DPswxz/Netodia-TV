@@ -12,7 +12,7 @@
 //!   audio will fail here. The `test` job points ALSA's default PCM at the
 //!   userspace `null` device, so this runs headless there; `test-windows` skips
 //!   it by name instead, WASAPI having no equivalent short of a signed virtual
-//!   audio driver. Both jobs are in `.github/workflows/pr-validation.yml`.
+//!   audio driver. Both jobs are in `.github/workflows/release.yml`.
 
 use std::path::PathBuf;
 

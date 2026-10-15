@@ -1,8 +1,8 @@
 name: cargo audit
 description: >-
   Fail on RustSec advisories covering any dependency in Cargo.lock. Shared by
-  pr-validation.yml (early warning on a PR into main) and release.yml (the gate
-  that holds a release). Deliberately takes no inputs — one policy, one verdict.
+  release.yml on pull requests, main pushes, releases, and manual runs. Deliberately
+  takes no inputs — one policy, one verdict.
 
 runs:
   using: composite

@@ -1,10 +1,9 @@
 //! What the repo ships and what the gate runs: thread-name length, the bundled fonts against
-//! their attribution, the five package formats' licence directories, two CI-workflow pins and
-//! two MSI ones, the Debian copyright, and the bundled licence texts.
+//! their attribution, the six package formats' licence directories, workflow-gate pins, two MSI
+//! pins, the Debian copyright, and the bundled licence texts.
 //!
-//! None of it asks anything of a crate. Five of these read a file no member owns — a workflow,
-//! a shell script, the MSI source — and the other four walk the whole tree, so every one of
-//! them was homeless before this crate existed and sat wherever it was written.
+//! Several pins read files no member owns — a workflow, a shell script, the MSI source — and
+//! others walk the whole tree, so these checks were homeless before this crate existed.
 
 use std::path::Path;
 
@@ -107,7 +106,7 @@ const ATTRIBUTION: &str = include_str!("../../../licenses/ATTRIBUTION.txt");
 const MIN_FONTS: usize = 6;
 
 /// A face imported by a `.slint` file is `include_bytes!`d into the binary, so it starts being
-/// redistributed by all five package formats the moment that import lands — and by the git tree
+/// redistributed by all six package formats the moment that import lands — and by the git tree
 /// immediately. Neither licence we carry is satisfied by the font's own name table alone:
 /// Apache-2.0 §4(a) wants a copy of the licence delivered to recipients, and Material Symbols
 /// carries no licence string in its name table at all.
@@ -163,7 +162,7 @@ const MSI_SOURCE: &str = "crates/netodia/wix/main.wxs";
 /// The RPM stages and ships in separate statements, so the needle has to be the second: drop the
 /// `%files` line and the staged copy goes unread in the *build* directory, which `check-files`
 /// never looks at — no warning, and a pin on the `cp` still green.
-const LICENSE_SHIPPERS: [(&str, &str); 5] = [
+const LICENSE_SHIPPERS: [(&str, &str); 6] = [
     ("scripts/build-rpm.sh", "%license LICENSE licenses/"),
     // The binary's manifest, not the workspace root's: `[package.metadata.deb]` is package
     // metadata and went with the package. Its `../../` is why the needle stops at the glob.
@@ -171,21 +170,25 @@ const LICENSE_SHIPPERS: [(&str, &str); 5] = [
     ("scripts/build-tarball.sh", "cp -r \"$REPO_ROOT/licenses\""),
     ("scripts/build-appimage.sh", "cp -r \"$REPO_ROOT/licenses\""),
     (MSI_SOURCE, "$(var.RepoRoot)\\licenses\\"),
+    (
+        ".github/workflows/release.yml",
+        "Copy-Item -Path \"licenses/*\" -Destination (Join-Path $bundle \"licenses\") -Recurse",
+    ),
 ];
 
-/// Five formats built by five unrelated toolchains, four of which no reviewer on this machine can
-/// run and one of which (the MSI) no Linux runner can build at all. That is exactly the shape
-/// where one format quietly stops shipping the licence text and nothing says so until a distro
-/// packager files it.
+/// Six formats built by unrelated toolchains, most of which no reviewer on this machine can run
+/// and two of which (the MSI and portable ZIP) no Linux runner can build at all. That is exactly
+/// the shape where one format quietly stops shipping the licence text and nothing says so until a
+/// distro packager files it.
 ///
 /// A `%license` line, an asset triple, a `cp` and an MSI `File` share nothing but their effect, so
 /// a named list rather than a walk — the opposite call from the font pin above and for the
 /// opposite reason: the set of formats is closed and changing it is deliberate, where the set of
 /// fonts is open.
 ///
-/// Two of the five carry the same needle from different files, which is the point: the tarball got
-/// a `build-tarball.sh` of its own so all five spellings sit beside the format they ship, rather
-/// than one of them being a `cp` buried in a matrix slot.
+/// The tarball and AppImage carry the same needle from different files, which is the point: all
+/// six spellings sit beside the format they ship, rather than one of them being a copy buried in
+/// a matrix slot.
 #[test]
 fn every_package_format_ships_the_licenses_dir() {
     let root = Path::new(REPO_ROOT);
@@ -250,10 +253,10 @@ fn workflow_job_needs<'a>(src: &'a str, job: &str) -> Vec<&'a str> {
 /// What that leaves is a job added to the file and never named there: the aggregate doesn't wait
 /// for it, so it can report green while that job is still running or already red.
 #[test]
-fn the_aggregate_waits_on_every_job_in_the_gate_workflow() {
-    const AGGREGATE: &str = "pr-validation";
+fn the_quality_aggregate_waits_on_every_check() {
+    const AGGREGATE: &str = "quality";
 
-    let path = Path::new(REPO_ROOT).join(".github/workflows/pr-validation.yml");
+    let path = Path::new(REPO_ROOT).join(".github/workflows/release.yml");
     let src = std::fs::read_to_string(&path).unwrap_or_default();
     assert!(!src.is_empty(), "unreadable or empty: {}", path.display());
 
@@ -267,13 +270,41 @@ fn the_aggregate_waits_on_every_job_in_the_gate_workflow() {
     let gated = workflow_job_needs(&src, AGGREGATE);
     assert!(!gated.is_empty(), "`{AGGREGATE}`'s `needs:` list did not parse");
 
-    let ungated: Vec<_> =
-        jobs.iter().filter(|id| **id != AGGREGATE && !gated.contains(id)).collect();
+    let ungated: Vec<_> = jobs
+        .iter()
+        .filter(|id| {
+            **id != AGGREGATE && **id != "build" && **id != "publish" && !gated.contains(id)
+        })
+        .collect();
     assert!(
         ungated.is_empty(),
         "{ungated:?} are missing from `{AGGREGATE}`'s `needs:`, so the required check never \
-         waits on them and goes green whatever they report"
+         waits on them and can go green while they fail"
     );
+    assert_eq!(
+        workflow_job_needs(&src, "build"),
+        vec![AGGREGATE],
+        "release packaging must wait for the quality aggregate"
+    );
+}
+
+#[test]
+fn workflow_runs_rust_and_slint_checks_on_changes() {
+    let path = Path::new(REPO_ROOT).join(".github/workflows/release.yml");
+    let workflow = std::fs::read_to_string(&path).unwrap_or_default();
+    assert!(!workflow.is_empty(), "unreadable or empty: {}", path.display());
+
+    for required in [
+        "  push:\n    branches: [main]",
+        "  pull_request:\n    branches: [main]",
+        "cargo fmt --all --check",
+        "cargo check --locked -p netodia-ui",
+        "cargo clippy --all-targets --locked --workspace -- -D warnings",
+        "cargo test --locked --workspace",
+        "uses: ./.github/actions/cargo-audit",
+    ] {
+        assert!(workflow.contains(required), "release.yml is missing {required:?}");
+    }
 }
 
 /// The value of `key:` in the named job, bounded at the next job id like
@@ -288,49 +319,25 @@ fn workflow_job_env<'a>(src: &'a str, job: &str, key: &str) -> Option<&'a str> {
         .map(|value| value.trim().trim_matches(['"', '\'']))
 }
 
-/// The gate and the coverage run disagree about debug info, and the disagreement is invisible.
-///
-/// Each side's reason sits in its own workflow; what neither file can say is that tidying them
-/// into agreement reddens nothing. The gate is the half whose backtraces get read, and `0`
-/// throws away what `test-windows`' first red run named: `tests\crossfade.rs:152:9`.
-///
-/// A pin rather than a comment because the comment already failed. The coverage bullet went on
-/// describing the gate as keeping *default* debug info for a whole commit after it stopped.
-/// `deploy-coverage.yml` leaves the skip denylist for the same reason `LICENSE` is absent from
-/// it: compiling nothing is not the same as being unexercised.
+/// Keep useful file/line backtraces while avoiding full debug info on CI test builds.
 #[test]
-fn the_two_workflows_disagree_about_debug_info_on_purpose() {
+fn workspace_test_jobs_keep_line_tables_for_backtraces() {
     const KEYS: [&str; 2] = ["CARGO_PROFILE_DEV_DEBUG", "CARGO_PROFILE_TEST_DEBUG"];
-    const GATE: [&str; 2] = ["test", "test-windows"];
+    const TEST_JOBS: [&str; 2] = ["test-linux", "test-windows"];
 
-    let root = Path::new(REPO_ROOT).join(".github/workflows");
-    let read = |name: &str| {
-        let src = std::fs::read_to_string(root.join(name)).unwrap_or_default();
-        assert!(!src.is_empty(), "unreadable or empty: {name}");
-        src
-    };
-    let (gate, coverage) = (read("pr-validation.yml"), read("deploy-coverage.yml"));
+    let path = Path::new(REPO_ROOT).join(".github/workflows/release.yml");
+    let workflow = std::fs::read_to_string(&path).unwrap_or_default();
+    assert!(!workflow.is_empty(), "unreadable or empty: {}", path.display());
 
     for key in KEYS {
-        for job in GATE {
+        for job in TEST_JOBS {
             assert_eq!(
-                workflow_job_env(&gate, job, key),
+                workflow_job_env(&workflow, job, key),
                 Some("line-tables-only"),
-                "pr-validation.yml's `{job}` must keep `file:line` in its backtraces"
+                "release.yml's `{job}` must keep `file:line` in its backtraces"
             );
         }
-        assert_eq!(
-            workflow_job_env(&coverage, "coverage", key),
-            Some("0"),
-            "deploy-coverage.yml must not pay for DWARF no report reads"
-        );
     }
-
-    assert!(
-        !gate.contains("!.github/workflows/deploy-coverage.yml"),
-        "the skip denylist excludes deploy-coverage.yml again, so the edit that breaks \
-         this pin merges with the gate skipped"
-    );
 }
 
 /// `src` with every `<!-- … -->` block removed.
@@ -485,8 +492,8 @@ fn as_dep5_field_body(text: &str) -> String {
 /// against a standalone paragraph of the same name; without one the stanza names a licence the
 /// file never states, which is a package whose copyright is unreadable rather than merely terse.
 ///
-/// `LICENSE` compiles nothing and must still stay off `pr-validation.yml`'s skip denylist: a PR
-/// touching only that file would skip `test`, and the gate counts `skipped` as a pass.
+/// `LICENSE` compiles nothing but remains an input to these tests; the PR workflow runs workspace
+/// checks without a path filter, so licence-only changes are exercised too.
 #[test]
 fn the_debian_copyright_quotes_the_licences_it_ships() {
     let root = Path::new(REPO_ROOT);

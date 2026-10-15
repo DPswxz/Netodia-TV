@@ -41,14 +41,14 @@ from pathlib import Path
 # leading arch token — which is what the aarch64-first ordering existed
 # for.
 #
-# `release-build.yml` renames the deb to the same `netodia-<tag>-<arch>.deb`
+# `release.yml` renames the deb to the same `netodia-<tag>-<arch>.deb`
 # scheme every other slot produces (its `netodia-*.deb` globs in the
 # attest/sign/upload steps depend on that), and this table was left on
 # the old name. Nothing complained: `classify` returned None, the loop
 # below skipped it, and v0.8.0 shipped a manifest with no deb entry at
 # all while both signed .deb files sat on the release. Deb users got
 # `NoAssetForTarget` — "no update available" — indefinitely. These
-# patterns are downstream of `release-build.yml`'s packaging steps and
+# patterns are downstream of `release.yml`'s packaging steps and
 # the `scripts/build-*.sh` they call; move them together.
 PLATFORM_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     # aarch64 (ARM64 — Apple Silicon on Linux, Snapdragon X laptops,
@@ -245,7 +245,7 @@ def build_manifest(
             # goes quiet again one name at a time.
             raise SystemExit(
                 f"{path.name} matches no PLATFORM_PATTERNS entry. Something in "
-                "release-build.yml's packaging steps renamed an artifact out "
+                "release.yml's packaging steps renamed an artifact out "
                 "from under this table — fix the pattern; do not let the "
                 "platform drop out of the manifest silently."
             )

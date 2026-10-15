@@ -1,8 +1,8 @@
 name: Build latest.json
 description: >-
-  Render the updater manifest from a directory of artifacts. Shared by the
-  draft-time build and the on-publish refresh so the notes-stripping pin can't
-  differ between the manifest users first see and the one that replaces it.
+  Render the updater manifest from a directory of signed release artifacts. The
+  release workflow runs this after publication so the manifest includes the final
+  release notes.
 
 inputs:
   version:
