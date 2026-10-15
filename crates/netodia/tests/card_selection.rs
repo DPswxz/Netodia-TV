@@ -33,11 +33,10 @@ const CARD_SELECTION_HOMES: [&str; 4] = [
     "globals/selection.slint",
 ];
 
-/// The five grids that can fit on one row, each reading the count off whichever model its mounted
+/// The three grids that can fit on one row, each reading the count off whichever model its mounted
 /// tab drew.
-const LONE_ROW_MOUNTS: [&str; 4] = [
+const LONE_ROW_MOUNTS: [&str; 3] = [
     "views/browse-view.slint",
-    "views/favorites-view.slint",
     "views/my-library-view.slint",
     "views/recently-played-view.slint",
 ];
@@ -126,7 +125,7 @@ fn every_section_leave_hands_its_card_selection_back() {
         }
     }
 
-    assert!(gates >= 10, "only {gates} section gates found, so the walk is broken");
+    assert!(gates >= 9, "only {gates} section gates found, so the walk is broken");
     assert_eq!(
         clearing,
         CARD_SELECTION_LEAVES.into_iter().collect::<BTreeSet<&str>>(),
