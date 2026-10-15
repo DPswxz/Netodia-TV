@@ -242,6 +242,7 @@
                         <Component Id="ThirdPartyLicenses" Guid="45ED4477-D203-541B-976B-88688B296B65">
                             <File Id="Attribution" Name="ATTRIBUTION.txt" KeyPath="yes" DiskId="1" Source="$(var.RepoRoot)\licenses\ATTRIBUTION.txt" />
                             <File Id="VazirmatnOfl" Name="Vazirmatn-OFL-1.1.txt" DiskId="1" Source="$(var.RepoRoot)\licenses\Vazirmatn-OFL-1.1.txt" />
+                            <File Id="NotoSansScOfl" Name="NotoSansSC-OFL-1.1.txt" DiskId="1" Source="$(var.RepoRoot)\licenses\NotoSansSC-OFL-1.1.txt" />
                             <File Id="Apache20" Name="Apache-2.0.txt" DiskId="1" Source="$(var.RepoRoot)\licenses\Apache-2.0.txt" />
                             <File Id="Gpl30" Name="GPL-3.0.txt" DiskId="1" Source="$(var.RepoRoot)\licenses\GPL-3.0.txt" />
                             <File Id="Mpl20" Name="MPL-2.0.txt" DiskId="1" Source="$(var.RepoRoot)\licenses\MPL-2.0.txt" />

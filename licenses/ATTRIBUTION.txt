@@ -20,7 +20,7 @@ and Cargo.lock is what pins it.
 Debian packages carry a fuller machine-readable version of this at
 /usr/share/doc/melodia/copyright; the two are kept in step by
 the_debian_copyright_quotes_the_licences_it_ships, in
-crates/melodia/tests/packaging.rs.
+crates/netodia/tests/packaging.rs.
 
 
 Vazirmatn
@@ -40,9 +40,9 @@ sizes. Vazirmatn's own glyph outlines, capHeight, x-height and the usWin* clip
 bounds are untouched.
 
 Files:
-  crates/melodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-Regular.ttf
-  crates/melodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-Medium.ttf
-  crates/melodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-SemiBold.ttf
+  crates/netodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-Regular.ttf
+  crates/netodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-Medium.ttf
+  crates/netodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-SemiBold.ttf
 
 Upstream declares NO Reserved Font Name -- its copyright line names the project
 and stops there -- so OFL section 5 imposes no rename on the patched build, and
@@ -71,9 +71,9 @@ positioning, into the Vazirmatn faces. No outline is altered. This is the
 release Vazirmatn's own Latin was imported from, so the added letters match it.
 
 Files:
-  crates/melodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-Regular.ttf
-  crates/melodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-Medium.ttf
-  crates/melodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-SemiBold.ttf
+  crates/netodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-Regular.ttf
+  crates/netodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-Medium.ttf
+  crates/netodia-ui/ui/assets/fonts/vazirmatn/Vazirmatn-SemiBold.ttf
 
 Merged rather than shipped beside Vazirmatn, so the faces keep the Vazirmatn
 name and carry it under upstream's OFL, which is how upstream already ships its
@@ -93,7 +93,7 @@ bundled as a separate family and selected for the zh_CN locale, so Han text is
 available without relying on fonts installed by the host operating system.
 
 Files:
-  crates/melodia-ui/ui/assets/fonts/NotoSansSC-VF.ttf
+  crates/netodia-ui/ui/assets/fonts/NotoSansSC-VF.ttf
 
 The upstream font name is retained; its Reserved Font Name is not changed.
 
@@ -111,8 +111,8 @@ ligatures listed in `scripts/icons.txt`, by glyph id with --no-layout-closure so
 the closure can't pull the rest of the catalogue back in. No outline is altered.
 
 Files:
-  crates/melodia-ui/ui/assets/fonts/MaterialSymbolsRounded.ttf
-  crates/melodia-ui/ui/assets/fonts/MaterialSymbolsRoundedFilled.ttf
+  crates/netodia-ui/ui/assets/fonts/MaterialSymbolsRounded.ttf
+  crates/netodia-ui/ui/assets/fonts/MaterialSymbolsRoundedFilled.ttf
 
 Neither face carries a license string in its name table, in the subsets or in
 the pristine upstream sources -- Apache-2.0.txt is the only copy that travels
