@@ -29,6 +29,7 @@ export component CloudFavoritesSongsTab inherits Rectangle {
         position-field: "track_number";
         show-number: true;
         favorite-clickable: true;
+        cloud-entity-links: true;
         request-sort(field) => { root.request-sort(field); }
         play-track(id, index) => { root.play-track(id, index); }
         toggle-favorite(id, liked) => { if (!liked) { root.remove-favorite(id); } }

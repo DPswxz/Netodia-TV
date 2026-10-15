@@ -5,6 +5,7 @@ import { MaterialIcon } from "../material-icon.slint";
 import { ArtworkImage } from "../artwork-image.slint";
 import { TrackContextMenu } from "track-context-menu.slint";
 import { CloudTrackContextMenu } from "cloud-track-context-menu.slint";
+import { CloudTrackActions } from "../../globals/cloud-track-actions.slint";
 import { DataCell } from "track-list-cell.slint";
 import { Checkbox } from "../checkbox.slint";
 import { SelectionPill } from "selection-pill.slint";
@@ -41,6 +42,7 @@ export component TrackListRowItem inherits Rectangle {
     // Cloud hosts own activation and likes through the exact remote ID. They share the
     // row visuals, but local selection and SQLite context actions do not apply.
     in property <bool> cloud-row: false;
+    in property <bool> cloud-entity-links: false;
     in property <bool> single-click-play: true;
     in property <bool> favorite-clickable: true;
 
@@ -61,7 +63,6 @@ export component TrackListRowItem inherits Rectangle {
     // Shift as it stood on the press the pick is about to complete; see `touch.clicked`.
     property <bool> press-shift;
     property <length> press-link-x;
-    property <length> press-link-y;
     // Disk-only Browse rows arrive `enabled == false` — dimmed, and swallowing every
     // interaction: row body, # checkbox, favourite button and right-click menu alike.
     property <bool> enabled: root.row-data.enabled;
@@ -72,34 +73,32 @@ export component TrackListRowItem inherits Rectangle {
     // macOS Light and sat exactly on it under two other light variants. The whole list, header
     // included, is on this one rung, and hierarchy comes from size and weight instead.
     property <brush> ink: (root.playing ? Theme.accent : Theme.text).transparentize(1.0 - root.fade);
-    // These IDs are local library keys. Cloud rows carry remote service IDs and keep their normal
-    // play-on-click behavior instead of treating those IDs as local detail targets.
-    property <bool> artist-link-enabled: !root.cloud-row && root.enabled
-        && root.row-data.artist_id > 0 && root.view-context != "artist-detail";
-    property <bool> album-link-enabled: !root.cloud-row && root.enabled
-        && root.row-data.album_id > 0 && root.view-context != "album-detail";
+    // Local list rows navigate by SQLite IDs; cloud rows use exact service IDs and only expose
+    // these links in hosts that opt in (currently Favorites).
+    property <bool> artist-link-enabled: root.enabled && root.columns.show_artist
+        && (root.cloud-row
+            ? root.cloud-entity-links && root.row-data.artist_remote_id != ""
+            : root.row-data.artist_id > 0 && root.view-context != "artist-detail");
+    property <bool> album-link-enabled: root.enabled && root.columns.show_album
+        && (root.cloud-row
+            ? root.cloud-entity-links && root.row-data.album_remote_id != ""
+            : root.row-data.album_id > 0 && root.view-context != "album-detail");
+    // Use the cell's full bounds for hit testing. The rendered label is what the user aims at,
+    // and the cell width already follows the same layout as the header and the text itself.
     property <bool> artist-link-hovered: root.artist-link-enabled && root.columns.show_artist
         && touch.has-hover
         && touch.mouse-x >= root.layout.artist_x
-        && touch.mouse-x < root.layout.artist_x + min(root.layout.artist_w, artist-cell.label-width)
-        && touch.mouse-y >= (touch.height - artist-cell.label-height) / 2
-        && touch.mouse-y < (touch.height + artist-cell.label-height) / 2;
+        && touch.mouse-x < root.layout.artist_x + root.layout.artist_w;
     property <bool> album-link-hovered: root.album-link-enabled && root.columns.show_album
         && touch.has-hover
         && touch.mouse-x >= root.layout.album_x
-        && touch.mouse-x < root.layout.album_x + min(root.layout.album_w, album-cell.label-width)
-        && touch.mouse-y >= (touch.height - album-cell.label-height) / 2
-        && touch.mouse-y < (touch.height + album-cell.label-height) / 2;
+        && touch.mouse-x < root.layout.album_x + root.layout.album_w;
     property <bool> artist-link-pressed: root.artist-link-enabled && root.columns.show_artist
         && root.press-link-x >= root.layout.artist_x
-        && root.press-link-x < root.layout.artist_x + min(root.layout.artist_w, artist-cell.label-width)
-        && root.press-link-y >= (touch.height - artist-cell.label-height) / 2
-        && root.press-link-y < (touch.height + artist-cell.label-height) / 2;
+        && root.press-link-x < root.layout.artist_x + root.layout.artist_w;
     property <bool> album-link-pressed: root.album-link-enabled && root.columns.show_album
         && root.press-link-x >= root.layout.album_x
-        && root.press-link-x < root.layout.album_x + min(root.layout.album_w, album-cell.label-width)
-        && root.press-link-y >= (touch.height - album-cell.label-height) / 2
-        && root.press-link-y < (touch.height + album-cell.label-height) / 2;
+        && root.press-link-x < root.layout.album_x + root.layout.album_w;
 
     // Drives context-menu entry visibility (no "Go to Album" inside Album Detail, "Remove from
     // Playlist" only in Playlist Detail) and the current-playlist exclusion in the Add-to-Playlist
@@ -251,14 +250,22 @@ export component TrackListRowItem inherits Rectangle {
             // `slint-pitfalls.md`'s grab-invalidation entry. It runs before `pointer-event`, so
             // `drag-started` still holds the value the block below is about to reset.
             clicked => {
-                if (root.enabled && root.cloud-row && root.single-click-play) {
+                if (root.enabled && !root.drag-started && root.artist-link-pressed) {
+                    if (root.cloud-row) {
+                        CloudTrackActions.open-artist(root.row-data.artist_remote_id);
+                    } else {
+                        root.go-to-artist(root.row-data.artist_id);
+                    }
+                } else if (root.enabled && !root.drag-started && root.album-link-pressed) {
+                    if (root.cloud-row) {
+                        CloudTrackActions.open-album(root.row-data.album_remote_id);
+                    } else {
+                        root.go-to-album(root.row-data.album_id);
+                    }
+                } else if (root.enabled && root.cloud-row && root.single-click-play) {
                     root.clicked-row();
                 } else if (!root.cloud-row && root.enabled && !root.drag-started) {
-                    if (root.artist-link-pressed) {
-                        root.go-to-artist(root.row-data.artist_id);
-                    } else if (root.album-link-pressed) {
-                        root.go-to-album(root.row-data.album_id);
-                    } else if (root.selecting) {
+                    if (root.selecting) {
                         root.pick(root.press-shift);
                     }
                 }
@@ -278,7 +285,6 @@ export component TrackListRowItem inherits Rectangle {
                 if (ev.kind == PointerEventKind.down && ev.button == PointerEventButton.left) {
                     root.press-shift = ev.modifiers.shift;
                     root.press-link-x = self.mouse-x;
-                    root.press-link-y = self.mouse-y;
                 }
                 if (ev.kind == PointerEventKind.up && ev.button == PointerEventButton.left) {
                     root.request-blur-search();
@@ -461,8 +467,7 @@ export component TrackListRowItem inherits Rectangle {
 
             // Uniform elide-with-LRM cells; year and length are structurally different and stay
             // inline below.
-            artist-cell := DataCell {
-                visible: root.columns.show_artist;
+            if root.columns.show_artist: DataCell {
                 x: root.layout.artist_x;
                 y: 0;
                 width: root.layout.artist_w;
@@ -475,8 +480,7 @@ export component TrackListRowItem inherits Rectangle {
                     : @tr("Unknown artist");
                 ink: root.artist-link-hovered ? Theme.accent : root.ink;
             }
-            album-cell := DataCell {
-                visible: root.columns.show_album;
+            if root.columns.show_album: DataCell {
                 x: root.layout.album_x;
                 y: 0;
                 width: root.layout.album_w;

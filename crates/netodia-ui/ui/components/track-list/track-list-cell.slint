@@ -11,15 +11,11 @@ export component DataCell inherits Rectangle {
     in property <string> text-content;
     // The row's `ink`, so every cell answers playing and dimmed in one place.
     in property <brush> ink;
-    // Track rows use the rendered label bounds for their link hit targets, so only the name is
-    // clickable rather than the whole column. Measurement and drawing share this Text.
-    out property <length> label-width: label.preferred-width;
-    out property <length> label-height: label.preferred-height;
 
     clip: true;
     VerticalLayout {
         alignment: center;
-        label := Text {
+        Text {
             text: "‎" + root.text-content;
             color: root.ink;
             font-size: Theme.font-size-row;

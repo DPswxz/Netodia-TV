@@ -12,6 +12,8 @@ export component CloudPlaylistTracks inherits Rectangle {
     in property <string> position-field: "position";
     in property <bool> favorite-clickable: true;
     in property <bool> show-number: false;
+    in property <bool> sortable: true;
+    in property <bool> cloud-entity-links: false;
     callback request-sort(string);
     callback play-track(string, int);
     callback toggle-favorite(string, bool);
@@ -31,8 +33,10 @@ export component CloudPlaylistTracks inherits Rectangle {
         playing-track-id: Player.vm.track.id;
         playing-remote-id: Player.vm.track.file_path == "" ? Player.vm.track.remote_id : "";
         cloud-rows: true;
+        cloud-entity-links: root.cloud-entity-links;
         cloud-single-click: false;
         cloud-favorite-clickable: root.favorite-clickable;
+        sortable: root.sortable;
         request-sort(field) => {
             root.request-sort(field == "track_number" ? root.position-field : field);
         }

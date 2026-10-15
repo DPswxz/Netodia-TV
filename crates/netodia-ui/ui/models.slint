@@ -56,6 +56,10 @@ export struct TrackListRow {
     album_id: int,
     artist_id: int,
     genre_id: int,
+    // Exact NetEase entity IDs for cloud-row navigation; unlike Slint `int`, strings preserve
+    // the service's full 64-bit IDs. Local rows leave these as their decimal linkage IDs too.
+    album_remote_id: string,
+    artist_remote_id: string,
 }
 
 // One page's track list columns, and what `views.json` keeps of them. `w_number`, `w_year` and

@@ -1,0 +1,19 @@
+import { TrackListRow } from "../models.slint";
+
+// An online album or artist detail opened from a NetEase-backed track list. The global keeps the
+// detail mounted over the current page so closing it returns to the exact list the user came from.
+export global CloudEntityDetail {
+    in-out property <bool> open: false;
+    in-out property <string> kind;          // "album" | "artist"
+    in-out property <string> remote-id;     // exact 64-bit NetEase ID
+    in-out property <string> title;
+    in-out property <string> subtitle;
+    in-out property <string> artwork-path;
+    in-out property <[TrackListRow]> tracks;
+    in-out property <bool> loading: false;
+    in-out property <string> error;
+
+    callback close();
+    callback retry();
+    callback play-cloud-row(string /*song ID*/, int /*index*/);
+}

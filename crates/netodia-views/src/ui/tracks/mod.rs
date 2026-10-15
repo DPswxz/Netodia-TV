@@ -152,6 +152,12 @@ pub fn to_slint_track_list_row(r: &RsTrackListRow, pool: &mut StringPool) -> UiT
         album_id: r.album_id.map_or(0, clamp_i64_to_i32),
         artist_id: r.artist_id.map_or(0, clamp_i64_to_i32),
         genre_id: r.genre_id.map_or(0, clamp_i64_to_i32),
+        album_remote_id: r
+            .album_id
+            .map_or_else(SharedString::default, |id| SharedString::from(id.to_string())),
+        artist_remote_id: r
+            .artist_id
+            .map_or_else(SharedString::default, |id| SharedString::from(id.to_string())),
     }
 }
 

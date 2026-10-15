@@ -2,4 +2,6 @@
 export global CloudTrackActions {
     callback enqueue(string /*song ID*/, bool /*play next*/);
     callback toggle-favorite(string /*song ID*/, bool /*liked*/);
+    callback open-album(string /*NetEase album ID*/);
+    callback open-artist(string /*NetEase artist ID*/);
 }
