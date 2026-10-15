@@ -35,12 +35,8 @@ use super::install_kind::{install_target, linux_pkg};
 /// write time with the absolute path of the running binary.
 const DESKTOP_TEMPLATE: &str = include_str!("../../../../../assets/desktop/Netodia.desktop.tmpl");
 
-/// SVG launcher icon. The "with background" variant — the disc behind
-/// the glyph belongs in taskbar / launcher contexts (the in-app custom
-/// titlebar uses the without-background variant because the window
-/// mantle already provides the disc). Matches the file shipped by
-/// `scripts/install-linux.sh` and `scripts/build-rpm.sh`.
-const ICON_SVG: &[u8] = include_bytes!("../../../../../assets/icons/logo-with-background.svg");
+/// Launcher icon, matching the supplied artwork shipped by the packages.
+const ICON_PNG: &[u8] = include_bytes!("../../../../../assets/icons/netodia.png");
 
 /// `AppStream` metainfo. Deployed to `~/.local/share/metainfo/` so a
 /// per-user tarball install shows up in software centres (KDE Discover
@@ -111,8 +107,26 @@ pub fn refresh_user_install() -> AppResult<()> {
             );
         }
     }
-    let icon_path =
-        data_home.join("icons").join("hicolor").join("scalable").join("apps").join("netodia.svg");
+    let icons_dir = data_home.join("icons").join("hicolor");
+    let icon_path = icons_dir.join("256x256").join("apps").join("netodia.png");
+    // Remove the old scalable artwork so an upgraded tarball install cannot keep showing it.
+    let mut legacy_icon_removed = false;
+    for legacy in [
+        icons_dir.join("scalable").join("apps").join("netodia.svg"),
+        icons_dir.join("scalable").join("apps").join("Netodia.svg"),
+    ] {
+        match std::fs::remove_file(&legacy) {
+            Ok(()) => legacy_icon_removed = true,
+            Err(e) if e.kind() != std::io::ErrorKind::NotFound => {
+                log::debug!(
+                    "desktop_integration: legacy icon {} remove failed: {}",
+                    legacy.display(),
+                    describe(&e)
+                );
+            }
+            Err(_) => {}
+        }
+    }
     // Per-user mirror of the copy RPM/DEB land in `/usr/share/metainfo/`.
     let metainfo_path =
         data_home.join("metainfo").join("com.github.helpmeeadice.netodia.metainfo.xml");
@@ -135,10 +149,11 @@ pub fn refresh_user_install() -> AppResult<()> {
         }
     };
     let desktop_changed = write(&desktop_path, desktop_body.as_bytes());
-    let icon_changed = write(&icon_path, ICON_SVG);
+    let icon_changed = write(&icon_path, ICON_PNG);
     let metainfo_changed = write(&metainfo_path, METAINFO_XML.as_bytes());
 
-    let any_changed = desktop_changed.unwrap_or(false)
+    let any_changed = legacy_icon_removed
+        || desktop_changed.unwrap_or(false)
         || icon_changed.unwrap_or(false)
         || metainfo_changed.unwrap_or(false);
     if any_changed {
@@ -244,7 +259,7 @@ mod tests;
 #[cfg(test)]
 pub(crate) const TEST_DESKTOP_TEMPLATE: &str = DESKTOP_TEMPLATE;
 #[cfg(test)]
-pub(crate) const TEST_ICON_SVG: &[u8] = ICON_SVG;
+pub(crate) const TEST_ICON_PNG: &[u8] = ICON_PNG;
 #[cfg(test)]
 pub(crate) const TEST_METAINFO: &str = METAINFO_XML;
 

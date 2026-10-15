@@ -70,7 +70,7 @@ assets = [
     ["target/release/Netodia", "usr/bin/netodia", "755"],
     ["../../scripts/Netodia.desktop", "usr/share/applications/com.github.helpmeeadice.netodia.desktop", "644"],
     ["../../packaging/com.github.helpmeeadice.netodia.metainfo.xml", "usr/share/metainfo/com.github.helpmeeadice.netodia.metainfo.xml", "644"],
-    ["../../assets/icons/logo-with-background.svg", "usr/share/icons/hicolor/scalable/apps/netodia.svg", "644"],
+    ["../../assets/icons/netodia.png", "usr/share/icons/hicolor/256x256/apps/netodia.png", "644"],
     ["../../LICENSE", "usr/share/doc/netodia/LICENSE", "644"],
     # The fonts, the vendored winit and the crates on copyleft terms all compile into
     # the binary, so this package owes their licence text. Globbed, so a new file needs

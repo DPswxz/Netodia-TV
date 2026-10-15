@@ -102,13 +102,9 @@ mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" "$APPDIR/usr/share/i
 cp "$BINARY" "$APPDIR/usr/bin/Netodia"
 chmod +x "$APPDIR/usr/bin/Netodia"
 
-# Icon — linuxdeploy uses the basename to derive `Icon=` in the desktop
-# file, so the SVG filename must match the .desktop's Icon= field. Use
-# the WITH-background brand SVG: it ships as the taskbar / launcher /
-# alt-tab thumbnail icon where there's no app chrome behind the glyph.
-# The without-background variant is reserved for the in-app custom
-# titlebar where the window mantle already provides the disc.
-cp "$REPO_ROOT/assets/icons/logo-with-background.svg" "$APPDIR/netodia.svg"
+# Install the supplied logo at its hicolor size and pass it to linuxdeploy
+# for the AppImage launcher metadata.
+cp "$REPO_ROOT/assets/icons/netodia.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/netodia.png"
 
 # Body kept in lockstep with `scripts/build-rpm.sh` + `Cargo.toml`'s
 # DEB asset `scripts/Netodia.desktop` + `assets/desktop/Netodia.desktop.tmpl`.
@@ -164,7 +160,7 @@ OUTPUT="$OUTPUT" \
 "$LINUXDEPLOY" \
   --appdir "$APPDIR" \
   --desktop-file "$APPDIR/com.github.helpmeeadice.netodia.desktop" \
-  --icon-file "$APPDIR/netodia.svg" \
+  --icon-file "$APPDIR/usr/share/icons/hicolor/256x256/apps/netodia.png" \
   --executable "$APPDIR/usr/bin/Netodia" \
   --output appimage
 

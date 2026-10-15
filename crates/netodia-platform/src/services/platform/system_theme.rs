@@ -259,40 +259,8 @@ pub fn get_kde_colors() -> Option<KdeColorPalette> {
     kde_palette_from_sections(&sections)
 }
 
-/// The Plasma style a `plasmarc` naming none is on, and the one that ships no `colors` of its own.
-const DEFAULT_PLASMA_STYLE: &str = "default";
-
-/// Breeze Light's window background, which `KColorScheme` falls back to when no file names one.
-const PLASMA_DEFAULT_WINDOW_BG: (u8, u8, u8) = (239, 240, 241);
-
-/// Whether the Plasma panel paints light. Read off the panel's own colours rather than the portal,
-/// because the panel follows the Plasma *style*: one shipping a `colors` file paints from it, so
-/// Breeze Twilight puts a dark panel over a light app scheme. A key that file leaves out falls
-/// through to `kdeglobals`, as Plasma's config does.
-///
-/// **Fails light**: a colour no file names is Breeze Light's, what Plasma paints without one.
-pub fn plasma_panel_is_light() -> bool {
-    let window_bg = [plasma_style_colors_path(), kde_config_path("kdeglobals")]
-        .into_iter()
-        .flatten()
-        .find_map(|path| get_color(&read_kconfig(&path)?, "Colors:Window", "BackgroundNormal"))
-        .unwrap_or(PLASMA_DEFAULT_WINDOW_BG);
-    rgb_is_light(window_bg)
-}
-
 fn rgb_is_light((r, g, b): (u8, u8, u8)) -> bool {
     is_light_hex((u32::from(r) << 16) | (u32::from(g) << 8) | u32::from(b))
-}
-
-/// The active Plasma style's `colors` file, searched in `QStandardPaths`' order. `None` for a style
-/// that ships none, the default among them.
-fn plasma_style_colors_path() -> Option<PathBuf> {
-    let style = kde_config_path("plasmarc")
-        .and_then(|path| read_kconfig(&path))
-        .and_then(|mut sections| sections.get_mut("Theme")?.remove("name"))
-        .unwrap_or_else(|| DEFAULT_PLASMA_STYLE.to_owned());
-    let relative = Path::new("plasma/desktoptheme").join(style).join("colors");
-    xdg_data_dirs().into_iter().map(|dir| dir.join(&relative)).find(|path| path.is_file())
 }
 
 /// `XDG_DATA_HOME`, then each of `XDG_DATA_DIRS` under the spec's default. The spec calls a relative

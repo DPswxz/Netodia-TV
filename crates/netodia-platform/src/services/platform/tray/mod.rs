@@ -24,7 +24,6 @@
 
 #[cfg(target_os = "linux")]
 mod ksni_backend;
-mod light_taskbar;
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 mod tray_icon_backend;
 
@@ -32,8 +31,7 @@ mod tray_icon_backend;
 pub use ksni_backend::{LinuxTray, init as init_tray};
 #[cfg(any(target_os = "windows", target_os = "macos"))]
 pub use tray_icon_backend::{
-    init as init_tray, refresh_icon as refresh_tray_icon, shutdown as shutdown_tray,
-    update as update_tray,
+    init as init_tray, shutdown as shutdown_tray, update as update_tray,
 };
 
 /// Bounded capacity of the `TrayAction` channel. The tray callback thread
@@ -97,8 +95,7 @@ impl TraySnapshot {
     }
 }
 
-/// The tray icon, baked into the binary. Rasterised from
-/// `crates/netodia-ui/ui/assets/icons/logo-without-background.svg` (see `scripts/`).
+/// The tray icon, baked into the binary and derived from the supplied Netodia logo.
 const TRAY_PNG: &[u8] = include_bytes!("../../../../../../assets/icons/tray.png");
 
 /// Decode the embedded tray PNG into `(width, height, rgba8)`. Returns `None`

@@ -89,8 +89,8 @@ from `main.rs` without ever opening this file.
 
 - **`services::platform::desktop_integration` self-deploys `.desktop` + icon on boot for tarball installs.**
   Compiled-in payloads `assets/desktop/Netodia.desktop.tmpl` (`@EXEC@`) +
-  `logo-with-background.svg`; BLAKE3-gated idempotent writes to
-  `~/.local/share/applications/…desktop` + `~/.local/share/icons/…/netodia.svg`. Skipped on
+  `assets/icons/netodia.png`; BLAKE3-gated idempotent writes to
+  `~/.local/share/applications/…desktop` + `~/.local/share/icons/…/netodia.png`. Skipped on
   AppImage (`$APPIMAGE` set) and RPM/DEB. Don't move the source paths without updating the
   `include_*!` call sites.
 

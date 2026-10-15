@@ -10,8 +10,8 @@
 #   1. Copies the `Netodia` binary to ~/.local/share/Netodia/Netodia
 #   2. Drops the .desktop file at
 #      ~/.local/share/applications/com.github.helpmeeadice.netodia.desktop
-#   3. Drops the SVG icon at
-#      ~/.local/share/icons/hicolor/scalable/apps/netodia.svg
+#   3. Drops the PNG icon at
+#      ~/.local/share/icons/hicolor/256x256/apps/netodia.png
 #   4. Best-effort desktop + icon cache refresh
 #
 # Both names match the RPM/DEB destinations — the desktop one so software
@@ -34,7 +34,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 INSTALL_DIR="${NETODIA_INSTALL_DIR:-$DATA_HOME/Netodia}"
 APPS_DIR="$DATA_HOME/applications"
-ICONS_DIR="$DATA_HOME/icons/hicolor/scalable/apps"
+ICONS_DIR="$DATA_HOME/icons/hicolor/256x256/apps"
 
 # Verify the tarball contents we need are present next to this script.
 need() {
@@ -42,7 +42,7 @@ need() {
 }
 need Netodia
 need com.github.helpmeeadice.netodia.desktop
-need netodia.svg
+need netodia.png
 
 echo "==> installing Netodia to $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR" "$APPS_DIR" "$ICONS_DIR"
@@ -50,7 +50,10 @@ mkdir -p "$INSTALL_DIR" "$APPS_DIR" "$ICONS_DIR"
 DESKTOP_FILE="com.github.helpmeeadice.netodia.desktop"
 install -m 0755 "$SCRIPT_DIR/Netodia"           "$INSTALL_DIR/Netodia"
 install -m 0644 "$SCRIPT_DIR/$DESKTOP_FILE"     "$APPS_DIR/$DESKTOP_FILE"
-install -m 0644 "$SCRIPT_DIR/netodia.svg"       "$ICONS_DIR/netodia.svg"
+install -m 0644 "$SCRIPT_DIR/netodia.png"       "$ICONS_DIR/netodia.png"
+# Remove the icon deployed by earlier SVG-based releases.
+rm -f "$DATA_HOME/icons/hicolor/scalable/apps/netodia.svg" \
+      "$DATA_HOME/icons/hicolor/scalable/apps/Netodia.svg"
 
 # Earlier per-user installs used these names; a leftover shows as a duplicate
 # launcher for the same binary. Mirrored in uninstall-linux.sh.
@@ -102,7 +105,7 @@ cat <<EOF
 
   Binary    : $INSTALL_DIR/Netodia
   Launcher  : $APPS_DIR/$DESKTOP_FILE
-  Icon      : $ICONS_DIR/netodia.svg
+  Icon      : $ICONS_DIR/netodia.png
 
 Run it from your application launcher, or directly:
     $INSTALL_DIR/Netodia

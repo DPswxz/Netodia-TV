@@ -85,14 +85,6 @@ export global Theme {
     // leaves the thumb nothing to gauge extent against. `crust` is a recess under every palette.
     out property <brush> scrollbar-track-on-card: root.crust;
 
-    // The Netodia mark, painted over the logo SVG's alpha via `colorize`. The asset carries the
-    // dark arm's stops, but in the titlebar the mark sits on `mantle`, where Mocha's pastels wash
-    // out on a light palette — Latte's own blue and teal rather than a darkened Mocha pair,
-    // `darker()` dividing HSV value alone and sending a pastel grey.
-    out property <brush> brand-mark: root.is-light(root.mantle)
-        ? @linear-gradient(135deg, #1e66f5 0%, #179299 100%)
-        : @linear-gradient(135deg, #89b4fa 0%, #94e2d5 100%);
-
     // Layout
     out property <length> sidebar-collapsed-w: 46px;
     out property <length> sidebar-default-w: 180px;

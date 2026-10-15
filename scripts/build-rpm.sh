@@ -11,7 +11,7 @@
 #   sudo dnf install ~/rpmbuild/RPMS/x86_64/netodia-*.rpm
 #
 # The RPM packages the prebuilt binary + a .desktop file + AppStream
-# MetaInfo + the SVG logo + the project LICENSE + the third-party
+# MetaInfo + the PNG logo + the project LICENSE + the third-party
 # license texts + the polkit update helper/policy. Per-user data
 # (queue.json, settings.json, netodia.db, artwork/) stays at
 # `$XDG_DATA_HOME/Netodia/` and is shared across installs — install +
@@ -61,10 +61,8 @@ mkdir -p "$PKG_DIR"
 # Stage: binary + icon + desktop file + licenses + polkit helper/policy
 cp "$BINARY" "$PKG_DIR/netodia"
 chmod 0755 "$PKG_DIR/netodia"
-# With-background SVG for the OS launcher / taskbar / KRunner icon —
-# the without-background variant is reserved for the in-app custom
-# titlebar where the window mantle provides the disc behind the glyph.
-cp "$REPO_ROOT/assets/icons/logo-with-background.svg" "$PKG_DIR/netodia.svg"
+# Supplied PNG artwork for the OS launcher / taskbar / KRunner icon and titlebar.
+cp "$REPO_ROOT/assets/icons/netodia.png" "$PKG_DIR/netodia.png"
 cp "$REPO_ROOT/LICENSE" "$PKG_DIR/LICENSE"
 # The two bundled fonts, the vendored winit fork and the crates on
 # copyleft terms are all compiled into the binary, so this package
@@ -168,7 +166,7 @@ system light/dark and Material You.
 install -D -m 0755 netodia %{buildroot}%{_bindir}/netodia
 install -D -m 0644 com.github.helpmeeadice.netodia.desktop %{buildroot}%{_datadir}/applications/com.github.helpmeeadice.netodia.desktop
 install -D -m 0644 com.github.helpmeeadice.netodia.metainfo.xml %{buildroot}%{_datadir}/metainfo/com.github.helpmeeadice.netodia.metainfo.xml
-install -D -m 0644 netodia.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/netodia.svg
+install -D -m 0644 netodia.png %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/netodia.png
 install -D -m 0755 netodia-update-helper %{buildroot}%{_libexecdir}/netodia-update-helper
 install -D -m 0644 com.github.helpmeeadice.netodia.update.policy %{buildroot}%{_datadir}/polkit-1/actions/com.github.helpmeeadice.netodia.update.policy
 
@@ -189,7 +187,7 @@ fi
 %{_bindir}/netodia
 %{_datadir}/applications/com.github.helpmeeadice.netodia.desktop
 %{_datadir}/metainfo/com.github.helpmeeadice.netodia.metainfo.xml
-%{_datadir}/icons/hicolor/scalable/apps/netodia.svg
+%{_datadir}/icons/hicolor/256x256/apps/netodia.png
 %{_libexecdir}/netodia-update-helper
 %{_datadir}/polkit-1/actions/com.github.helpmeeadice.netodia.update.policy
 

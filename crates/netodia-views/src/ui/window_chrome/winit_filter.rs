@@ -215,7 +215,6 @@ pub(super) fn install(app: &AppWindow, state: &AppState, targets: PressTargets) 
             WindowEvent::ThemeChanged(_) => {
                 let _ = weak.upgrade_in_event_loop(|ui| {
                     ui.global::<netodia_ui::WindowChrome>().invoke_recheck_system_theme();
-                    crate::ui::shell::tray_bridge::refresh_icon();
                 });
                 EventResult::Propagate
             }
@@ -369,8 +368,6 @@ fn on_focus(weak: &slint::Weak<AppWindow>, focused: bool) -> EventResult {
                 ui.global::<netodia_ui::WindowChrome>().invoke_recheck_system_theme();
                 crate::ui::appearance::window_border::refresh_system_color(&ui);
             }
-            #[cfg(any(target_os = "windows", target_os = "linux"))]
-            crate::ui::shell::tray_bridge::refresh_icon();
         }
     });
     EventResult::Propagate

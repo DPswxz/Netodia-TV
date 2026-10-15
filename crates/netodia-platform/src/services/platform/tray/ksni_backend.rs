@@ -95,8 +95,6 @@ impl ksni::Tray for NetodiaTray {
 /// Dropping it shuts the SNI service down, removing the icon.
 pub struct LinuxTray {
     handle: ksni::blocking::Handle<NetodiaTray>,
-    /// The panel the icon was last painted for, so a recheck that finds it unchanged sets nothing.
-    on_light_panel: bool,
 }
 
 impl LinuxTray {
@@ -108,16 +106,6 @@ impl LinuxTray {
         });
     }
 
-    /// Repaint the icon for the panel it sits on, if that changed since it was last painted.
-    pub fn set_on_light_panel(&mut self, on_light_panel: bool) {
-        if self.on_light_panel == on_light_panel {
-            return;
-        }
-        let icon = icon_for(on_light_panel);
-        if self.handle.update(move |tray| tray.icon = icon).is_some() {
-            self.on_light_panel = on_light_panel;
-        }
-    }
 }
 
 impl Drop for LinuxTray {
@@ -137,13 +125,10 @@ fn rgba_to_argb(mut rgba: Vec<u8>) -> Vec<u8> {
     rgba
 }
 
-/// The embedded icon, painted for the panel it sits on. Empty if the asset won't decode.
-fn icon_for(on_light_panel: bool) -> Vec<Icon> {
+/// The embedded icon. Empty if the asset won't decode.
+fn icon_for() -> Vec<Icon> {
     super::decode_icon()
-        .and_then(|(w, h, mut rgba)| {
-            if on_light_panel {
-                super::light_taskbar::paint(&mut rgba, w, h);
-            }
+        .and_then(|(w, h, rgba)| {
             Some(Icon {
                 width: i32::try_from(w).ok()?,
                 height: i32::try_from(h).ok()?,
@@ -156,16 +141,16 @@ fn icon_for(on_light_panel: bool) -> Vec<Icon> {
 
 /// Spawn the `StatusNotifierItem` service. Returns `None` when the session has
 /// no SNI host (vanilla GNOME) or no D-Bus — the app then runs without a tray.
-pub fn init(action_tx: mpsc::Sender<TrayAction>, on_light_panel: bool) -> Option<LinuxTray> {
+pub fn init(action_tx: mpsc::Sender<TrayAction>) -> Option<LinuxTray> {
     use ksni::blocking::TrayMethods;
 
-    let icon = icon_for(on_light_panel);
+    let icon = icon_for();
     let tray = NetodiaTray { snapshot: TraySnapshot::default(), icon, action_tx };
 
     match tray.spawn() {
         Ok(handle) => {
             log::info!("System tray registered (StatusNotifierItem)");
-            Some(LinuxTray { handle, on_light_panel })
+            Some(LinuxTray { handle })
         }
         Err(e) => {
             log::info!(

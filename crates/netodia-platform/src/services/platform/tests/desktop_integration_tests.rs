@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use tempfile::tempdir;
 
 use crate::services::platform::desktop_integration::{
-    TEST_DESKTOP_TEMPLATE, TEST_ICON_SVG, TEST_METAINFO, render_desktop, test_write_if_changed,
+    TEST_DESKTOP_TEMPLATE, TEST_ICON_PNG, TEST_METAINFO, render_desktop, test_write_if_changed,
 };
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -122,10 +122,10 @@ fn write_if_changed_skips_when_content_matches() -> TestResult {
 }
 
 #[test]
-fn icon_svg_is_non_empty() {
+fn icon_png_is_non_empty() {
     // Against an `include_bytes!` resolving to a moved or unreadable asset.
-    assert!(!TEST_ICON_SVG.is_empty(), "compiled-in icon payload must not be empty");
-    assert_eq!(TEST_ICON_SVG.first(), Some(&b'<'), "compiled-in icon must look like an SVG");
+    assert!(!TEST_ICON_PNG.is_empty(), "compiled-in icon payload must not be empty");
+    assert_eq!(TEST_ICON_PNG.first(), Some(&0x89), "compiled-in icon must have a PNG signature");
 }
 
 #[test]

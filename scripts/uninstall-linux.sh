@@ -15,7 +15,7 @@ set -euo pipefail
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 INSTALL_DIR="${NETODIA_INSTALL_DIR:-$DATA_HOME/Netodia}"
 APPS_DIR="$DATA_HOME/applications"
-ICONS_DIR="$DATA_HOME/icons/hicolor/scalable/apps"
+ICONS_DIR="$DATA_HOME/icons/hicolor/256x256/apps"
 
 removed=0
 remove() {
@@ -52,11 +52,10 @@ remove "$APPS_DIR/netodia.desktop"
 # AppStream MetaInfo — Netodia self-deploys this to the per-user
 # metainfo dir on first launch (see desktop_integration.rs).
 remove "$DATA_HOME/metainfo/com.github.helpmeeadice.netodia.metainfo.xml"
-remove "$ICONS_DIR/netodia.svg"
-# Legacy: earlier dev builds installed the icon as `Netodia.svg`
-# (uppercase). Best-effort cleanup so a re-install with the corrected
-# lowercase name doesn't leave a stale capitalised entry behind.
-remove "$ICONS_DIR/Netodia.svg"
+remove "$ICONS_DIR/netodia.png"
+# Clean the scalable SVG installed by previous releases too.
+remove "$DATA_HOME/icons/hicolor/scalable/apps/netodia.svg"
+remove "$DATA_HOME/icons/hicolor/scalable/apps/Netodia.svg"
 
 # Symlink under ~/.local/bin/ — only created if the user opted in
 # during install (mentioned in install script's tail). Best-effort.
