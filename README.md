@@ -1,239 +1,48 @@
 # Netodia
 
-**A fast, lightweight cross-platform desktop music player built with [Slint](https://slint.dev/) and pure Rust.**
+[![License: AGPL-3.0-or-later](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/Built%20with-Rust-orange.svg)](https://www.rust-lang.org/)
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/KenanSalar/Netodia?label=version&color=blueviolet)](https://github.com/HELPMEEADICE/Netodia/releases)
-[![Platforms](https://img.shields.io/badge/platforms-Linux%20%C2%B7%20Windows-success.svg)](#installation)
-[![Built with Rust](https://img.shields.io/badge/built%20with-Rust%20%2B%20Slint-orange.svg)](https://www.rust-lang.org/)
+**Netodia 是一款基于 [Melodia](https://github.com/KenanSalar/Melodia) 修改的第三方网易云音乐桌面客户端。**它使用 Rust 和 Slint 构建，在 Melodia 的桌面音乐播放器基础上整合了网易云音乐账号、曲库浏览和在线播放功能，同时保留本地音乐管理与播放能力。
 
-There is no embedded browser engine underneath the UI, which keeps the memory footprint small; [Footprint](#footprint) has the measured numbers and the setup behind them.
+> **第三方项目声明**：Netodia 由社区独立开发，与网易云音乐及其关联公司无隶属、授权或官方支持关系。网易云音乐的账号、接口、曲库和播放权限由相关服务提供方管理；服务规则或接口变化可能影响部分功能。请遵守相关服务条款并合理使用。
 
----
+## 功能
 
-## Screenshots
+- **网易云账号**：支持二维码、手机号和邮箱登录。
+- **在线音乐**：搜索歌曲，浏览歌单、专辑和歌手，并播放网易云音乐曲目；可在设置中选择云端播放音质。
+- **个人音乐**：浏览收藏和创建的歌单、喜欢的歌曲、最近播放与每日推荐；提供私人漫游、心动模式和相似歌曲等播放入口。
+- **歌词**：显示在线曲目歌词，也支持本地歌词文件和音乐文件内嵌歌词。
+- **本地音乐**：扫描和管理本地曲库，支持搜索、歌单、标签编辑及多种常见音频格式。
+- **桌面播放体验**：包含播放队列、均衡器、ReplayGain、无缝播放、迷你播放器、系统媒体按键和多种主题。
+- **跨平台**：支持 Linux 与 Windows，面向 `x86_64` 和 `aarch64` 架构提供构建。
 
-Six theme families, light and dark variants, configurable accents, and Material You dynamic color; the shots below are a handful of them, all on the default aurora backdrop. See [Themes](#themes) below for the full list.
+网易云音乐功能需要网络连接。部分歌曲、音质或账号功能可能受账号状态、会员权限、地区及服务端策略限制。
 
-### Library
+## 下载
 
-<table>
-  <tr>
-    <td width="50%"><img src="assets/screenshots/songs.png" alt="My Library on the Songs tab"><br><sub><b>My Library</b>: one page and five tabs, here on Songs with sortable, toggleable columns.</sub></td>
-    <td width="50%"><img src="assets/screenshots/album.png" alt="My Library on the Albums tab"><br><sub><b>Albums</b>: a virtualized cover grid, sorted by name, year, or artist.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="assets/screenshots/playlist-detail.png" alt="A playlist opened inside My Library"><br><sub><b>Detail in place</b>: opening a playlist grows the band into its banner, tabs still in reach.</sub></td>
-    <td><img src="assets/screenshots/search.png" alt="Search view"><br><sub><b>Search</b>: a top-result card over songs, albums, artists, and genres.</sub></td>
-  </tr>
-</table>
+前往 [GitHub Releases](https://github.com/HELPMEEADICE/Netodia/releases) 下载适用于你系统的版本。Linux 提供 `.deb`、`.rpm`、AppImage 或压缩包等构建；Windows 提供安装包或便携版本（以对应版本的发布附件为准）。
 
-### Now Playing
+## 从源码构建
 
-<table>
-  <tr>
-    <td width="50%"><img src="assets/screenshots/nowplaying-upnext.png" alt="Now Playing with the Up Next list"><br><sub><b>Up Next</b>: the queue beside the artwork, the file's format, and the visualizer.</sub></td>
-    <td width="50%"><img src="assets/screenshots/nowplaying-lyrics.png" alt="Now Playing with a timed lyrics sheet"><br><sub><b>Lyrics</b>: the header switch trades Up Next for a timed sheet that follows the song line by line.</sub></td>
-  </tr>
-</table>
-
-### Settings
-
-<table>
-  <tr>
-    <td><img src="assets/screenshots/settings.png" alt="Settings on the Interface tab"><br><sub><b>Settings</b>: five tabs and a search box, here on the theme, variant, accent, and backdrop.</sub></td>
-  </tr>
-</table>
-
-### Mini-player
-
-Shrink the window past a threshold and the full UI collapses into a compact mini-player. It grows with the window rather than switching between layouts: a one-line strip, then a card with the controls sliding under the title beside larger artwork and the window buttons opening above, then a column with Up Next or lyrics below. Close Netodia from it and it opens as the mini-player next time, with its restore button still returning to the full-size window you had.
-
-<table>
-  <tr>
-    <td width="50%" valign="top"><img src="assets/screenshots/miniplayer-onestrip-aurora.png" alt="Mini-player as a one-line strip"><br><sub><b>Strip</b>: the most compact form, the controls on the title's line.</sub></td>
-    <td width="50%" valign="top"><img src="assets/screenshots/miniplayer-nolist.png" alt="Mini-player as a card with window buttons"><br><sub><b>Card</b>: the controls under the title beside larger artwork, the window buttons above.</sub></td>
-  </tr>
-  <tr>
-    <td valign="top"><img src="assets/screenshots/miniplayer-upnext-aurora.png" alt="Mini-player column with the Up Next list"><br><sub><b>Up Next</b>: taller still, the column opens the queue under the card.</sub></td>
-    <td valign="top"><img src="assets/screenshots/miniplayer-lyrics-aurora.png" alt="Mini-player column with a timed lyrics sheet"><br><sub><b>Lyrics</b>: the switch in the corner trades Up Next for the timed sheet.</sub></td>
-  </tr>
-</table>
-
----
-
-## Features
-
-### Library
-- A first-run card that opens on your library, adding your Music folder in one click or any other folder you pick, then sets language, theme and accent, and names every feature that reaches the network so you can switch it on or leave it off. Three panels, closeable in a click, and reachable again from Settings ▸ About
-- Parallel folder scanning, live folder watching, and incremental re-scans
-- Content hashing (BLAKE3), so a moved or renamed file keeps its play counts, favorites, and place in the queue
-- Full-text search (SQLite FTS5) over tracks, albums, artists, and genres, and over the people credited on a track, so a composer or a producer reaches their work: accent-insensitive, relevance-ranked, with a top-result card and recent history. The filter box on every list searches the same fields
-- **My Library** groups NetEase music into Collected Playlists, Created Playlists, Recommendations (Daily Recommendations, Personal Radar, and recommended playlists), and Infinite Roaming (Personal Roaming, Heart Mode, and Similar Songs). Roaming refills the queue automatically; opening a playlist grows the tab band into its banner.
-- Favorites and Recently Played, each a hero banner over sortable lists and browsable card grids. Recently Played stays local to the library and is not sent to an external listening-history service
-- Browse by folder, as a detailed list or a grid of cards
-- Play and skip counts, natural sort, resizable and toggleable columns
-- Multi-selection on every library list and card grid: tick one to start, then a click anywhere on a row or card adds the next and shift-click takes a range. Right-click acts on the whole set, from queueing it to editing its tags; `Esc` clears it
-- Copy from any right-click menu: a song's title, artist, album, "Artist - Title" or file path, or an album's name and artist. A selection copies one line per item, in the order it was picked, and the queue's in queue order
-- Tag editing for one track or many at once, cover art included, written straight back to the files. A track's artists, its genres and the ten studio credits (composer, lyricist, conductor, performer, producer and the rest) are each an editable list rather than one text box, beside the rest of what a file can carry: work and movement, key, mood, ISRC, and the release's own label, catalog number, barcode and medium
-- Manual and smart playlists, the latter rule-based and resolved live; `.m3u8` import and export, several at once as a single `.zip` that imports back without extracting, drag-and-drop import and reordering
-- A database backup before every schema migration, three kept
-
-### Playback
-- Gapless, including the AAC encoder delay and padding read back from `iTunSMPB` or the MP4 edit list, and the trailing padding a Matroska file states
-- Crossfade (1–12 s) across two decks with a clip-safe ramp, optionally skipped between same-album tracks, and under exclusive output too wherever the next track needs no change of device format
-- 10-band equalizer (31 Hz – 16 kHz) with preamp, presets, and a soft-knee limiter
-- ReplayGain in track or album mode, with preamp and peak-based clip prevention
-- Queue with shuffle and repeat; playing from any list queues that list behind your pick
-- Hold Previous or Next to scan through a track in short audible jumps that grow the longer you hold, and hold Play/Pause to stop, which takes the track back to its start
-- Full-screen Now Playing with an up-next list and a spectrum, mirrored, or waveform visualizer tinted to the album's own colors
-- Playback speed 0.25×–2.0×, a playback-linked sleep timer, resume on startup, media keys
-- Band-limited sample-rate conversion wherever a file's rate isn't the output's or the speed isn't 1×, carried across gapless track changes, and skipped entirely where the rates already match
-- Responsive mini-player: shrink the window and the UI collapses to a strip, a card or a column with Up Next or lyrics, one layout that rearranges as you resize instead of jumping between them
-
-### Bit-perfect output
-- **Exclusive output** on Linux and Windows, off until you choose it under Settings ▸ Playback ▸ Output. Netodia takes the audio device for itself and hands it the decoder's samples at each file's own sample rate and bit depth, with no system mixer in between: an ALSA `hw:` device on Linux, asked of the sound server so it is handed back cleanly, and WASAPI exclusive mode on Windows
-- A **Signal Path** panel follows the playing track from the file to the device, grades every stage that can change it (the decoded format, EQ and ReplayGain, speed, volume, a crossfade, the sample rate, the channel layout and the output itself), and sums it up as Bit-perfect, Enhanced (only effects you chose), Converted, Lossy (a compressed file, whatever else the path does), or Fallback (a refused claim, which outranks the rest). **Make Bit-Perfect** switches off whatever you chose that changes the sound, and from shared output asks to switch to exclusive
-- A quality chip in the player bar carries that verdict and the device's rate, and opens the panel in one click. It shows only under exclusive output, and moves into the overflow menu if you'd rather
-- **Output Device** (**Exclusive Device** on Linux) picks the sound card exclusive output claims. On Windows it routes shared output too, and its System Default entry follows whichever device Windows makes the default. A chosen device you unplug hands playback to the default and is taken back as soon as it returns. On Linux the sound server routes shared output, and remembers where you moved it in its own mixer
-- A device that refuses the claim never costs you the music: playback carries on shared (on Windows, through that same device), a notification names the device, and the panel says why
-- **Unsupported Sample Rates** can keep the claim for a file at a rate the device lacks, resampling it to one the device has rather than handing it to the system mixer, and an album mixing such rates stays gapless wherever the device's own rate doesn't change
-- Dither wherever samples Netodia changed are narrowed to 16 or 24 bits, so a quiet fade ends in a soft hiss rather than distortion, while untouched samples still pass bit-exact
-- **Hardware Volume** turns the device's own volume control instead of scaling the samples, so the slider keeps the sound bit-perfect, and the system's own volume keys move Netodia's slider with it
-- **Give the Device Back When Paused** hands the device to other apps after five minutes paused; pressing play takes it again and carries on where it stopped
-- A buffer period to choose, a short silence for the DACs that mute while they switch sample rates, and on Windows a polling mode for USB devices that stutter under exclusive output
-- In shared mode on Linux, **Match the File's Sample Rate** reopens the device at each track's own rate wherever the sound server allows it
-- Unplugging the device or restarting the sound server picks playback up on the new output at the same position
-
-### Lyrics
-- A panel in the Now Playing column in place of Up Next, turned on from the switch in that view's header or under Settings ▸ Services ▸ Lyrics. A timed sheet follows the song line by line, and clicking a line seeks to it
-- **Off by default, and off means off**: while lyrics are switched off, Now Playing shows Up Next and nothing looks a sheet up or keeps one in memory
-- Read from a `.lrc` beside the track or from the file's own lyrics tag, so a library that already carries them needs no online lookup
-- **Online lookup is off until you switch it on**, from the lyrics menu or under Settings ▸ Services ▸ Lyrics. Nothing contacts **lrclib.net** until you do, and what it answers is cached under your data folder rather than written into your files
-- Romanization printed under a line written in a script you don't read. Korean and Japanese each get an engine matched to them; around a hundred scripts are covered in all, Chinese, Cyrillic and Arabic among them. On by default, and it draws nothing for a sheet already in Latin letters
-- A bilingual sheet's translation is drawn under the words it glosses
-- **Look up again** when a sheet matched the wrong recording, **Save to file** to write the one on screen into the track's own tag, and **Edit lyrics…** when it is nearly right and a stamp needs typing. The Edit Tags dialog offers the same sheet above its Lyrics field
-
-### Themes
-Six families, each with light and dark variants and configurable accents: **Catppuccin** (Latte, Frappé, Macchiato, Mocha), **Material 3**, **GNOME Adwaita**, **KDE Breeze**, **Windows Fluent**, and **macOS**. System dark/light is followed automatically, KDE color schemes are read from `kdeglobals`, and Material You derives a palette from the current artwork in seven color styles. Headers paint an aurora of the album's own colors by default, or a blurred cover instead. The titlebar is custom and transparent, with native decorations available, and KDE opens on its native one. A first launch picks the desktop's own theme too: Windows Fluent, KDE Breeze and GNOME Adwaita follow the system's light or dark mode, and any other desktop starts on Catppuccin Mocha.
-
-### Formats and languages
-MP3, FLAC, M4A/M4B (AAC and ALAC), raw AAC (`.aac`), Ogg Vorbis (`.ogg`, `.oga`), Opus (`.opus`, up to 7.1), WAV (PCM and ADPCM), AIFF/AIFF-C, Matroska (`.mka`), and CAF. Matroska and CAF carry no tags Netodia can read, so those tracks list under their filename, as does anything whose tags are too damaged to parse.
-
-Seventeen locales (English, German, French, Spanish, Turkish, Greek, Italian, Brazilian Portuguese, European Portuguese, Dutch, Polish, Indonesian, Russian, Ukrainian, Hungarian, Vietnamese, Simplified Chinese), switchable at runtime with no restart.
-
-### System integration
-- OS media controls (MPRIS2 on Linux, SMTC on Windows) and media keys
-- A system-tray icon with playback controls, on by default, and an optional close-to-tray; both under Settings ▸ Interface
-- A daily update check, named on first run and switchable under Settings ▸ Updates. It asks GitHub for a signed manifest and nothing else; package-managed installs skip it entirely
-- Set Netodia as your default player and double-click a track; it runs as a single instance, so files open in the window you already have
-- Always-on-top on Windows, on any X11 desktop, and on Wayland under KDE, or GNOME with the Window Calls extension
-- On Linux, a self-deploying desktop entry and AppStream metadata for KDE Discover and GNOME Software
-- Window, queue, and navigation state persisted across sessions
-
-## Footprint
-
-Release builds against the same 512-track library on one dual-boot PC, a Ryzen 7 9800X3D (8 cores, 16 threads) with an RTX 3080 and the window on a 144 Hz display. On both platforms Netodia opened on the same playlist, its detail view showing the hero banner, and the visualizer ran in the Mirrored style. After 30 s to settle, each scenario is sampled every second for 60 s: memory is the median sample, CPU and GPU the total over that minute. Each platform's table uses what its own kernel accounts for, so the columns differ between the two.
-
-### Linux (Fedora)
-
-Measured with [`scripts/measure-linux-footprint.sh`](scripts/measure-linux-footprint.sh) on KDE Plasma under Wayland.
-
-#### Custom titlebar
-
-| Scenario | Anonymous | PSS | USS | RSS | GPU memory | CPU (1 core) | CPU (all cores) | GPU |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Idle | 32 MiB | 87 MiB | 81 MiB | 157 MiB | 39 MiB | 0.08% | 0.01% | 0.00% |
-| Playing, list view | 33 MiB | 89 MiB | 84 MiB | 157 MiB | 35 MiB | 0.67% | 0.04% | 1.21% |
-| Playing, visualizer live | 33 MiB | 90 MiB | 85 MiB | 158 MiB | 35 MiB | 3.88% | 0.24% | 1.86% |
-
-#### Native titlebar
-
-| Scenario | Anonymous | PSS | USS | RSS | GPU memory | CPU (1 core) | CPU (all cores) | GPU |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Idle | 32 MiB | 87 MiB | 81 MiB | 157 MiB | 24 MiB | 0.08% | 0.01% | 0.00% |
-| Playing, list view | 33 MiB | 90 MiB | 84 MiB | 156 MiB | 24 MiB | 0.57% | 0.04% | 0.00% |
-| Playing, visualizer live | 33 MiB | 91 MiB | 86 MiB | 157 MiB | 29 MiB | 3.92% | 0.24% | 0.78% |
-
-Linux keeps no commit charge per process, so **Anonymous** is the figure to compare: the memory Netodia allocated itself, in RAM or in swap, which nothing another process does can move. It is also the number that stays flat, since grids and track lists are virtualized and the cover caches are capped against the display, so a larger library barely moves it. **PSS** is KDE System Monitor's Memory column. It adds a share of the file-backed pages, mostly the binary and the shared graphics stack rather than anything Netodia allocated, and that share shrinks whenever another program maps the same libraries. **USS** is the part no other process maps, what closing Netodia gives back, and System Monitor's Private column. **RSS** counts every shared page in full. **GPU memory** is the video memory the NVIDIA driver charges to Netodia, where FemtoVG keeps its textures and framebuffers, counted apart from the rest. **CPU (1 core)** counts one full core as 100%, and **CPU (all cores)** spreads that across all 16 threads, as System Monitor's CPU column does. **GPU** is the utilization the NVIDIA driver reports for Netodia, in whole percents each second.
-
-### Windows
-
-Measured with [`scripts/measure-windows-footprint.ps1`](scripts/measure-windows-footprint.ps1).
-
-#### Custom titlebar
-
-| Scenario | Commit | Private WS | Working set | GPU dedicated | GPU shared | CPU (1 core) | CPU (all cores) | GPU |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Idle | 105 MiB | 60 MiB | 119 MiB | 26 MiB | 13 MiB | 0.13% | 0.01% | 0.00% |
-| Playing, list view | 112 MiB | 64 MiB | 123 MiB | 28 MiB | 17 MiB | 0.91% | 0.06% | 0.12% |
-| Playing, visualizer live | 116 MiB | 67 MiB | 126 MiB | 29 MiB | 17 MiB | 6.33% | 0.40% | 2.36% |
-
-#### Native titlebar
-
-| Scenario | Commit | Private WS | Working set | GPU dedicated | GPU shared | CPU (1 core) | CPU (all cores) | GPU |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Idle | 102 MiB | 59 MiB | 118 MiB | 23 MiB | 13 MiB | 0.16% | 0.01% | 0.00% |
-| Playing, list view | 103 MiB | 59 MiB | 118 MiB | 24 MiB | 13 MiB | 0.89% | 0.06% | 0.10% |
-| Playing, visualizer live | 115 MiB | 67 MiB | 126 MiB | 27 MiB | 19 MiB | 9.06% | 0.57% | 2.17% |
-
-Windows keeps no PSS, so **Commit** is the figure to compare: the private memory Windows has set aside for Netodia, in RAM or paged out, which doesn't fall when Windows trims the process. **Private WS** is Task Manager's Memory column, the private memory in RAM at that moment. **Working set** adds the pages Netodia shares with other processes, mostly system DLLs. **GPU dedicated** and **GPU shared** are the video memory Task Manager lists per process, where FemtoVG keeps its textures and framebuffers, counted apart from commit. **CPU (1 core)** counts one full core as 100%, and **CPU (all cores)** spreads that across all 16 threads, as Task Manager's Details tab does. **GPU** is the busiest GPU engine, Task Manager's per-process figure.
-
-## Keyboard Shortcuts
-
-| Action | Shortcut |
-|--------|----------|
-| Play / Pause | `Space` |
-| Seek backward / forward 5s | `←` / `→` |
-| Seek backward / forward 30s | `Shift+←` / `Shift+→` |
-| Previous / Next track | `Ctrl+←` / `Ctrl+→`, or `P` / `N` |
-| Volume up / down 5% | `↑` / `↓` |
-| Volume up / down 1% | `Ctrl+↑` / `Ctrl+↓` |
-| Seek to 0–90% | `0`–`9` |
-| Mute | `M` |
-| Favorite current track | `L` |
-| Shuffle | `S` |
-| Repeat mode | `R` |
-| Queue sheet | `Q` |
-| Select all (queue sheet) | `Ctrl+A` |
-| Now Playing view | `F` |
-| Maximize | `F11` |
-| Toggle sidebar | `Ctrl+B` |
-| Settings | `Ctrl+,` |
-| New playlist | `Ctrl+N` |
-| Close dialog / close Now Playing / clear selection | `Esc` |
-| Navigate back / forward through history | `Mouse-4` / `Mouse-5` |
-
-OS media keys (play/pause, next, previous, stop) are also handled. Stop takes the track back to its start, as holding the Play/Pause button does.
-
-## Installation
-
-Linux (X11 and Wayland) and Windows, on both `x86_64` and `aarch64`. Take the latest build from the
-[Releases page](https://github.com/HELPMEEADICE/Netodia/releases).
-
-| Format | Install |
-|--------|---------|
-| `.rpm` (Fedora/RHEL) | `sudo dnf install ./netodia-*.rpm` |
-| `.deb` (Debian/Ubuntu) | `sudo apt install ./netodia-*.deb` |
-| AppImage | `chmod +x netodia-*.AppImage && ./netodia-*.AppImage` |
-| Tarball | Extract, then `./install-linux.sh`, which installs into `~/.local/share/Netodia` with no `sudo`, so the in-app updater needs no polkit prompt |
-| Windows | Run the installer, or use the portable binary |
-
-Netodia updates itself in place, minisign-signed. Release artifacts also carry
-build-provenance attestations, verifiable with:
+项目使用 Rust 2024 edition，工具链版本见 [`rust-toolchain.toml`](rust-toolchain.toml)。Linux 构建还需要 Slint/FemtoVG 所需的系统开发依赖；Windows 无需额外的项目专用依赖。
 
 ```bash
-gh attestation verify <file> --repo KenanSalar/Netodia
+git clone https://github.com/HELPMEEADICE/Netodia.git
+cd Netodia
+cargo run -p netodia
 ```
 
-## Building from Source
-
-[Rust](https://rustup.rs/) **1.97.0**, edition 2024, pinned by `rust-toolchain.toml` and installed by
-rustup on its own. Linux additionally needs the development packages for Slint's FemtoVG renderer
-(no WebKitGTK); Windows needs nothing extra.
+构建发布版本：
 
 ```bash
-# Debian/Ubuntu
+cargo build --release -p netodia
+```
+
+Linux 常见构建依赖：
+
+```bash
+# Debian / Ubuntu
 sudo apt install libfontconfig1-dev libfreetype6-dev libasound2-dev \
                  libxkbcommon-dev mesa-vulkan-drivers libwayland-dev
 
@@ -242,107 +51,10 @@ sudo dnf install fontconfig-devel freetype-devel alsa-lib-devel \
                  libxkbcommon-devel vulkan-loader wayland-devel
 ```
 
-```bash
-git clone https://github.com/HELPMEEADICE/Netodia.git
-cd Netodia
+## 项目来源与许可
 
-cargo run -p netodia                                     # debug build, runs the app
-cargo build --release -p netodia                         # release → target/release/Netodia
-cargo clippy --all-targets --workspace -- -D warnings    # lint
-cargo test --workspace                                   # tests
-```
+Netodia 基于 [Kenan Salar 的 Melodia](https://github.com/KenanSalar/Melodia) 修改。感谢 Melodia 项目及其贡献者提供的基础播放器实现。
 
-A source build keeps its own library under `Netodia-dev`, beside an installed copy's folder rather
-than inside it, so a schema migration still on a branch can't leave an installed Netodia unable to
-open its database, and the two can run at once. `NETODIA_DATA_DIR` points either build at a
-directory of your choosing.
+Netodia 按 [GNU Affero 通用公共许可证 v3 或更高版本（AGPL-3.0-or-later）](LICENSE) 发布。分发或修改本项目时，请遵守许可证要求；随项目提供的第三方组件许可文本见 [`licenses/`](licenses/)。
 
-`winit/` is a checked-in copy of winit 0.30.13 plus an unmerged Wayland file drag-and-drop fix
-([winit#1881]), wired by `Cargo.toml`'s `[patch.crates-io]`. A fresh clone builds with no setup;
-dropping the patch costs only that drag-and-drop.
-
-[winit#1881]: https://github.com/rust-windowing/winit/issues/1881
-
-## Architecture
-
-The Slint UI runs on the main thread and a single multi-threaded Tokio runtime handles the database,
-scanner, watcher, player control, and HTTP. There is no WebView and no IPC boundary: UI callbacks
-spawn async work, state flows back over `watch` and `mpsc` channels consumed by UI-thread tasks, and
-cpal's device callback, or an exclusive claim's own writer thread, pulls the mixer directly, so
-decoding, the DSP chain, and the mix stay off the runtime entirely.
-
-Fourteen crates, layered so the compiler enforces the direction rather than a convention: the UI
-names no database or socket, the decoders name no mixer, the tag writer names no state machine.
-Slint 1.16 on FemtoVG, Tokio, Symphonia and cpal (with ALSA and WASAPI directly for exclusive output),
-SQLite via SQLx with WAL and FTS5, Lofty for tags, Rayon, BLAKE3, and minisign for the updater.
-
-[`CLAUDE.md`](CLAUDE.md) is the architecture reference; [`docs/adr/`](docs/adr/) records why each
-piece was chosen over the alternatives.
-
-## Data and Logs
-
-Everything lives under the OS application-data directory, `~/.local/share/Netodia` on Linux and
-`%APPDATA%\Netodia` on Windows:
-
-| File / folder | Purpose |
-|---------------|---------|
-| `netodia.db` | The music library (SQLite, WAL + FTS5) |
-| `settings.json`, `views.json`, `queue.json` | Preferences, per-view UI state, and the track queue |
-| `artwork/`, `artists/` | Cached album and artist images. A deleted cover is put back from your music files on the next scan |
-| `lyrics/` | Sheets the online lookup found, and a marker for the tracks it found none for |
-| `backups/` | Database copies taken before each schema migration |
-| `logs/` | Rolling logs and crash reports |
-
-`NETODIA_DATA_DIR` moves the whole folder somewhere else.
-
-Netodia writes a log on every run, with no environment variable and no terminal needed, and leaves a
-crash report beside it if it ever panics. The current log is `netodia_rCURRENT.log`; it rotates at
-2 MiB and keeps the 7 most recent, so `logs/` stays under about 16 MiB.
-
-**Settings → About → Diagnostics** opens that folder, saves a single `netodia-diagnostics-*.txt` to
-attach to a bug report, and toggles verbose logging. The report carries your version, OS, desktop
-session and install method, your library's size, a short fixed list of settings, recent crash
-reports, and the tail of the logs. Home directory paths are shortened to `~`, and **no credentials,
-tokens or session keys are ever included**; those live in a separate file the report doesn't read.
-
-If Netodia won't start at all, `netodia --logs` prints the log directory and exits. That covers Linux
-and macOS: a Windows build runs with no console attached, so use `%APPDATA%\Netodia\logs\` directly.
-For finer control than the verbose switch, `RUST_LOG=debug netodia` overrides the filter for both the
-log file and the terminal.
-
-## Contributing
-
-Contributions are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) has the setup, the checks to run
-before pushing, and how pull requests are handled.
-
-## License
-
-Copyright (C) 2026 Kenan Salar. Netodia is free software under the
-[GNU Affero General Public License](LICENSE), version 3 or, at your option, any later version, and is
-distributed without any warranty.
-
-The AGPL covers Netodia itself. Two fonts, a patched winit fork and several crates on copyleft terms
-(the UI toolkit, the audio decoders and the Japanese romanization engine) are compiled into the
-binary under their own terms; every one of those licenses ships in [`licenses/`](licenses/), which
-every package carries alongside this file.
-
-## Acknowledgments
-
-Built on the work of the [Slint](https://slint.dev/),
-[cpal](https://github.com/RustAudio/cpal),
-[Symphonia](https://github.com/pdeljanov/Symphonia), and
-[SQLx](https://github.com/launchbadge/sqlx) projects, the
-[Catppuccin](https://catppuccin.com/) palette, and
-[Material Foundation](https://m3.material.io/)'s color utilities, along with the many other crates
-listed in `Cargo.toml`. The lyrics directory is [LRCLIB](https://lrclib.net) (no account).
-Romanization is [uroman-rs](https://github.com/stellanomia/uroman-rs) for most scripts and
-[kakasi](https://github.com/Theta-Dev/kakasi) for Japanese.
-
-Netodia's interface is set in [Vazirmatn](https://github.com/rastikerdar/vazirmatn) (SIL Open Font
-License 1.1), with its Greek, Russian, Ukrainian and Vietnamese letters taken from
-[Roboto](https://github.com/googlefonts/roboto-3-classic) (Apache License 2.0). Simplified Chinese
-uses [Noto Sans SC](https://github.com/notofonts/noto-cjk) (SIL Open Font License 1.1); the icons
-come from [Material Symbols Rounded](https://github.com/google/material-design-icons) (Apache
-License 2.0). Vazirmatn, Roboto and Material Symbols are modified, as is the vendored
-[winit](https://github.com/rust-windowing/winit) fork (Apache License 2.0) that gives Wayland its
-drag-and-drop events. What changed in each ships in [`licenses/`](licenses/).
+网易云音乐及相关商标、服务和内容归其各自权利人所有，本项目不主张相关权利。
