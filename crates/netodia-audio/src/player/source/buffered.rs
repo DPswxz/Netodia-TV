@@ -289,13 +289,16 @@ mod tests {
         let (released, wake) = &*release;
         *released.lock().map_err(|_| AppError::Player("test gate poisoned".to_owned()))? = true;
         wake.notify_one();
-        let recovered = (0..1000).find_map(|_| {
-            let sample = source.next();
-            if sample.is_none() {
-                thread::yield_now();
+        let deadline = std::time::Instant::now() + Duration::from_secs(1);
+        let recovered = loop {
+            if let Some(sample) = source.next() {
+                break Some(sample);
             }
-            sample
-        });
+            if std::time::Instant::now() >= deadline {
+                break None;
+            }
+            thread::sleep(SOURCE_POLL_INTERVAL);
+        };
         assert_eq!(recovered, Some(0.75));
         assert_eq!(source.state(), BufferState::Playing);
         Ok(())
