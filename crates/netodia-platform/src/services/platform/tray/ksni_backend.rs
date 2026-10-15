@@ -105,7 +105,6 @@ impl LinuxTray {
             tray.snapshot = snapshot;
         });
     }
-
 }
 
 impl Drop for LinuxTray {

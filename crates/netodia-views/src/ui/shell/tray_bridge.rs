@@ -335,11 +335,7 @@ fn snapshot_from_vm(vm: Option<&PlayerViewModelLight>) -> TraySnapshot {
 /// Linux state subscriber: a tokio task owning the `Send` `LinuxTray`. Dropping the tray
 /// when the task ends removes the icon, so no explicit teardown is needed.
 #[cfg(target_os = "linux")]
-fn spawn_state_subscriber_linux(
-    spawner: &TaskSpawner,
-    state: &AppState,
-    tray: tray::LinuxTray,
-) {
+fn spawn_state_subscriber_linux(spawner: &TaskSpawner, state: &AppState, tray: tray::LinuxTray) {
     let mut rx = state.sinks.view_model.subscribe();
     spawner.spawn_cancellable(move |shutdown| async move {
         // `update` is a blocking D-Bus round trip to ksni's service thread, so
