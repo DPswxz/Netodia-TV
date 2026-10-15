@@ -6,7 +6,7 @@
 //! (`clippy::let_underscore_lock`, denied through `correctness`); these cover what it
 //! can't see.
 //!
-//! Six writers take `IndexPersist` — the sidebar's nav index and the five pages' tab
+//! Five writers take `IndexPersist` — the sidebar's nav index and the four pages' tab
 //! indices — and the lock itself is private to the primitive, so a call site can no longer
 //! hold it wrongly. What is left to a test is the primitive's own critical section and the
 //! two halves a caller still owns: writing inside the closure, and publishing before it

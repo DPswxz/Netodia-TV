@@ -1,6 +1,6 @@
 //! Ordering for the `views.json` index writes that can fire more than once a tick.
 //!
-//! Six indices are written this way — the sidebar's `last_nav_index` and the five pages'
+//! Five indices are written this way — the sidebar's `last_nav_index` and the four pages'
 //! tab indices — and every one of them is a *catch-up* write: the Slint property is
 //! already correct, so nothing on screen depends on the disk hop landing. What does
 //! depend on it is the next launch, and there the only value that matters is the last

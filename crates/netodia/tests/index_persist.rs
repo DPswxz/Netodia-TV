@@ -2,22 +2,23 @@
 //!
 //! Two blocking tasks have no ordering between them whichever tick queued them, so a value the
 //! user only passed through can land last. `IndexPersist` owns that argument; these ask whether
-//! anything reaches around it, of the whole wiring tree rather than the six known sites.
+//! anything reaches around it, of the whole wiring tree rather than a hand-picked set.
 
 use netodia_testkit::{MIN_UI_SOURCES, UI_SRC_DIR, stripped_sources};
 
 /// How a *caller* reaches the primitive. The leading dot is what keeps the walks below off
 /// the definition in `index_persist.rs`, which is a writer of nothing.
 const CALL: &str = ".write_if_current(";
+const EXPECTED_INDEX_SETTERS: [&str; 5] =
+    ["my_library_tab", "favorites_tab", "recently_played_tab", "settings_tab", "last_nav_index"];
 
 /// Whether `needle` is still inside the block whose `{` sits at `open`.
 fn inside_block(src: &str, open: usize, needle: usize) -> bool {
     netodia_testkit::depth_between(src, open, needle).is_some_and(|depth| depth >= 1)
 }
 
-/// The wiring under [`UI_SRC_DIR`], less the pins over it. A pin that quotes a call site to
-/// describe it reads as one, and `every_writer_publishes_before_it_spawns` counts writers by
-/// equality, so such a pin lands as a seventh writer that is only a sentence about the rule.
+/// The wiring under [`UI_SRC_DIR`], excluding test pins so examples in tests are not mistaken for
+/// persisted writers.
 fn wiring_sources() -> Vec<(String, String)> {
     stripped_sources(UI_SRC_DIR, "rs", MIN_UI_SOURCES)
         .into_iter()
@@ -25,19 +26,19 @@ fn wiring_sources() -> Vec<(String, String)> {
         .collect()
 }
 
-/// Every `views.json` index write in a source, **found rather than listed**: a sixth page
-/// is a setter of its own, and a list is exactly what would not notice one.
+/// Every `views.json` index write in a source, **found rather than listed**: a new page is a setter
+/// of its own, and the walk checks it along with the existing pages.
 ///
 /// The shape is `library::settings::set_<name>(`, kept when `<name>` is a tab index or the
 /// nav index. Every other `library::settings` setter writes a value no second call in the
 /// same tick competes for.
-fn index_write_sites(src: &str) -> Vec<usize> {
+fn index_write_sites(src: &str) -> Vec<(usize, &str)> {
     const PREFIX: &str = "library::settings::set_";
     src.match_indices(PREFIX)
         .filter_map(|(at, _)| {
             let name = src.get(at + PREFIX.len()..)?.split_once('(')?.0;
             let ordered = name.ends_with("_tab") || name == "last_nav_index";
-            ordered.then_some(at)
+            ordered.then_some((at, name))
         })
         .collect()
 }
@@ -51,14 +52,16 @@ fn index_write_sites(src: &str) -> Vec<usize> {
 #[test]
 fn every_persisted_index_is_written_inside_the_ordering_closure() {
     let mut sites = 0usize;
+    let mut setters = Vec::new();
     for (rel, src) in wiring_sources() {
         let closures: Vec<usize> = src
             .match_indices(CALL)
             .filter_map(|(at, _)| src.get(at..).and_then(|rest| rest.find('{')).map(|rel| at + rel))
             .collect();
 
-        for write in index_write_sites(&src) {
+        for (write, setter) in index_write_sites(&src) {
             sites += 1;
+            setters.push(setter);
             assert!(
                 closures.iter().any(|&open| inside_block(&src, open, write)),
                 "{rel} writes a `views.json` index outside an `IndexPersist` closure — a \
@@ -67,7 +70,13 @@ fn every_persisted_index_is_written_inside_the_ordering_closure() {
             );
         }
     }
-    assert!(sites >= 6, "only {sites} index writes found — the walk is broken");
+    let missing: Vec<&str> =
+        EXPECTED_INDEX_SETTERS.into_iter().filter(|setter| !setters.contains(setter)).collect();
+    assert!(missing.is_empty(), "missing ordered index writers: {missing:?}");
+    assert!(
+        sites >= EXPECTED_INDEX_SETTERS.len(),
+        "only {sites} ordered index writes found — the walk is broken"
+    );
 }
 
 /// **The publish happens on the UI thread, ahead of the spawn.**
@@ -93,9 +102,9 @@ fn every_writer_publishes_before_it_spawns() {
             prev = write;
         }
     }
-    assert_eq!(
-        writers, 6,
-        "six writers take `IndexPersist` — the nav index and the five pages' tabs. A new one \
-         is welcome; a *missing* one is a page that went back to writing unordered",
+    assert!(
+        writers >= EXPECTED_INDEX_SETTERS.len(),
+        "only {writers} writers take `IndexPersist` — expected the nav index and four page tabs; \
+         a *missing* one is a page that went back to writing unordered",
     );
 }

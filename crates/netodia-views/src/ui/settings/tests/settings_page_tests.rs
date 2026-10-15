@@ -301,8 +301,8 @@ fn every_column_takes_its_own_cell() {
 /// body it is meant to show rather than on whichever tab it was last left at.
 ///
 /// Both writes go through the callbacks that already own an `IndexPersist`. Reaching for
-/// `library::settings::set_settings_tab` here instead would build, persist, and be a seventh
-/// writer: `crates/netodia/tests/index_persist.rs` pins that count at six, but it walks
+/// `library::settings::set_settings_tab` here instead would build, persist, and be a sixth
+/// writer: `crates/netodia/tests/index_persist.rs` pins the baseline writers, but it walks
 /// `netodia-views` for the *setter*, so it would never see this ordering.
 #[test]
 fn opening_settings_on_a_tab_writes_the_tab_before_the_nav_index() {
