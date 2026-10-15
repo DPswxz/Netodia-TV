@@ -34,7 +34,7 @@ pub enum QrStatus {
     Authorized,
 }
 
-/// Returns a bounded NetEase image URL while leaving other HTTP artwork sources intact.
+/// Returns a bounded `NetEase` image URL while leaving other HTTP artwork sources intact.
 pub fn cover_request_url(source: &str) -> Option<reqwest::Url> {
     let mut url = netodia_net::services::net::http_url(source)?;
     let host = url.host_str()?;

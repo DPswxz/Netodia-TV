@@ -332,7 +332,7 @@ struct RestorePlan {
 }
 
 /// Resolve the cached playlist against the library and settle shuffle and repeat against
-/// `settings.json`. Local tracks refresh from SQLite so moved files are honored; cloud entries
+/// `settings.json`. Local tracks refresh from `SQLite` so moved files are honored; cloud entries
 /// come directly from the disk snapshot because they have no local database row.
 ///
 /// `repeat_mode` and `shuffle_enabled` come from `settings.json`, not `queue.json`. A restored
