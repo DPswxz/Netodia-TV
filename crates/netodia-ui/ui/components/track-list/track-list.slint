@@ -51,7 +51,7 @@ export component TrackList inherits Rectangle {
 
     // Cloud hosts share all table visuals while owning actions through exact string IDs.
     in property <bool> cloud-rows: false;
-    in property <bool> cloud-entity-links: false;
+    in property <bool> cloud-entity-links: true;
     in property <bool> cloud-single-click: true;
     in property <bool> cloud-favorite-clickable: false;
     callback play-cloud-row(string, int);

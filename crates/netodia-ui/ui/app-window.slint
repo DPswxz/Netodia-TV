@@ -58,6 +58,7 @@ import { ShortcutScope } from "layout/shortcut-scope.slint";
 import { PlaceholderView } from "views/placeholder-view.slint";
 import { MyLibraryView } from "views/my-library-view.slint";
 import { FavoritesView } from "views/favorites-view.slint";
+import { CloudEntityDetailView } from "views/favorites/cloud-entity-detail-view.slint";
 import { RecentlyPlayedView } from "views/recently-played-view.slint";
 import { BrowseView } from "views/browse-view.slint";
 import { SearchView } from "views/search-view.slint";
@@ -584,6 +585,16 @@ export component AppWindow inherits Window {
                         height: parent.height;
                         enter-from: NavEnterFrom.above;
                         NowPlayingView { width: 100%; height: 100%; }
+                    }
+
+                    // Cloud album and artist pages sit over whichever view launched them. The
+                    // current section stays mounted underneath, so Back returns to its exact scroll
+                    // position and filter state.
+                    if CloudEntityDetail.open && !Nav.now-playing-open: CloudEntityDetailView {
+                        x: 0;
+                        y: 0;
+                        width: 100%;
+                        height: 100%;
                     }
 
                     // Inside the content panel so its backdrop and slide stay off the sidebar

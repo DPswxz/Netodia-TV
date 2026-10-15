@@ -35,7 +35,7 @@ use netodia_app::services::view_state::ViewStateData;
 use netodia_app::state::AppState;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
-use netodia_ui::{AppWindow, Dialog, Nav, Player};
+use netodia_ui::{AppWindow, CloudEntityDetail, Dialog, Nav, Player};
 
 use index_persist::IndexPersist;
 use macros::{spawn_logged, spawn_logged_sync, wire_pb, wire_sync, wire_sync_pb};
@@ -362,6 +362,11 @@ fn wire_persist_selected_index(ui: &AppWindow, state: &AppState) {
     let persist = Arc::new(IndexPersist::new(nav.get_selected_index()));
     nav.on_persist_selected_index(move |idx| {
         if let Some(ui) = ui_weak.upgrade() {
+            // Cloud details are a temporary overlay on the current page. A sidebar route change
+            // leaves that page, so dismiss the overlay before recording the new location.
+            if ui.global::<CloudEntityDetail>().get_open() {
+                ui.global::<CloudEntityDetail>().invoke_close();
+            }
             crate::ui::nav_history::record_current(&ui);
         }
         persist.publish(idx);

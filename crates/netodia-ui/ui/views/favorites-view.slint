@@ -3,8 +3,6 @@ import { MosaicTabHero } from "../components/hero/mosaic-tab-hero.slint";
 import { FilterThrottle } from "../components/filter-throttle.slint";
 import { ViewTransition } from "../components/view-transition.slint";
 import { CloudFavoritesSongsTab } from "favorites/cloud-favorites-songs-tab.slint";
-import { CloudEntityDetail } from "../globals/cloud-entity-detail.slint";
-import { CloudEntityDetailView } from "favorites/cloud-entity-detail-view.slint";
 
 // NetEase favorites are a single cloud-backed song list. Keep the shared hero styling while
 // removing local-only queue, artist-grid and playlist controls from this page.
@@ -52,7 +50,7 @@ export component FavoritesView inherits Rectangle {
             vertical-stretch: 1;
             clip: true;
 
-            if Favorites.tab-idx == Favorites.tab-songs && !CloudEntityDetail.open: ViewTransition {
+            if Favorites.tab-idx == Favorites.tab-songs: ViewTransition {
                 width: parent.width;
                 height: parent.height;
                 enter-from: hero.tab-enter-from;
@@ -73,13 +71,6 @@ export component FavoritesView inherits Rectangle {
                     request-sort(field) => { Favorites.request-sort(field); }
                     request-blur-search => { Favorites.blur-search-tick += 1; }
                 }
-            }
-            if Favorites.tab-idx == Favorites.tab-songs && CloudEntityDetail.open: ViewTransition {
-                width: parent.width;
-                height: parent.height;
-                enter-from: hero.tab-enter-from;
-                enabled: hero.tab-anim-armed;
-                CloudEntityDetailView { width: 100%; height: 100%; }
             }
         }
     }

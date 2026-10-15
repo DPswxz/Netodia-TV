@@ -13,7 +13,7 @@ export component CloudPlaylistTracks inherits Rectangle {
     in property <bool> favorite-clickable: true;
     in property <bool> show-number: false;
     in property <bool> sortable: true;
-    in property <bool> cloud-entity-links: false;
+    in property <bool> cloud-entity-links: true;
     callback request-sort(string);
     callback play-track(string, int);
     callback toggle-favorite(string, bool);
