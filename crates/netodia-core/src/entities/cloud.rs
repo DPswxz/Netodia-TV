@@ -146,7 +146,7 @@ pub enum Quality {
 }
 
 impl Quality {
-    /// Bitrate used by the song URL endpoint. YesPlayMusic requests 350000 for
+    /// Bitrate used by the song URL endpoint. `YesPlayMusic` requests 350000 for
     /// lossless and 999000 for Hi-Res instead of sending a format name.
     pub const fn bitrate(self) -> u32 {
         match self {
