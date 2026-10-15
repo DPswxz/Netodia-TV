@@ -130,18 +130,6 @@ fn wire_row_flags(ui: &AppWindow, state: &AppState, search_ui: &Arc<SearchUi>) {
             }
         });
     }
-    {
-        let su = search_ui.clone();
-        wire_row_flag!(g, on_set_row_rating, state, "search::set_rating",
-        library::ratings::set_rating, collect_track_ids,
-        captures: [weak, su],
-        after: |id_vec, rating| {
-            for id in &id_vec {
-                su.flip_rating(*id, rating);
-                apply::apply_row_rating(&weak, *id, rating);
-            }
-        });
-    }
 }
 
 fn wire_sort(ui: &AppWindow, state: &AppState, search_ui: &Arc<SearchUi>) {

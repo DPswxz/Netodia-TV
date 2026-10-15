@@ -6,7 +6,6 @@ import { Player } from "../globals/player.slint";
 import { AccentDiscButton } from "../components/now-playing/accent-disc-button.slint";
 import { AccentGlyphButton } from "../components/now-playing/accent-glyph-button.slint";
 import { MetaChipStrip } from "../components/meta-chip-strip.slint";
-import { StarRating } from "../components/star-rating.slint";
 import { NowPlayingCover } from "../components/now-playing/now-playing-cover.slint";
 import { UpNextList } from "../components/now-playing/up-next-list.slint";
 import { LyricsPanel } from "../components/now-playing/lyrics-panel.slint";
@@ -110,23 +109,6 @@ export component NowPlayingView inherits Rectangle {
             }
 
             Rectangle { horizontal-stretch: 1; }
-
-            // Left of the favourite heart.
-            if Player.vm.has_track: VerticalLayout {
-                alignment: center;
-                StarRating {
-                    rating: Player.vm.track.rating;
-                    star-size: 22px;
-                    // Accent-tinted rather than the list views' yellow; `AccentGlyphButton`,
-                    // which the rest of the row is, says why the group shares one colour.
-                    filled-color: Player.np-accent-bright;
-                    empty-color: Player.np-accent-dim;
-                    // The glyph family to the right answers the pointer; a star row that did not
-                    // would be the one dead control in the header.
-                    hover-preview: true;
-                    rated(n) => { Player.set-current-rating(n); }
-                }
-            }
 
             VerticalLayout {
                 alignment: center;

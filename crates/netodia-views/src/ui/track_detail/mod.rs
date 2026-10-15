@@ -31,7 +31,6 @@ pub trait DetailGlobal: RowSelectionView + TrackListColumnState + TrackListActio
     fn bind_shuffle(&self, f: impl FnMut() + 'static);
     fn bind_play_row(&self, f: impl FnMut(i32, i32) + 'static);
     fn bind_toggle_row_favorite(&self, f: impl FnMut(ModelRc<i32>, bool) + 'static);
-    fn bind_set_row_rating(&self, f: impl FnMut(ModelRc<i32>, i32) + 'static);
     fn bind_select_row(&self, f: impl FnMut(i32, i32, bool, bool) + 'static);
     fn bind_select_all(&self, f: impl FnMut() + 'static);
     fn bind_clear_selection(&self, f: impl FnMut() + 'static);
@@ -65,9 +64,6 @@ macro_rules! impl_detail_global {
             }
             fn bind_toggle_row_favorite(&self, f: impl FnMut(ModelRc<i32>, bool) + 'static) {
                 self.on_toggle_row_favorite(f);
-            }
-            fn bind_set_row_rating(&self, f: impl FnMut(ModelRc<i32>, i32) + 'static) {
-                self.on_set_row_rating(f);
             }
             fn bind_select_row(&self, f: impl FnMut(i32, i32, bool, bool) + 'static) {
                 self.on_select_row(f);
@@ -146,12 +142,6 @@ impl<V: TrackDetail> DetailRows<V> {
     pub fn mirror_favorite(&self, id: i64, fav: bool) {
         self.view.cache().flip_favorite(id, fav);
         self.patch_row(id, move |r| r.is_favorite = fav);
-    }
-
-    /// [`Self::mirror_favorite`]'s star-rating twin.
-    pub fn mirror_rating(&self, id: i64, rating: i32) {
-        self.view.cache().flip_rating(id, rating);
-        self.patch_row(id, move |r| r.rating = rating);
     }
 
     fn patch_row(&self, id: i64, patch: impl Fn(&mut UiTrackListRow) + Send + 'static) {

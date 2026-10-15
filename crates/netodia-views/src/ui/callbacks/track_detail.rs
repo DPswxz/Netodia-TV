@@ -79,7 +79,7 @@ fn wire_playback<V: TrackDetail>(g: &V::Global, state: &AppState, view: &Arc<V>)
     wire_queue_actions(g, state, collect_track_ids);
 }
 
-/// Heart and stars write through, then patch the rows they touched.
+/// Favorites write through, then patch the rows they touched.
 fn wire_row_flags<V: TrackDetail>(
     g: &V::Global,
     state: &AppState,
@@ -94,15 +94,6 @@ fn wire_row_flags<V: TrackDetail>(
     after: |id_vec, fav| {
         for id in &id_vec {
             rows.mirror_favorite(*id, fav);
-        }
-    });
-    wire_row_flag!(g, bind_set_row_rating, state,
-    format_args!("{}::set_rating", V::VIEW_ID),
-    library::ratings::set_rating, collect_track_ids,
-    captures: [rows],
-    after: |id_vec, rating| {
-        for id in &id_vec {
-            rows.mirror_rating(*id, rating);
         }
     });
 }

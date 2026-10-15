@@ -17,6 +17,7 @@ use netodia_engine::player::engine::state::{PlayerStateHandle, lock_state, with_
 use netodia_engine::player::engine::types::{PlaybackStatus, RepeatMode};
 use netodia_net::services::net::range_reader::RangeReader;
 use netodia_playback::player::playback::replaygain::TrackReplayGain;
+use parking_lot::RwLock;
 
 use crate::cloud::{CloudService, QrStatus, SessionStatus};
 use tokio::sync::watch;
@@ -63,6 +64,7 @@ pub struct CloudPlayback {
     engine: Arc<PlaybackEngine>,
     player_state: Arc<PlayerStateHandle>,
     sinks: Arc<PlayerSinks>,
+    quality: Arc<RwLock<Quality>>,
 }
 
 impl CloudPlayback {
@@ -87,7 +89,23 @@ impl CloudPlayback {
         player_state: Arc<PlayerStateHandle>,
         sinks: Arc<PlayerSinks>,
     ) -> Self {
-        Self { cloud, http, artwork_dir, engine, player_state, sinks }
+        Self {
+            cloud,
+            http,
+            artwork_dir,
+            engine,
+            player_state,
+            sinks,
+            quality: Arc::new(RwLock::new(Quality::default())),
+        }
+    }
+
+    pub fn quality(&self) -> Quality {
+        *self.quality.read()
+    }
+
+    pub fn set_quality(&self, quality: Quality) {
+        *self.quality.write() = quality;
     }
 
     pub fn account_status(&self) -> SessionStatus {
@@ -131,7 +149,6 @@ impl CloudPlayback {
         song_ids: &[i64],
         selected_song_id: i64,
         shuffle: bool,
-        quality: Quality,
         volume: f64,
         speed: f64,
     ) -> AppResult<CloudPlaybackResult> {
@@ -168,6 +185,7 @@ impl CloudPlayback {
         };
         let candidates =
             playback_candidates(tracks.len(), start_index, repeat_mode, shuffle || shuffle_enabled);
+        let quality = self.quality();
         let mut last_error = None;
         for candidate in candidates {
             let song_id = tracks[candidate].id;
@@ -268,12 +286,7 @@ impl CloudPlayback {
     /// action, so seeking is a new range-backed decoder generation. The current-track check and
     /// generation reservation happen before the first await, preventing a delayed slider task
     /// from taking over a song selected after the user dragged it.
-    pub async fn seek(
-        &self,
-        song_id: i64,
-        quality: Quality,
-        position: Duration,
-    ) -> AppResult<CloudPlaybackResult> {
+    pub async fn seek(&self, song_id: i64, position: Duration) -> AppResult<CloudPlaybackResult> {
         let (generation, volume, speed, was_paused, position) = {
             let _exec = self.player_state.lock_exec();
             let state = lock_state(&self.player_state);
@@ -298,7 +311,7 @@ impl CloudPlayback {
         };
         self.play_reserved(ReservedPlayback {
             song_id,
-            quality,
+            quality: self.quality(),
             volume,
             speed,
             start_position: Some(position),
@@ -496,7 +509,7 @@ impl CloudPlayback {
             match self
                 .play_reserved(ReservedPlayback {
                     song_id,
-                    quality: Quality::Exhigh,
+                    quality: self.quality(),
                     volume,
                     speed,
                     start_position: None,

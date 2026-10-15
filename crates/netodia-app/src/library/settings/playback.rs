@@ -7,6 +7,7 @@ use crate::library::playback::FOLLOW_RATE_SUPPORTED;
 use crate::services;
 use crate::services::settings::{PausedDevice, SettingsData};
 use netodia_core::config::Paths;
+use netodia_core::entities::cloud::Quality;
 use netodia_core::error::AppError;
 use netodia_engine::player::engine::backend::OutputChoice;
 use netodia_engine::player::engine::state::{MAX_SPEED, MAX_VOLUME, MIN_SPEED};
@@ -116,6 +117,13 @@ pub fn set_play_button_animation(paths: &Paths, mode: String) -> Result<(), AppE
 pub fn set_resume_on_startup(paths: &Paths, on: bool) -> Result<(), AppError> {
     services::settings::mutate_settings(paths, move |settings| {
         settings.playback.resume_on_startup = on;
+    })
+}
+
+/// Persist the selected `NetEase` stream quality for new cloud playback requests.
+pub fn set_cloud_quality(paths: &Paths, quality: Quality) -> Result<(), AppError> {
+    services::settings::mutate_settings(paths, move |settings| {
+        settings.playback.cloud_quality = quality;
     })
 }
 

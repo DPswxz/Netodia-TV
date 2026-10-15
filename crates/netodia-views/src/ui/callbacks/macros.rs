@@ -104,10 +104,10 @@ macro_rules! wire_sync_pb {
     }};
 }
 
-/// Wire an `on_toggle_row_favorite` / `on_set_row_rating`-shaped callback: collect ids,
-/// bail on an empty set, hop onto the runtime, run the async setter, then run `after` for
-/// the optimistic per-view patch. The Slint side passes an `[int]`, so a single-row click
-/// and a multi-select batch share one path.
+/// Wire an `on_toggle_row_favorite`-shaped callback: collect ids, bail on an empty set,
+/// hop onto the runtime, run the async setter, then run `after` for the optimistic
+/// per-view patch. The Slint side passes an `[int]`, so a single-row click and a
+/// multi-select batch share one path.
 ///
 /// `captures:` lists the local bindings `after` needs, each cloned once into the callback
 /// and once per invocation. `$label` is `spawn_logged!`'s.

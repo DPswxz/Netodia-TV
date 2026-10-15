@@ -3008,6 +3008,50 @@ msgstr "还没有收藏歌单"
 msgid "Playlists you collect on NetEase will appear here."
 msgstr "在网易云收藏的歌单会显示在这里。"
 
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Audio quality"
+msgstr "音质选择"
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Standard"
+msgstr "标准"
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Higher"
+msgstr "较高"
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Lossless"
+msgstr "无损"
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Very high"
+msgstr "极高"
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Standard · 128 kbps"
+msgstr "标准音质 · 128 kbps"
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Higher · 192 kbps"
+msgstr "较高音质 · 192 kbps"
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Very high · 320 kbps"
+msgstr "极高音质 · 320 kbps"
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Lossless · FLAC"
+msgstr "无损音质 · FLAC"
+
+#: ui/components/dialog/smart-playlist-editor-body.slint
+msgid "Saved rule"
+msgstr "已有规则"
+
+#: ui/components/dialog/smart-playlist-editor-body.slint
+msgid "Saved order"
+msgstr "已有排序"
+
 #: ui/views/my-library/playlist-detail.slint
 msgid "This NetEase playlist has no available tracks."
 msgstr "这个网易云歌单暂时没有可播放的歌曲。"

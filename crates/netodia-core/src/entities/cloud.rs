@@ -106,6 +106,7 @@ pub struct Account {
 #[serde(rename_all = "lowercase")]
 pub enum Quality {
     Standard,
+    Higher,
     #[default]
     Exhigh,
     Lossless,
@@ -116,9 +117,20 @@ impl Quality {
     pub const fn level(self) -> &'static str {
         match self {
             Self::Standard => "standard",
+            Self::Higher => "higher",
             Self::Exhigh => "exhigh",
             Self::Lossless => "lossless",
             Self::Hires => "hires",
+        }
+    }
+
+    pub fn from_level(level: &str) -> Self {
+        match level {
+            "standard" => Self::Standard,
+            "higher" => Self::Higher,
+            "lossless" => Self::Lossless,
+            "hires" => Self::Hires,
+            _ => Self::Exhigh,
         }
     }
 }

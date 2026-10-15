@@ -1,7 +1,7 @@
 //! Surgical in-place patches on a Slint row `VecModel`.
 //!
 //! Every list surface (Tracks, Browse, the four detail views, Favorites,
-//! Recently Played, Search) patches a favorite/rating change into its visible rows
+//! Recently Played, Search) patches a favorite change into its visible rows
 //! the same way, and the queue sheet patches two of its own: walk the model, mutate
 //! the rows that matter, write back only those. This module owns that walk; the
 //! per-view `apply_row_*` wrappers keep only their `upgrade_in_event_loop`

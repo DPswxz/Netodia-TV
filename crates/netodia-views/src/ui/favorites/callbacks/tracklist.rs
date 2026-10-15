@@ -9,7 +9,6 @@ use crate::ui::callbacks::{next_sort, persist_view_sort};
 use crate::ui::favorites::{self as favorites_ui_mod, FavoritesUi};
 use crate::ui::track_list_view::view_id;
 use netodia_app::state::AppState;
-use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, CloudTrackActions, Favorites};
@@ -67,8 +66,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
         });
     }
 
-    // The cloud list has no local rating or local playback queue to mutate.
-    g.on_set_row_rating(|_, _| {});
+    // The cloud list has no local playback queue to mutate.
     g.on_play_next(|_| {});
     g.on_add_to_queue(|_| {});
 
@@ -131,10 +129,8 @@ fn play_favorite_song(state: &AppState, ids: Vec<i64>, song_id: i64) {
             let player = lock_state(&state.player_state);
             (player.effective_volume(), player.playback_speed)
         };
-        if let Err(error) = state
-            .cloud_playback
-            .play_queue(&ids, song_id, false, Quality::Exhigh, volume, speed)
-            .await
+        if let Err(error) =
+            state.cloud_playback.play_queue(&ids, song_id, false, volume, speed).await
         {
             log::warn!("favorites::play_cloud_song({song_id}): {}", describe(&error));
         }

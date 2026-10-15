@@ -254,7 +254,7 @@ pub fn install_views(
     // lands.
     ui::nav_history::record_current(app);
 
-    // The Now-Playing heart and star rating fan into every per-row cache.
+    // The Now-Playing heart fans into every per-row cache.
     let row_flags = ui::callbacks::RowFlagHandles {
         tracks: &tracks_ui,
         browse: &browse_ui,
@@ -265,7 +265,6 @@ pub fn install_views(
         search: &search_ui,
     };
     ui::callbacks::wire_now_playing_favorite(app, state, row_flags);
-    ui::callbacks::wire_now_playing_rating(app, state, row_flags);
     // Retune the cover tiers to the real display. One call for every card grid, they all draw
     // the same card at the same size; Genres has no cover at all.
     //
@@ -321,7 +320,6 @@ pub fn install_library_settings_and_friends(
     ui::settings::netease_account::install(app, state);
     let notifications = ui::shell::notifications::install(app);
     ui::settings::file_watching::install(app, state, &notifications);
-    ui::settings::rating_writeback::install(app, state);
     ui::settings::updater_settings::install(app, state);
     ui::settings::motion::install(app, state);
     ui::settings::about::install(app, state);

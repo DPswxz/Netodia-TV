@@ -187,16 +187,6 @@ pub fn apply_row_favorite(weak: &Weak<AppWindow>, id: i64, fav: bool) {
     });
 }
 
-/// Set `rating` on a single row in the Slint `VecModel` — the star-rating
-/// analogue of [`apply_row_favorite`].
-pub fn apply_row_rating(weak: &Weak<AppWindow>, id: i64, rating: i32) {
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        model_patch::patch_track_row_by_id(&ui.global::<Search>().get_tracks(), id, |r| {
-            r.rating = rating;
-        });
-    });
-}
-
 /// Toggle the `loading` flag on the Slint side. Used by `kick_search`
 /// to surface the "Searching…" line through the FTS round-trip.
 pub fn set_loading_on_ui(weak: &Weak<AppWindow>, on: bool) {

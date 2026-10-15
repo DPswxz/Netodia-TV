@@ -58,7 +58,7 @@ pub const NAV_BROWSE: i32 = 1;
 // need: this slice's own `callbacks.rs`, plus the cross-slice `apply_row_*`
 // mirrors in `callbacks::now_playing`.
 pub(super) use cards::{BrowseViewMode, mode_from_index, mode_index, rebuild_cards};
-pub(super) use fetch::{apply_row_favorite, apply_row_rating, fetch_and_apply, resort_and_apply};
+pub(super) use fetch::{apply_row_favorite, fetch_and_apply, resort_and_apply};
 pub(super) use selection::{clear_selection, handle_select_row, select_all};
 
 /// Install the Browse models, build the handle, wire every `Browse.*` callback,

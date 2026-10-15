@@ -3026,6 +3026,50 @@ msgstr ""
 msgid "Playlists you collect on NetEase will appear here."
 msgstr ""
 
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Audio quality"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Standard"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Higher"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Lossless"
+msgstr ""
+
+#: ui/components/now-playing/overflow-menu.slint
+msgid "Very high"
+msgstr ""
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Standard · 128 kbps"
+msgstr ""
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Higher · 192 kbps"
+msgstr ""
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Very high · 320 kbps"
+msgstr ""
+
+#: ui/components/now-playing/flyout-presets.slint
+msgid "Lossless · FLAC"
+msgstr ""
+
+#: ui/components/dialog/smart-playlist-editor-body.slint
+msgid "Saved rule"
+msgstr ""
+
+#: ui/components/dialog/smart-playlist-editor-body.slint
+msgid "Saved order"
+msgstr ""
+
 #: ui/views/my-library/playlist-detail.slint
 msgid "This NetEase playlist has no available tracks."
 msgstr ""

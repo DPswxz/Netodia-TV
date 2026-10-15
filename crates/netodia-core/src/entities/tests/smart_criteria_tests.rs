@@ -98,9 +98,8 @@ fn field_value_types_and_operator_lists_are_coherent() {
 
 #[test]
 fn editor_field_array_is_exhaustive_and_unique() {
-    // Wildcard-free match: adding a `RuleField` variant fails to compile here
-    // until it's given an arm — the reminder to also list it in `FIELDS` (and
-    // the Slint `field-names` array that mirrors `FIELDS` by index).
+    // Wildcard-free match keeps the known field set explicit. Rating remains a stored legacy
+    // criterion but is deliberately absent from the editor's visible field list.
     for &f in FIELDS {
         match f {
             RuleField::Title
@@ -238,10 +237,12 @@ fn match_mode_and_limit_order_index_round_trip() {
             assert_eq!(LimitOrder::from_index(idx), o);
         }
     }
-    // Out-of-range indices fall back to the default rather than panicking.
+    // Rating uses the reserved negative index for old playlists; other out-of-range indices
+    // fall back to the default rather than panicking.
     assert_eq!(MatchMode::from_index(-1), MatchMode::default());
     assert_eq!(MatchMode::from_index(99), MatchMode::default());
-    assert_eq!(LimitOrder::from_index(-1), LimitOrder::default());
+    assert_eq!(LimitOrder::RatingDesc.as_index(), -1);
+    assert_eq!(LimitOrder::from_index(-1), LimitOrder::RatingDesc);
     assert_eq!(LimitOrder::from_index(99), LimitOrder::default());
 }
 

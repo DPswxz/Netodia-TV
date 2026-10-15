@@ -5,7 +5,7 @@ import { ViewTransition } from "../components/view-transition.slint";
 import { CloudFavoritesSongsTab } from "favorites/cloud-favorites-songs-tab.slint";
 
 // NetEase favorites are a single cloud-backed song list. Keep the shared hero styling while
-// removing local-only rating, queue, artist-grid and playlist controls from this page.
+// removing local-only queue, artist-grid and playlist controls from this page.
 export component FavoritesView inherits Rectangle {
     property <int> filter-tick-pending: 0;
 

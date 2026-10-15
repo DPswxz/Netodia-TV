@@ -197,17 +197,9 @@ shape, `lofty.md` for tag access, `blake3.md` for hashing, `rayon.md` for the pa
 
 ## Ratings
 
-- **Star ratings mirror the favorite path.** Inert `tracks.rating` (0–5) surfaced via a
-  **hover-revealed** `StarRating` (`crates/netodia-ui/ui/components/star-rating.slint`) inside the
-  track-row Title cell — no rating column, no in-table sort. Rides on `TrackListRow` +
-  `TrackSummary`. Writes via `library::ratings::{set_rating, set_current_rating}` (clamped 0–5),
-  mirroring `favorites::{set_favorite, toggle_current_favorite}` down to the `sync_current_track_*`
-  helper (over `player::state::sync_current_track_if_in`) that flips the playing track's cached
-  field + emits, so the NP star updates from a list-row edit — it re-checks the id under the emit
-  lock, safe against a mid-write track change. Rating **never changes list membership**, so every
-  surface is optimistic (`flip_rating`/`apply_row_rating`, detail siblings), wired via
-  `wire_row_flag!`; Search included, having no `library_changed` subscriber to fall back on. NP
-  parity via `wire_now_playing_rating`.
+- `tracks.rating` remains for imported tags and existing smart-playlist criteria. The UI no longer
+  offers rating controls, rating-based smart-playlist choices, or rating tag write-back settings;
+  keep the stored column and legacy smart-playlist evaluation readable for existing libraries.
 
 ## Write-through to files
 

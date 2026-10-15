@@ -2,7 +2,6 @@ import { Theme } from "../../theme.slint";
 import { TrackListRow, TrackColumns, TrackColumnLayout } from "../../models.slint";
 import { RowCovers } from "../../globals/tracks.slint";
 import { MaterialIcon } from "../material-icon.slint";
-import { StarRating } from "../star-rating.slint";
 import { ArtworkImage } from "../artwork-image.slint";
 import { TrackContextMenu } from "track-context-menu.slint";
 import { CloudTrackContextMenu } from "cloud-track-context-menu.slint";
@@ -40,7 +39,7 @@ export component TrackListRowItem inherits Rectangle {
     in property <string> playing-remote-id;
 
     // Cloud hosts own activation and likes through the exact remote ID. They share the
-    // row visuals, but local selection, ratings and SQLite context actions do not apply.
+    // row visuals, but local selection and SQLite context actions do not apply.
     in property <bool> cloud-row: false;
     in property <bool> single-click-play: true;
     in property <bool> favorite-clickable: true;
@@ -131,9 +130,6 @@ export component TrackListRowItem inherits Rectangle {
     callback play-next([int]);
     callback add-to-queue([int]);
     callback toggle-row-favorite([int] /*track_ids*/, bool /*new_state*/);
-    // 0–5, batch-shaped like the favorite toggle; the hover strip emits one id today
-    // and leaves room for multi-select later.
-    callback set-row-rating([int] /*track_ids*/, int /*rating*/);
     callback select-row(int /*idx*/, int /*id*/, bool /*shift*/, bool /*ctrl*/);
     // Raised by the context menu; the view that owns the set answers them.
     callback select-all();
@@ -367,7 +363,7 @@ export component TrackListRowItem inherits Rectangle {
                 }
             }
 
-            // Title cell: artwork, title, favourite, rating strip. `horizontal-stretch: 1` on the
+            // Title cell: artwork, title and favourite. `horizontal-stretch: 1` on the
             // text column is what makes `overflow: elide` fire at all — without it, under
             // `alignment: start` the column takes its intrinsic width (the full string) and the
             // Text never learns it should elide, which RTL scripts make visible by overflowing left
@@ -420,18 +416,6 @@ export component TrackListRowItem inherits Rectangle {
                             icon-color: Theme.red;
                             filled: true;
                             fade: root.fade;
-                        }
-                    }
-                    // Revealed on hover to the right of the title, which elides to make room rather
-                    // than being swapped out the way the Length cell's duration is. Gated on
-                    // `enabled` so disk-only Browse rows can't be rated. The strip's TouchArea
-                    // descends from `touch`, so hovering a star keeps this strip mounted.
-                    if touch.has-hover && root.enabled && !root.cloud-row: VerticalLayout {
-                        alignment: center;
-                        StarRating {
-                            rating: root.row-data.rating;
-                            star-size: 16px;
-                            rated(n) => { root.set-row-rating([root.row-data.id], n); }
                         }
                     }
                 }

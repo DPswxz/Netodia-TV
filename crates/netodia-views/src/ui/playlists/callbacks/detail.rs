@@ -11,7 +11,6 @@ use crate::ui::callbacks::{DialogClaim, collect_track_ids};
 use crate::ui::playlists::{self as playlists_ui_mod, PlaylistsUi};
 use netodia_app::library;
 use netodia_app::state::AppState;
-use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, PlaylistDetail};
@@ -63,10 +62,8 @@ fn play_cloud_song(state: &AppState, ids: Vec<i64>, song_id: i64, shuffle: bool)
             let player = lock_state(&state.player_state);
             (player.effective_volume(), player.playback_speed)
         };
-        if let Err(error) = state
-            .cloud_playback
-            .play_queue(&ids, song_id, shuffle, Quality::Exhigh, volume, speed)
-            .await
+        if let Err(error) =
+            state.cloud_playback.play_queue(&ids, song_id, shuffle, volume, speed).await
         {
             log::warn!("playlists::play_cloud_song({song_id}): {}", describe(&error));
         }

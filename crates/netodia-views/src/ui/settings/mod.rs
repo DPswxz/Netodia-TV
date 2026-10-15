@@ -23,7 +23,6 @@ pub mod motion;
 pub mod netease_account;
 pub mod output_settings;
 pub mod playback_settings;
-pub mod rating_writeback;
 pub mod settings_page;
 pub mod signal_path;
 pub mod updater_settings;

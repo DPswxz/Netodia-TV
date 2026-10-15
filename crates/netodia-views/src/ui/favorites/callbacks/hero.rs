@@ -7,7 +7,6 @@ use slint::ComponentHandle;
 
 use crate::ui::favorites::FavoritesUi;
 use netodia_app::state::AppState;
-use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, Favorites};
@@ -31,10 +30,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
                     let player = lock_state(&s.player_state);
                     (player.effective_volume(), player.playback_speed)
                 };
-                if let Err(error) = s
-                    .cloud_playback
-                    .play_queue(&ids, id, true, Quality::Exhigh, volume, speed)
-                    .await
+                if let Err(error) = s.cloud_playback.play_queue(&ids, id, true, volume, speed).await
                 {
                     log::warn!("favorites::shuffle_cloud_song: {}", describe(&error));
                 }

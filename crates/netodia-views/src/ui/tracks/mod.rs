@@ -41,7 +41,7 @@ pub use fetch::fetch_and_apply;
 // modules away, plus the cross-slice `apply_row_*` mirrors in
 // `callbacks::now_playing`. `pub(super)` is `pub(in crate::ui)` here, which is
 // exactly that reach.
-pub(super) use fetch::{apply_row_favorite, apply_row_rating, refilter, resort_and_apply};
+pub(super) use fetch::{apply_row_favorite, refilter, resort_and_apply};
 pub(super) use selection::{clear_selection, handle_select_row, select_all};
 
 /// Install the Tracks models, build the handle, and wire every `Tracks.*`

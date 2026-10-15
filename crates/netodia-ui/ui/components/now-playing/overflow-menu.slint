@@ -7,14 +7,13 @@ import { Queue } from "../../globals/queue.slint";
 import { SignalPathUi } from "../../globals/signal-path.slint";
 import { WindowChrome, PopupHighlight } from "../../globals/shell.slint";
 import { IconButton } from "../icon-button.slint";
-import { MaterialIcon } from "../material-icon.slint";
-import { StarRating } from "../star-rating.slint";
 import { MenuSurface } from "./menu-surface.slint";
 import { PopupDismissCatcher } from "../popup-dismiss-catcher.slint";
 import { OverflowRow } from "./overflow-row.slint";
 import { SpeedFlyout } from "./speed-flyout.slint";
 import { SleepTimerFlyout } from "./sleep-timer-flyout.slint";
-import { FlyoutMetrics, SleepPresets, SpeedPresets } from "./flyout-presets.slint";
+import { QualityFlyout } from "./quality-flyout.slint";
+import { AudioQualityPresets, FlyoutMetrics, SleepPresets, SpeedPresets } from "./flyout-presets.slint";
 
 // The bar's overflow trigger and its popup: five permanent rows, two of which open a
 // left-side flyout, plus every button the user routed here.
@@ -36,6 +35,7 @@ export component OverflowMenu inherits Rectangle {
     // left column**, so they're mutually exclusive: opening one closes the other.
     property <bool> speed-flyout-open: false;
     property <bool> sleep-flyout-open: false;
+    property <bool> quality-flyout-open: false;
 
     // The close triple every row calls: drop the popup, collapse both flyouts, release
     // the trigger highlight. **A function rather than a callback** — the rows invoke it
@@ -44,6 +44,7 @@ export component OverflowMenu inherits Rectangle {
         pop.close();
         root.speed-flyout-open = false;
         root.sleep-flyout-open = false;
+        root.quality-flyout-open = false;
         PopupHighlight.id = "";
     }
 
@@ -75,8 +76,11 @@ export component OverflowMenu inherits Rectangle {
     property <length> sleep-flyout-h:
         FlyoutMetrics.option-row-h * (SleepPresets.list.length + 2) + 9px
         + FlyoutMetrics.chrome-h;
+    property <length> quality-flyout-w: 200px;
+    property <length> quality-flyout-h:
+        FlyoutMetrics.option-row-h * AudioQualityPresets.list.length + FlyoutMetrics.chrome-h;
     // Reserve the wider one, so the popup never re-layouts on a switch.
-    property <length> left-col-w: max(root.flyout-w, root.sleep-flyout-w);
+    property <length> left-col-w: max(root.flyout-w, max(root.sleep-flyout-w, root.quality-flyout-w));
     // Keeps the two columns reading as separate floating chromes.
     property <length> gap: 8px;
 
@@ -121,7 +125,7 @@ export component OverflowMenu inherits Rectangle {
         // both offsets cancel `self.width` — so it stays pinned under the trigger
         // whether or not a flyout is open.
         width: root.left-col-w + root.gap + self.menu-w;
-        height: max(root.menu-h, max(root.flyout-h, root.sleep-flyout-h));
+        height: max(root.menu-h, max(root.flyout-h, max(root.sleep-flyout-h, root.quality-flyout-h)));
         x: btn.width - self.width;
         y: -self.height - Theme.popup-gap;
         close-policy: close-on-click-outside;
@@ -170,6 +174,18 @@ export component OverflowMenu inherits Rectangle {
             }
         }
 
+        if root.quality-flyout-open: QualityFlyout {
+            x: root.left-col-w - root.quality-flyout-w;
+            y: parent.height - root.quality-flyout-h;
+            width: root.quality-flyout-w;
+            height: root.quality-flyout-h;
+            pick(token) => {
+                Settings.cloud-quality = token;
+                Settings.cloud-quality-changed(token);
+                root.dismiss();
+            }
+        }
+
         // Menu column — right, bottom-anchored under the trigger.
         MenuSurface {
             popup-id: "overflow";
@@ -199,6 +215,7 @@ export component OverflowMenu inherits Rectangle {
                     clicked => {
                         root.speed-flyout-open = !root.speed-flyout-open;
                         root.sleep-flyout-open = false;
+                        root.quality-flyout-open = false;
                         PopupHighlight.id = "overflow";
                     }
                 }
@@ -218,6 +235,7 @@ export component OverflowMenu inherits Rectangle {
                     clicked => {
                         root.sleep-flyout-open = !root.sleep-flyout-open;
                         root.speed-flyout-open = false;
+                        root.quality-flyout-open = false;
                         PopupHighlight.id = "overflow";
                     }
                 }
@@ -259,54 +277,20 @@ export component OverflowMenu inherits Rectangle {
                     }
                 }
 
-                // Inline, so unlike the dialog rows it neither closes the popup nor
-                // opens a flyout: a star applies immediately and re-asserts the
-                // highlight id.
-                rating-row := Rectangle {
-                    // Not an `OverflowRow`, so it has to take the shared row
-                    // height itself — `menu-h` above reserves one for it.
-                    height: FlyoutMetrics.menu-row-h;
-                    // `OverflowRow`'s dimming, through the brushes rather than `opacity`, which
-                    // would hold a texture for as long as the menu is open with nothing to rate.
-                    property <float> fade: Player.vm.has_track ? 1.0 : 0.5;
-                    HorizontalLayout {
-                        padding-left: Theme.pad-sm;
-                        padding-right: Theme.pad-sm;
-                        spacing: Theme.pad-sm;
-                        alignment: stretch;
-                        VerticalLayout {
-                            alignment: center;
-                            MaterialIcon {
-                                name: "star";
-                                icon-size: 20px;
-                                icon-color: Player.vm.track.rating > 0 ? Theme.accent : Theme.text;
-                                filled: Player.vm.track.rating > 0;
-                                fade: rating-row.fade;
-                            }
-                        }
-                        VerticalLayout {
-                            alignment: center;
-                            horizontal-stretch: 1;
-                            Text {
-                                text: @tr("Rating");
-                                color: Theme.text.transparentize(1.0 - rating-row.fade);
-                                font-size: Theme.font-size-md;
-                            }
-                        }
-                        VerticalLayout {
-                            alignment: center;
-                            StarRating {
-                                rating: Player.vm.track.rating;
-                                star-size: 18px;
-                                enabled: Player.vm.has_track;
-                                filled-color: Theme.yellow.transparentize(1.0 - rating-row.fade);
-                                empty-color: Theme.subtext0.transparentize(1.0 - rating-row.fade);
-                                rated(n) => {
-                                    Player.set-current-rating(n);
-                                    PopupHighlight.id = "overflow";
-                                }
-                            }
-                        }
+                OverflowRow {
+                    icon: "graphic_eq";
+                    label: @tr("Audio quality");
+                    trailing-text: Settings.cloud-quality == "standard" ? @tr("Standard")
+                        : Settings.cloud-quality == "higher" ? @tr("Higher")
+                        : Settings.cloud-quality == "lossless" ? @tr("Lossless")
+                        : @tr("Very high");
+                    trailing-icon: "chevron_left";
+                    active: root.quality-flyout-open;
+                    clicked => {
+                        root.quality-flyout-open = !root.quality-flyout-open;
+                        root.speed-flyout-open = false;
+                        root.sleep-flyout-open = false;
+                        PopupHighlight.id = "overflow";
                     }
                 }
 

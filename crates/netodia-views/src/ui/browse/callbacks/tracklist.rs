@@ -67,8 +67,7 @@ fn wire_play_row(g: &Browse<'_>, state: &AppState, browse_ui: &Arc<BrowseUi>) {
 
 /// Write through, then surgically update each row (no re-fetch, so scroll
 /// position holds and there's no flash). Disk-only rows have id 0 and are
-/// filtered out by `collect_nonzero_track_ids`; rating never changes list
-/// membership.
+/// filtered out by `collect_nonzero_track_ids`.
 fn wire_row_flags(ui: &AppWindow, state: &AppState, browse_ui: &Arc<BrowseUi>) {
     let g = ui.global::<Browse>();
     let weak = ui.as_weak();
@@ -81,18 +80,6 @@ fn wire_row_flags(ui: &AppWindow, state: &AppState, browse_ui: &Arc<BrowseUi>) {
             for id in &id_vec {
                 bu.flip_favorite(*id, fav);
                 browse_ui_mod::apply_row_favorite(&weak, *id, fav);
-            }
-        });
-    }
-    {
-        let bu = browse_ui.clone();
-        wire_row_flag!(g, on_set_row_rating, state, "browse::set_rating",
-        library::ratings::set_rating, collect_nonzero_track_ids,
-        captures: [weak, bu],
-        after: |id_vec, rating| {
-            for id in &id_vec {
-                bu.flip_rating(*id, rating);
-                browse_ui_mod::apply_row_rating(&weak, *id, rating);
             }
         });
     }

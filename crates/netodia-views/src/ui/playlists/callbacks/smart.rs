@@ -264,6 +264,9 @@ fn default_rule_row() -> SmartRuleRow {
 
 /// Field at a dropdown index (falling back to `Title` on an out-of-range index).
 fn field_at(index: i32) -> sc::RuleField {
+    if index == -1 {
+        return sc::RuleField::Rating;
+    }
     usize::try_from(index)
         .ok()
         .and_then(|i| sc::FIELDS.get(i).copied())
@@ -286,7 +289,11 @@ fn keep_or_clear(new_kind: i32, old_kind: i32, old_text: &SharedString) -> Share
 
 /// Build an editor row from a stored rule.
 fn rule_to_row(rule: &sc::Rule) -> Option<SmartRuleRow> {
-    let field_index = i32::try_from(sc::FIELDS.iter().position(|f| *f == rule.field)?).ok()?;
+    let field_index = if rule.field == sc::RuleField::Rating {
+        -1
+    } else {
+        i32::try_from(sc::FIELDS.iter().position(|f| *f == rule.field)?).ok()?
+    };
     let vt = rule.field.value_type();
     let op_index = i32::try_from(sc::ops_for(vt).iter().position(|o| *o == rule.op)?).ok()?;
     let value_text = match &rule.value {
@@ -306,7 +313,11 @@ fn rule_to_row(rule: &sc::Rule) -> Option<SmartRuleRow> {
 
 /// Rebuild a rule from an editor row (dropping incoherent / incomplete rows).
 fn row_to_rule(row: &SmartRuleRow) -> Option<sc::Rule> {
-    let field = usize::try_from(row.field_index).ok().and_then(|i| sc::FIELDS.get(i).copied())?;
+    let field = if row.field_index == -1 {
+        sc::RuleField::Rating
+    } else {
+        usize::try_from(row.field_index).ok().and_then(|i| sc::FIELDS.get(i).copied())?
+    };
     let vt = field.value_type();
     let op = usize::try_from(row.op_index).ok().and_then(|i| sc::ops_for(vt).get(i).copied())?;
     let value = sc::RuleValue::from_input(vt, op, row.value_text.as_str());

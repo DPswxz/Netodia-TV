@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
+use netodia_core::entities::cloud::Quality;
 use netodia_engine::player::engine::backend::OutputChoice;
 use netodia_engine::player::engine::types::RepeatMode;
 use netodia_playback::player::playback::crossfade::DEFAULT_CROSSFADE_MS;
@@ -20,6 +21,7 @@ pub struct PlaybackFlags {
     pub gapless_playback: bool,
     pub resume_on_startup: bool,
     pub is_muted: bool,
+    pub cloud_quality: Quality,
     /// Rate multiplier, clamped to the player's `MIN_SPEED..=MAX_SPEED` when
     /// applied or persisted.
     pub playback_speed: f64,
@@ -31,6 +33,7 @@ impl Default for PlaybackFlags {
             gapless_playback: true,
             resume_on_startup: false,
             is_muted: false,
+            cloud_quality: Quality::default(),
             playback_speed: 1.0,
         }
     }

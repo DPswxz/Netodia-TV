@@ -25,7 +25,6 @@ export global Tracks {
     callback play-next([int] /*track_ids*/);
     callback add-to-queue([int]);
     callback toggle-row-favorite([int] /*track_ids*/, bool /*new*/);
-    callback set-row-rating([int] /*track_ids*/, int /*rating*/);
     callback request-refresh();
     // Whether the section is on screen. Rust skips `library_changed` refreshes while
     // hidden and runs one deferred re-fetch on re-enter.
@@ -116,7 +115,6 @@ export global Browse {
     callback play-next([int] /*track_ids*/);
     callback add-to-queue([int] /*track_ids*/);
     callback toggle-row-favorite([int] /*track_ids*/, bool /*new_state*/);
-    callback set-row-rating([int] /*track_ids*/, int /*rating*/);
     callback select-row(int /*idx*/, int /*id*/, bool /*shift*/, bool /*ctrl*/);
     callback select-all();
     callback clear-selection();

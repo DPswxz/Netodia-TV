@@ -42,7 +42,7 @@ use macros::{spawn_logged, spawn_logged_sync, wire_pb, wire_sync, wire_sync_pb};
 
 pub use cross_tab_nav::wire_cross_tab_nav;
 pub use library_settings::wire_library_settings;
-pub use now_playing::{RowFlagHandles, wire_now_playing_favorite, wire_now_playing_rating};
+pub use now_playing::{RowFlagHandles, wire_now_playing_favorite};
 pub use tags::wire_tags;
 pub use updater::{check_painter, wire as wire_updater};
 
@@ -286,14 +286,8 @@ fn wire_seek(ui: &AppWindow, state: &AppState) {
         if let Some(song_id) = cloud_track_id {
             let weak = weak.clone();
             s.runtime.clone().spawn(async move {
-                let result = s
-                    .cloud_playback
-                    .seek(
-                        song_id,
-                        netodia_core::entities::cloud::Quality::Exhigh,
-                        std::time::Duration::from_millis(pos),
-                    )
-                    .await;
+                let result =
+                    s.cloud_playback.seek(song_id, std::time::Duration::from_millis(pos)).await;
                 let failed = match result {
                     Ok(result) => !result.started,
                     Err(error) => {

@@ -10,7 +10,6 @@ use crate::ui::recently_played::{
     self as recently_played_ui_mod, RecentlyPlayedTab, RecentlyPlayedUi,
 };
 use netodia_app::state::AppState;
-use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, RecentlyPlayed};
@@ -64,10 +63,8 @@ fn play_recent_queue(state: &AppState, ids: Vec<i64>, selected: i64, shuffle: bo
             let player = lock_state(&state.player_state);
             (player.effective_volume(), player.playback_speed)
         };
-        if let Err(error) = state
-            .cloud_playback
-            .play_queue(&ids, selected, shuffle, Quality::Exhigh, volume, speed)
-            .await
+        if let Err(error) =
+            state.cloud_playback.play_queue(&ids, selected, shuffle, volume, speed).await
         {
             log::warn!("recently_played::play_cloud_queue({selected}): {}", describe(&error));
         }
@@ -100,8 +97,6 @@ fn wire_row_flags(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedUi
             state.cloud_liked_changed.bump();
         });
     });
-    // NetEase history does not support local star ratings.
-    g.on_set_row_rating(|_, _| {});
 }
 
 fn wire_retry(ui: &AppWindow, state: &AppState, rp_ui: &Arc<RecentlyPlayedUi>) {

@@ -108,16 +108,6 @@ pub fn apply_row_favorite(weak: &Weak<AppWindow>, id: i64, fav: bool) {
     });
 }
 
-/// Set `rating` on a single row in the Slint `VecModel` — the star-rating
-/// analogue of [`apply_row_favorite`].
-pub fn apply_row_rating(weak: &Weak<AppWindow>, id: i64, rating: i32) {
-    let _ = weak.upgrade_in_event_loop(move |ui| {
-        model_patch::patch_track_row_by_id(&ui.global::<Tracks>().get_rows(), id, |r| {
-            r.rating = rating;
-        });
-    });
-}
-
 /// UI-thread-only: apply current selection state to `visible` and swap
 /// the model contents via the shared diff helper, which prefers per-row
 /// `set_row_data` over `set_vec` when ids align positionally so the

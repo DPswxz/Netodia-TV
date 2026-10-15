@@ -72,7 +72,7 @@ Shrink the window past a threshold and the full UI collapses into a compact mini
 - **My Library** gathers everything into one page with five tabs (Songs, Albums, Artists, Genres, Playlists); opening an entity grows the tab band into its banner rather than navigating away
 - Favorites and Recently Played, each a hero banner over sortable lists and browsable card grids. Recently Played stays local to the library and is not sent to an external listening-history service
 - Browse by folder, as a detailed list or a grid of cards
-- Star ratings, play and skip counts, natural sort, resizable and toggleable columns
+- Play and skip counts, natural sort, resizable and toggleable columns
 - Multi-selection on every library list and card grid: tick one to start, then a click anywhere on a row or card adds the next and shift-click takes a range. Right-click acts on the whole set, from queueing it to editing its tags; `Esc` clears it
 - Copy from any right-click menu: a song's title, artist, album, "Artist - Title" or file path, or an album's name and artist. A selection copies one line per item, in the order it was picked, and the queue's in queue order
 - Tag editing for one track or many at once, cover art included, written straight back to the files. A track's artists, its genres and the ten studio credits (composer, lyricist, conductor, performer, producer and the rest) are each an editable list rather than one text box, beside the rest of what a file can carry: work and movement, key, mood, ISRC, and the release's own label, catalog number, barcode and medium

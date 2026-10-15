@@ -241,6 +241,7 @@ impl AppState {
             player_state.clone(),
             sinks.clone(),
             runtime.clone(),
+            settings.playback.cloud_quality,
         )
         .await;
 
@@ -325,9 +326,11 @@ async fn initialize_cloud_playback(
     player_state: Arc<PlayerStateHandle>,
     sinks: Arc<PlayerSinks>,
     runtime: Handle,
+    quality: netodia_core::entities::cloud::Quality,
 ) -> (CloudService, CloudPlayback) {
     let (cloud, cloud_playback) =
         CloudPlayback::initialize(http, artwork_dir, engine, player_state, sinks.clone()).await;
+    cloud_playback.set_quality(quality);
     sinks.set_external_track_playback(cloud_playback.external_track_handler(runtime));
     (cloud, cloud_playback)
 }

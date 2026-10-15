@@ -87,8 +87,7 @@ fn wire_play_row(ui: &AppWindow, state: &AppState, tracks_ui: &Arc<TracksUi>) {
 }
 
 /// Write through, then surgically update each affected row (no list
-/// re-fetch, so scroll position holds and there's no flash). Rating never
-/// changes list membership.
+/// re-fetch, so scroll position holds and there's no flash).
 fn wire_row_flags(ui: &AppWindow, state: &AppState, tracks_ui: &Arc<TracksUi>) {
     let tracks = ui.global::<Tracks>();
     let weak = ui.as_weak();
@@ -101,18 +100,6 @@ fn wire_row_flags(ui: &AppWindow, state: &AppState, tracks_ui: &Arc<TracksUi>) {
             for id in &id_vec {
                 tu.flip_favorite(*id, fav);
                 tracks_ui_mod::apply_row_favorite(&weak, *id, fav);
-            }
-        });
-    }
-    {
-        let tu = tracks_ui.clone();
-        wire_row_flag!(tracks, on_set_row_rating, state, "tracks::set_rating",
-        library::ratings::set_rating, collect_track_ids,
-        captures: [weak, tu],
-        after: |id_vec, rating| {
-            for id in &id_vec {
-                tu.flip_rating(*id, rating);
-                tracks_ui_mod::apply_row_rating(&weak, *id, rating);
             }
         });
     }

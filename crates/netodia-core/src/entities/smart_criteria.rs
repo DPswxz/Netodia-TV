@@ -321,7 +321,6 @@ pub const FIELDS: &[RuleField] = &[
     RuleField::DurationMs,
     RuleField::PlayCount,
     RuleField::SkipCount,
-    RuleField::Rating,
     RuleField::Bitrate,
     RuleField::SampleRate,
     RuleField::FileSize,
@@ -335,9 +334,8 @@ pub const FIELDS: &[RuleField] = &[
 /// directions from it, so the ordering lives in exactly one place.
 pub const MATCH_MODES: &[MatchMode] = &[MatchMode::All, MatchMode::Any];
 
-/// Limit-order editor order. The Slint `limit-orders` dropdown mirrors this by
-/// index; [`LimitOrder::as_index`] / [`LimitOrder::from_index`] derive both
-/// directions from it.
+/// Limit-order choices shown in the editor. The legacy rating order stays readable through the
+/// `-1` sentinel in [`LimitOrder::as_index`] / [`LimitOrder::from_index`], but is no longer offered.
 pub const LIMIT_ORDERS: &[LimitOrder] = &[
     LimitOrder::DateAddedDesc,
     LimitOrder::DateAddedAsc,
@@ -345,13 +343,11 @@ pub const LIMIT_ORDERS: &[LimitOrder] = &[
     LimitOrder::PlayCountAsc,
     LimitOrder::LastPlayedDesc,
     LimitOrder::LastPlayedAsc,
-    LimitOrder::RatingDesc,
     LimitOrder::Random,
 ];
 
 /// Position of `value` in `slice` as an `i32` dropdown index, or `0` when
-/// absent. Used by the `as_index` helpers over the editor-order arrays, where
-/// the value is always present (every enum variant is listed).
+/// absent. Used by the `as_index` helpers over the editor-order arrays.
 fn index_of<T: PartialEq>(slice: &[T], value: &T) -> i32 {
     slice.iter().position(|v| v == value).and_then(|i| i32::try_from(i).ok()).unwrap_or(0)
 }
@@ -378,11 +374,17 @@ impl LimitOrder {
     /// Dropdown index for this order (mirrors [`LIMIT_ORDERS`] / the Slint
     /// `limit-orders` array by position).
     pub fn as_index(self) -> i32 {
+        if self == Self::RatingDesc {
+            return -1;
+        }
         index_of(LIMIT_ORDERS, &self)
     }
 
     /// Order at a dropdown index, falling back to the default on out-of-range.
     pub fn from_index(index: i32) -> Self {
+        if index == -1 {
+            return Self::RatingDesc;
+        }
         at_index(LIMIT_ORDERS, index).copied().unwrap_or_default()
     }
 }

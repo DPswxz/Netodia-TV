@@ -85,6 +85,10 @@ export global Settings {
     in-out property <bool> resume-on-startup: false;
     callback resume-on-startup-changed(bool);
 
+    // Selected quality for `NetEase` cloud streams; local files keep their source format.
+    in-out property <string> cloud-quality: "exhigh";
+    callback cloud-quality-changed(string);
+
     // Each `*-changed` applies to the live playback engine synchronously before persisting on the
     // blocking pool — the equalizer / ReplayGain two-phase shape. The duration is in **seconds**
     // here, the slider's natural unit; Rust converts to the milliseconds the backend and
@@ -206,13 +210,6 @@ export global Settings {
     // at all, and shipping it off stranded new users in a stale-UI failure mode.
     in-out property <bool> watch-for-file-changes: true;
     callback watch-for-file-changes-changed(bool);
-
-    // Whether a star also lands in the file's own tag. **On by default**: a rating that lives
-    // only in the database is one a library rebuild loses and no other player can see, which is
-    // the reason the write path exists at all. The cost it buys is real though — lofty
-    // re-serializes the whole tag, so a rating rewrites the file — hence the switch.
-    in-out property <bool> write-ratings-to-tags: true;
-    callback write-ratings-to-tags-changed(bool);
 
     // Logical pixels, mirrored into `Theme.shell-radius` on every change so the mantle shell and
     // content panel repaint reactively. Rust clamps and snaps to the nearest chip preset on read,

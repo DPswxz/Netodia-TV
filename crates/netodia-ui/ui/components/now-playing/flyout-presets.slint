@@ -16,6 +16,11 @@ export struct SleepPreset {
     label: string,
 }
 
+export struct AudioQualityPreset {
+    value: string,
+    label: string,
+}
+
 export global SpeedPresets {
     // Capped at the player's 2×: the deck resamples naively so pitch shifts with it, and past
     // that it's chipmunk territory. Mirror any change in `current-speed-label()`.
@@ -41,6 +46,15 @@ export global SleepPresets {
         { value: 60,  label: @tr("60 min") },
         { value: 90,  label: @tr("90 min") },
         { value: -1,  label: @tr("End of track") },
+    ];
+}
+
+export global AudioQualityPresets {
+    out property <[AudioQualityPreset]> list: [
+        { value: "standard", label: @tr("Standard · 128 kbps") },
+        { value: "higher", label: @tr("Higher · 192 kbps") },
+        { value: "exhigh", label: @tr("Very high · 320 kbps") },
+        { value: "lossless", label: @tr("Lossless · FLAC") },
     ];
 }
 

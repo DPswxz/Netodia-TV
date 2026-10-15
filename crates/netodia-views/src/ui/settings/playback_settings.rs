@@ -21,6 +21,7 @@ use crate::ui::settings_bind::toggle_binding;
 use netodia_app::library;
 use netodia_app::services::settings;
 use netodia_app::state::AppState;
+use netodia_core::entities::cloud::Quality;
 use netodia_core::error::describe;
 use netodia_playback::player::playback::crossfade;
 use netodia_ui::{AppWindow, Settings};
@@ -58,6 +59,7 @@ pub fn install_playback_settings(ui: &AppWindow, state: &AppState) {
         g.set_gapless_playback(s.playback.gapless_playback);
         g.set_play_button_animation_idx(play_button_anim_idx_from_token(&s.play_button_animation));
         g.set_resume_on_startup(s.playback.resume_on_startup);
+        g.set_cloud_quality(s.playback.cloud_quality.level().into());
 
         g.set_crossfade_enabled(s.crossfade.crossfade_enabled);
         g.set_crossfade_duration_secs(crossfade::crossfade_ms_to_secs(
@@ -97,6 +99,15 @@ pub fn install_playback_settings(ui: &AppWindow, state: &AppState) {
         // two-way binding already updated the property before this fired.
         state_resume.persist_blocking("persist resume_on_startup", move |paths| {
             library::settings::set_resume_on_startup(paths, on)
+        });
+    });
+
+    let state_quality = state.clone();
+    ui.global::<Settings>().on_cloud_quality_changed(move |token| {
+        let quality = Quality::from_level(token.as_str());
+        state_quality.cloud_playback.set_quality(quality);
+        state_quality.persist_blocking("persist cloud_quality", move |paths| {
+            library::settings::set_cloud_quality(paths, quality)
         });
     });
 
