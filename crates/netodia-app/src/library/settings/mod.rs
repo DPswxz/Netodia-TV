@@ -58,7 +58,7 @@ pub use onboarding::set_onboarding_seen;
 pub use playback::{
     reset_for_bit_perfect, set_cloud_quality, set_gapless_playback, set_output_choice,
     set_output_follow_rate, set_output_paused_device, set_output_resync_ms,
-    set_play_button_animation, set_playback_speed, set_resume_on_startup, switch_to_bit_perfect,
+    set_play_button_animation, set_playback_speed, switch_to_bit_perfect,
 };
 pub use ratings::set_write_ratings_to_tags;
 pub use replaygain::{

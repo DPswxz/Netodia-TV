@@ -108,18 +108,6 @@ pub fn set_play_button_animation(paths: &Paths, mode: String) -> Result<(), AppE
     })
 }
 
-/// Persist the user toggle for "Resume on Startup". No runtime side
-/// effect at toggle time — the flag is consulted once, at the next
-/// `main.rs` startup after `restore_persisted_playback`, so a single-phase
-/// disk write is all that's needed. The on-disk default is `false`
-/// (`PlaybackFlags::default()` in `services/settings/playback.rs`), so
-/// first-launch users land with auto-resume off.
-pub fn set_resume_on_startup(paths: &Paths, on: bool) -> Result<(), AppError> {
-    services::settings::mutate_settings(paths, move |settings| {
-        settings.playback.resume_on_startup = on;
-    })
-}
-
 /// Persist the selected `NetEase` stream quality for new cloud playback requests.
 pub fn set_cloud_quality(paths: &Paths, quality: Quality) -> Result<(), AppError> {
     services::settings::mutate_settings(paths, move |settings| {

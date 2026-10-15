@@ -80,11 +80,6 @@ export global Settings {
     in-out property <int> play-button-animation-idx: 0;
     callback play-button-animation-changed(int);
 
-    // Persist-only — no runtime side effect. `main.rs` consults the flag once at the
-    // next launch, after `restore_persisted_playback`.
-    in-out property <bool> resume-on-startup: false;
-    callback resume-on-startup-changed(bool);
-
     // Selected quality for `NetEase` cloud streams; local files keep their source format.
     in-out property <string> cloud-quality: "exhigh";
     callback cloud-quality-changed(string);

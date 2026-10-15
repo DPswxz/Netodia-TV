@@ -6,8 +6,6 @@
 //!
 //! - **Play-button animation** needs no runtime mirror — `PlayButton` binds its overlays
 //!   to the Slint global, so the chip click repaints reactively.
-//! - **Resume on startup** has no runtime side effect at all; the flag is consulted
-//!   once, by `main.rs` after `restore_persisted_playback`.
 //! - **The crossfade duration slider** splits `changed` (live, no disk) from `committed`
 //!   (drag release, persists), as `set-volume` / `commit-volume` do.
 //!
@@ -58,7 +56,6 @@ pub fn install_playback_settings(ui: &AppWindow, state: &AppState) {
         let g = ui.global::<Settings>();
         g.set_gapless_playback(s.playback.gapless_playback);
         g.set_play_button_animation_idx(play_button_anim_idx_from_token(&s.play_button_animation));
-        g.set_resume_on_startup(s.playback.resume_on_startup);
         g.set_cloud_quality(s.playback.cloud_quality.level().into());
 
         g.set_crossfade_enabled(s.crossfade.crossfade_enabled);
@@ -90,15 +87,6 @@ pub fn install_playback_settings(ui: &AppWindow, state: &AppState) {
         let token = play_button_anim_token_from_idx(idx).to_owned();
         state_anim.persist_blocking("persist play_button_animation", move |paths| {
             library::settings::set_play_button_animation(paths, token)
-        });
-    });
-
-    let state_resume = state.clone();
-    ui.global::<Settings>().on_resume_on_startup_changed(move |on| {
-        // Single-phase: the flag is consulted only at the next startup, and the
-        // two-way binding already updated the property before this fired.
-        state_resume.persist_blocking("persist resume_on_startup", move |paths| {
-            library::settings::set_resume_on_startup(paths, on)
         });
     });
 

@@ -1,12 +1,12 @@
 //! Background-task spawning, queue restore, and what the two ways of starting
-//! resolve to: resume-on-startup, or the files this launch was handed.
+//! resolve to: a restored queue left paused, or the files this launch was handed.
 
 use std::sync::Arc;
 
 use slint::ComponentHandle;
 
 use netodia_app::state::{AppState, StartupChannels};
-use netodia_app::{library, services, tasks};
+use netodia_app::{library, tasks};
 use netodia_core::error::describe;
 use netodia_core::utils;
 use netodia_engine::player::engine::event_sink::EventSink;
@@ -93,32 +93,10 @@ pub fn restore_persisted_playback(runtime: &tokio::runtime::Runtime, state: &App
     }
 }
 
-/// With "Resume on Startup" on and a restored queue, play here so the first frame paints
-/// `Playing` and the deck is already decoding.
-pub fn maybe_resume_on_startup(
-    state: &AppState,
-    startup_settings: Option<&services::settings::SettingsData>,
-) {
-    let resume_enabled = startup_settings.is_some_and(|s| s.playback.resume_on_startup);
-    if !resume_enabled {
-        return;
-    }
-    // Bind the bool out so the guard drops *before* `player_play()`, which
-    // re-enters the same lock through `with_state_emit`.
-    let has_source = {
-        let s = netodia_engine::player::engine::state::lock_state(&state.player_state);
-        s.source.is_some()
-    };
-    if has_source && let Err(e) = library::playback::player_play(&state.playback_ctx()) {
-        log::warn!("resume_on_startup: player_play failed: {}", describe(&e));
-    }
-}
-
 /// Play the files this launch was handed on the command line.
 ///
 /// After [`restore_persisted_playback`] so an opened track wins over what the
-/// last session left; `main()` skips [`maybe_resume_on_startup`] when there are
-/// files, resuming being visible for the moment it takes this to replace it.
+/// last session left. A normal launch leaves the restored track paused.
 /// Synchronous like the restore — the first frame should paint what was
 /// double-clicked.
 pub fn open_startup_files(

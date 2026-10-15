@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use super::PlayerState;
 use crate::player::engine::queue::current_index_from_i32;
-use crate::player::engine::types::{PersistableQueue, PersistedPlayback};
+use crate::player::engine::types::{PersistableQueue, PersistedPlayback, PlaybackStatus};
 use netodia_core::entities::track::TrackSummary;
 
 impl PlayerState {
@@ -46,5 +46,6 @@ pub fn restore_queue(
         state.duration_ms = u64::try_from(track.duration_ms.max(0)).unwrap_or(0);
         state.position_ms = u64::try_from(track.last_position.max(0)).unwrap_or(0);
         state.source = Some(track);
+        state.status = PlaybackStatus::Paused;
     }
 }

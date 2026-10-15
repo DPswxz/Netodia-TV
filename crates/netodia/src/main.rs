@@ -103,11 +103,9 @@ fn main() -> AppResult<()> {
     let startup_view_state: Option<services::view_state::ViewStateData> =
         library::settings::get_view_state(&state.paths).ok();
 
-    // Files on the command line replace the restored queue and play, so resume
-    // would only be visible for the moment it takes them to land.
-    if startup_files.is_empty() {
-        boot::tasks::maybe_resume_on_startup(&state, startup_settings.as_ref());
-    } else {
+    // A normal launch leaves the restored track paused. Files passed on the
+    // command line replace the restored queue and start playing as requested.
+    if !startup_files.is_empty() {
         boot::tasks::open_startup_files(&runtime, &state, &startup_files);
     }
 

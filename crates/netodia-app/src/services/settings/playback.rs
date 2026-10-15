@@ -19,6 +19,9 @@ use netodia_playback::player::playback::replaygain::{DEFAULT_MODE, RG_DEFAULT_PR
 #[serde(default)]
 pub struct PlaybackFlags {
     pub gapless_playback: bool,
+    /// Compatibility field for settings written by older versions. Playback is always restored
+    /// paused now, so this legacy option is ignored and omitted from subsequent settings writes.
+    #[serde(skip)]
     pub resume_on_startup: bool,
     pub is_muted: bool,
     pub cloud_quality: Quality,

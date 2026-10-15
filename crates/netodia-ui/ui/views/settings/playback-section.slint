@@ -46,8 +46,6 @@ export component PlaybackSection inherits Rectangle {
     property <string> gapless-desc: @tr("Seamless transitions between tracks without silence gaps");
     property <string> anim-label: @tr("Play Button Animation");
     property <string> anim-desc: @tr("Visual effect on the play button while music is playing");
-    property <string> resume-label: @tr("Resume on Startup");
-    property <string> resume-desc: @tr("Automatically resume the last track from where you left off when the app starts");
     property <string> crossfade-label: @tr("Crossfade");
     property <string> crossfade-desc: @tr("Overlap the end of one track with the start of the next");
     property <string> crossfade-format-desc: @tr("Overlap the end of one track with the start of the next, unless the device has to change format between them");
@@ -67,7 +65,6 @@ export component PlaybackSection inherits Rectangle {
     // Per row, feeding both the inner `if` and the section's `has-matches`.
     property <bool> show-gapless: row-visible(gapless-label, gapless-desc);
     property <bool> show-anim: row-visible(anim-label, anim-desc);
-    property <bool> show-resume: row-visible(resume-label, resume-desc);
     // The cluster searches as one unit: any of its labels reveals the toggle plus whichever
     // sub-rows are mounted, so every sub-row's pair is a term here. Left off, a sub-row is
     // reachable only by scrolling to it.
@@ -89,7 +86,7 @@ export component PlaybackSection inherits Rectangle {
     property <bool> show-crossfade-details: root.show-crossfade && Settings.crossfade-enabled;
 
     out property <bool> has-matches:
-        show-gapless || show-anim || show-resume || show-crossfade || show-visualizer;
+        show-gapless || show-anim || show-crossfade || show-visualizer;
 
     // Wrapper so the root's preferred-height tracks the card's natural height —
     // a `Rectangle` sizes from a layout child, never from a conditional one.
@@ -108,7 +105,7 @@ export component PlaybackSection inherits Rectangle {
             }
         }
         // Each gates on a visible row either side, so none is left stranded.
-        if root.show-gapless && (root.show-crossfade || root.show-anim || root.show-resume || root.show-visualizer): SectionDivider {}
+        if root.show-gapless && (root.show-crossfade || root.show-anim || root.show-visualizer): SectionDivider {}
 
         if root.show-crossfade: SettingRow {
             icon: "swap_horiz";
@@ -164,7 +161,7 @@ export component PlaybackSection inherits Rectangle {
                 toggled(v) => { Settings.crossfade-fade-on-pause-changed(v); }
             }
         }
-        if root.show-crossfade && (root.show-anim || root.show-resume || root.show-visualizer): SectionDivider {}
+        if root.show-crossfade && (root.show-anim || root.show-visualizer): SectionDivider {}
 
         if root.show-anim: SettingRowStacked {
             icon: "animation";
@@ -179,18 +176,7 @@ export component PlaybackSection inherits Rectangle {
                 selected(i) => { Settings.play-button-animation-changed(i); }
             }
         }
-        if root.show-anim && (root.show-resume || root.show-visualizer): SectionDivider {}
-
-        if root.show-resume: SettingRow {
-            icon: "play_circle";
-            label: root.resume-label;
-            description: root.resume-desc;
-            ToggleSwitch {
-                checked <=> Settings.resume-on-startup;
-                toggled(v) => { Settings.resume-on-startup-changed(v); }
-            }
-        }
-        if root.show-resume && root.show-visualizer: SectionDivider {}
+        if root.show-anim && root.show-visualizer: SectionDivider {}
 
         // Binds `Visualizer` directly rather than mirroring its flags onto
         // `Settings` — it owns its own state and callbacks, as the EQ dialog
