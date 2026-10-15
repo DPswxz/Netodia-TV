@@ -52,7 +52,7 @@ fn index_write_sites(src: &str) -> Vec<(usize, &str)> {
 #[test]
 fn every_persisted_index_is_written_inside_the_ordering_closure() {
     let mut sites = 0usize;
-    let mut setters = Vec::new();
+    let mut setters: Vec<String> = Vec::new();
     for (rel, src) in wiring_sources() {
         let closures: Vec<usize> = src
             .match_indices(CALL)
@@ -61,7 +61,7 @@ fn every_persisted_index_is_written_inside_the_ordering_closure() {
 
         for (write, setter) in index_write_sites(&src) {
             sites += 1;
-            setters.push(setter);
+            setters.push(setter.to_owned());
             assert!(
                 closures.iter().any(|&open| inside_block(&src, open, write)),
                 "{rel} writes a `views.json` index outside an `IndexPersist` closure — a \
@@ -70,8 +70,10 @@ fn every_persisted_index_is_written_inside_the_ordering_closure() {
             );
         }
     }
-    let missing: Vec<&str> =
-        EXPECTED_INDEX_SETTERS.into_iter().filter(|setter| !setters.contains(setter)).collect();
+    let missing: Vec<&str> = EXPECTED_INDEX_SETTERS
+        .into_iter()
+        .filter(|setter| !setters.iter().any(|actual| actual.as_str() == *setter))
+        .collect();
     assert!(missing.is_empty(), "missing ordered index writers: {missing:?}");
     assert!(
         sites >= EXPECTED_INDEX_SETTERS.len(),
