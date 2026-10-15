@@ -1,7 +1,7 @@
 name: Linux system deps
 description: >-
   Install Netodia's Linux build/test system dependencies (Slint femtovg fonts,
-  ALSA, xkbcommon, Wayland, OpenSSL) with Azure apt-mirror failover and
+  ALSA, D-Bus, xkbcommon, Wayland, OpenSSL) with Azure apt-mirror failover and
   a time-bounded retry loop. `extra-packages` is what a packaging slot adds on
   top; the base set is the same everywhere so a gate and a release can't
   provision differently.
@@ -43,7 +43,7 @@ runs:
         # Unquoted on purpose: the input is a package list, and splitting it on
         # whitespace is the whole point.
         packages=(
-          libasound2-dev libxkbcommon-dev libfontconfig1-dev libfreetype-dev
+          libasound2-dev libdbus-1-dev libxkbcommon-dev libfontconfig1-dev libfreetype-dev
           libwayland-dev libssl-dev pkg-config
           $EXTRA_PACKAGES
         )

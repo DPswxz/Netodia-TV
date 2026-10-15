@@ -47,7 +47,8 @@ cargo llvm-cov --workspace --html          # coverage → target/llvm-cov/html/
 ## Prerequisites
 
 - **Rust** edition 2024, pinned to 1.97.0 by `rust-toolchain.toml`.
-- **Linux**: GTK / X11 / Wayland dev pkgs for Slint femtovg (`libfontconfig1-dev`, `libfreetype6-dev`, Vulkan/OpenGL; `libwayland-dev` on Wayland). No WebKitGTK.
+- **Linux**: `libdbus-1-dev`, `libasound2-dev`, `libxkbcommon-dev`, `libfontconfig1-dev`,
+  `libfreetype-dev`, `libwayland-dev`, `libssl-dev`, and `pkg-config`. No WebKitGTK.
 - **Windows**: no extra deps.
 
 ## Architecture
