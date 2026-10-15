@@ -160,10 +160,6 @@ fn install_notices(
     install_audio_device_lost_subscriber(state, weak.clone(), notifications.clone())?;
     install_artwork_restore_subscriber(state, weak.clone(), notifications.clone())?;
 
-    // The Ko-fi link, plus the one-time support toast a few minutes into
-    // whichever early launch is the fifth. Counts this launch either way.
-    ui::support::install(app, state, notifications.clone())?;
-
     install_toast_bridge(weak.clone(), notifications.clone())?;
 
     install_rss_sampler(weak)
@@ -197,8 +193,7 @@ fn install_updater_and_onboarding(
     // The two surfaces that would otherwise land on top of it wait in this closure: the first
     // thirty seconds shouldn't be three stacked surfaces. Held rather than skipped — the crash
     // notice consumes its marker as it fires — and it runs immediately on every launch that opens
-    // no card. Deferring a *daily* check by the length of a welcome card costs nothing. The Ko-fi
-    // prompt can't collide, being spent on the fifth launch behind a two-minute delay.
+    // no card. Deferring a *daily* check by the length of a welcome card costs nothing.
     let deferred_spawner = spawner.clone();
     let deferred_state = state.clone();
     let deferred_notifications = notifications.clone();

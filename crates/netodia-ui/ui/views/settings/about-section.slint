@@ -1,5 +1,4 @@
 import { Settings } from "../../settings.slint";
-import { Theme } from "../../theme.slint";
 import { SettingsPage } from "../../globals/settings-page.slint";
 import { NetodiaUpdater } from "../../globals/updater.slint";
 import { SectionCard } from "../../components/settings/section-card.slint";
@@ -7,15 +6,12 @@ import { SectionDivider } from "../../components/settings/section-divider.slint"
 import { SettingRow } from "../../components/settings/setting-row.slint";
 import { SectionButton } from "../../components/settings/section-button.slint";
 
-// The conventional About pane: identity, authorship, a support link, a repository
-// link and the license. Unlike Updates, no backend state gates a row — only the
-// search filter can hide one.
+// The About pane: identity, adapter and UI framework authors, and the license.
+// Unlike Updates, only the search filter can hide a row.
 //
 // The version reads `NetodiaUpdater.current-version` rather than its own copy,
-// so About and Updates can't disagree. Both links reach the same launcher "Open
-// Containing Folder" uses — the repository through `crates/netodia-views/src/ui/settings/about.rs`, Ko-fi
-// through `crates/netodia-views/src/ui/support.rs`, which owns it because the support toast fires the same
-// callback. Search visibility follows `language-section.slint`.
+// so About and Updates can't disagree. Both author links use the system launcher
+// through `crates/netodia-views/src/ui/settings/about.rs`.
 export component AboutSection inherits Rectangle {
     background: transparent;
     horizontal-stretch: 1;
@@ -31,37 +27,31 @@ export component AboutSection inherits Rectangle {
                                         SettingsPage.search-query);
     }
 
-    // The brands, the SPDX id and "GitHub" / "Ko-fi" stay untranslated but still
+    // The brands, the SPDX id and "GitHub" stay untranslated but still
     // belong in the haystack — they're what a user would type.
     property <string> app-label: "Netodia";
     // Translators: `{}` is the version number, such as 0.9.2
     property <string> version-desc: @tr("Version {}", NetodiaUpdater.current-version);
-    // Translators: `{}` is the author's name, a proper noun kept as is
-    property <string> author-label: @tr("Made by {}", "Kenan Salar");
+    // Translators: `{}` is the adapter author's GitHub name, kept as is
+    property <string> adapter-author-label: @tr("NetEase Cloud Music adapter author: {}", "HELPMEEADICE");
+    // Translators: `{}` is the UI framework author's name, kept as is
+    property <string> framework-author-label: @tr("UI framework author: {}", "Kenan Salar");
     property <string> repo-label: "GitHub";
-    // Translators: support as in funding the project, not technical support
-    property <string> support-label: @tr("Support Netodia");
-    property <string> support-desc: @tr("Netodia is free and open source. Support helps keep it going.");
     property <string> license-label: @tr("License");
     property <string> license-desc: "AGPL-3.0-or-later";
-    // Translators: Ko-fi is a brand and stays as is; support means funding
-    property <string> kofi-label: @tr("Support me on Ko-fi");
     property <string> welcome-label: @tr("Welcome Guide");
     property <string> welcome-desc: @tr("Run the first-run setup again.");
     // Translators: a button in a narrow slot, so keep it short
     property <string> welcome-action: @tr("Show");
 
     property <bool> show-app: row-visible(app-label, version-desc);
-    property <bool> show-author: row-visible(author-label, repo-label);
-    // The button's own wording is a term too, "Ko-fi" alone being the brand rather than
-    // anything the row says about it.
-    property <bool> show-support: row-visible(support-label, support-desc)
-        || row-visible(kofi-label, "Ko-fi");
+    property <bool> show-adapter-author: row-visible(adapter-author-label, repo-label);
+    property <bool> show-framework-author: row-visible(framework-author-label, repo-label);
     property <bool> show-license: row-visible(license-label, license-desc);
     property <bool> show-welcome: row-visible(welcome-label, welcome-desc);
 
-    out property <bool> has-matches: show-app || show-author || show-support || show-license
-        || show-welcome;
+    out property <bool> has-matches: show-app || show-adapter-author
+        || show-framework-author || show-license || show-welcome;
 
     // Wrapper so the root's preferred-height tracks the card's natural height —
     // see `language-section.slint`.
@@ -75,48 +65,41 @@ export component AboutSection inherits Rectangle {
                 description: root.version-desc;
             }
 
-            // No leading icon, matching the Updates section's action buttons.
-            if root.show-app && root.show-author: SectionDivider {}
-            if root.show-author: SettingRow {
+            if root.show-app && root.show-adapter-author: SectionDivider {}
+            if root.show-adapter-author: SettingRow {
                 icon: "person";
-                label: root.author-label;
+                label: root.adapter-author-label;
                 SectionButton {
                     label: root.repo-label;
                     icon: "";
                     primary: false;
-                    clicked => { Settings.open-repository(); }
+                    clicked => { Settings.open-adapter-author(); }
                 }
             }
 
-            // The one filled button in the card, and deliberately so — it asks for
-            // something rather than going somewhere. The mark keeps its own colours: it
-            // is Ko-fi's, and it reads on any accent because it carries both ends — the
-            // dark outline over a light one, the white cup over a dark one.
-            if (root.show-app || root.show-author) && root.show-support: SectionDivider {}
-            if root.show-support: SettingRow {
-                icon: "favorite";
-                label: root.support-label;
-                description: root.support-desc;
+            if (root.show-app || root.show-adapter-author) && root.show-framework-author:
+                SectionDivider {}
+            if root.show-framework-author: SettingRow {
+                icon: "person";
+                label: root.framework-author-label;
                 SectionButton {
-                    label: root.kofi-label;
+                    label: root.repo-label;
                     icon: "";
-                    leading-image: @image-url("../../assets/icons/kofi-symbol.svg");
-                    corner-radius: Theme.radius-md;
-                    primary: true;
-                    clicked => { Settings.open-kofi(); }
+                    primary: false;
+                    clicked => { Settings.open-framework-author(); }
                 }
             }
 
-            if (root.show-app || root.show-author || root.show-support) && root.show-license: SectionDivider {}
+            if (root.show-app || root.show-adapter-author || root.show-framework-author)
+                && root.show-license: SectionDivider {}
             if root.show-license: SettingRow {
                 icon: "balance";
                 label: root.license-label;
                 description: root.license-desc;
             }
 
-            // Wired from `ui/onboarding/`, not `about.rs`: the card owns its own callback the way
-            // Ko-fi's does, so neither the row nor the feature has to know about the other.
-            if (root.show-app || root.show-author || root.show-support || root.show-license)
+            // Wired from `ui/onboarding/`, which owns the welcome card.
+            if (root.show-app || root.show-adapter-author || root.show-framework-author || root.show-license)
                 && root.show-welcome: SectionDivider {}
             if root.show-welcome: SettingRow {
                 icon: "waving_hand";

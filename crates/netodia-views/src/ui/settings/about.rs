@@ -1,7 +1,6 @@
 //! Wire the Settings page's About section.
 //!
-//! Registers `Settings.open-repository`, whose URL is `CARGO_PKG_REPOSITORY` so the link
-//! tracks the canonical repo with no hardcoded string. The launch goes through
+//! Registers the contributor links shown in Settings → About. Each launch goes through
 //! [`crate::ui::launcher::open_target`], which owns the hop off the UI thread.
 //!
 //! The version shown in the About card is *not* set here — it rides on
@@ -13,17 +12,18 @@ use crate::ui::launcher;
 use netodia_app::state::AppState;
 use netodia_ui::{AppWindow, Settings};
 
-/// Empty only if the `repository` field is removed from `Cargo.toml`; the callback guards
-/// against handing a blank URL to `open`.
-const REPOSITORY_URL: &str = env!("CARGO_PKG_REPOSITORY");
+const ADAPTER_AUTHOR_URL: &str = "https://github.com/HELPMEEADICE";
+const FRAMEWORK_AUTHOR_URL: &str = "https://github.com/KenanSalar";
 
 pub fn install(ui: &AppWindow, state: &AppState) {
     let runtime = state.runtime.clone();
-    ui.global::<Settings>().on_open_repository(move || {
-        if REPOSITORY_URL.is_empty() {
-            log::warn!("open-repository: CARGO_PKG_REPOSITORY is empty");
-            return;
+    ui.global::<Settings>().on_open_adapter_author({
+        let runtime = runtime.clone();
+        move || {
+            runtime.spawn(launcher::open_target(ADAPTER_AUTHOR_URL, "open-adapter-author"));
         }
-        runtime.spawn(launcher::open_target(REPOSITORY_URL, "open-repository"));
+    });
+    ui.global::<Settings>().on_open_framework_author(move || {
+        runtime.spawn(launcher::open_target(FRAMEWORK_AUTHOR_URL, "open-framework-author"));
     });
 }

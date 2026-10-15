@@ -4,8 +4,7 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-# Not decoration: `ui::settings::about` reads `CARGO_PKG_REPOSITORY` for the link it
-# opens, and `ui::callbacks::updater` and `ui::settings::updater_settings` read
+# Not decoration: `ui::callbacks::updater` and `ui::settings::updater_settings` read
 # `CARGO_PKG_VERSION` for the compare and the label. A member inheriting neither
 # ships an empty link and a version of "0.0.0", and only *logs* about the first.
 repository.workspace = true

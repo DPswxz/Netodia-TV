@@ -310,14 +310,10 @@ and macOS: a Windows build runs with no console attached, so use `%APPDATA%\Neto
 For finer control than the verbose switch, `RUST_LOG=debug netodia` overrides the filter for both the
 log file and the terminal.
 
-## Contributing and Support
+## Contributing
 
 Contributions are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) has the setup, the checks to run
 before pushing, and how pull requests are handled.
-
-Netodia is free, open source, and built in my spare time, with nothing gated behind payment. If it's
-useful to you, you can support me at [ko-fi.com/kenansalar](https://ko-fi.com/kenansalar), the same
-link the app carries at **Settings → About**.
 
 ## License
 

@@ -1461,18 +1461,6 @@ msgid "A crash report was written. Open the log folder to find it."
 msgstr "Γράφτηκε μια αναφορά κατάρρευσης. Ανοίξτε τον φάκελο καταγραφής για να τη βρείτε."
 
 #: ui/settings.slint
-msgid "Enjoying Netodia?"
-msgstr "Σας αρέσει το Netodia;"
-
-#: ui/settings.slint
-msgid "It's free and open source, built in my spare time. If it's useful to you, you can support me. You'll only see this once."
-msgstr "Είναι δωρεάν και ανοιχτού κώδικα, φτιαγμένο στον ελεύθερο χρόνο μου. Αν σας φαίνεται χρήσιμο, μπορείτε να με στηρίξετε. Θα το δείτε μόνο μία φορά."
-
-#: ui/settings.slint
-msgid "Support"
-msgstr "Στήριξη"
-
-#: ui/settings.slint
 msgid "Audio device disconnected"
 msgstr "Η συσκευή ήχου αποσυνδέθηκε"
 
@@ -2015,29 +2003,19 @@ msgstr "Αναζήτηση ρυθμίσεων…"
 msgid "Version {}"
 msgstr "Έκδοση {}"
 
-#. Translators: `{}` is the author's name, a proper noun kept as is
+#. Translators: `{}` is the adapter author's GitHub name, kept as is
 #: ui/views/settings/about-section.slint
-msgid "Made by {}"
-msgstr "Δημιουργήθηκε από {}"
+msgid "NetEase Cloud Music adapter author: {}"
+msgstr "Δημιουργός προσαρμογέα NetEase Cloud Music: {}"
 
-# "Στήριξη", not "Υποστήριξη", which would read as technical support here.
-#. Translators: support as in funding the project, not technical support
+#. Translators: `{}` is the UI framework author's name, kept as is
 #: ui/views/settings/about-section.slint
-msgid "Support Netodia"
-msgstr "Στηρίξτε το Netodia"
-
-#: ui/views/settings/about-section.slint
-msgid "Netodia is free and open source. Support helps keep it going."
-msgstr "Το Netodia είναι δωρεάν και ανοιχτού κώδικα. Η στήριξη βοηθά να συνεχιστεί."
+msgid "UI framework author: {}"
+msgstr "Δημιουργός πλαισίου UI: {}"
 
 #: ui/views/settings/about-section.slint
 msgid "License"
 msgstr "Άδεια"
-
-#. Translators: Ko-fi is a brand and stays as is; support means funding
-#: ui/views/settings/about-section.slint
-msgid "Support me on Ko-fi"
-msgstr "Στηρίξτε με στο Ko-fi"
 
 #: ui/views/settings/about-section.slint
 msgid "Welcome Guide"

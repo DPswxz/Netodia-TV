@@ -46,7 +46,6 @@ pub mod settings_bind;
 pub mod shell;
 pub mod signal;
 pub mod sleep_timer;
-pub mod support;
 pub mod tab_bar;
 pub mod track_columns;
 pub mod track_detail;

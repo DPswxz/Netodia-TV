@@ -1,5 +1,4 @@
-//! The flag structs behind the Settings ▸ About tab: updates, diagnostics, and what the welcome card
-//! and the support prompt remember.
+//! The flag structs behind the Settings ▸ About tab: updates, diagnostics, and what the welcome card remembers.
 
 use serde::{Deserialize, Serialize};
 
@@ -69,16 +68,6 @@ impl UpdateFlags {
 #[serde(default)]
 pub struct DiagnosticsFlags {
     pub verbose_logging: bool,
-}
-
-/// What the one-time Ko-fi prompt remembers. `launch_count` stops advancing
-/// once `support_prompt_seen` is set, so a settled install stops rewriting
-/// `settings.json` at boot rather than counting forever.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default)]
-pub struct SupportFlags {
-    pub launch_count: u32,
-    pub support_prompt_seen: bool,
 }
 
 /// The onboarding revision this install has been shown, `0` meaning never.

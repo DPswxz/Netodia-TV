@@ -476,9 +476,9 @@ fn as_dep5_field_body(text: &str) -> String {
 /// saying something, just not the true thing, so nothing looks broken.
 ///
 /// **`licenses/` may not fall through to `Files: *`.** Those texts are the FSF's, the ASF's,
-/// Mozilla's, SIL's, Vazirmatn authors', and Adobe/Google's, reproduced because their own licences require it;
-/// swept into the catch-all they are declared AGPL by this package's author, which is the Ko-fi
-/// stanza's argument over four more files. Nothing about `GPL-3.0.txt` changes when the package
+/// Mozilla's, SIL's, Vazirmatn authors', and Adobe/Google's, reproduced because their own licences
+/// require it; swept into the catch-all they are declared AGPL by this package's author. Nothing
+/// about `GPL-3.0.txt` changes when the package
 /// starts claiming it, so a diff of the texts cannot show this.
 ///
 /// **And every short name a stanza uses has to be defined.** DEP-5 resolves a `License:` field

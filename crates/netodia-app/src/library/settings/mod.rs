@@ -12,7 +12,6 @@
 //! - [`folders`]: library folder CRUD, watcher toggle, and `scan_folder*`.
 //! - [`diagnostics`]: the Verbose Logging switch.
 //! - [`motion`]: the Skip Startup Animation switch.
-//! - [`support`]: the launch counter behind the one-time Ko-fi prompt.
 //! - [`onboarding`]: the revision the welcome card has been shown at.
 //!
 //! `settings.json` setters funnel through
@@ -33,7 +32,6 @@ pub mod onboarding;
 pub mod playback;
 pub mod ratings;
 pub mod replaygain;
-pub mod support;
 pub mod updates;
 pub mod view;
 pub mod visualizer;
@@ -65,7 +63,6 @@ pub use replaygain::{
     set_replaygain_enabled, set_replaygain_mode, set_replaygain_preamp,
     set_replaygain_prevent_clipping,
 };
-pub use support::{mark_support_prompt_seen, record_launch};
 pub use updates::{set_auto_check_enabled, set_skipped_release};
 pub use view::{
     get_view_sort, set_artist_albums_collapsed, set_browse_path, set_browse_view_mode,

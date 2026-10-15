@@ -309,7 +309,6 @@ fn run_action(ui: &AppWindow, kind: NotificationKind) {
         NotificationKind::InstallUpdate => ui.global::<NetodiaUpdater>().invoke_install(),
         NotificationKind::UpdateRestart => ui.global::<NetodiaUpdater>().invoke_restart(),
         NotificationKind::CrashReport => ui.global::<Settings>().invoke_open_log_folder(),
-        NotificationKind::SupportNetodia => ui.global::<Settings>().invoke_open_kofi(),
         NotificationKind::ExclusiveRefused => ui.global::<Settings>().invoke_open_signal_path(),
         // Kinds that only group rows; their rows carry no button.
         NotificationKind::None

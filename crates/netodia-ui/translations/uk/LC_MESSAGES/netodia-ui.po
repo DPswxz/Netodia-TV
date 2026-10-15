@@ -1467,18 +1467,6 @@ msgid "A crash report was written. Open the log folder to find it."
 msgstr "Звіт про збій записано. Він міститься в теці журналів."
 
 #: ui/settings.slint
-msgid "Enjoying Netodia?"
-msgstr "Подобається Netodia?"
-
-#: ui/settings.slint
-msgid "It's free and open source, built in my spare time. If it's useful to you, you can support me. You'll only see this once."
-msgstr "Це безкоштовна програма з відкритим кодом, яку я роблю у вільний час. Якщо вона вам корисна, ви можете мене підтримати. Це повідомлення зʼявиться лише один раз."
-
-#: ui/settings.slint
-msgid "Support"
-msgstr "Підтримати"
-
-#: ui/settings.slint
 msgid "Audio device disconnected"
 msgstr "Аудіопристрій відключено"
 
@@ -2032,28 +2020,19 @@ msgstr "Пошук налаштувань…"
 msgid "Version {}"
 msgstr "Версія {}"
 
-#. Translators: `{}` is the author's name, a proper noun kept as is
+#. Translators: `{}` is the adapter author's GitHub name, kept as is
 #: ui/views/settings/about-section.slint
-msgid "Made by {}"
-msgstr "Автор: {}"
+msgid "NetEase Cloud Music adapter author: {}"
+msgstr "Автор адаптації NetEase Cloud Music: {}"
 
-#. Translators: support as in funding the project, not technical support
+#. Translators: `{}` is the UI framework author's name, kept as is
 #: ui/views/settings/about-section.slint
-msgid "Support Netodia"
-msgstr "Підтримати Netodia"
-
-#: ui/views/settings/about-section.slint
-msgid "Netodia is free and open source. Support helps keep it going."
-msgstr "Netodia — безкоштовна програма з відкритим кодом. Ваша підтримка допомагає їй розвиватися."
+msgid "UI framework author: {}"
+msgstr "Автор UI-фреймворку: {}"
 
 #: ui/views/settings/about-section.slint
 msgid "License"
 msgstr "Ліцензія"
-
-#. Translators: Ko-fi is a brand and stays as is; support means funding
-#: ui/views/settings/about-section.slint
-msgid "Support me on Ko-fi"
-msgstr "Підтримати мене на Ko-fi"
 
 #: ui/views/settings/about-section.slint
 msgid "Welcome Guide"

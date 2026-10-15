@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use super::about::{DiagnosticsFlags, OnboardingFlags, SupportFlags, UpdateFlags};
+use super::about::{DiagnosticsFlags, OnboardingFlags, UpdateFlags};
 use super::interface::{BackdropFlags, LayoutFlags, MotionFlags, TrayFlags, WindowFlags};
 use super::library::LibraryFlags;
 use super::playback::{
@@ -181,8 +181,6 @@ pub struct SettingsData {
     #[serde(flatten)]
     pub diagnostics: DiagnosticsFlags,
     #[serde(flatten)]
-    pub support: SupportFlags,
-    #[serde(flatten)]
     pub onboarding: OnboardingFlags,
 }
 
@@ -232,7 +230,6 @@ impl Default for SettingsData {
             backdrop: BackdropFlags::default(),
             updates: UpdateFlags::default(),
             diagnostics: DiagnosticsFlags::default(),
-            support: SupportFlags::default(),
             onboarding: OnboardingFlags::default(),
         }
     }
