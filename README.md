@@ -21,7 +21,7 @@
 
 ## 下载
 
-前往 [GitHub Releases](https://github.com/HELPMEEADICE/Netodia/releases) 下载适用于你系统的版本。Linux 提供 `.deb`、`.rpm`、AppImage 或压缩包等构建；Windows 提供安装包或便携版本（以对应版本的发布附件为准）。
+前往 [GitHub Releases](https://github.com/HELPMEEADICE/Netodia/releases) 下载适用于你系统的版本。Linux 提供 `.deb`、`.rpm`、AppImage 或压缩包等构建；Windows 提供 `.msi` 安装包和 `.zip` 便携版（以对应版本的发布附件为准）。
 
 ## 从源码构建
 

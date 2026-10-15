@@ -1,119 +1,249 @@
-name: Release
-
-# A pushed `v*.*.*` tag starts a cycle and `Cargo.toml` must agree: `prepare`
-# fails the run on a mismatch, so bump and tag are one act rather than two that
-# can drift. A published tag short-circuits; a still-draft one is rebuilt in
-# place (`--clobber`). The flip to published stays manual, drafts not being
-# served by `/releases/latest/download/`, so the updater only sees a release once
-# you have taken that QA step.
-#
-# The phases live in `release-*.yml`, which carry `workflow_call` and nothing
-# else, so they cannot be dispatched by mistake. This file is the shape of a
-# release: what runs, in what order, and the table of what ships.
+name: Build and release
 
 on:
-  # **A re-run is dispatched on the tag, never on a branch**, and this takes no input, so
-  # the ref picked in the dropdown (or `gh workflow run release.yml --ref <the tag>`) is
-  # the whole of that decision. The tag rebuilds the commit its draft was signed from; a
-  # branch is for a build nobody has tagged yet, and from `main` after the next bump has
-  # landed it resolves *that* version's tag and opens a different draft, which is not a
-  # re-run of anything. Neither reaches a published tag, `prepare` short-circuiting on
-  # one, so the recovery window is the draft.
+  # Build after a release is published. Draft releases are built when published.
+  release:
+    types: [published]
+  # Manual runs create downloadable Actions artifacts and never touch a Release.
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*.*.*'
 
 permissions:
-  contents: write
-  # OIDC token to mint the Sigstore certificate, plus write to the attestations
-  # store. Verify with `gh attestation verify <file> --repo KenanSalar/Netodia`.
-  id-token: write
-  attestations: write
+  contents: read
 
-# One group for every release run, keyed on nothing: the shared resource is the
-# draft, not the ref that reached it, and a per-ref group would leave two runs
-# `--clobber`ing one draft. Releases never overlap, so a queued unrelated version
-# costs only the wait; only one sits pending, a third cancelling the waiting one.
-# Deliberately not repeated in the called workflows: matching group names on both
-# sides of a call is how a run cancels its own caller.
 concurrency:
-  group: release
+  group: netodia-build-${{ github.event.release.tag_name || format('manual-{0}', github.run_number) }}
   cancel-in-progress: false
 
-# Only `audit` narrows the grant above, and that is the shape it already had.
-# The three called workflows take it whole on purpose: `prepare` reads release
-# state including DRAFTS, which are visible only to a token with push access, and
-# `build` needs all three of contents/id-token/attestations for the Sigstore
-# step. A job-level block REPLACES rather than merges, so trimming one here is a
-# change that fails at tag time and nowhere earlier. Worth doing deliberately,
-# not as a side effect of moving files.
 jobs:
-  prepare:
-    uses: ./.github/workflows/release-prepare.yml
-
-  # Holds the release on a RustSec advisory: the updater ships executable code to
-  # every installed client, so a delayed release beats a vulnerable one. Still a
-  # gate though every PR ran it: the DB moves, and a tag can be weeks later.
-  audit:
-    needs: prepare
-    if: needs.prepare.outputs.should_release == 'true'
-    runs-on: ubuntu-latest
-    # Reads Cargo.lock and nothing else; don't leave the workflow-level write
-    # grant reachable from a job whose whole body is a third-party scanner.
+  build:
+    name: ${{ matrix.kind }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/cargo-audit
-
-  # One artifact + its prehashed minisign signature per slot, for `publish`.
-  build:
-    # `linux-rpm (aarch64)` rather than every matrix field in declaration order:
-    # kind + arch names all ten uniquely. Display only; `needs:` keys off the id.
-    name: ${{ matrix.kind }} (${{ matrix.arch }})
-    needs: [prepare, audit]
-    if: needs.prepare.outputs.should_release == 'true'
+      id-token: write
+      attestations: write
     strategy:
-      # Saves minutes, at the cost of not learning if a second slot also fails.
-      fail-fast: true
+      fail-fast: false
       matrix:
-        # `arch` reaches the output filenames and build-{tarball,appimage,rpm}.sh's ARCH.
         include:
-          - { target: x86_64-unknown-linux-gnu,  runner: ubuntu-latest,      kind: linux-tarball,  arch: x86_64  }
-          - { target: x86_64-unknown-linux-gnu,  runner: ubuntu-latest,      kind: linux-appimage, arch: x86_64  }
-          - { target: x86_64-unknown-linux-gnu,  runner: ubuntu-latest,      kind: linux-rpm,      arch: x86_64  }
-          - { target: x86_64-unknown-linux-gnu,  runner: ubuntu-latest,      kind: linux-deb,      arch: x86_64  }
-          - { target: x86_64-pc-windows-msvc,    runner: windows-2025-vs2026, kind: windows-msi,  arch: x86_64  }
+          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest,       kind: linux-tarball,  arch: x86_64 }
+          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest,       kind: linux-appimage, arch: x86_64 }
+          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest,       kind: linux-rpm,      arch: x86_64 }
+          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest,       kind: linux-deb,      arch: x86_64 }
+          - { target: x86_64-pc-windows-msvc,   runner: windows-2025-vs2026, kind: windows-msi,    arch: x86_64 }
+          - { target: x86_64-pc-windows-msvc,   runner: windows-2025-vs2026, kind: windows-zip,    arch: x86_64 }
           - { target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm,   kind: linux-tarball,  arch: aarch64 }
           - { target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm,   kind: linux-appimage, arch: aarch64 }
           - { target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm,   kind: linux-rpm,      arch: aarch64 }
           - { target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm,   kind: linux-deb,      arch: aarch64 }
           - { target: aarch64-pc-windows-msvc,   runner: windows-11-arm,     kind: windows-msi,    arch: aarch64 }
-    uses: ./.github/workflows/release-build.yml
-    with:
-      target: ${{ matrix.target }}
-      runner: ${{ matrix.runner }}
-      kind: ${{ matrix.kind }}
-      arch: ${{ matrix.arch }}
-      tag: ${{ needs.prepare.outputs.tag }}
-      version: ${{ needs.prepare.outputs.version }}
-    # Named rather than inherited, so each phase's reach is written down where it
-    # is granted and `build` can't quietly acquire the publish token's scope.
-    secrets:
+          - { target: aarch64-pc-windows-msvc,   runner: windows-11-arm,     kind: windows-zip,    arch: aarch64 }
+    env:
+      TAG: ${{ github.event.release.tag_name || format('manual-{0}', github.run_number) }}
+      ARCH: ${{ matrix.arch }}
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_SHARED_SECRET: ${{ secrets.LASTFM_SHARED_SECRET }}
-      RADIO_BLOCKLIST: ${{ secrets.RADIO_BLOCKLIST }}
-      MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
-      MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+      NETODIA_RADIO_BLOCKLIST: ${{ secrets.RADIO_BLOCKLIST }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Resolve version and validate release tag
+        id: metadata
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="$(awk -F'"' '
+            /^\[/                  { in_ws = ($0 == "[workspace.package]") }
+            in_ws && /^version = / { print $2; exit }
+          ' Cargo.toml)"
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::Could not read [workspace.package].version from Cargo.toml."
+            exit 1
+          fi
+          if [[ "$EVENT_NAME" == "release" && "$RELEASE_TAG" != "v$VERSION" ]]; then
+            echo "::error::Release tag $RELEASE_TAG does not match Cargo version v$VERSION."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/linux-system-deps
+        if: runner.os == 'Linux'
+        with:
+          extra-packages: ${{ matrix.kind == 'linux-rpm' && 'rpm' || '' }}
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          shared-key: rust-release-${{ matrix.kind }}-${{ matrix.arch }}
+          target: ${{ matrix.target }}
+
+      - name: Build Netodia
+        run: cargo build --release -p netodia --target ${{ matrix.target }} --locked
+
+      - name: Package Linux tarball
+        if: matrix.kind == 'linux-tarball'
+        shell: bash
+        run: bash scripts/build-tarball.sh "netodia-${TAG}-${ARCH}-linux.tar.gz"
+
+      - name: Package AppImage
+        if: matrix.kind == 'linux-appimage'
+        shell: bash
+        run: bash scripts/build-appimage.sh "netodia-${TAG}-${ARCH}.AppImage"
+
+      - name: Package RPM
+        if: matrix.kind == 'linux-rpm'
+        shell: bash
+        run: |
+          bash scripts/build-rpm.sh
+          cp ~/rpmbuild/RPMS/${ARCH}/netodia-*.rpm .
+
+      - name: Install cargo-deb
+        if: matrix.kind == 'linux-deb'
+        run: cargo install --locked --version 3.7.0 cargo-deb
+
+      - name: Package deb
+        if: matrix.kind == 'linux-deb'
+        shell: bash
+        run: |
+          cargo deb -p netodia --target ${{ matrix.target }} --no-build
+          src="$(ls target/${{ matrix.target }}/debian/*.deb)"
+          cp "$src" "netodia-${TAG}-${ARCH}.deb"
+
+      - uses: ./.github/actions/setup-wix
+        if: matrix.kind == 'windows-msi'
+
+      - name: Package MSI
+        if: matrix.kind == 'windows-msi'
+        shell: pwsh
+        run: |
+          cargo wix --toolset modern --package netodia --target ${{ matrix.target }} --no-build --nocapture
+          $packages = Get-ChildItem -Path "target/wix/" -Filter "*.msi" -Recurse
+          if (-not $packages) { throw "cargo wix did not produce an MSI" }
+          $packages | ForEach-Object {
+            Copy-Item $_.FullName -Destination "netodia-$env:TAG-$env:ARCH.msi"
+          }
+
+      - name: Package portable ZIP
+        if: matrix.kind == 'windows-zip'
+        shell: pwsh
+        run: |
+          $bundle = Join-Path $env:RUNNER_TEMP "netodia-portable"
+          New-Item -ItemType Directory -Path $bundle -Force | Out-Null
+          New-Item -ItemType Directory -Path (Join-Path $bundle "licenses") -Force | Out-Null
+          Copy-Item -LiteralPath "target/${{ matrix.target }}/release/Netodia.exe" -Destination $bundle
+          Copy-Item -LiteralPath "LICENSE" -Destination $bundle
+          Copy-Item -Path "licenses/*" -Destination (Join-Path $bundle "licenses") -Recurse
+          @"
+          Netodia portable package
+
+          Extract this archive anywhere and run Netodia.exe. No installation is required.
+          "@ | Set-Content -LiteralPath (Join-Path $bundle "README.txt") -Encoding utf8
+          Compress-Archive -Path (Join-Path $bundle "*") `
+            -DestinationPath "netodia-$env:TAG-$env:ARCH-windows.zip" -CompressionLevel Optimal -Force
+
+      - name: Generate build provenance attestation
+        if: github.event_name == 'release'
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: |
+            netodia-*.tar.gz
+            netodia-*.AppImage
+            netodia-*.rpm
+            netodia-*.deb
+            netodia-*.msi
+            netodia-*.zip
+
+      - uses: ./.github/actions/install-minisign
+        if: github.event_name == 'release'
+
+      - uses: ./.github/actions/minisign-sign
+        if: github.event_name == 'release'
+        with:
+          key: ${{ secrets.MINISIGN_SECRET_KEY }}
+          password: ${{ secrets.MINISIGN_PASSWORD }}
+          files: netodia-*.tar.gz netodia-*.AppImage netodia-*.rpm netodia-*.deb netodia-*.msi netodia-*.zip
+          trusted-comment: version=${{ steps.metadata.outputs.version }} target=${{ matrix.kind }} file={file}
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.kind }}-${{ matrix.arch }}
+          path: |
+            netodia-*.tar.gz
+            netodia-*.AppImage
+            netodia-*.rpm
+            netodia-*.deb
+            netodia-*.msi
+            netodia-*.zip
+            netodia-*.minisig
+          retention-days: 30
+          if-no-files-found: error
 
   publish:
-    needs: [prepare, build]
-    if: needs.prepare.outputs.should_release == 'true'
-    uses: ./.github/workflows/release-publish.yml
-    with:
-      tag: ${{ needs.prepare.outputs.tag }}
-      version: ${{ needs.prepare.outputs.version }}
-    secrets:
-      MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
-      MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+    name: Upload release assets
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: ./.github/actions/install-minisign
+
+      - uses: ./.github/actions/minisign-verify
+        with:
+          signatures: artifacts/*.minisig
+
+      - name: Resolve version and capture release notes
+        id: metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="$(awk -F'"' '
+            /^\[/                  { in_ws = ($0 == "[workspace.package]") }
+            in_ws && /^version = / { print $2; exit }
+          ' Cargo.toml)"
+          if [[ -z "$VERSION" || "$TAG" != "v$VERSION" ]]; then
+            echo "::error::Release tag $TAG does not match Cargo.toml version v$VERSION."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          gh release view "$TAG" --json body -q '.body' > release-notes.md || : > release-notes.md
+
+      - uses: ./.github/actions/build-manifest
+        with:
+          version: ${{ steps.metadata.outputs.version }}
+          tag: ${{ env.TAG }}
+          artifacts: artifacts/
+          notes-file: release-notes.md
+          out: latest.json
+
+      - uses: ./.github/actions/minisign-sign
+        with:
+          key: ${{ secrets.MINISIGN_SECRET_KEY }}
+          password: ${{ secrets.MINISIGN_PASSWORD }}
+          files: latest.json
+          trusted-comment: version=${{ steps.metadata.outputs.version }} manifest=true
+
+      - uses: ./.github/actions/minisign-verify
+        with:
+          signatures: latest.json.minisig
+
+      - uses: ./.github/actions/sha256sums
+        with:
+          directory: artifacts
+
+      - name: Upload assets to the published release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: gh release upload "$TAG" artifacts/* latest.json latest.json.minisig --clobber
