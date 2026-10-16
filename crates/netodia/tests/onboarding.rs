@@ -14,6 +14,8 @@ const MIN_ONBOARDING_SOURCES: usize = 3;
 const BOOT_UI: &str = include_str!("../src/boot/ui_setup/install.rs");
 const APP_WINDOW: &str = include_str!("../../netodia-ui/ui/app-window.slint");
 const SHORTCUT_SCOPE: &str = include_str!("../../netodia-ui/ui/layout/shortcut-scope.slint");
+const OVERLAY: &str =
+    include_str!("../../netodia-ui/ui/components/onboarding/onboarding-overlay.slint");
 const LOGIN_PANEL: &str =
     include_str!("../../netodia-ui/ui/components/onboarding/login-panel.slint");
 const UPDATE_SECTION: &str =
