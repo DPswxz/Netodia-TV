@@ -46,3 +46,60 @@ fn a_second_dismiss_inside_the_fade_is_a_no_op() {
         "dismiss must early-out once `open` is already false"
     );
 }
+
+/// The three inputs `install` decides on, and the one that is easy to get backwards.
+///
+/// `None` is a `settings.json` that exists and won't read — a missing or corrupt one defaults, so
+/// a fresh install is the `Some`-at-`0` case below. Treating `None` as "already seen" reads as the
+/// cautious choice and fails the wrong way: the install least able to answer for itself loses the
+/// one surface that would.
+#[test]
+fn the_card_is_owed_on_a_fresh_or_unreadable_install_and_not_on_a_settled_one() {
+    use netodia_app::services::settings::{ONBOARDING_VERSION, OnboardingFlags, SettingsData};
+
+    let fresh = SettingsData { onboarding: OnboardingFlags::default(), ..default_settings() };
+    let seen = SettingsData {
+        onboarding: OnboardingFlags { onboarding_version: ONBOARDING_VERSION },
+        ..default_settings()
+    };
+
+    assert!(super::card_is_owed(None), "an unreadable settings.json must still show the card");
+    assert!(super::card_is_owed(Some(&fresh)), "a revision of 0 is owed the card");
+    assert!(!super::card_is_owed(Some(&seen)), "a settled install must not be shown the card");
+}
+
+/// `dismiss` is an `Fn`, so a second Escape inside the fade re-enters it, and the About row can
+/// dismiss a re-opened card again in the same session. Running the held work twice spawns a second
+/// daily updater task against the same event channel.
+#[test]
+fn the_deferred_work_runs_once_however_many_times_it_is_asked() {
+    let runs = std::rc::Rc::new(std::cell::Cell::new(0_u32));
+    let counted = std::rc::Rc::clone(&runs);
+    let deferred = super::DeferredOnce::new(move || counted.set(counted.get() + 1));
+
+    deferred.run();
+    deferred.run();
+    deferred.run();
+
+    assert_eq!(runs.get(), 1, "the deferred surfaces must not stack up on repeated dismissals");
+}
+
+/// A launch that opens no card still owes the deferred work immediately — which is every launch
+/// after the first, so a regression here silently retires the update check for settled installs.
+#[test]
+fn a_settled_install_is_still_owed_its_deferred_work() {
+    let ran = std::rc::Rc::new(std::cell::Cell::new(false));
+    let flag = std::rc::Rc::clone(&ran);
+    let deferred = super::DeferredOnce::new(move || flag.set(true));
+
+    assert!(!ran.get(), "nothing runs before it is asked for");
+    deferred.run();
+
+    assert!(ran.get());
+}
+
+/// `SettingsData::default()` reaches the desktop and locale environment variables through its
+/// serde defaults, so it is read under the shared lock like every other deliberate reader.
+fn default_settings() -> netodia_app::services::settings::SettingsData {
+    netodia_testkit::reading_env(netodia_app::services::settings::SettingsData::default)
+}

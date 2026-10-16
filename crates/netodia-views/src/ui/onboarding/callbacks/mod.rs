@@ -1,5 +1,6 @@
 //! The card's wiring. One way out, shared by the X, the backdrop, Escape and Skip.
 
+use std::rc::Rc;
 use std::time::Duration;
 
 use netodia_app::library;
@@ -7,27 +8,28 @@ use netodia_app::state::AppState;
 use netodia_ui::{AppWindow, Onboarding, Settings, Theme};
 use slint::ComponentHandle;
 
-pub(super) fn wire(ui: &AppWindow, state: &AppState) {
-    wire_dismiss(ui, state);
-    wire_run_again(ui, state);
+pub(super) fn wire(ui: &AppWindow, state: &AppState, deferred: Rc<super::DeferredOnce>) {
+    wire_dismiss(ui, state, deferred);
+    wire_run_again(ui);
 }
 
-/// The Settings ▸ About row, which is the entry point for opening the optional guide.
-fn wire_run_again(ui: &AppWindow, state: &AppState) {
+/// The Settings ▸ About row, and the only way back to the card once it has been seen — which is
+/// what makes an early dismissal safe to treat as final.
+fn wire_run_again(ui: &AppWindow) {
     let weak = ui.as_weak();
-    let state = state.clone();
     ui.global::<Settings>().on_run_onboarding(move || {
         if let Some(ui) = weak.upgrade() {
-            super::open(&ui, &state);
+            super::open(&ui);
         }
     });
 }
 
 /// Mark the card seen and close it.
 ///
-/// Every dismissal path lands here, including Skip on the first panel. Settings ▸ About remains
-/// available when someone wants to open the guide again.
-fn wire_dismiss(ui: &AppWindow, state: &AppState) {
+/// Every dismissal path lands here, including Skip on the first panel: a card that comes back
+/// because it was closed early is a nag, and Settings ▸ About is where someone who dismissed by
+/// reflex gets it again.
+fn wire_dismiss(ui: &AppWindow, state: &AppState, deferred: Rc<super::DeferredOnce>) {
     let weak = ui.as_weak();
     let state = state.clone();
 
@@ -48,10 +50,16 @@ fn wire_dismiss(ui: &AppWindow, state: &AppState) {
         let fade_ms = u64::try_from(ui.global::<Theme>().get_dur_fast()).unwrap_or(0);
         let fade = Duration::from_millis(fade_ms);
         let weak = ui.as_weak();
+        let deferred = Rc::clone(&deferred);
         slint::Timer::single_shot(fade, move || {
             if let Some(ui) = weak.upgrade() {
                 ui.global::<Onboarding>().set_mounted(false);
+                crate::ui::settings::netease_account::stop_onboarding_qr_login_if_page_inactive(
+                    &ui,
+                );
             }
+            // The surfaces boot held back so the card wasn't one of three at once.
+            deferred.run();
         });
     });
 }

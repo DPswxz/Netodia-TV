@@ -3,7 +3,7 @@ import { Onboarding } from "../../globals/onboarding.slint";
 import { IconButton } from "../icon-button.slint";
 import { SectionButton } from "../settings/section-button.slint";
 import { OnboardingAppearancePanel } from "appearance-panel.slint";
-import { OnboardingMusicPanel } from "music-panel.slint";
+import { OnboardingLoginPanel } from "login-panel.slint";
 import { OnboardingFeaturesPanel } from "features-panel.slint";
 
 // The first-run card. Borrows `DialogOverlay`'s backdrop and card treatment and owns the rest:
@@ -112,10 +112,9 @@ export component OnboardingOverlay inherits Rectangle {
                 }
             }
 
-            // The library first, nothing else filling it. Only the appearance panel takes the
-            // width: its strips wrap against it, where the other two lay themselves out from the
-            // layout alone.
-            if Onboarding.step == 0: OnboardingMusicPanel { }
+            // NetEase sign-in is the first thing a new user sees; the other panels explain the
+            // app's appearance and features.
+            if Onboarding.step == 0: OnboardingLoginPanel { }
             if Onboarding.step == 1: OnboardingAppearancePanel { content-w: card.content-w; }
             if Onboarding.step == 2: OnboardingFeaturesPanel { }
 

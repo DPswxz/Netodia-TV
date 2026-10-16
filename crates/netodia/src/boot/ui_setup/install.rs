@@ -47,7 +47,7 @@ pub fn install_ui(
     install_player_surfaces(app, state, &views)?;
     seed_and_fetch(app, state, &views, view_state);
     install_notices(app, state, &views, &notifications)?;
-    install_updater_and_welcome_guide(app, state, spawner, &notifications);
+    install_updater_and_onboarding(app, state, spawner, settings, &notifications);
     install_platform_hooks(app, state, spawner, settings, file_open_listener);
     Ok(())
 }
@@ -165,10 +165,11 @@ fn install_notices(
     install_rss_sampler(weak)
 }
 
-fn install_updater_and_welcome_guide(
+fn install_updater_and_onboarding(
     app: &AppWindow,
     state: &AppState,
     spawner: &tasks::TaskSpawner,
+    settings: Option<&SettingsData>,
     notifications: &Rc<NotificationsUi>,
 ) {
     let weak = app.as_weak();
@@ -185,30 +186,44 @@ fn install_updater_and_welcome_guide(
     );
     ui::callbacks::wire_updater(app, state, notifications, &updater_event_tx);
 
-    // The welcome guide remains available from Settings → About, but startup goes straight to the
-    // hydrated Services page so the NetEase QR code is the first thing a new user sees.
-    ui::onboarding::install(app, state);
+    // The first-run card, opened only if this install hasn't seen the current revision. After
+    // `hydrate_ui_from_settings`, so a deep link out of it isn't racing the boot's own nav and tab
+    // writes, and before `app.show()`, like everything else that seeds a Slint property.
+    //
+    // The two surfaces that would otherwise land on top of it wait in this closure: the first
+    // thirty seconds shouldn't be three stacked surfaces. Held rather than skipped — the crash
+    // notice consumes its marker as it fires — and it runs immediately on every launch that opens
+    // no card. Deferring a *daily* check by the length of a welcome card costs nothing.
+    let deferred_spawner = spawner.clone();
+    let deferred_state = state.clone();
+    let deferred_notifications = notifications.clone();
+    ui::onboarding::install(app, state, settings, move || {
+        if let Some(ui) = weak.upgrade() {
+            ui::settings::diagnostics::notify_previous_crash(
+                &ui,
+                &deferred_state,
+                &deferred_notifications,
+            );
+        }
 
-    if let Some(ui) = weak.upgrade() {
-        ui::settings::diagnostics::notify_previous_crash(&ui, state, notifications);
-    }
-
-    // Only the install shape gates the spawn — those two can't change while the process lives.
-    // The auto-check switch is read per tick instead; Settings ▸ Updates owns that preference.
-    if services::updater::is_available() && !platform::install_kind::is_system_install() {
-        tasks::updater_daily::spawn(
-            spawner,
-            state.clone(),
-            ui::callbacks::check_painter(weak.clone()),
-            updater_event_tx,
-        );
-    } else {
-        log::info!(
-            "updater_daily: not spawning (available={}, system_managed={})",
-            services::updater::is_available(),
-            platform::install_kind::is_system_install()
-        );
-    }
+        // Only the install shape gates the spawn — those two can't change while the process
+        // lives. The auto-check switch is read per tick instead, the welcome card and
+        // Settings ▸ Updates both offering it after this point.
+        if services::updater::is_available() && !platform::install_kind::is_system_install() {
+            tasks::updater_daily::spawn(
+                &deferred_spawner,
+                deferred_state.clone(),
+                ui::callbacks::check_painter(weak.clone()),
+                updater_event_tx,
+            );
+        } else {
+            log::info!(
+                "updater_daily: not spawning (available={}, system_managed={})",
+                services::updater::is_available(),
+                platform::install_kind::is_system_install()
+            );
+        }
+    });
 }
 
 /// The boot-time housekeeping, the tray, the forwarded-launch server, and the Windows steps that

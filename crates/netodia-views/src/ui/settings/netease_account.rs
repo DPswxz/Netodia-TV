@@ -122,17 +122,36 @@ pub fn install(ui: &AppWindow, state: &AppState) {
 /// Start the first QR code after persisted tabs have been hydrated. Slint initializes change
 /// trackers silently, so a launch already on Services may not emit the page-active callback.
 pub fn start_initial_qr_login_if_active(ui: &AppWindow) {
+    if qr_page_is_active(ui) {
+        ui.global::<CloudAccount>().invoke_qr_page_active_changed(true);
+    }
+}
+
+/// Start QR sign-in when the optional welcome guide is opened, even if the underlying Settings tab
+/// is not Services. The automatic path waits for session restoration before doing any login work.
+pub fn start_onboarding_qr_login_if_needed(ui: &AppWindow) {
+    let account = ui.global::<CloudAccount>();
+    if !qr_page_is_active(ui) && !account.get_logged_in() && account.get_qr_status() == 0 {
+        account.invoke_qr_page_active_changed(true);
+    }
+}
+
+/// Keep QR polling alive after the guide closes only when the underlying Services page is active.
+pub fn stop_onboarding_qr_login_if_page_inactive(ui: &AppWindow) {
+    if !qr_page_is_active(ui) {
+        ui.global::<CloudAccount>().invoke_qr_page_active_changed(false);
+    }
+}
+
+fn qr_page_is_active(ui: &AppWindow) -> bool {
     const NAV_SETTINGS: i32 = 9;
 
     let nav = ui.global::<Nav>();
     let settings = ui.global::<SettingsPage>();
-    let active = nav.get_selected_index() == NAV_SETTINGS
+    nav.get_selected_index() == NAV_SETTINGS
         && !nav.get_now_playing_open()
         && (settings.get_tab_idx() == settings.get_tab_services()
-            || !settings.get_search_query().is_empty());
-    if active {
-        ui.global::<CloudAccount>().invoke_qr_page_active_changed(true);
-    }
+            || !settings.get_search_query().is_empty())
 }
 
 fn start_qr_login(

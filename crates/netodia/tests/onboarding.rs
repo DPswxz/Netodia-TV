@@ -1,4 +1,4 @@
-//! What the optional welcome guide can break without failing a build.
+//! What the first-run card can break without failing a build.
 //!
 //! Every property here is invisible to review and to every other walk: a tracker that panics only
 //! on the *second* open, a reordering of which surface Escape reaches first, a switch offered
@@ -12,9 +12,10 @@ use netodia_testkit::{UI_DIR, strip_line_comments};
 const MIN_ONBOARDING_SOURCES: usize = 3;
 
 const BOOT_UI: &str = include_str!("../src/boot/ui_setup/install.rs");
-const ONBOARDING: &str = include_str!("../../netodia-views/src/ui/onboarding/mod.rs");
 const APP_WINDOW: &str = include_str!("../../netodia-ui/ui/app-window.slint");
 const SHORTCUT_SCOPE: &str = include_str!("../../netodia-ui/ui/layout/shortcut-scope.slint");
+const LOGIN_PANEL: &str =
+    include_str!("../../netodia-ui/ui/components/onboarding/login-panel.slint");
 const UPDATE_SECTION: &str =
     include_str!("../../netodia-ui/ui/views/settings/update-section.slint");
 const FEATURES_PANEL: &str =
@@ -89,11 +90,31 @@ fn no_onboarding_component_carries_a_change_tracker() {
     );
 }
 
+/// The first welcome panel is the NetEase QR login and contains no library-folder picker.
+#[test]
+fn the_first_welcome_panel_is_netease_qr_sign_in() {
+    let overlay = strip_line_comments(OVERLAY);
+    assert!(
+        overlay.contains("if Onboarding.step == 0: OnboardingLoginPanel"),
+        "the first welcome step must mount the QR sign-in panel"
+    );
+    assert!(
+        !overlay.contains("OnboardingMusicPanel"),
+        "the welcome guide must no longer ask for a music folder"
+    );
+
+    let panel = strip_line_comments(LOGIN_PANEL);
+    assert!(panel.contains("CloudAccount.qr-image"), "the sign-in panel must show the QR image");
+    assert!(
+        panel.contains("CloudAccount.start-qr-login()"),
+        "the sign-in panel must let the user refresh the QR code"
+    );
+}
+
 /// The card paints *under* `DialogOverlay`, and the Escape chain answers in the same order.
 ///
-/// Step 2's folder picker raises a real `Dialog` when it fails, so a card mounted above the dialog
-/// layer would cover the error it just caused and swallow the Escape meant to dismiss it. Both
-/// halves are one edit away from disagreeing and neither fails a build.
+/// The welcome guide can coexist with a dialog raised elsewhere in the app. It stays below the
+/// dialog layer in the paint order, and Escape reaches the dialog first.
 #[test]
 fn the_card_sits_under_the_dialog_in_paint_and_in_escape_order() {
     let sheet = strip_line_comments(APP_WINDOW);
@@ -148,25 +169,24 @@ fn the_card_gates_the_non_escape_shortcuts() {
     );
 }
 
-/// The welcome guide stays available by hand, while a fresh launch proceeds directly to the
-/// Services tab and its QR login.
+/// The crash notice used to sit inside `settings::diagnostics::install`, where it could not be
+/// lost. It is a line in a closure in `install_ui` now, so that the welcome card can hold it back —
+/// and `take_unseen` consumes the marker, so dropping the line doesn't defer a report, it
+/// retires the whole surface. The failure is silence: reports keep accruing and none is ever
+/// shown, which no other test and no run can notice.
+///
+/// It anchors on the call rather than on the closure's braces, so it catches the line going and
+/// not the line being hoisted out to a later statement. That one is the *old* behaviour rather
+/// than silence, and shows on the next launch.
 #[test]
-fn startup_does_not_cover_the_qr_login_with_the_welcome_guide() {
-    let installer = ONBOARDING
-        .split_once("pub fn install(")
-        .and_then(|(_, rest)| rest.split_once("\n/// Mount the card").map(|(body, _)| body))
-        .map_or("", |body| body);
-    assert!(!installer.is_empty(), "onboarding::install must be present");
-    assert!(
-        !installer.contains("open("),
-        "onboarding::install must wire the optional guide without mounting it on launch"
-    );
-
+fn the_deferred_work_still_carries_the_crash_notice() {
     let boot = strip_line_comments(BOOT_UI);
-    let guide = boot.find("ui::onboarding::install(app, state);");
-    let crash_notice = boot.find("notify_previous_crash");
+    let deferred =
+        boot.split_once("ui::onboarding::install(").map(|(_, rest)| rest).unwrap_or_default();
+
     assert!(
-        matches!((guide, crash_notice), (Some(guide), Some(notice)) if guide < notice),
-        "the guide must be wired before the previous-run crash notice is raised"
+        deferred.contains("notify_previous_crash"),
+        "`install_ui` must still raise the previous run's crash notice from the closure it hands \
+         `ui::onboarding::install`"
     );
 }
