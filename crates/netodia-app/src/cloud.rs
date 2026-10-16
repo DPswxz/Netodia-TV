@@ -754,20 +754,28 @@ mod tests {
 
     #[test]
     fn netease_cover_requests_use_https_and_a_bounded_size() {
-        let url = cover_request_url("http://p2.music.126.net/cover.jpg?token=abc")
-            .expect("NetEase artwork URL");
-        assert_eq!(url.as_str(), "https://p2.music.126.net/cover.jpg?token=abc&param=512y512");
+        assert_eq!(
+            cover_request_url("http://p2.music.126.net/cover.jpg?token=abc")
+                .as_ref()
+                .map(reqwest::Url::as_str),
+            Some("https://p2.music.126.net/cover.jpg?token=abc&param=512y512")
+        );
     }
 
     #[test]
     fn existing_sizes_and_other_artwork_hosts_are_preserved() {
-        let sized = cover_request_url("https://p1.music.126.net/cover.jpg?param=224y224")
-            .expect("already sized artwork URL");
-        assert_eq!(sized.as_str(), "https://p1.music.126.net/cover.jpg?param=224y224");
-
-        let other = cover_request_url("https://example.com/cover.jpg?token=abc")
-            .expect("other artwork URL");
-        assert_eq!(other.as_str(), "https://example.com/cover.jpg?token=abc");
+        assert_eq!(
+            cover_request_url("https://p1.music.126.net/cover.jpg?param=224y224")
+                .as_ref()
+                .map(reqwest::Url::as_str),
+            Some("https://p1.music.126.net/cover.jpg?param=224y224")
+        );
+        assert_eq!(
+            cover_request_url("https://example.com/cover.jpg?token=abc")
+                .as_ref()
+                .map(reqwest::Url::as_str),
+            Some("https://example.com/cover.jpg?token=abc")
+        );
     }
 
     #[test]
