@@ -92,7 +92,7 @@ fn no_onboarding_component_carries_a_change_tracker() {
     );
 }
 
-/// The first welcome panel is the NetEase QR login and contains no library-folder picker.
+/// The first welcome panel is a `NetEase` QR login and contains no library-folder picker.
 #[test]
 fn the_first_welcome_panel_is_netease_qr_sign_in() {
     let overlay = strip_line_comments(OVERLAY);
