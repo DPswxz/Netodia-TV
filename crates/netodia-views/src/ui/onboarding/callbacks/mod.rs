@@ -1,6 +1,5 @@
 //! The card's wiring. One way out, shared by the X, the backdrop, Escape and Skip.
 
-use std::rc::Rc;
 use std::time::Duration;
 
 use netodia_app::library;
@@ -8,13 +7,12 @@ use netodia_app::state::AppState;
 use netodia_ui::{AppWindow, Onboarding, Settings, Theme};
 use slint::ComponentHandle;
 
-pub(super) fn wire(ui: &AppWindow, state: &AppState, deferred: Rc<super::DeferredOnce>) {
-    wire_dismiss(ui, state, deferred);
+pub(super) fn wire(ui: &AppWindow, state: &AppState) {
+    wire_dismiss(ui, state);
     wire_run_again(ui, state);
 }
 
-/// The Settings ▸ About row, and the only way back to the card once it has been seen — which is
-/// what makes an early dismissal safe to treat as final.
+/// The Settings ▸ About row, which is the entry point for opening the optional guide.
 fn wire_run_again(ui: &AppWindow, state: &AppState) {
     let weak = ui.as_weak();
     let state = state.clone();
@@ -27,10 +25,9 @@ fn wire_run_again(ui: &AppWindow, state: &AppState) {
 
 /// Mark the card seen and close it.
 ///
-/// Every dismissal path lands here, including Skip on the first panel: a card that comes back
-/// because it was closed early is a nag, and Settings ▸ About is where someone who dismissed by
-/// reflex gets it again.
-fn wire_dismiss(ui: &AppWindow, state: &AppState, deferred: Rc<super::DeferredOnce>) {
+/// Every dismissal path lands here, including Skip on the first panel. Settings ▸ About remains
+/// available when someone wants to open the guide again.
+fn wire_dismiss(ui: &AppWindow, state: &AppState) {
     let weak = ui.as_weak();
     let state = state.clone();
 
@@ -51,13 +48,10 @@ fn wire_dismiss(ui: &AppWindow, state: &AppState, deferred: Rc<super::DeferredOn
         let fade_ms = u64::try_from(ui.global::<Theme>().get_dur_fast()).unwrap_or(0);
         let fade = Duration::from_millis(fade_ms);
         let weak = ui.as_weak();
-        let deferred = Rc::clone(&deferred);
         slint::Timer::single_shot(fade, move || {
             if let Some(ui) = weak.upgrade() {
                 ui.global::<Onboarding>().set_mounted(false);
             }
-            // The surfaces boot held back so the card wasn't one of three at once.
-            deferred.run();
         });
     });
 }

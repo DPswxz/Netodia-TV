@@ -1,4 +1,4 @@
-//! What the first-run card can break without failing a build.
+//! What the optional welcome guide can break without failing a build.
 //!
 //! Every property here is invisible to review and to every other walk: a tracker that panics only
 //! on the *second* open, a reordering of which surface Escape reaches first, a switch offered
@@ -12,6 +12,7 @@ use netodia_testkit::{UI_DIR, strip_line_comments};
 const MIN_ONBOARDING_SOURCES: usize = 3;
 
 const BOOT_UI: &str = include_str!("../src/boot/ui_setup/install.rs");
+const ONBOARDING: &str = include_str!("../../netodia-views/src/ui/onboarding/mod.rs");
 const APP_WINDOW: &str = include_str!("../../netodia-ui/ui/app-window.slint");
 const SHORTCUT_SCOPE: &str = include_str!("../../netodia-ui/ui/layout/shortcut-scope.slint");
 const UPDATE_SECTION: &str =
@@ -147,24 +148,24 @@ fn the_card_gates_the_non_escape_shortcuts() {
     );
 }
 
-/// The crash notice used to sit inside `settings::diagnostics::install`, where it could not be
-/// lost. It is a line in a closure in `install_ui` now, so that the welcome card can hold it back —
-/// and `take_unseen` consumes the marker, so dropping the line doesn't defer a report, it
-/// retires the whole surface. The failure is silence: reports keep accruing and none is ever
-/// shown, which no other test and no run can notice.
-///
-/// It anchors on the call rather than on the closure's braces, so it catches the line going and
-/// not the line being hoisted out to a later statement. That one is the *old* behaviour rather
-/// than silence, and shows on the next launch.
+/// The welcome guide stays available by hand, while a fresh launch proceeds directly to the
+/// Services tab and its QR login.
 #[test]
-fn the_deferred_work_still_carries_the_crash_notice() {
-    let boot = strip_line_comments(BOOT_UI);
-    let deferred =
-        boot.split_once("ui::onboarding::install(").map(|(_, rest)| rest).unwrap_or_default();
-
+fn startup_does_not_cover_the_qr_login_with_the_welcome_guide() {
+    let installer = ONBOARDING
+        .split_once("pub fn install(")
+        .and_then(|(_, rest)| rest.split_once("\n/// Mount the card").map(|(body, _)| body))
+        .expect("onboarding::install must be present");
     assert!(
-        deferred.contains("notify_previous_crash"),
-        "`install_ui` must still raise the previous run's crash notice from the closure it hands \
-         `ui::onboarding::install`"
+        !installer.contains("open("),
+        "onboarding::install must wire the optional guide without mounting it on launch"
+    );
+
+    let boot = strip_line_comments(BOOT_UI);
+    let guide = boot.find("ui::onboarding::install(app, state);");
+    let crash_notice = boot.find("notify_previous_crash");
+    assert!(
+        matches!((guide, crash_notice), (Some(guide), Some(notice)) if guide < notice),
+        "the guide must be wired before the previous-run crash notice is raised"
     );
 }
