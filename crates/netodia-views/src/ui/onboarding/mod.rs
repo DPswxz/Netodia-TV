@@ -26,7 +26,7 @@ mod music_folder;
 const MOUNT_SETTLE: Duration = Duration::from_millis(1);
 
 /// Wire the optional guide without covering the launch page. Fresh installs open directly on the
-/// Services tab, where NetEase QR sign-in starts during settings hydration; the guide remains
+/// Services tab, where `NetEase` QR sign-in starts during settings hydration; the guide remains
 /// available from Settings → About.
 pub fn install(ui: &AppWindow, state: &AppState) {
     callbacks::wire(ui, state);
