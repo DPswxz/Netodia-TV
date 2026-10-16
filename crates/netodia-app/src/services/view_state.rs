@@ -76,7 +76,7 @@ impl Default for ViewStateData {
     }
 }
 
-/// A fresh install opens Settings on its Services tab for NetEase QR sign-in.
+/// A fresh install opens Settings on its Services tab for `NetEase` QR sign-in.
 fn default_last_nav_index() -> i32 {
     9
 }
