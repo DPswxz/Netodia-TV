@@ -102,6 +102,7 @@ pub fn hydrate_ui_from_settings(
     apply_mini_backdrop(app, settings);
     app.global::<ArtistDetail>().set_albums_collapsed(vs.artist_albums_collapsed);
     ui::settings::settings_page::seed_tab(app, vs.settings_tab);
+    ui::settings::netease_account::start_initial_qr_login_if_active(app);
 }
 
 /// `sidebar.slint` already clamps `Nav.sidebar-width` at the use site, so no

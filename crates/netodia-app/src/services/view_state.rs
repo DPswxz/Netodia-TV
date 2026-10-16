@@ -67,7 +67,7 @@ impl Default for ViewStateData {
             last_nav_index: default_last_nav_index(),
             last_detail_ids: HashMap::new(),
             artist_albums_collapsed: false,
-            settings_tab: 0,
+            settings_tab: 3,
             favorites_tab: 0,
             recently_played_tab: 0,
             my_library_tab: 0,
@@ -76,10 +76,9 @@ impl Default for ViewStateData {
     }
 }
 
-/// Matches `nav.slint`'s own `Nav.selected-index` default, so a fresh install
-/// lands where the Slint side already points.
+/// A fresh install opens Settings on its Services tab for NetEase QR sign-in.
 fn default_last_nav_index() -> i32 {
-    3
+    9
 }
 
 /// The highest index `nav.slint` routes. Bounds [`ViewStateData::last_nav_index`]

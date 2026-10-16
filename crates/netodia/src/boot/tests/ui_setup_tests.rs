@@ -19,7 +19,7 @@ const INSTALL: &str = include_str!("../ui_setup/install.rs");
 /// every later evaluation is compared against.
 ///
 /// Hydrate afterwards and every seed answers for the global's declared default
-/// (`3`, Tracks), leaving `TracksUi` marked active for a section that isn't on
+/// (`9`, Settings), leaving Settings marked active for a section that isn't on
 /// screen: the gate's baseline is already `false`, so it has no `false` edge
 /// left to deliver.
 #[test]

@@ -401,6 +401,15 @@ impl CloudPlayback {
         self.cloud.begin_qr_login().await
     }
 
+    /// Starts the automatic launch-page QR flow without interrupting a restored account.
+    pub async fn begin_qr_login_if_signed_out(&self) -> AppResult<Option<String>> {
+        let key = self.cloud.begin_qr_login_if_signed_out().await?;
+        if key.is_some() {
+            self.engine.stop();
+        }
+        Ok(key)
+    }
+
     pub async fn check_qr_login(&self, key: &str) -> AppResult<QrStatus> {
         let status = self.cloud.check_qr_login(key).await?;
         if status == QrStatus::Authorized {

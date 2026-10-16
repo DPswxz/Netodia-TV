@@ -12,7 +12,7 @@ fn json_err(e: &serde_json::Error) -> AppError {
 #[test]
 fn test_view_state_default() {
     let vs = ViewStateData::default();
-    assert_eq!(vs.last_nav_index, 3);
+    assert_eq!(vs.last_nav_index, 9);
     assert!(vs.view_columns.is_empty());
     assert!(vs.view_column_widths.is_empty());
     assert!(vs.view_sort.is_empty());
@@ -20,7 +20,7 @@ fn test_view_state_default() {
     assert_eq!(vs.browse_view_mode, 0);
     assert!(vs.last_detail_ids.is_empty());
     assert!(!vs.artist_albums_collapsed);
-    assert_eq!(vs.settings_tab, 0);
+    assert_eq!(vs.settings_tab, 3);
     assert_eq!(vs.favorites_tab, 0);
     assert_eq!(vs.recently_played_tab, 0);
     assert_eq!(vs.my_library_tab, 0);
@@ -31,13 +31,12 @@ fn test_view_state_missing_fields_default() -> Result<(), AppError> {
     // An empty object must deserialize to all-defaults — mirrors a fresh
     // `views.json` or a partial file written by an older client.
     let vs: ViewStateData = serde_json::from_str("{}").map_err(|e| json_err(&e))?;
-    assert_eq!(vs.last_nav_index, 3);
+    assert_eq!(vs.last_nav_index, 9);
     assert!(vs.view_sort.is_empty());
-    // Written before either page had tabs — must read back as the first tab,
-    // not fail the whole file. Browse's presentation is the same story: a file
-    // predating the card view lands on the list.
+    // A missing Settings tab defaults to Services; a missing Browse presentation
+    // lands on the list rather than failing the whole file.
     assert_eq!(vs.browse_view_mode, 0);
-    assert_eq!(vs.settings_tab, 0);
+    assert_eq!(vs.settings_tab, 3);
     assert_eq!(vs.favorites_tab, 0);
     assert_eq!(vs.recently_played_tab, 0);
     assert_eq!(vs.my_library_tab, 0);

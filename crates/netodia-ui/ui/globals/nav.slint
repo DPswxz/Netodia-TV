@@ -10,7 +10,7 @@ export enum NavEnterFrom { above, right, left }
 // are preserved in `views.json` on existing installs. The top of the range is
 // `services::view_state::MAX_NAV_INDEX`, which bounds the persisted value both ways.
 export global Nav {
-    in-out property <int> selected-index: 3;
+    in-out property <int> selected-index: 9;
     // The full-screen Now Playing view. Toggled from the bar's track-info card, which stays
     // mounted, so the same card closes it.
     in-out property <bool> now-playing-open: false;

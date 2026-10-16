@@ -7,7 +7,7 @@ use std::time::Duration;
 use netodia_app::cloud::QrStatus;
 use netodia_app::state::AppState;
 use netodia_core::error::describe;
-use netodia_ui::{AppWindow, CloudAccount};
+use netodia_ui::{AppWindow, CloudAccount, Nav, SettingsPage};
 use parking_lot::Mutex;
 use qrcode::QrCode;
 use qrcode::render::svg;
@@ -75,7 +75,7 @@ pub fn install(ui: &AppWindow, state: &AppState) {
         let weak = ui.as_weak();
         let qr_login = qr_login.clone();
         account.on_start_qr_login(move || {
-            start_qr_login(weak.clone(), state.clone(), qr_login.clone());
+            start_qr_login(weak.clone(), state.clone(), qr_login.clone(), false);
         });
     }
 
@@ -88,9 +88,12 @@ pub fn install(ui: &AppWindow, state: &AppState) {
     {
         let weak = ui.as_weak();
         let qr_login = qr_login.clone();
+        let state = state.clone();
         account.on_qr_page_active_changed(move |active| {
             if !active {
                 cancel_qr_login(&weak, &qr_login);
+            } else {
+                start_qr_login(weak.clone(), state.clone(), qr_login.clone(), true);
             }
         });
     }
@@ -116,7 +119,28 @@ pub fn install(ui: &AppWindow, state: &AppState) {
     }
 }
 
-fn start_qr_login(weak: Weak<AppWindow>, state: AppState, controller: QrLoginController) {
+/// Start the first QR code after persisted tabs have been hydrated. Slint initializes change
+/// trackers silently, so a launch already on Services may not emit the page-active callback.
+pub fn start_initial_qr_login_if_active(ui: &AppWindow) {
+    const NAV_SETTINGS: i32 = 9;
+
+    let nav = ui.global::<Nav>();
+    let settings = ui.global::<SettingsPage>();
+    let active = nav.get_selected_index() == NAV_SETTINGS
+        && !nav.get_now_playing_open()
+        && (settings.get_tab_idx() == settings.get_tab_services()
+            || !settings.get_search_query().is_empty());
+    if active {
+        ui.global::<CloudAccount>().invoke_qr_page_active_changed(true);
+    }
+}
+
+fn start_qr_login(
+    weak: Weak<AppWindow>,
+    state: AppState,
+    controller: QrLoginController,
+    automatic: bool,
+) {
     let generation = controller.generation.fetch_add(1, Ordering::AcqRel).wrapping_add(1);
     let cancellation = CancellationToken::new();
     if let Some((_, previous)) =
@@ -129,8 +153,19 @@ fn start_qr_login(weak: Weak<AppWindow>, state: AppState, controller: QrLoginCon
     state.runtime.spawn(async move {
         let key = tokio::select! {
             () = cancellation.cancelled() => return,
-            result = state.cloud_playback.begin_qr_login() => match result {
-                Ok(key) => key,
+            result = async {
+                if automatic {
+                    state.cloud_playback.begin_qr_login_if_signed_out().await
+                } else {
+                    state.cloud_playback.begin_qr_login().await.map(Some)
+                }
+            } => match result {
+                Ok(Some(key)) => key,
+                Ok(None) => {
+                    set_qr_state(&weak, &controller, generation, 0, false, None, None);
+                    controller.finish(generation);
+                    return;
+                }
                 Err(error) => {
                     if controller.is_current(generation) {
                         set_qr_state(&weak, &controller, generation, 6, false, None, Some(describe(&error)));

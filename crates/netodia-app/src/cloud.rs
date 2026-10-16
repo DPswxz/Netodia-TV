@@ -601,6 +601,17 @@ impl CloudService {
         self.client.qr_key().await.map_err(Into::into)
     }
 
+    /// Starts the launch-page QR flow only when session restoration has left the user signed out.
+    /// The transition lock keeps this check from racing a saved-cookie restore.
+    pub async fn begin_qr_login_if_signed_out(&self) -> AppResult<Option<String>> {
+        let _guard = self.transition.lock().await;
+        if self.status().account.is_some() || self.pending_restore.lock().await.is_some() {
+            return Ok(None);
+        }
+        self.begin_login().await;
+        self.client.qr_key().await.map(Some).map_err(Into::into)
+    }
+
     pub async fn check_qr_login(&self, key: &str) -> AppResult<QrStatus> {
         let _guard = self.transition.lock().await;
         let result = match self.client.qr_check(key).await? {
@@ -831,6 +842,19 @@ mod tests {
         ));
         assert!(matches!(service.songs(&[1, 0]).await, Err(AppError::Validation(_))));
         assert!(!service.guest_initialized.load(Ordering::Acquire));
+    }
+
+    #[tokio::test]
+    async fn automatic_qr_login_preserves_a_pending_saved_session() {
+        let service = service_for_test();
+        *service.pending_restore.lock().await = Some(StoredSession {
+            version: SESSION_VERSION,
+            device_id: DEVICE_ID.to_owned(),
+            cookie: "saved-cookie".to_owned(),
+        });
+
+        assert!(matches!(service.begin_qr_login_if_signed_out().await, Ok(None)));
+        assert!(service.pending_restore.lock().await.is_some());
     }
 
     #[tokio::test]
