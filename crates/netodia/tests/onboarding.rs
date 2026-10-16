@@ -155,7 +155,8 @@ fn startup_does_not_cover_the_qr_login_with_the_welcome_guide() {
     let installer = ONBOARDING
         .split_once("pub fn install(")
         .and_then(|(_, rest)| rest.split_once("\n/// Mount the card").map(|(body, _)| body))
-        .expect("onboarding::install must be present");
+        .map_or("", |body| body);
+    assert!(!installer.is_empty(), "onboarding::install must be present");
     assert!(
         !installer.contains("open("),
         "onboarding::install must wire the optional guide without mounting it on launch"
