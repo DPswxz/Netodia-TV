@@ -25,7 +25,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
     wire_remove_track(ui, state, playlists_ui);
 }
 
-/// Cloud playlist rows do not exist in SQLite, so activation and shuffle use the buffered
+/// Cloud playlist rows do not exist in `SQLite`, so activation and shuffle use the buffered
 /// `NetEase` source instead of the local queue API.
 fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
     let s = state.clone();

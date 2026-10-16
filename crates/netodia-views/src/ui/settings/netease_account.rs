@@ -309,12 +309,17 @@ mod tests {
 
     #[test]
     fn login_qr_svg_can_be_loaded_by_slint() {
-        let svg = login_qr_svg("netodia-test-key").expect("QR generation should succeed");
-        assert!(svg.contains("<svg"));
-        assert!(svg.contains("#11111b"));
-        assert!(svg.contains("#ffffff"));
-        assert!(svg.contains("viewBox"));
-        Image::load_from_svg_data(svg.as_bytes())
-            .expect("generated QR SVG should be accepted by Slint");
+        let svg = login_qr_svg("netodia-test-key");
+        assert!(svg.is_ok(), "QR generation should succeed");
+        if let Ok(svg) = &svg {
+            assert!(svg.contains("<svg"));
+            assert!(svg.contains("#11111b"));
+            assert!(svg.contains("#ffffff"));
+            assert!(svg.contains("viewBox"));
+            assert!(
+                Image::load_from_svg_data(svg.as_bytes()).is_ok(),
+                "generated QR SVG should be accepted by Slint"
+            );
+        }
     }
 }

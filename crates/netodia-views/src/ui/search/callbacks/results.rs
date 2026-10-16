@@ -113,7 +113,7 @@ fn wire_play_row(ui: &AppWindow, state: &AppState) {
     });
 }
 
-/// Cloud search rows keep their exact NetEase IDs and start the current result set through the
+/// Cloud search rows keep their exact `NetEase` IDs and start the current result set through the
 /// buffered cloud playback path.
 fn wire_cloud_rows(ui: &AppWindow, state: &AppState, search_ui: &Arc<SearchUi>) {
     let s = state.clone();

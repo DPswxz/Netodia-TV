@@ -1,6 +1,6 @@
 //! Shared exact-ID cloud row actions for Favorites, history and playlist details.
 
-use slint::{ComponentHandle, Model, ModelRc, VecModel};
+use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -19,6 +19,12 @@ use netodia_ui::{
 static ENTITY_DETAIL_REQUEST: AtomicU64 = AtomicU64::new(0);
 
 pub(super) fn wire(ui: &AppWindow, state: &AppState) {
+    wire_track_actions(ui, state);
+    wire_entity_actions(ui, state);
+    wire_entity_detail_actions(ui, state);
+}
+
+fn wire_track_actions(ui: &AppWindow, state: &AppState) {
     let actions = ui.global::<CloudTrackActions>();
     let s = state.clone();
     actions.on_enqueue(move |remote_id, play_next| {
@@ -89,7 +95,10 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState) {
             s.cloud_liked_changed.bump();
         });
     });
+}
 
+fn wire_entity_actions(ui: &AppWindow, state: &AppState) {
+    let actions = ui.global::<CloudTrackActions>();
     let weak = ui.as_weak();
     let s = state.clone();
     actions.on_open_album(move |remote_id| {
@@ -103,7 +112,9 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState) {
         let Some(ui) = weak.upgrade() else { return };
         open_entity_detail(&ui, &s, "artist", remote_id.to_string());
     });
+}
 
+fn wire_entity_detail_actions(ui: &AppWindow, state: &AppState) {
     let weak = ui.as_weak();
     let s = state.clone();
     ui.global::<CloudEntityDetail>().on_retry(move || {
@@ -119,7 +130,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState) {
         let detail = ui.global::<CloudEntityDetail>();
         detail.set_open(false);
         detail.set_loading(false);
-        detail.set_error(Default::default());
+        detail.set_error(SharedString::default());
         detail.set_tracks(empty_track_model());
     });
 
@@ -166,12 +177,12 @@ fn open_entity_detail(ui: &AppWindow, state: &AppState, kind: &str, remote_id: S
     detail.set_open(true);
     detail.set_kind(kind.clone().into());
     detail.set_remote_id(remote_id.clone().into());
-    detail.set_title(Default::default());
-    detail.set_subtitle(Default::default());
-    detail.set_artwork_path(Default::default());
+    detail.set_title(SharedString::default());
+    detail.set_subtitle(SharedString::default());
+    detail.set_artwork_path(SharedString::default());
     detail.set_tracks(empty_track_model());
     detail.set_loading(true);
-    detail.set_error(Default::default());
+    detail.set_error(SharedString::default());
 
     let state = state.clone();
     let weak = ui.as_weak();

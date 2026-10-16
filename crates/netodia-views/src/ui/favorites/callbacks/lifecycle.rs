@@ -91,8 +91,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
                 {
                     let g = ui.global::<Favorites>();
                     favorites_ui_mod::apply_filtered_tracks_now(&ui, &fu);
-                    let count =
-                        i32::try_from(fu.state().tracks_all.snapshot().total()).unwrap_or(i32::MAX);
+                    let count = fu.state().tracks_all.snapshot().total();
                     g.set_track_count(count);
                     g.set_cloud_loading(true);
                     g.set_cloud_error(slint::SharedString::default());

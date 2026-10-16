@@ -1,4 +1,4 @@
-//! Search fetch flow: debounced commit → NetEase song search → stale-token
+//! Search fetch flow: debounced commit → `NetEase` song search → stale-token
 //! guard → cover prewarm → apply. Plus the 2-second delayed history-add
 //! scheduler.
 //!
@@ -22,7 +22,7 @@ use netodia_core::entities::search::SearchResults;
 use netodia_core::error::{AppResult, describe};
 use netodia_ui::{AppWindow, Search};
 
-/// Bump the fetch token, search NetEase for songs, and (if the token is still
+/// Bump the fetch token, search `NetEase` for songs, and (if the token is still
 /// current after the request resolves) apply the result to the Slint
 /// models. A newer keystroke that supersedes this one will have moved
 /// the token, and the post-fetch check drops the stale UI write.
@@ -92,8 +92,8 @@ pub async fn kick_search(
     Ok(())
 }
 
-/// Adapt NetEase search songs to the shared track-list projection. The empty local path and the
-/// exact remote ID keep cloud results out of SQLite while letting the standard row renderer fetch
+/// Adapt `NetEase` search songs to the shared track-list projection. The empty local path and the
+/// exact remote ID keep cloud results out of `SQLite` while letting the standard row renderer fetch
 /// their remote artwork and cloud playback callbacks handle activation.
 fn cloud_song_row(song: Song, state: &AppState) -> netodia_core::entities::track::TrackListRow {
     let artist = song.artist_names();

@@ -69,8 +69,7 @@ pub async fn refresh_tracks(
     let account_generation = state.cloud.status().generation;
     let liked_revision = state.cloud.liked_ids_revision();
     let sort = current_sort(fav_ui);
-    let cached_count =
-        i32::try_from(fav_ui.state().tracks_all.snapshot().total()).unwrap_or(i32::MAX);
+    let cached_count = fav_ui.state().tracks_all.snapshot().total();
     set_cloud_state(weak, true, None, cached_count);
     let rows = match fetch_cloud_favorites(state).await {
         Ok(rows) => rows,
@@ -80,8 +79,7 @@ pub async fn refresh_tracks(
                 return Ok(());
             }
             fav_ui.mark_songs_dirty();
-            let cached_count =
-                i32::try_from(fav_ui.state().tracks_all.snapshot().total()).unwrap_or(i32::MAX);
+            let cached_count = fav_ui.state().tracks_all.snapshot().total();
             set_cloud_state(weak, false, Some(describe(&error)), cached_count);
             return Err(error);
         }

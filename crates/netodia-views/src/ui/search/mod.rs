@@ -1,4 +1,4 @@
-//! The Search page: a query-driven list of NetEase songs over one cloud search per debounced
+//! The Search page: a query-driven list of `NetEase` songs over one cloud search per debounced
 //! keystroke.
 //!
 //! **Songs** is a cloud-aware `TrackList` showing a compact prefix by default; "Show all" swaps to
