@@ -186,7 +186,7 @@ const LICENSE_SHIPPERS: [(&str, &str); 6] = [
 /// opposite reason: the set of formats is closed and changing it is deliberate, where the set of
 /// fonts is open.
 ///
-/// The tarball and AppImage carry the same needle from different files, which is the point: all
+/// The tarball and `AppImage` carry the same needle from different files, which is the point: all
 /// six spellings sit beside the format they ship, rather than one of them being a copy buried in
 /// a matrix slot.
 #[test]
