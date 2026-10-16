@@ -1051,39 +1051,13 @@ msgstr "Automatisch controleren op updates"
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Eén keer per dag vraagt Netodia aan GitHub of er een nieuwere versie is."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your music"
-msgstr "Je muziek"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add the folders your music lives in. Netodia picks up changes to them on its own."
-msgstr "Voeg de mappen toe waarin je muziek staat. Netodia merkt wijzigingen daarin vanzelf op."
-
-#: ui/components/onboarding/music-panel.slint
-msgid "{n} folder in your library"
-msgid_plural "{n} folders in your library"
-msgstr[0] "{n} map in je bibliotheek"
-msgstr[1] "{n} mappen in je bibliotheek"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add a folder to scan for music files."
 msgstr "Voeg een map toe om naar muziekbestanden te scannen."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your Music folder: {}"
-msgstr "Je muziekmap: {}"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add Music Folder"
-msgstr "Muziekmap toevoegen"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add Folder"
 msgstr "Map toevoegen"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Choose Another Folder"
-msgstr "Andere map kiezen"
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint

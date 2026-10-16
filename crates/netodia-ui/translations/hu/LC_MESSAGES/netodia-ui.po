@@ -1053,39 +1053,13 @@ msgstr "Frissítések automatikus keresése"
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "A Netodia naponta egyszer megkérdezi a GitHubot, hogy megjelent-e újabb verzió."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your music"
-msgstr "A zenéid"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add the folders your music lives in. Netodia picks up changes to them on its own."
-msgstr "Add hozzá a mappákat, amelyekben a zenéid vannak. A Netodia magától észleli a bennük történt változásokat."
-
-#: ui/components/onboarding/music-panel.slint
-msgid "{n} folder in your library"
-msgid_plural "{n} folders in your library"
-msgstr[0] "{n} mappa a könyvtáradban"
-msgstr[1] "{n} mappa a könyvtáradban"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add a folder to scan for music files."
 msgstr "Adj hozzá egy mappát a zenefájlok kereséséhez."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your Music folder: {}"
-msgstr "A Zene mappád: {}"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add Music Folder"
-msgstr "Zene mappa hozzáadása"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add Folder"
 msgstr "Mappa hozzáadása"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Choose Another Folder"
-msgstr "Másik mappa választása"
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint

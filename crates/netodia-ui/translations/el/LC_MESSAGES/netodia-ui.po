@@ -1052,39 +1052,13 @@ msgstr "Αυτόματος έλεγχος για ενημερώσεις"
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Μία φορά την ημέρα, το Netodia ρωτά το GitHub αν υπάρχει νεότερη έκδοση."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your music"
-msgstr "Η μουσική σας"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add the folders your music lives in. Netodia picks up changes to them on its own."
-msgstr "Προσθέστε τους φακέλους όπου βρίσκεται η μουσική σας. Το Netodia εντοπίζει μόνο του τις αλλαγές τους."
-
-#: ui/components/onboarding/music-panel.slint
-msgid "{n} folder in your library"
-msgid_plural "{n} folders in your library"
-msgstr[0] "{n} φάκελος στη βιβλιοθήκη σας"
-msgstr[1] "{n} φάκελοι στη βιβλιοθήκη σας"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add a folder to scan for music files."
 msgstr "Πρόσθεσε έναν φάκελο για σάρωση αρχείων μουσικής."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your Music folder: {}"
-msgstr "Ο φάκελος μουσικής σας: {}"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add Music Folder"
-msgstr "Προσθήκη φακέλου μουσικής"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add Folder"
 msgstr "Προσθήκη φακέλου"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Choose Another Folder"
-msgstr "Επιλογή άλλου φακέλου"
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint

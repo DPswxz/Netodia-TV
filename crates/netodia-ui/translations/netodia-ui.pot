@@ -1175,40 +1175,12 @@ msgstr ""
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr ""
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your music"
-msgstr ""
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add the folders your music lives in. Netodia picks up changes to them on its own."
-msgstr ""
-
-#: ui/components/onboarding/music-panel.slint
-msgid "{n} folder in your library"
-msgid_plural "{n} folders in your library"
-msgstr[0] ""
-msgstr[1] ""
-
-#: ui/components/onboarding/music-panel.slint
 #: ui/views/settings/library-section.slint
 msgid "Add a folder to scan for music files."
 msgstr ""
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your Music folder: {}"
-msgstr ""
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add Music Folder"
-msgstr ""
-
-#: ui/components/onboarding/music-panel.slint
 #: ui/views/settings/library-section.slint
 msgid "Add Folder"
-msgstr ""
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Choose Another Folder"
 msgstr ""
 
 #. Translators: Netodia is the product name and stays as is

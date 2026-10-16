@@ -1051,39 +1051,13 @@ msgstr "Procurar atualizações automaticamente"
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Uma vez por dia, o Netodia pergunta ao GitHub se há uma versão mais nova."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your music"
-msgstr "Sua música"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add the folders your music lives in. Netodia picks up changes to them on its own."
-msgstr "Adicione as pastas onde fica sua música. O Netodia percebe sozinho as mudanças nelas."
-
-#: ui/components/onboarding/music-panel.slint
-msgid "{n} folder in your library"
-msgid_plural "{n} folders in your library"
-msgstr[0] "{n} pasta na sua biblioteca"
-msgstr[1] "{n} pastas na sua biblioteca"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add a folder to scan for music files."
 msgstr "Adicione uma pasta para procurar arquivos de música."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your Music folder: {}"
-msgstr "Sua pasta de música: {}"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add Music Folder"
-msgstr "Adicionar pasta de música"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add Folder"
 msgstr "Adicionar pasta"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Choose Another Folder"
-msgstr "Escolher outra pasta"
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint

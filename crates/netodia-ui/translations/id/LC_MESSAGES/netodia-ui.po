@@ -1049,38 +1049,13 @@ msgstr "Periksa pembaruan secara otomatis"
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Sekali sehari, Netodia menanyakan ke GitHub apakah ada versi yang lebih baru."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your music"
-msgstr "Musik Anda"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add the folders your music lives in. Netodia picks up changes to them on its own."
-msgstr "Tambahkan folder tempat musik Anda disimpan. Netodia mendeteksi perubahan di dalamnya dengan sendirinya."
-
-#: ui/components/onboarding/music-panel.slint
-msgid "{n} folder in your library"
-msgid_plural "{n} folders in your library"
-msgstr[0] "{n} folder di pustaka Anda"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add a folder to scan for music files."
 msgstr "Tambahkan folder untuk dipindai mencari berkas musik."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your Music folder: {}"
-msgstr "Folder Musik Anda: {}"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add Music Folder"
-msgstr "Tambahkan Folder Musik"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add Folder"
 msgstr "Tambahkan Folder"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Choose Another Folder"
-msgstr "Pilih Folder Lain"
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint

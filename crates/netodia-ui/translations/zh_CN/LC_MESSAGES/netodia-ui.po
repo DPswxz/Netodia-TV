@@ -1049,38 +1049,13 @@ msgstr "自动检查更新"
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Netodia 每天会询问 GitHub 是否有新版本。"
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your music"
-msgstr "你的音乐"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add the folders your music lives in. Netodia picks up changes to them on its own."
-msgstr "添加音乐所在的文件夹。Netodia 会自动检测其中的更改。"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "{n} folder in your library"
-msgid_plural "{n} folders in your library"
-msgstr[0] "音乐库中有 {n} 个文件夹"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add a folder to scan for music files."
 msgstr "添加用于扫描音乐文件的文件夹。"
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your Music folder: {}"
-msgstr "你的“音乐”文件夹：{}"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add Music Folder"
-msgstr "添加音乐文件夹"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add Folder"
 msgstr "添加文件夹"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Choose Another Folder"
-msgstr "选择其他文件夹"
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint

@@ -1049,38 +1049,13 @@ msgstr "Tự động kiểm tra bản cập nhật"
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Mỗi ngày một lần, Netodia hỏi GitHub xem đã có phiên bản mới hơn chưa."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your music"
-msgstr "Nhạc của bạn"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add the folders your music lives in. Netodia picks up changes to them on its own."
-msgstr "Thêm các thư mục chứa nhạc của bạn. Netodia sẽ tự nhận biết các thay đổi trong đó."
-
-#: ui/components/onboarding/music-panel.slint
-msgid "{n} folder in your library"
-msgid_plural "{n} folders in your library"
-msgstr[0] "{n} thư mục trong thư viện của bạn"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add a folder to scan for music files."
 msgstr "Thêm thư mục để quét tìm tệp nhạc."
 
-#: ui/components/onboarding/music-panel.slint
-msgid "Your Music folder: {}"
-msgstr "Thư mục Nhạc của bạn: {}"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Add Music Folder"
-msgstr "Thêm thư mục Nhạc"
-
-#: ui/components/onboarding/music-panel.slint ui/views/settings/library-section.slint
+#: ui/views/settings/library-section.slint
 msgid "Add Folder"
 msgstr "Thêm thư mục"
-
-#: ui/components/onboarding/music-panel.slint
-msgid "Choose Another Folder"
-msgstr "Chọn thư mục khác"
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint
