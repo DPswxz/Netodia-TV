@@ -90,10 +90,10 @@ pub fn install(ui: &AppWindow, state: &AppState) {
         let qr_login = qr_login.clone();
         let state = state.clone();
         account.on_qr_page_active_changed(move |active| {
-            if !active {
-                cancel_qr_login(&weak, &qr_login);
-            } else {
+            if active {
                 start_qr_login(weak.clone(), state.clone(), qr_login.clone(), true);
+            } else {
+                cancel_qr_login(&weak, &qr_login);
             }
         });
     }
