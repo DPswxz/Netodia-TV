@@ -6,6 +6,7 @@
 //! resolve against.
 
 use std::io::{Read, Seek, Write};
+use std::path::Path;
 
 use chrono::NaiveDateTime;
 use zip::write::SimpleFileOptions;
@@ -103,7 +104,8 @@ pub fn read<R: Read + Seek>(reader: R) -> Result<Contents, AppError> {
     for index in 0..archive.len() {
         let is_playlist = archive
             .name_for_index(index)
-            .is_some_and(|name| has_extension(name.as_ref(), &PLAYLIST_EXTENSIONS));
+            .and_then(Result::ok)
+            .is_some_and(|name| has_extension(Path::new(name.as_ref()), &PLAYLIST_EXTENSIONS));
         if !is_playlist {
             continue;
         }
