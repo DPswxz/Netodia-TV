@@ -37,4 +37,15 @@ ignore = [
     # but unreleased.
     # revisit: 2026-08-19
     "RUSTSEC-2024-0436",
+
+    # zbus_names, zvariant and zvariant_derive have been folded into zbus and have no patched
+    # versions. The affected zbus 4 crates come through keyring 3 / secret-service 4; zbus 5 is
+    # also required by Slint 1.16.1's Linux accessibility stack. Removing the latter path needs a
+    # Slint upgrade, which remains deferred because 1.17 regressed Enter transitions and per-frame
+    # pacing (docs/plans/SLINT_NATIVE_ADOPTION.md). These are unmaintained notices, not reported
+    # vulnerabilities. Revisit after the Slint accessibility dependency can move to zbus 6.
+    # revisit: 2026-11-19
+    "RUSTSEC-2026-0370",
+    "RUSTSEC-2026-0371",
+    "RUSTSEC-2026-0372",
 ]
