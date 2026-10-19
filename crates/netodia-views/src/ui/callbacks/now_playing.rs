@@ -76,54 +76,10 @@ pub struct RowFlagHandles<'a> {
     pub search: &'a Arc<SearchUi>,
 }
 
-/// Wire the player bar/full-screen heart to the `NetEase` liked-song endpoint for cloud sources and
-/// to the local library for local files. The player model and queued row are patched only after a
-/// successful cloud write, and the Favorites view is notified to refresh its account cache.
-pub(super) fn wire_player_favorite(ui: &AppWindow, state: &AppState) {
-    let state = state.clone();
-    ui.global::<Player>().on_toggle_favorite(move || {
-        let Some(current) = lock_state(&state.player_state).source.clone() else {
-            return;
-        };
-        let song_id = current.id;
-        let liked = !current.is_favorite;
-        let is_cloud = current.file_path.is_empty();
-        let state = state.clone();
-        state.runtime.clone().spawn(async move {
-            if !is_cloud {
-                if let Err(error) = library::favorites::toggle_current_favorite(&state).await {
-                    log::warn!("toggle_favorite: {}", describe(&error));
-                }
-                return;
-            }
-
-            if let Err(error) = state.cloud.like(song_id, liked).await {
-                log::warn!("netease_like({song_id}, {liked}): {}", describe(&error));
-                return;
-            }
-            with_state_emit(&state.player_state, &state.sinks, |player| {
-                if let Some(track) = player.source.as_mut()
-                    && track.id == song_id
-                    && track.file_path.is_empty()
-                {
-                    Arc::make_mut(track).is_favorite = liked;
-                }
-                for track in &mut player.queue.tracks {
-                    if track.id == song_id && track.file_path.is_empty() {
-                        Arc::make_mut(track).is_favorite = liked;
-                    }
-                }
-            });
-            state.cloud_liked_changed.bump();
-        });
-    });
-}
-
 /// Wire `Player.toggle-favorite` (heart in the Now Playing view, the
-/// now-playing-bar, and the queue/track overflow menu). Mirrors the
-/// resulting `(id, fav)` into every view-side surface that holds a
-/// per-row `is_favorite`, so a row showing the currently-playing track
-/// updates instantly regardless of which view it sits in.
+/// now-playing-bar, and the queue/track overflow menu). Cloud tracks update
+/// the `NetEase` liked-song list; local files keep their local-library flag.
+/// Local row caches are mirrored after their database write succeeds.
 ///
 /// Call once after every `install` whose handle [`RowFlagHandles`] carries.
 pub fn wire_now_playing_favorite(ui: &AppWindow, state: &AppState, handles: RowFlagHandles<'_>) {
@@ -132,7 +88,39 @@ pub fn wire_now_playing_favorite(ui: &AppWindow, state: &AppState, handles: RowF
     ui.global::<Player>().on_toggle_favorite(move || {
         let s = s.clone();
         let m = m.clone();
+        let Some(current) = lock_state(&s.player_state).source.clone() else {
+            return;
+        };
+        let id = current.id;
+        let liked = !current.is_favorite;
+        let is_cloud = current.file_path.is_empty();
         s.runtime.clone().spawn(async move {
+            if is_cloud {
+                let generation = s.cloud.status().generation;
+                if let Err(error) = s.cloud.like(id, liked).await {
+                    log::warn!("netease_like({id}, {liked}): {}", describe(&error));
+                    return;
+                }
+                if s.cloud.status().generation != generation {
+                    return;
+                }
+                with_state_emit(&s.player_state, &s.sinks, |player| {
+                    if let Some(track) = player.source.as_mut()
+                        && track.id == id
+                        && track.file_path.is_empty()
+                    {
+                        Arc::make_mut(track).is_favorite = liked;
+                    }
+                    for track in &mut player.queue.tracks {
+                        if track.id == id && track.file_path.is_empty() {
+                            Arc::make_mut(track).is_favorite = liked;
+                        }
+                    }
+                });
+                s.cloud_liked_changed.bump();
+                return;
+            }
+
             match library::favorites::toggle_current_favorite(&s).await {
                 Ok(Some((id, fav))) => m.mirror_favorite(id, fav),
                 Ok(None) => {}

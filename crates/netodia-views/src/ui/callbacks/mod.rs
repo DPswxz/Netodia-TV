@@ -229,10 +229,9 @@ pub fn wire_all(ui: &AppWindow, state: &AppState) {
     wire_seek(ui, state);
     wire_set_volume(&player, state);
     wire_set_playback_speed(&player, state);
-    now_playing::wire_player_favorite(ui, state);
-    // Player.toggle-favorite is wired in `wire_now_playing_favorite` (called
-    // after every per-view wire fn) so it can fan the change into all three
-    // surfaces that hold a per-row `is_favorite` (Tracks, Browse, AlbumDetail).
+    // Player.toggle-favorite is wired in `wire_now_playing_favorite` after the
+    // per-view handles exist. That single handler routes cloud songs to
+    // NetEase and mirrors local-file favorites into their row caches.
 
     wire_persist_selected_index(ui, state);
     wire_reveal_in_folder(ui, state);
