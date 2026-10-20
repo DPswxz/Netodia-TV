@@ -403,13 +403,7 @@ impl Client {
             return Err(Error::InvalidResponse);
         }
         let generation = self.generation();
-        if self
-            .cookies
-            .read()
-            .await
-            .get("MUSIC_U")
-            .is_none_or(|token| token.is_empty())
-        {
+        if self.cookies.read().await.get("MUSIC_U").is_none_or(|token| token.is_empty()) {
             return Err(Error::Authentication);
         }
         for action in ["startplay", "play"] {
