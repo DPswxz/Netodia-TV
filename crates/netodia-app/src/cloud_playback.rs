@@ -5,12 +5,12 @@ use std::future::Future;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use netodia_audio::player::source::audio::AudioSource;
 use netodia_audio::player::source::buffered::BufferedAudioSource;
 use netodia_audio::player::source::file_decode::FileDecoder;
-use netodia_core::entities::cloud::{Account, Quality, Song};
+use netodia_core::entities::cloud::{Account, Quality, Song, StreamTicket};
 use netodia_core::entities::track::TrackSummary;
 use netodia_core::error::{AppError, AppResult};
 use netodia_engine::player::engine::backend::PlaybackEngine;
@@ -48,6 +48,21 @@ struct ReservedPlayback {
     queue_update: QueueUpdate,
 }
 
+#[derive(Clone)]
+struct ActiveStreamTicket {
+    ticket: StreamTicket,
+    quality: Quality,
+    expires_at: Instant,
+}
+
+impl ActiveStreamTicket {
+    fn is_valid_for(&self, song_id: i64, quality: Quality) -> bool {
+        self.ticket.song_id == song_id
+            && self.quality == quality
+            && self.expires_at > Instant::now()
+    }
+}
+
 /// Result of resolving and handing a cloud track to the engine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CloudPlaybackResult {
@@ -71,6 +86,7 @@ pub struct CloudPlayback {
     pending_queue_playback_generation: Arc<AtomicU64>,
     listening_generation: Arc<AtomicU64>,
     decoder_generation: Arc<AtomicU64>,
+    active_stream_ticket: Arc<RwLock<Option<ActiveStreamTicket>>>,
 }
 
 impl CloudPlayback {
@@ -107,6 +123,7 @@ impl CloudPlayback {
             pending_queue_playback_generation: Arc::new(AtomicU64::new(0)),
             listening_generation: Arc::new(AtomicU64::new(0)),
             decoder_generation: Arc::new(AtomicU64::new(0)),
+            active_stream_ticket: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -127,6 +144,21 @@ impl CloudPlayback {
 
     pub fn set_quality(&self, quality: Quality) {
         *self.quality.write() = quality;
+    }
+
+    fn valid_stream_ticket(&self, song_id: i64, quality: Quality) -> Option<ActiveStreamTicket> {
+        self.active_stream_ticket
+            .read()
+            .as_ref()
+            .filter(|active| active.is_valid_for(song_id, quality))
+            .cloned()
+    }
+
+    fn clear_stream_ticket_if_matches(&self, failed: &ActiveStreamTicket) {
+        let mut active = self.active_stream_ticket.write();
+        if active.as_ref().is_some_and(|current| current.ticket.url == failed.ticket.url) {
+            *active = None;
+        }
     }
 
     /// Apply a quality choice immediately and prepare the current cloud track for a source swap.
@@ -504,6 +536,14 @@ impl CloudPlayback {
     }
 
     async fn play_reserved(&self, request: ReservedPlayback) -> AppResult<CloudPlaybackResult> {
+        self.play_reserved_with_ticket(request, None).await
+    }
+
+    async fn play_reserved_with_ticket(
+        &self,
+        request: ReservedPlayback,
+        cached_ticket: Option<ActiveStreamTicket>,
+    ) -> AppResult<CloudPlaybackResult> {
         let ReservedPlayback {
             song_id,
             quality,
@@ -516,44 +556,89 @@ impl CloudPlayback {
         } = request;
         let cancellation = self.cloud.account_tasks_token();
         let song_ids = [song_id];
-        let (ticket, songs) = tokio::try_join!(
-            self.cloud.stream_ticket(song_id, quality),
-            self.cloud.songs(&song_ids),
-        )?;
+        let cached_ticket = cached_ticket.filter(|ticket| ticket.is_valid_for(song_id, quality));
+        let cached_summary = cached_ticket.as_ref().and_then(|_| {
+            lock_state(&self.player_state)
+                .source
+                .as_ref()
+                .filter(|current| current.id == song_id && current.file_path.is_empty())
+                .cloned()
+        });
+        let (mut active_ticket, summary, cover_url, mut used_cached_ticket) =
+            match (cached_ticket, cached_summary) {
+                (Some(ticket), Some(summary)) => (ticket, summary, None, true),
+                _ => {
+                    let ticket_request = async {
+                        let ticket = self.cloud.stream_ticket(song_id, quality).await?;
+                        let issued_at = Instant::now();
+                        let expires_at = issued_at
+                            .checked_add(Duration::from_secs(ticket.expires_after_seconds))
+                            .unwrap_or(issued_at);
+                        Ok::<_, AppError>(ActiveStreamTicket { ticket, quality, expires_at })
+                    };
+                    let (ticket, songs) =
+                        tokio::try_join!(ticket_request, self.cloud.songs(&song_ids))?;
+                    let cached_artwork = lock_state(&self.player_state)
+                        .source
+                        .as_ref()
+                        .filter(|current| current.id == song_id && current.file_path.is_empty())
+                        .and_then(|current| current.artwork_path.clone());
+                    let song = songs
+                        .into_iter()
+                        .find(|song| song.id == song_id)
+                        .ok_or_else(|| AppError::network_msg("网易云未返回歌曲信息"))?;
+                    let cover_url = song.album.cover_url.clone();
+                    let is_favorite = self.cloud.cached_is_liked(song_id).unwrap_or(false);
+                    (
+                        ticket,
+                        Arc::new(track_summary(song, cached_artwork, is_favorite)),
+                        cover_url,
+                        false,
+                    )
+                }
+            };
         if cancellation.is_cancelled() {
             return Err(AppError::network_msg("网易云播放请求已取消"));
         }
-        let cached_artwork = lock_state(&self.player_state)
-            .source
-            .as_ref()
-            .filter(|current| current.id == song_id && current.file_path.is_empty())
-            .and_then(|current| current.artwork_path.clone());
-        let song = songs
-            .into_iter()
-            .find(|song| song.id == song_id)
-            .ok_or_else(|| AppError::network_msg("网易云未返回歌曲信息"))?;
-        let cover_url = song.album.cover_url.clone();
-        let is_favorite = self.cloud.cached_is_liked(song_id).unwrap_or(false);
-        let summary = Arc::new(track_summary(song, cached_artwork, is_favorite));
         let should_fetch_cover = summary.artwork_path.is_none() && cover_url.is_some();
 
-        let trial = ticket.trial;
-        let url = ticket.url;
-        let extension = decoder_extension(&ticket.format).to_owned();
-        let reported_size = ticket.size;
         let start = start_position.unwrap_or(Duration::ZERO);
-        let source_task = tokio::task::spawn_blocking(move || {
-            open_buffered_source(&url, &extension, reported_size, start)
-        });
-
-        let source = tokio::select! {
-            () = cancellation.cancelled() => {
-                return Err(AppError::network_msg("网易云播放请求已取消"));
-            }
-            result = source_task => {
-                result.map_err(|error| AppError::io("在线播放解码任务失败", error))??
+        let source = loop {
+            let url = active_ticket.ticket.url.clone();
+            let extension = decoder_extension(&active_ticket.ticket.format).to_owned();
+            let reported_size = active_ticket.ticket.size;
+            let source_task = tokio::task::spawn_blocking(move || {
+                open_buffered_source(&url, &extension, reported_size, start)
+            });
+            let source_result = tokio::select! {
+                () = cancellation.cancelled() => {
+                    return Err(AppError::network_msg("网易云播放请求已取消"));
+                }
+                result = source_task => {
+                    result.map_err(|error| AppError::io("在线播放解码任务失败", error))?
+                }
+            };
+            match source_result {
+                Ok(source) => break source,
+                Err(error) if used_cached_ticket && is_expired_stream_url_error(&error) => {
+                    self.clear_stream_ticket_if_matches(&active_ticket);
+                    let ticket = tokio::select! {
+                        () = cancellation.cancelled() => {
+                            return Err(AppError::network_msg("网易云播放请求已取消"));
+                        }
+                        result = self.cloud.stream_ticket(song_id, quality) => result?,
+                    };
+                    let issued_at = Instant::now();
+                    let expires_at = issued_at
+                        .checked_add(Duration::from_secs(ticket.expires_after_seconds))
+                        .unwrap_or(issued_at);
+                    active_ticket = ActiveStreamTicket { ticket, quality, expires_at };
+                    used_cached_ticket = false;
+                }
+                Err(error) => return Err(error),
             }
         };
+        let trial = active_ticket.ticket.trial;
         if cancellation.is_cancelled() {
             return Err(AppError::network_msg("网易云播放请求已取消"));
         }
@@ -574,6 +659,7 @@ impl CloudPlayback {
             if keep_paused {
                 self.engine.pause();
             }
+            *self.active_stream_ticket.write() = Some(active_ticket);
             let duration_ms = u64::try_from(summary.duration_ms.max(0)).unwrap_or(0);
             let position_ms = u64::try_from(start.as_millis()).unwrap_or(u64::MAX);
             with_state_emit(&self.player_state, &self.sinks, |state| {
@@ -684,6 +770,8 @@ impl ExternalTrackPlayback for CloudQueuePlaybackHandler {
 
     fn play_from(&self, track: Arc<TrackSummary>, position_ms: u64) {
         let song_id = track.id;
+        let quality = self.playback.quality();
+        let cached_ticket = self.playback.valid_stream_ticket(song_id, quality);
         let (volume, speed, position_ms) = {
             let state = lock_state(&self.playback.player_state);
             if state
@@ -701,18 +789,19 @@ impl ExternalTrackPlayback for CloudQueuePlaybackHandler {
         };
 
         // The engine released this source during a long pause. Keep the selected cloud track
-        // seated but stopped while its fresh ticket and decoder are prepared.
+        // seated but stopped while its decoder is prepared; a still-valid ticket can be reused.
         self.playback.engine.stop();
         let generation = self.playback.engine.reserve_playback_request();
         with_state_emit(&self.playback.player_state, &self.playback.sinks, |state| {
             state.status = PlaybackStatus::Stopped;
             state.position_ms = position_ms;
         });
-        self.spawn_resume(song_id, volume, speed, position_ms, generation);
+        self.spawn_resume(song_id, quality, volume, speed, position_ms, generation, cached_ticket);
     }
 
     fn resume(&self, track: Arc<TrackSummary>) {
         let song_id = track.id;
+        let quality = self.playback.quality();
         let (volume, speed, position_ms) = {
             let state = lock_state(&self.playback.player_state);
             if state
@@ -731,15 +820,21 @@ impl ExternalTrackPlayback for CloudQueuePlaybackHandler {
             (state.effective_volume(), state.playback_speed, position_ms)
         };
 
-        // Do not let the old URL's decoder reach EOS while the replacement is loading. On
-        // failure the track stays paused, so the playback monitor cannot advance the queue.
+        let cached_ticket = self.playback.valid_stream_ticket(song_id, quality);
+        if cached_ticket.is_some() && self.playback.engine.holds_source() {
+            self.playback.engine.resume();
+            return;
+        }
+
+        // The saved ticket has expired, does not match this source, or the decoder was released.
+        // Keep any old decoder paused while a replacement is prepared.
         self.playback.engine.pause();
         let generation = self.playback.engine.reserve_playback_request();
         with_state_emit(&self.playback.player_state, &self.playback.sinks, |state| {
             state.status = PlaybackStatus::Paused;
             state.position_ms = position_ms;
         });
-        self.spawn_resume(song_id, volume, speed, position_ms, generation);
+        self.spawn_resume(song_id, quality, volume, speed, position_ms, generation, cached_ticket);
     }
 }
 
@@ -747,24 +842,29 @@ impl CloudQueuePlaybackHandler {
     fn spawn_resume(
         &self,
         song_id: i64,
+        quality: Quality,
         volume: f64,
         speed: f64,
         position_ms: u64,
         generation: u64,
+        cached_ticket: Option<ActiveStreamTicket>,
     ) {
         let playback = self.playback.clone();
         self.runtime.spawn(async move {
             let result = playback
-                .play_reserved(ReservedPlayback {
-                    song_id,
-                    quality: playback.quality(),
-                    volume,
-                    speed,
-                    start_position: Some(Duration::from_millis(position_ms)),
-                    generation,
-                    keep_paused: false,
-                    queue_update: QueueUpdate::Preserve,
-                })
+                .play_reserved_with_ticket(
+                    ReservedPlayback {
+                        song_id,
+                        quality,
+                        volume,
+                        speed,
+                        start_position: Some(Duration::from_millis(position_ms)),
+                        generation,
+                        keep_paused: false,
+                        queue_update: QueueUpdate::Preserve,
+                    },
+                    cached_ticket,
+                )
                 .await;
             if let Err(error) = result {
                 log::warn!(
@@ -894,6 +994,27 @@ async fn download_cover(
     .flatten()
 }
 
+fn is_expired_stream_url_error(error: &AppError) -> bool {
+    let mut cause: Option<&(dyn std::error::Error + 'static)> = Some(error);
+    while let Some(current) = cause {
+        if current
+            .downcast_ref::<netodia_net::services::net::range_reader::MediaError>()
+            .is_some_and(|error| {
+                matches!(
+                    error,
+                    netodia_net::services::net::range_reader::MediaError::HttpStatus(
+                        401 | 403 | 404 | 410
+                    )
+                )
+            })
+        {
+            return true;
+        }
+        cause = std::error::Error::source(current);
+    }
+    false
+}
+
 /// Candidate order for a newly selected cloud queue item. Repeat-off respects the tail the user
 /// selected from; looping modes wrap once. Shuffle anchors the requested item and randomizes the
 /// remaining candidates before any network resolution begins.
@@ -953,8 +1074,8 @@ fn open_buffered_source(
     reported_size: Option<u64>,
     start: Duration,
 ) -> AppResult<BufferedAudioSource> {
-    let reader = RangeReader::open(url)
-        .map_err(|error| AppError::network_msg(format!("在线播放源加载失败：{error}")))?;
+    let reader =
+        RangeReader::open(url).map_err(|error| AppError::network("在线播放源加载失败", error))?;
     let byte_len = reader.byte_len().or(reported_size);
     let mut decoder = FileDecoder::open_reader(reader, extension, byte_len)?;
     if !start.is_zero() {
