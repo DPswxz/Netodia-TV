@@ -4,6 +4,64 @@ use crate::netease::endpoints::Protocol;
 use netodia_core::entities::cloud::Quality;
 use serde_json::json;
 
+#[tokio::test]
+async fn listening_uses_clientlog_eapi_with_the_desktop_reporting_profile() -> Result<()> {
+    let client = super::Client::new(reqwest::Client::new());
+    let cookies =
+        std::collections::BTreeMap::from([("MUSIC_U".to_owned(), "test-token".to_owned())]);
+    let request = client
+        .prepare_request(ep::WEBLOG, super::listen_log("play", 42, 123)?, &cookies)
+        .await?
+        .build()
+        .map_err(|_| crate::netease::Error::InvalidResponse)?;
+    assert_eq!(request.url().as_str(), "https://clientlog.music.163.com/eapi/feedback/weblog");
+    assert_eq!(ep::WEBLOG.protocol, Protocol::Eapi);
+    assert!(!ep::WEBLOG.read_only);
+    let (_, header, _) = client.request_context(ep::WEBLOG, &cookies, "csrf", 1000);
+    assert_eq!(header["os"], "osx");
+    assert_eq!(header["MUSIC_U"], "test-token");
+    assert_eq!(header["__csrf"], "csrf");
+    assert_eq!(header["deviceId"], client.device_id());
+    Ok(())
+}
+
+#[test]
+fn listening_logs_pair_song_identity_with_actual_seconds() -> Result<()> {
+    for action in ["startplay", "play"] {
+        let body = super::listen_log(action, 42, 123)?;
+        let logs: serde_json::Value = serde_json::from_str(
+            body["logs"].as_str().ok_or(crate::netease::Error::InvalidResponse)?,
+        )
+        .map_err(|_| crate::netease::Error::InvalidResponse)?;
+        assert_eq!(logs[0]["action"], action);
+        assert_eq!(logs[0]["json"]["id"], "42");
+        assert_eq!(logs[0]["json"]["type"], "song");
+        assert_eq!(logs[0]["json"]["content"], "id=0");
+        if action == "play" {
+            assert_eq!(logs[0]["json"]["time"], 123);
+            assert_eq!(logs[0]["json"]["end"], "playend");
+        } else {
+            assert!(logs[0]["json"]["time"].is_null());
+        }
+    }
+    Ok(())
+}
+
+#[tokio::test]
+async fn listening_never_sends_guest_or_stale_session_logs() {
+    let client = super::Client::new(reqwest::Client::new());
+    assert!(matches!(
+        client.report_listen(42, 60).await,
+        Err(crate::netease::Error::Authentication)
+    ));
+    let generation = client.generation();
+    client.clear_session().await;
+    assert!(matches!(
+        client.request_in_generation(ep::WEBLOG, json!({}), generation).await,
+        Err(crate::netease::Error::Cancelled)
+    ));
+}
+
 #[test]
 fn stream_quality_uses_yesplaymusic_bitrates() {
     assert_eq!(ep::STREAM.path, "/api/song/enhance/player/url");

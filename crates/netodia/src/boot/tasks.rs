@@ -42,6 +42,7 @@ pub fn spawn_background_tasks(
     });
 
     tasks::playback_monitor::spawn(spawner, state);
+    tasks::netease_listening::spawn(spawner, state);
     tasks::file_event_processor::spawn(spawner, state, channels.file_event_rx);
     tasks::queue_prune::spawn(spawner, state);
     tasks::retroactive_hash::spawn(spawner, state);

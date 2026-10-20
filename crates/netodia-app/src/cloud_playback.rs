@@ -69,6 +69,8 @@ pub struct CloudPlayback {
     quality: Arc<RwLock<Quality>>,
     queue_generation: Arc<AtomicU64>,
     pending_queue_playback_generation: Arc<AtomicU64>,
+    listening_generation: Arc<AtomicU64>,
+    decoder_generation: Arc<AtomicU64>,
 }
 
 impl CloudPlayback {
@@ -103,11 +105,24 @@ impl CloudPlayback {
             quality: Arc::new(RwLock::new(Quality::default())),
             queue_generation: Arc::new(AtomicU64::new(0)),
             pending_queue_playback_generation: Arc::new(AtomicU64::new(0)),
+            listening_generation: Arc::new(AtomicU64::new(0)),
+            decoder_generation: Arc::new(AtomicU64::new(0)),
         }
     }
 
     pub fn quality(&self) -> Quality {
         *self.quality.read()
+    }
+
+    /// Identifies real cloud-track starts, including a repeat of the same song. Seeking and
+    /// quality changes reopen the decoder with a start position and preserve this identity.
+    pub fn listening_generation(&self) -> u64 {
+        self.listening_generation.load(Ordering::Acquire)
+    }
+
+    /// Changes on every installed cloud decoder, allowing observers to discard seek jumps.
+    pub fn decoder_generation(&self) -> u64 {
+        self.decoder_generation.load(Ordering::Acquire)
     }
 
     pub fn set_quality(&self, quality: Quality) {
@@ -562,6 +577,10 @@ impl CloudPlayback {
             let duration_ms = u64::try_from(summary.duration_ms.max(0)).unwrap_or(0);
             let position_ms = u64::try_from(start.as_millis()).unwrap_or(u64::MAX);
             with_state_emit(&self.player_state, &self.sinks, |state| {
+                self.decoder_generation.fetch_add(1, Ordering::AcqRel);
+                if start_position.is_none() {
+                    self.listening_generation.fetch_add(1, Ordering::AcqRel);
+                }
                 // A cloud queue replaces the prior queue only once its selected stream is ready,
                 // so an unavailable song cannot destroy a working queue.
                 match queue_update {

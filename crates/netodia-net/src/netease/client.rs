@@ -133,7 +133,7 @@ impl Client {
         data["e_r"] = json!(false);
         let now = chrono_millis();
         let (cookie_header, headers, user_agent) =
-            self.request_context(endpoint.protocol, cookies, &csrf, now);
+            self.request_context(endpoint, cookies, &csrf, now);
         let (base, route, payload) = match endpoint.protocol {
             Protocol::Weapi => {
                 data["csrf_token"] = json!(csrf);
@@ -146,7 +146,11 @@ impl Client {
             Protocol::Eapi => {
                 data["header"] = headers;
                 (
-                    "https://interfacepc.music.163.com",
+                    if endpoint.path == ep::WEBLOG.path {
+                        "https://clientlog.music.163.com"
+                    } else {
+                        "https://interfacepc.music.163.com"
+                    },
                     endpoint.path.replacen("/api/", "/eapi/", 1),
                     crypto::eapi(endpoint.path, &data)?,
                 )
@@ -191,12 +195,18 @@ impl Client {
 
     fn request_context(
         &self,
-        protocol: Protocol,
+        endpoint: Endpoint<'_>,
         cookies: &BTreeMap<String, String>,
         csrf: &str,
         now: u128,
     ) -> (String, Value, &'static str) {
-        let (os, appver, osver, channel, user_agent) = request_profile(protocol);
+        // The reporting service uses the macOS desktop profile, as in API Enhanced and
+        // YesPlayMusic. The ordinary EAPI host/profile does not record listening history.
+        let (os, appver, osver, channel, user_agent) = if endpoint.path == ep::WEBLOG.path {
+            ("osx", "3.1.10.5100", "15.5", "netease", WEAPI_UA)
+        } else {
+            request_profile(endpoint.protocol)
+        };
         let build_version = (now / 1000).to_string();
         let mut request_cookies = cookies.clone();
         for (name, value) in [
@@ -241,7 +251,7 @@ impl Client {
         if let Some(value) = request_cookies.get("MUSIC_A").filter(|value| !value.is_empty()) {
             headers["MUSIC_A"] = json!(value);
         }
-        if protocol == Protocol::Eapi
+        if endpoint.protocol == Protocol::Eapi
             && let Some(value) = request_cookies.get("NMTID").filter(|value| !value.is_empty())
         {
             headers["NMTID"] = json!(value);
@@ -250,7 +260,15 @@ impl Client {
     }
 
     async fn request(&self, endpoint: Endpoint<'_>, data: Value) -> Result<Value> {
-        let generation = self.generation();
+        self.request_in_generation(endpoint, data, self.generation()).await
+    }
+
+    async fn request_in_generation(
+        &self,
+        endpoint: Endpoint<'_>,
+        data: Value,
+        generation: u64,
+    ) -> Result<Value> {
         let cookies = self.cookies.read().await.clone();
         let prepared = self.prepare_request(endpoint, data, &cookies).await?;
         let attempts = if endpoint.read_only { 2 } else { 1 };
@@ -375,6 +393,30 @@ impl Client {
             json!({"username":crypto::anonymous_username(&self.device_id)}),
         )
         .await?;
+        Ok(())
+    }
+
+    /// Submit one actual listen. Writes are deliberately not retried: a lost acknowledgement
+    /// must not turn into a duplicate listen. Keep both logs in the same account generation.
+    pub async fn report_listen(&self, song_id: i64, seconds: u64) -> Result<()> {
+        if song_id <= 0 || seconds == 0 {
+            return Err(Error::InvalidResponse);
+        }
+        let generation = self.generation();
+        if !self.cookies.read().await.get("MUSIC_U").is_some_and(|token| !token.is_empty()) {
+            return Err(Error::Authentication);
+        }
+        for action in ["startplay", "play"] {
+            if generation != self.generation() {
+                return Err(Error::Cancelled);
+            }
+            self.request_in_generation(
+                ep::WEBLOG,
+                listen_log(action, song_id, seconds)?,
+                generation,
+            )
+            .await?;
+        }
         Ok(())
     }
 
@@ -701,6 +743,26 @@ impl Client {
         .await?;
         Ok(())
     }
+}
+
+fn listen_log(action: &str, song_id: i64, seconds: u64) -> Result<Value> {
+    // A cloud queue can mix search, album and playlist results; it does not retain a single
+    // upstream source ID. Report the unknown source as 0 instead of inventing a playlist.
+    let mut data = json!({
+        "id": song_id.to_string(), "type": "song", "mainsite": "1",
+        "mainsiteWeb": "1", "content": "id=0"
+    });
+    if action == "play" {
+        data["download"] = json!(0);
+        data["end"] = json!("playend");
+        data["sourceId"] = json!("0");
+        data["time"] = json!(seconds);
+        data["wifi"] = json!(0);
+        data["source"] = json!("list");
+    }
+    let logs = serde_json::to_string(&json!([{ "action": action, "json": data }]))
+        .map_err(|_| Error::InvalidResponse)?;
+    Ok(json!({"logs": logs}))
 }
 
 fn fill_album_covers(album: &Album, songs: &mut [Song]) {

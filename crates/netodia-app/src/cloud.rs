@@ -389,6 +389,30 @@ impl CloudService {
         (*cached_account == account_id && *generation == status.generation).then(|| songs.clone())
     }
 
+    /// Report a completed listening session only to the account that actually heard it.
+    /// Reporting failures stay in the background and never change the login or player state.
+    pub async fn report_listen(
+        &self,
+        song_id: i64,
+        seconds: u64,
+        generation: u64,
+    ) -> AppResult<()> {
+        let (_account, cancellation) = self.account_snapshot()?;
+        if self.status().generation != generation {
+            return Ok(());
+        }
+        validate_id("歌曲", song_id)?;
+        self.account_request_in_generation(
+            self.client.report_listen(song_id, seconds),
+            cancellation,
+        )
+        .await?;
+        if self.status().generation == generation {
+            *self.recent_songs_cache.write() = None;
+        }
+        Ok(())
+    }
+
     /// Cached membership for player controls. `None` means this account's liked set has not yet
     /// been fetched in this process; callers can still write the toggle and refresh it afterward.
     pub fn cached_is_liked(&self, song_id: i64) -> Option<bool> {
