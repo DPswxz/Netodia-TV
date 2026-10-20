@@ -67,7 +67,7 @@ fn repeats_and_account_changes_keep_separate_identities() {
 fn resume_offset_and_suspend_are_not_listening_time() {
     let mut tracker = ListenTracker::default();
     let _ = tick(&mut tracker, sample(120_000));
-    let _ = tracker.observe(sample(180_000), Duration::from_secs(60));
+    let _ = tracker.observe(sample(180_000), Duration::from_mins(1));
     let _ = tick(&mut tracker, sample(180_500));
     let _ = tick(&mut tracker, sample(181_000));
     assert_eq!(tracker.finish().map(|report| report.seconds), Some(1));

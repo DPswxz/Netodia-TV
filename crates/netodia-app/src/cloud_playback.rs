@@ -55,6 +55,13 @@ struct ActiveStreamTicket {
     expires_at: Instant,
 }
 
+struct ResolvedCloudTrack {
+    active_ticket: ActiveStreamTicket,
+    summary: Arc<TrackSummary>,
+    cover_url: Option<String>,
+    used_cached_ticket: bool,
+}
+
 impl ActiveStreamTicket {
     fn is_valid_for(&self, song_id: i64, quality: Quality) -> bool {
         self.ticket.song_id == song_id
@@ -539,23 +546,12 @@ impl CloudPlayback {
         self.play_reserved_with_ticket(request, None).await
     }
 
-    async fn play_reserved_with_ticket(
+    async fn resolve_playback_track(
         &self,
-        request: ReservedPlayback,
+        song_id: i64,
+        quality: Quality,
         cached_ticket: Option<ActiveStreamTicket>,
-    ) -> AppResult<CloudPlaybackResult> {
-        let ReservedPlayback {
-            song_id,
-            quality,
-            volume,
-            speed,
-            start_position,
-            generation,
-            keep_paused,
-            queue_update,
-        } = request;
-        let cancellation = self.cloud.account_tasks_token();
-        let song_ids = [song_id];
+    ) -> AppResult<ResolvedCloudTrack> {
         let cached_ticket = cached_ticket.filter(|ticket| ticket.is_valid_for(song_id, quality));
         let cached_summary = cached_ticket.as_ref().and_then(|_| {
             lock_state(&self.player_state)
@@ -564,45 +560,53 @@ impl CloudPlayback {
                 .filter(|current| current.id == song_id && current.file_path.is_empty())
                 .cloned()
         });
-        let (mut active_ticket, summary, cover_url, mut used_cached_ticket) =
-            match (cached_ticket, cached_summary) {
-                (Some(ticket), Some(summary)) => (ticket, summary, None, true),
-                _ => {
-                    let ticket_request = async {
-                        let ticket = self.cloud.stream_ticket(song_id, quality).await?;
-                        let issued_at = Instant::now();
-                        let expires_at = issued_at
-                            .checked_add(Duration::from_secs(ticket.expires_after_seconds))
-                            .unwrap_or(issued_at);
-                        Ok::<_, AppError>(ActiveStreamTicket { ticket, quality, expires_at })
-                    };
-                    let (ticket, songs) =
-                        tokio::try_join!(ticket_request, self.cloud.songs(&song_ids))?;
-                    let cached_artwork = lock_state(&self.player_state)
-                        .source
-                        .as_ref()
-                        .filter(|current| current.id == song_id && current.file_path.is_empty())
-                        .and_then(|current| current.artwork_path.clone());
-                    let song = songs
-                        .into_iter()
-                        .find(|song| song.id == song_id)
-                        .ok_or_else(|| AppError::network_msg("网易云未返回歌曲信息"))?;
-                    let cover_url = song.album.cover_url.clone();
-                    let is_favorite = self.cloud.cached_is_liked(song_id).unwrap_or(false);
-                    (
-                        ticket,
-                        Arc::new(track_summary(song, cached_artwork, is_favorite)),
-                        cover_url,
-                        false,
-                    )
-                }
-            };
-        if cancellation.is_cancelled() {
-            return Err(AppError::network_msg("网易云播放请求已取消"));
+        if let (Some(active_ticket), Some(summary)) = (cached_ticket, cached_summary) {
+            return Ok(ResolvedCloudTrack {
+                active_ticket,
+                summary,
+                cover_url: None,
+                used_cached_ticket: true,
+            });
         }
-        let should_fetch_cover = summary.artwork_path.is_none() && cover_url.is_some();
 
-        let start = start_position.unwrap_or(Duration::ZERO);
+        let song_ids = [song_id];
+        let ticket_request = async {
+            let ticket = self.cloud.stream_ticket(song_id, quality).await?;
+            let issued_at = Instant::now();
+            let expires_at = issued_at
+                .checked_add(Duration::from_secs(ticket.expires_after_seconds))
+                .unwrap_or(issued_at);
+            Ok::<_, AppError>(ActiveStreamTicket { ticket, quality, expires_at })
+        };
+        let (active_ticket, songs) = tokio::try_join!(ticket_request, self.cloud.songs(&song_ids))?;
+        let cached_artwork = lock_state(&self.player_state)
+            .source
+            .as_ref()
+            .filter(|current| current.id == song_id && current.file_path.is_empty())
+            .and_then(|current| current.artwork_path.clone());
+        let song = songs
+            .into_iter()
+            .find(|song| song.id == song_id)
+            .ok_or_else(|| AppError::network_msg("网易云未返回歌曲信息"))?;
+        let cover_url = song.album.cover_url.clone();
+        let is_favorite = self.cloud.cached_is_liked(song_id).unwrap_or(false);
+        Ok(ResolvedCloudTrack {
+            active_ticket,
+            summary: Arc::new(track_summary(song, cached_artwork, is_favorite)),
+            cover_url,
+            used_cached_ticket: false,
+        })
+    }
+
+    async fn open_source_with_expired_ticket_retry(
+        &self,
+        song_id: i64,
+        quality: Quality,
+        start: Duration,
+        cancellation: &tokio_util::sync::CancellationToken,
+        mut active_ticket: ActiveStreamTicket,
+        mut used_cached_ticket: bool,
+    ) -> AppResult<(ActiveStreamTicket, BufferedAudioSource)> {
         let source = loop {
             let url = active_ticket.ticket.url.clone();
             let extension = decoder_extension(&active_ticket.ticket.format).to_owned();
@@ -638,6 +642,43 @@ impl CloudPlayback {
                 Err(error) => return Err(error),
             }
         };
+        Ok((active_ticket, source))
+    }
+
+    async fn play_reserved_with_ticket(
+        &self,
+        request: ReservedPlayback,
+        cached_ticket: Option<ActiveStreamTicket>,
+    ) -> AppResult<CloudPlaybackResult> {
+        let ReservedPlayback {
+            song_id,
+            quality,
+            volume,
+            speed,
+            start_position,
+            generation,
+            keep_paused,
+            queue_update,
+        } = request;
+        let cancellation = self.cloud.account_tasks_token();
+        let ResolvedCloudTrack { active_ticket, summary, cover_url, used_cached_ticket } =
+            self.resolve_playback_track(song_id, quality, cached_ticket).await?;
+        if cancellation.is_cancelled() {
+            return Err(AppError::network_msg("网易云播放请求已取消"));
+        }
+        let should_fetch_cover = summary.artwork_path.is_none() && cover_url.is_some();
+
+        let start = start_position.unwrap_or(Duration::ZERO);
+        let (active_ticket, source) = self
+            .open_source_with_expired_ticket_retry(
+                song_id,
+                quality,
+                start,
+                &cancellation,
+                active_ticket,
+                used_cached_ticket,
+            )
+            .await?;
         let trial = active_ticket.ticket.trial;
         if cancellation.is_cancelled() {
             return Err(AppError::network_msg("网易云播放请求已取消"));
