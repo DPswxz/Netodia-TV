@@ -16,7 +16,7 @@ async fn listening_uses_clientlog_eapi_with_the_desktop_reporting_profile() -> R
         .map_err(|_| crate::netease::Error::InvalidResponse)?;
     assert_eq!(request.url().as_str(), "https://clientlog.music.163.com/eapi/feedback/weblog");
     assert_eq!(ep::WEBLOG.protocol, Protocol::Eapi);
-    assert!(!ep::WEBLOG.read_only);
+    const { assert!(!ep::WEBLOG.read_only) };
     let (_, header, _) = client.request_context(ep::WEBLOG, &cookies, "csrf", 1000);
     assert_eq!(header["os"], "osx");
     assert_eq!(header["MUSIC_U"], "test-token");
