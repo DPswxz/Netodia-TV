@@ -11,6 +11,17 @@ use netodia_core::entities::track::TrackSummary;
 /// resolve and install the source asynchronously.
 pub trait ExternalTrackPlayback: Send + Sync + 'static {
     fn play(&self, track: Arc<TrackSummary>);
+
+    /// Start an external track from a saved position after its source has been released.
+    /// Implementations that do not support seeking can fall back to a normal start.
+    fn play_from(&self, track: Arc<TrackSummary>, _position_ms: u64) {
+        self.play(track);
+    }
+
+    /// Resume an external track. Network backed implementations should refresh expiring sources.
+    fn resume(&self, track: Arc<TrackSummary>) {
+        self.play(track);
+    }
 }
 
 /// Events that come *from* OS media controls (MPRIS, SMTC, `MediaPlayer`) into the player.

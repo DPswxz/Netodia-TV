@@ -36,7 +36,7 @@ pub fn execute_actions<B: PlayerBackend>(
         match action {
             PlayerAction::PlayMedia { file_path, volume, speed, start_position_ms, replaygain } => {
                 if file_path.is_empty() {
-                    start_external_track(player_state, sinks);
+                    start_external_track(player_state, sinks, start_position_ms);
                 } else {
                     start_or_skip(
                         &mut pending,
@@ -63,7 +63,7 @@ pub fn execute_actions<B: PlayerBackend>(
                 // after it. In `RepeatMode::One` that also steps off the repeated
                 // track — rare enough (the file vanished mid-play) to accept.
                 if file_path.is_empty() {
-                    start_external_track(player_state, sinks);
+                    start_external_track(player_state, sinks, None);
                 } else {
                     start_or_skip(
                         &mut pending,
@@ -76,7 +76,7 @@ pub fn execute_actions<B: PlayerBackend>(
                     );
                 }
             }
-            PlayerAction::Resume => engine.resume(),
+            PlayerAction::Resume => resume_external_track(engine, player_state, sinks),
             PlayerAction::Pause { fade_ms } => engine.pause_with_fade(fade_ms),
             PlayerAction::Stop { fade_ms } => engine.stop_with_fade(fade_ms),
             PlayerAction::Seek { position_ms, file_path, replaygain } => {
@@ -110,7 +110,11 @@ pub fn execute_actions<B: PlayerBackend>(
 /// Start the queue's selected cloud track through the app-installed network player. The queue
 /// state has already moved to this track, so the callback can load it without a second selection.
 /// A missing app handler is treated as a playback failure rather than opening an empty path.
-fn start_external_track(player_state: &PlayerStateHandle, sinks: &PlayerSinks) {
+fn start_external_track(
+    player_state: &PlayerStateHandle,
+    sinks: &PlayerSinks,
+    start_position_ms: Option<u64>,
+) {
     let track = super::state::lock_state(player_state)
         .source
         .as_ref()
@@ -121,9 +125,32 @@ fn start_external_track(player_state: &PlayerStateHandle, sinks: &PlayerSinks) {
         return;
     };
     if let Some(playback) = sinks.external_track_playback() {
-        playback.play(track);
+        if let Some(position_ms) = start_position_ms {
+            playback.play_from(track, position_ms);
+        } else {
+            playback.play(track);
+        }
     } else {
         log::warn!("No external playback handler is installed for cloud song {}", track.id);
+    }
+}
+
+/// Cloud sources are short-lived, so resuming one reopens it through the app's network player.
+/// Local sources continue using the native engine's in-place resume.
+fn resume_external_track<B: PlayerBackend>(
+    engine: &B,
+    player_state: &PlayerStateHandle,
+    sinks: &PlayerSinks,
+) {
+    let track = super::state::lock_state(player_state)
+        .source
+        .as_ref()
+        .filter(|track| track.file_path.is_empty())
+        .cloned();
+    if let (Some(track), Some(playback)) = (track, sinks.external_track_playback()) {
+        playback.resume(track);
+    } else {
+        engine.resume();
     }
 }
 

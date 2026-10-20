@@ -681,6 +681,99 @@ impl ExternalTrackPlayback for CloudQueuePlaybackHandler {
             }
         });
     }
+
+    fn play_from(&self, track: Arc<TrackSummary>, position_ms: u64) {
+        let song_id = track.id;
+        let (volume, speed, position_ms) = {
+            let state = lock_state(&self.playback.player_state);
+            if state
+                .source
+                .as_ref()
+                .is_none_or(|current| current.id != song_id || !current.file_path.is_empty())
+            {
+                return;
+            }
+            (
+                state.effective_volume(),
+                state.playback_speed,
+                position_ms.min(state.duration_ms.saturating_sub(500)),
+            )
+        };
+
+        // The engine released this source during a long pause. Keep the selected cloud track
+        // seated but stopped while its fresh ticket and decoder are prepared.
+        self.playback.engine.stop();
+        let generation = self.playback.engine.reserve_playback_request();
+        with_state_emit(&self.playback.player_state, &self.playback.sinks, |state| {
+            state.status = PlaybackStatus::Stopped;
+            state.position_ms = position_ms;
+        });
+        self.spawn_resume(song_id, volume, speed, position_ms, generation);
+    }
+
+    fn resume(&self, track: Arc<TrackSummary>) {
+        let song_id = track.id;
+        let (volume, speed, position_ms) = {
+            let state = lock_state(&self.playback.player_state);
+            if state
+                .source
+                .as_ref()
+                .is_none_or(|current| current.id != song_id || !current.file_path.is_empty())
+            {
+                return;
+            }
+            let position_ms = if self.playback.engine.holds_source() {
+                self.playback.engine.query_heard_position()
+            } else {
+                state.position_ms
+            }
+            .min(state.duration_ms.saturating_sub(500));
+            (state.effective_volume(), state.playback_speed, position_ms)
+        };
+
+        // Do not let the old URL's decoder reach EOS while the replacement is loading. On
+        // failure the track stays paused, so the playback monitor cannot advance the queue.
+        self.playback.engine.pause();
+        let generation = self.playback.engine.reserve_playback_request();
+        with_state_emit(&self.playback.player_state, &self.playback.sinks, |state| {
+            state.status = PlaybackStatus::Paused;
+            state.position_ms = position_ms;
+        });
+        self.spawn_resume(song_id, volume, speed, position_ms, generation);
+    }
+}
+
+impl CloudQueuePlaybackHandler {
+    fn spawn_resume(
+        &self,
+        song_id: i64,
+        volume: f64,
+        speed: f64,
+        position_ms: u64,
+        generation: u64,
+    ) {
+        let playback = self.playback.clone();
+        self.runtime.spawn(async move {
+            let result = playback
+                .play_reserved(ReservedPlayback {
+                    song_id,
+                    quality: playback.quality(),
+                    volume,
+                    speed,
+                    start_position: Some(Duration::from_millis(position_ms)),
+                    generation,
+                    keep_paused: false,
+                    queue_update: QueueUpdate::Preserve,
+                })
+                .await;
+            if let Err(error) = result {
+                log::warn!(
+                    "cloud track resume {song_id}: {}",
+                    netodia_core::error::describe(&error)
+                );
+            }
+        });
+    }
 }
 
 impl CloudPlayback {
