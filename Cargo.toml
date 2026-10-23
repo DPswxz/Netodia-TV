@@ -55,7 +55,7 @@ slint = { version = "1.16.1", default-features = false, features = [
 slint-build = "1.16.1"
 
 # Async runtime / synchronisation
-tokio = { version = "1.53.1", features = [
+tokio = { version = "1.53.3", features = [
     "rt-multi-thread",
     "macros",
     "sync",
