@@ -30,6 +30,7 @@ on that aggregate, so it cannot package a commit that failed a check. Pull reque
 checks only.
 
 - fmt runs cargo fmt --all --check with the pinned toolchain.
+  It also runs the Python release-version regression tests, which need no Rust toolchain.
 - audit uses .github/actions/cargo-audit; keep the advisory policy in that one composite. It scans
   the committed Cargo.lock and needs neither Rust compilation nor system dependencies.
 - quality-linux installs .github/actions/linux-system-deps, explicitly runs
@@ -55,8 +56,12 @@ packaging job must continue to depend on the aggregate.
 ## Release and manual builds
 
 A published Release event builds and uploads packages to that release. Drafts start building when
-they are published. The version must match v plus [workspace.package].version. The build matrix has
-six formats for each supported architecture: Linux tarball, AppImage, RPM and DEB; Windows MSI and
+they are published. scripts/prepare-release.py validates the v-prefixed SemVer tag and sets
+[workspace.package].version in the runner checkout before compilation and packaging. The runner
+then uses cargo update --workspace to synchronize workspace versions in Cargo.lock while retaining
+third-party dependency pins; the build still uses --locked. Publish resolves the same tag version
+for signatures and latest.json. Manual runs keep the committed manifest and lockfile. The build matrix
+has six formats for each supported architecture: Linux tarball, AppImage, RPM and DEB; Windows MSI and
 portable ZIP; x86_64 and aarch64. BINARY must point at
 target/<target-triple>/release/Netodia because the Linux package scripts consume that environment
 variable. Keep artifact names compatible with scripts/build-latest-json.py's PLATFORM_PATTERNS.
@@ -186,8 +191,8 @@ identifying a thing by *name* that was unambiguous with one member, and both dee
   matrix slot must produce at least one matching package, and the artifact upload fails if it does
   not. Release-only signing and provenance use the same package extensions.
 
-The release workflow and three Linux packaging scripts scrape the version out of `[workspace.package]`
-rather than asking cargo. Each scrape anchors on the table by name, and every member carries
+The release-version preparation and three Linux packaging scripts read `[workspace.package]`
+rather than asking cargo. The shell scripts anchor on the table by name, and every member carries
 `version.workspace = true`.
 
 **A toolchain bump moves four things in lockstep** — `rust-toolchain.toml`, `Cargo.toml`'s

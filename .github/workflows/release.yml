@@ -28,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Test release version preparation
+        run: python -m unittest discover -s scripts -p 'test_*.py'
       - uses: ./.github/actions/setup-rust
       - name: Check Rust formatting
         run: cargo fmt --all --check
@@ -155,26 +157,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Resolve version and validate release tag
+      - name: Prepare build version
         id: metadata
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          VERSION="$(awk -F'"' '
-            /^\[/                  { in_ws = ($0 == "[workspace.package]") }
-            in_ws && /^version = / { print $2; exit }
-          ' Cargo.toml)"
-          if [[ -z "$VERSION" ]]; then
-            echo "::error::Could not read [workspace.package].version from Cargo.toml."
-            exit 1
-          fi
-          if [[ "$EVENT_NAME" == "release" && "$RELEASE_TAG" != "v$VERSION" ]]; then
-            echo "::error::Release tag $RELEASE_TAG does not match Cargo version v$VERSION."
-            exit 1
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        run: python scripts/prepare-release.py
 
       - uses: ./.github/actions/linux-system-deps
         if: runner.os == 'Linux'
@@ -185,6 +173,11 @@ jobs:
         with:
           shared-key: rust-release-${{ matrix.kind }}-${{ matrix.arch }}
           target: ${{ matrix.target }}
+
+      # Only workspace versions changed; keep third-party dependencies locked.
+      - name: Synchronize release workspace lockfile
+        if: github.event_name == 'release'
+        run: cargo update --workspace
 
       - name: Build Netodia
         run: cargo build --release -p netodia --target ${{ matrix.target }} --locked
@@ -310,21 +303,18 @@ jobs:
         with:
           signatures: artifacts/*.minisig
 
-      - name: Resolve version and capture release notes
+      - name: Prepare manifest version
         id: metadata
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: python scripts/prepare-release.py
+
+      - name: Capture release notes
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="$(awk -F'"' '
-            /^\[/                  { in_ws = ($0 == "[workspace.package]") }
-            in_ws && /^version = / { print $2; exit }
-          ' Cargo.toml)"
-          if [[ -z "$VERSION" || "$TAG" != "v$VERSION" ]]; then
-            echo "::error::Release tag $TAG does not match Cargo.toml version v$VERSION."
-            exit 1
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           gh release view "$TAG" --json body -q '.body' > release-notes.md || : > release-notes.md
 
       - uses: ./.github/actions/build-manifest
