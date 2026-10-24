@@ -361,6 +361,13 @@ io_other_error              = "warn"
 # lands native Wayland DnD.
 [patch.crates-io]
 winit = { path = "winit" }
+# accesskit_unix 0.18.0 aborts the process when the AT-SPI bus is unreachable: its
+# `run_event_loop` error is `unwrap()`ed, and `panic = "abort"` turns that into SIGABRT
+# before the first window. A session whose a11y socket was removed still advertises its
+# dead path from `org.a11y.Bus`, so the connect fails with ENOENT and the player dies.
+# In-tree, like `winit`, so the fix travels with the source; delete it if a release
+# carries the error down instead of unwrapping it.
+accesskit_unix = { path = "vendor/accesskit_unix" }
 
 [profile.release]
 lto = "fat"
