@@ -154,6 +154,14 @@ jobs:
       - uses: ./.github/actions/install-minisign
         if: github.event_name == 'release'
 
+      - name: Prepare signing test version
+        if: github.event_name == 'release'
+        id: metadata
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: python scripts/prepare-release.py
+
       - name: Create signing test payload
         if: github.event_name == 'release'
         shell: bash
@@ -165,7 +173,7 @@ jobs:
           key: ${{ secrets.MINISIGN_SECRET_KEY }}
           password: ${{ secrets.MINISIGN_PASSWORD }}
           files: ${{ runner.temp }}/netodia-signing-check
-          trusted-comment: release-signing-preflight
+          trusted-comment: version=${{ steps.metadata.outputs.version }} preflight=true
 
       - uses: ./.github/actions/minisign-verify
         if: github.event_name == 'release'

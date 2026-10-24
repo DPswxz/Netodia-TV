@@ -14,9 +14,10 @@ use std::path::Path;
 use netodia_app::services::updater::manifest::SUPPORTED_MANIFEST_SCHEMA;
 use netodia_testkit::{REPO_ROOT, strip_line_comments};
 
-/// One artifact-signing call and one release-manifest signing call. An equality rather than a
-/// floor: any new caller must pass the same fields, and a removed caller must update this contract.
-const SIGNING_INVOCATIONS: usize = 2;
+/// One signing preflight, one artifact-signing call and one release-manifest signing call. An
+/// equality rather than a floor: any new caller must pass the same fields, and a removed caller
+/// must update this contract.
+const SIGNING_INVOCATIONS: usize = 3;
 
 /// Ten from `format_key`, twelve from the script. Equalities so that adding a platform has to be
 /// done on both sides at once rather than on whichever one the change started in.
@@ -114,12 +115,15 @@ fn every_signature_carries_the_trusted_comment_fields_the_client_parses() {
 
     let manifests: Vec<&String> =
         comments.iter().filter(|(_, c)| c.contains("manifest=true")).map(|(n, _)| n).collect();
+    let preflights: Vec<&String> =
+        comments.iter().filter(|(_, c)| c.contains("preflight=true")).map(|(n, _)| n).collect();
     let artifacts: Vec<&(String, String)> =
         comments.iter().filter(|(_, c)| c.contains("file={file}")).collect();
 
     // `manifest=true` is the domain separation that stops an artifact signature being swapped into
     // the manifest's slot; the release workflow's manifest signature owes it.
     assert_eq!(manifests.len(), 1, "expected one manifest signature, got {manifests:?}");
+    assert_eq!(preflights.len(), 1, "expected one signing preflight, got {preflights:?}");
     assert_eq!(artifacts.len(), 1, "expected one artifact signature, got {artifacts:?}");
     let (name, artifact) = artifacts[0];
     assert!(
@@ -128,7 +132,7 @@ fn every_signature_carries_the_trusted_comment_fields_the_client_parses() {
     );
 }
 
-/// The `-t` flag itself lives in the composite action both callers delegate to, so the
+/// The `-t` flag itself lives in the composite action all callers delegate to, so the
 /// fields above reach a signature only while this step still passes them. `-SH` is the other half:
 /// a signature that isn't prehashed can't be verified as the artifact streams, and the client
 /// rejects it outright.
