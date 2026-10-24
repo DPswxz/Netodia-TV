@@ -503,16 +503,18 @@ impl Client {
         // Owned batches rather than borrowed ones: an async block over a `&[i64]` makes this
         // future's type depend on one slice lifetime, which callers spawning it can't satisfy.
         let batches = ids.chunks(SONG_BATCH).map(<[i64]>::to_vec).collect::<Vec<_>>();
-        let fetched: Vec<Vec<Song>> = futures_util::stream::iter(batches)
+        let mut fetched = futures_util::stream::iter(batches)
             .map(|batch| self.song_batch(batch))
             // A playlist open is the one caller that pays for more than a batch or two, and the
             // batches are independent: sequentially, a 600-track playlist waits out two round
             // trips for no ordering benefit. `buffered` keeps them in playlist order however they
             // interleave.
-            .buffered(SONG_BATCH_CONCURRENCY)
-            .try_collect()
-            .await?;
-        Ok(fetched.into_iter().flatten().collect())
+            .buffered(SONG_BATCH_CONCURRENCY);
+        let mut songs = Vec::with_capacity(ids.len());
+        while let Some(batch) = fetched.try_next().await? {
+            songs.extend(batch);
+        }
+        Ok(songs)
     }
 
     async fn song_batch(&self, ids: Vec<i64>) -> Result<Vec<Song>> {
