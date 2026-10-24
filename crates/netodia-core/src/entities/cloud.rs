@@ -37,6 +37,7 @@ pub const PERSONAL_RADAR_ID: i64 = 3_136_952_023;
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Artist {
     pub id: i64,
+    #[serde(deserialize_with = "deserialize_nullable_name")]
     pub name: String,
     #[serde(default, rename = "picUrl")]
     pub cover_url: Option<String>,
@@ -53,6 +54,7 @@ impl Artist {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Album {
     pub id: i64,
+    #[serde(deserialize_with = "deserialize_nullable_name")]
     pub name: String,
     #[serde(default, rename = "picUrl")]
     pub cover_url: Option<String>,
@@ -248,27 +250,14 @@ pub struct Lyrics {
     pub romanization: String,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn search_and_detail_song_shapes_share_identity() -> Result<(), serde_json::Error> {
-        let song: Song = serde_json::from_str(
-            r#"{"id":123,"name":"Song","artists":[{"id":1,"name":"Artist"}],"album":{"id":2,"name":"Album"},"duration":1000}"#,
-        )?;
-        assert_eq!(song.id, 123);
-        assert_eq!(song.artist_names(), "Artist");
-        assert_eq!(song.duration_ms, 1000);
-        Ok(())
-    }
-
-    #[test]
-    fn queue_metadata_contains_no_media_url() -> Result<(), serde_json::Error> {
-        let song = Song { id: 9, name: "Track".into(), ..Song::default() };
-        let json = serde_json::to_string(&song)?;
-        assert!(!json.contains("file_path"));
-        assert!(!json.contains("https:"));
-        Ok(())
-    }
+// Tracks can retain their IDs while NetEase returns null artist/album names. Missing display
+// metadata must not reject the whole song batch; other malformed field types still fail.
+fn deserialize_nullable_name<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<String, D::Error> {
+    Option::<String>::deserialize(deserializer).map(Option::unwrap_or_default)
 }
+
+#[cfg(test)]
+#[path = "tests/cloud_tests.rs"]
+mod tests;
