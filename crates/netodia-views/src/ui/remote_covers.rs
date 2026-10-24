@@ -15,6 +15,11 @@ use slint::{Image, Rgb8Pixel, SharedPixelBuffer};
 use tokio::runtime::Handle;
 use tokio::sync::Semaphore;
 
+use netodia_artwork::media::image::image_decode::{
+    FilterType, MAX_SOURCE_DIM, decode_memory_capped_to, large_decode_guard, memory_dimensions,
+    resize_rgb8,
+};
+
 const CACHE_CAP: NonZeroUsize = match NonZeroUsize::new(256) {
     Some(cap) => cap,
     None => panic!("remote cover cache capacity must be non-zero"),
@@ -22,7 +27,7 @@ const CACHE_CAP: NonZeroUsize = match NonZeroUsize::new(256) {
 const MAX_PENDING: usize = 128;
 const MAX_IN_FLIGHT: usize = 6;
 const MAX_SOURCE_BYTES: usize = 1_048_576;
-const MAX_SOURCE_DIM: u32 = 8192;
+const THUMB_SIZE: u32 = 72;
 const NEGATIVE_CACHE_TTL: Duration = Duration::from_secs(30);
 
 struct CachedCover {
@@ -149,19 +154,12 @@ fn parsed_http_url(source: &str) -> Option<reqwest::Url> {
 }
 
 fn decode_thumbnail(bytes: &[u8]) -> Option<SharedPixelBuffer<Rgb8Pixel>> {
-    let _oversized =
-        netodia_artwork::media::image::image_decode::memory_dimensions(bytes, MAX_SOURCE_DIM)
-            .map(|(width, height)| u64::from(width) * u64::from(height))
-            .and_then(netodia_artwork::media::image::image_decode::large_decode_guard);
-    let decoded =
-        netodia_artwork::media::image::image_decode::decode_memory_capped(bytes, MAX_SOURCE_DIM)?;
-    let side = 72.min(decoded.width().max(decoded.height()));
-    let thumbnail = netodia_artwork::media::image::image_decode::resize_rgb8(
-        &decoded,
-        side,
-        side,
-        netodia_artwork::media::image::image_decode::FilterType::Box,
-    )?;
+    let _oversized = memory_dimensions(bytes, MAX_SOURCE_DIM)
+        .map(|(width, height)| u64::from(width) * u64::from(height))
+        .and_then(large_decode_guard);
+    let decoded = decode_memory_capped_to(bytes, MAX_SOURCE_DIM, THUMB_SIZE)?;
+    let side = THUMB_SIZE.min(decoded.width().max(decoded.height()));
+    let thumbnail = resize_rgb8(&decoded, side, side, FilterType::Box)?;
     let (width, height) = thumbnail.dimensions();
     let mut buffer = SharedPixelBuffer::<Rgb8Pixel>::new(width, height);
     buffer.make_mut_bytes().copy_from_slice(thumbnail.as_raw());

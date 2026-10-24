@@ -117,6 +117,46 @@ fn a_container_without_scale_on_decode_falls_back() -> TestResult {
     Ok(())
 }
 
+// ── decode_memory_capped_to ──
+
+#[test]
+fn memory_jpeg_decodes_at_the_requested_scale() -> TestResult {
+    let (_tmp, path) = write_test_jpeg_sized(1024, 512)?;
+    let bytes = std::fs::read(path)?;
+
+    let decoded = decode_memory_capped_to(&bytes, MAX_SOURCE_DIM, 64)
+        .ok_or("the memory JPEG should decode")?;
+
+    assert_eq!((decoded.width(), decoded.height()), (128, 64));
+    Ok(())
+}
+
+#[test]
+fn memory_scale_does_not_bypass_source_dimension_limits() -> TestResult {
+    let (_tmp, path) = write_test_jpeg(64)?;
+    let bytes = std::fs::read(path)?;
+
+    assert!(decode_memory_capped_to(&bytes, 32, 8).is_none());
+    Ok(())
+}
+
+#[test]
+fn memory_png_uses_the_bounded_fallback() -> TestResult {
+    let (_tmp, path) = write_test_png(80)?;
+    let bytes = std::fs::read(path)?;
+
+    let decoded = decode_memory_capped_to(&bytes, MAX_SOURCE_DIM, 16)
+        .ok_or("the memory PNG should decode")?;
+
+    assert_eq!((decoded.width(), decoded.height()), (80, 80));
+    Ok(())
+}
+
+#[test]
+fn memory_scale_rejects_truncated_images() {
+    assert!(decode_memory_capped_to(&[0xff, 0xd8, 0xff], MAX_SOURCE_DIM, 48).is_none());
+}
+
 // ── fit_within ──
 
 /// The rule every tier depends on: a cover smaller than the tile is drawn at the tile's size

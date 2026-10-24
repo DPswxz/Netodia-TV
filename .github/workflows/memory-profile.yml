@@ -1,0 +1,69 @@
+name: Artwork memory profile
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - crates/netodia-artwork/**
+      - .github/workflows/memory-profile.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  artwork:
+    name: Compare full and scaled artwork decode
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CARGO_BUILD_JOBS: 4
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/linux-system-deps
+      - uses: ./.github/actions/setup-rust
+        with:
+          shared-key: artwork-memory
+      - name: Build release memory probe
+        run: cargo build --release --locked -p netodia-artwork --example artwork_footprint
+      - name: Measure both paths in separate processes
+        shell: bash
+        run: |
+          set -euo pipefail
+          probe=target/release/examples/artwork_footprint
+          "$probe" fixture "$RUNNER_TEMP/cover.jpg"
+          mkdir -p memory-profile
+          for mode in full scaled; do
+            /usr/bin/time -f '%M' -o "memory-profile/$mode.rss" \
+              "$probe" "$mode" "$RUNNER_TEMP/cover.jpg" > "memory-profile/$mode.txt"
+          done
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          root = Path('memory-profile')
+          full = int((root / 'full.rss').read_text())
+          scaled = int((root / 'scaled.rss').read_text())
+          report = (
+              '## Artwork decode peak RSS\n\n'
+              '| Path | Peak RSS (KiB) |\n| --- | ---: |\n'
+              f'| Full decode before resize | {full} |\n'
+              f'| Scaled decode before resize | {scaled} |\n\n'
+              f'Peak reduction: {(full - scaled) / full:.1%}.\n\n'
+              'Same synthetic 4096x4096 JPEG, same 72x72 output, separate release processes. '
+              'This measures the artwork path, not whole-application idle memory.\n\n'
+              '```text\n'
+              + (root / 'full.txt').read_text()
+              + (root / 'scaled.txt').read_text()
+              + '```\n'
+          )
+          (root / 'summary.md').write_text(report)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write(report)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: artwork-memory-profile
+          path: memory-profile/
+          retention-days: 30

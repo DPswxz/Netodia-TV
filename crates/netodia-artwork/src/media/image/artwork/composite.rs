@@ -17,8 +17,8 @@ use std::path::{Path, PathBuf};
 use netodia_core::error::describe;
 
 use crate::media::image::image_decode::{
-    FilterType, MAX_SOURCE_DIM, decode_capped, decode_memory_capped, large_decode_guard,
-    memory_dimensions,
+    FilterType, MAX_SOURCE_DIM, decode_capped_to, decode_memory_capped_to, large_decode_guard,
+    memory_dimensions, source_pixels,
 };
 
 use super::{
@@ -111,7 +111,7 @@ pub fn compose_cover_from_memory(source_bytes: &[Vec<u8>], side: u32) -> Option<
             let _oversized = memory_dimensions(bytes, MAX_SOURCE_DIM)
                 .map(|(w, h)| u64::from(w) * u64::from(h))
                 .and_then(large_decode_guard);
-            let Some(source) = decode_memory_capped(bytes, MAX_SOURCE_DIM) else {
+            let Some(source) = decode_memory_capped_to(bytes, MAX_SOURCE_DIM, side) else {
                 unreadable = Some(index);
                 break;
             };
@@ -160,8 +160,9 @@ fn compose_exact(
 
     let mut canvas = image::RgbImage::new(side, side);
     for (index, (path, &(x, y, width, height))) in sources.iter().zip(rects).enumerate() {
-        let source =
-            decode_capped(path, MAX_SOURCE_DIM).map_err(|_| ComposeStop::Unreadable(index))?;
+        let _oversized = source_pixels(path).and_then(large_decode_guard);
+        let source = decode_capped_to(path, MAX_SOURCE_DIM, side)
+            .map_err(|_| ComposeStop::Unreadable(index))?;
         let tile = resize_to_cover(&source, width * half, height * half, filter)
             .ok_or(ComposeStop::Unreadable(index))?;
         image::imageops::overlay(&mut canvas, &tile, i64::from(x * half), i64::from(y * half));

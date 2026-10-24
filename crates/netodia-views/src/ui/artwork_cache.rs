@@ -26,7 +26,7 @@ use crate::ui::backdrop::BackdropSample;
 use crate::ui::util::{BLUR_TARGET, COVER_SIZE, buffer_from_rgb};
 use netodia_artwork::media::image::decoded::Decoded;
 use netodia_artwork::media::image::image_decode::{
-    FilterType, MAX_SOURCE_DIM, decode_capped_to, decode_memory_capped, fit_within,
+    FilterType, MAX_SOURCE_DIM, decode_capped_to, decode_memory_capped_to, fit_within,
     large_decode_guard, memory_dimensions, resize_rgb8,
 };
 
@@ -103,7 +103,7 @@ impl ArtworkCache {
         let _oversized = memory_dimensions(bytes, MAX_SOURCE_DIM)
             .map(|(width, height)| u64::from(width) * u64::from(height))
             .and_then(large_decode_guard);
-        let pair = decode_memory_capped(bytes, MAX_SOURCE_DIM)
+        let pair = decode_memory_capped_to(bytes, MAX_SOURCE_DIM, COVER_SIZE)
             .and_then(|decoded| pair_from_image(&decoded, self.blur))?;
         self.cache.lock().put(key, Decoded::Ready(pair.clone()));
         Some(pair)

@@ -327,7 +327,8 @@ pub fn store_image(bytes: &[u8], ext: &str, dir: &Path) -> Option<String> {
 /// A source over the *byte* bound alone keeps its dimensions — `fit_within` never enlarges and
 /// has nothing to shrink, so it is re-encoded in place.
 fn normalized_bytes(bytes: &[u8], width: u32, height: u32) -> Option<Vec<u8>> {
-    let decoded = image_decode::decode_memory_capped(bytes, MAX_SOURCE_DIM)?;
+    let _oversized = image_decode::large_decode_guard(u64::from(width) * u64::from(height));
+    let decoded = image_decode::decode_memory_capped_to(bytes, MAX_SOURCE_DIM, STORE_MAX_DIM)?;
     let (target_w, target_h) =
         image_decode::fit_within(width, height, STORE_MAX_DIM, STORE_MAX_DIM);
     let resized = resize_rgb8(&decoded, target_w, target_h, STORE_FILTER)?;
