@@ -199,7 +199,7 @@ fn the_embedded_pubkey_is_still_the_release_key() {
     let key = src.lines().map(str::trim).filter(|line| !line.is_empty()).nth(1);
     assert_eq!(
         key,
-        Some("RWS7ypNIpu/lrcx22niqkHnyQrT5oAnCORcg1+rmzTRxasPaqlKT7BoU"),
+        Some("RWR2q6xSmr8wSnFpTOZKHFPRjFRHFzlGX/sHKwJ0Q/vwmFIcz5uLK2hS"),
         "the updater's public key changed; every install already in the field verifies against \
          the old one, so this is only correct as a deliberate rotation"
     );

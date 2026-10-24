@@ -73,7 +73,7 @@ pub fn embedded_pubkey() -> Result<PublicKey, MinisignError> {
 /// Pass `None` to skip the cross-check.
 ///
 /// Production callers pass [`embedded_pubkey`]; the parameter exists so tests can inject their own
-/// keypair, the production pubkey being keyed to a placeholder no fixture can match.
+/// keypair without access to the release signing secret.
 pub fn verify_stream<R: Read>(
     mut reader: R,
     sig_text: &str,

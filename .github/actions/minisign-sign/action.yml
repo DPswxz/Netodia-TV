@@ -32,13 +32,24 @@ runs:
         FILES: ${{ inputs.files }}
         COMMENT: ${{ inputs.trusted-comment }}
       run: |
+        if [[ -z "$KEY" || -z "$PW" ]]; then
+          echo "::error::Missing MINISIGN_SECRET_KEY or MINISIGN_PASSWORD. Configure repository Actions secrets before signing a release."
+          exit 1
+        fi
         # Armed before the key exists rather than run after the last signature:
         # `set -e` anywhere in between leaves the decoded key for every later step
         # otherwise. `shred` is absent from Git Bash, so Windows takes the fallback.
         trap 'shred -u "$RUNNER_TEMP/minisign.key" 2>/dev/null || rm -f "$RUNNER_TEMP/minisign.key"' EXIT
         # Subshell so the mode is the key's alone, not every `.minisig` written
         # below; a `chmod` after the redirect narrows the window instead of closing it.
-        (umask 077; echo "$KEY" | base64 -d > "$RUNNER_TEMP/minisign.key")
+        if ! (umask 077; printf '%s' "$KEY" | base64 -d > "$RUNNER_TEMP/minisign.key"); then
+          echo "::error::MINISIGN_SECRET_KEY must be the base64 encoding of the complete minisign secret key file."
+          exit 1
+        fi
+        if [[ ! -s "$RUNNER_TEMP/minisign.key" ]]; then
+          echo "::error::MINISIGN_SECRET_KEY decoded to an empty key file."
+          exit 1
+        fi
 
         shopt -s nullglob
         signed=0

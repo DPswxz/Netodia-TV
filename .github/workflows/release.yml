@@ -122,10 +122,62 @@ jobs:
           fi
           echo "All checks passed"
 
+  release-signing:
+    name: Release signing preflight
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'release'
+
+      - name: Require release signing secrets
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          PW: ${{ secrets.MINISIGN_PASSWORD }}
+        run: |
+          missing=0
+          for name in KEY PW; do
+            if [[ -z "${!name}" ]]; then
+              missing=1
+            fi
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            echo "::error::Configure MINISIGN_SECRET_KEY (base64-encoded key file) and MINISIGN_PASSWORD in repository Actions secrets before publishing a release."
+            exit 1
+          fi
+
+      - uses: ./.github/actions/install-minisign
+        if: github.event_name == 'release'
+
+      - name: Create signing test payload
+        if: github.event_name == 'release'
+        shell: bash
+        run: printf 'Netodia release signing preflight\n' > "$RUNNER_TEMP/netodia-signing-check"
+
+      - uses: ./.github/actions/minisign-sign
+        if: github.event_name == 'release'
+        with:
+          key: ${{ secrets.MINISIGN_SECRET_KEY }}
+          password: ${{ secrets.MINISIGN_PASSWORD }}
+          files: ${{ runner.temp }}/netodia-signing-check
+          trusted-comment: release-signing-preflight
+
+      - uses: ./.github/actions/minisign-verify
+        if: github.event_name == 'release'
+        with:
+          signatures: ${{ runner.temp }}/netodia-signing-check.minisig
+
+      - name: Clean signing test payload
+        if: always() && github.event_name == 'release'
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/netodia-signing-check" "$RUNNER_TEMP/netodia-signing-check.minisig"
+
   build:
     name: ${{ matrix.kind }} (${{ matrix.arch }})
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-    needs: [quality]
+    needs: [quality, release-signing]
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read

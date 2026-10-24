@@ -69,7 +69,10 @@ variable. Keep artifact names compatible with scripts/build-latest-json.py's PLA
 Release packages are minisign-signed and carry build provenance attestations. After all matrix
 slots finish, publish verifies signatures, generates and signs latest.json from the final published
 release notes, creates SHA256SUMS.txt, and uploads them with the packages. Release publishing
-requires the existing MINISIGN_SECRET_KEY and MINISIGN_PASSWORD repository secrets. Manual
+requires MINISIGN_SECRET_KEY (the entire secret key file encoded as base64) and MINISIGN_PASSWORD
+repository secrets. The release-signing preflight signs a small payload and verifies it against
+assets/updater-pubkey.b64 before any matrix build starts, catching missing secrets, wrong passwords
+and mismatched key pairs. Manual
 dispatches run the same quality gate and build matrix, then expose unsigned package files as Actions
 artifacts for 30 days; they do not update a Release or the updater manifest.
 
