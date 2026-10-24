@@ -104,7 +104,7 @@ jobs:
   quality:
     name: quality
     if: always()
-    needs: [fmt, audit, quality-linux, test-linux, quality-windows, test-windows]
+    needs: [fmt, audit, quality-linux, test-linux, quality-windows, test-windows, release-signing]
     runs-on: ubuntu-latest
     steps:
       - name: Require every check to pass
@@ -124,9 +124,12 @@ jobs:
 
   release-signing:
     name: Release signing preflight
-    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
+      - name: Skip signing for non-release events
+        if: github.event_name != 'release'
+        run: echo "Release signing is only required for published releases."
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: github.event_name == 'release'
 
@@ -177,7 +180,7 @@ jobs:
   build:
     name: ${{ matrix.kind }} (${{ matrix.arch }})
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-    needs: [quality, release-signing]
+    needs: [quality]
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
