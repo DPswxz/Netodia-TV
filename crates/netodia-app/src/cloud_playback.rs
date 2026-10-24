@@ -15,6 +15,7 @@ use netodia_core::entities::track::TrackSummary;
 use netodia_core::error::{AppError, AppResult};
 use netodia_engine::player::engine::backend::PlaybackEngine;
 use netodia_engine::player::engine::event_sink::{ExternalTrackPlayback, PlayerSinks};
+use netodia_engine::player::engine::queue::QueueState;
 use netodia_engine::player::engine::state::{PlayerStateHandle, lock_state, with_state_emit};
 use netodia_engine::player::engine::types::{PlaybackStatus, RepeatMode};
 use netodia_net::services::net::range_reader::RangeReader;
@@ -24,11 +25,43 @@ use parking_lot::RwLock;
 use crate::cloud::{CloudService, QrStatus, SessionStatus};
 use tokio::sync::watch;
 
+/// A row activation keeps the transport preference; an explicit order choice replaces it.
+#[derive(Clone, Copy)]
+pub enum CloudQueueShuffle {
+    Preserve,
+    Ordered,
+    Shuffle,
+}
+
+impl CloudQueueShuffle {
+    fn enabled(self, current: bool) -> bool {
+        match self {
+            Self::Preserve => current,
+            Self::Ordered => false,
+            Self::Shuffle => true,
+        }
+    }
+}
+
 #[derive(Clone)]
 struct CloudQueuePlan {
     tracks: Vec<Arc<TrackSummary>>,
     start_index: usize,
-    shuffle: bool,
+    shuffle: CloudQueueShuffle,
+}
+
+impl CloudQueuePlan {
+    fn apply(self, queue: &mut QueueState, rng: &mut impl rand::Rng) {
+        let shuffle = self.shuffle.enabled(queue.shuffle_enabled);
+        queue.clear();
+        queue.add_tracks(self.tracks);
+        let _ = queue.skip_to_index(self.start_index);
+        if shuffle {
+            queue.shuffle_play_order_in_place(rng, true);
+        } else {
+            queue.unshuffle();
+        }
+    }
 }
 
 enum QueueUpdate {
@@ -334,6 +367,43 @@ impl CloudPlayback {
                 Arc::new(track_summary(song, None, liked))
             })
             .collect();
+        let shuffle =
+            if shuffle { CloudQueueShuffle::Shuffle } else { CloudQueueShuffle::Preserve };
+        self.start_cloud_queue(generation, tracks, selected_song_id, shuffle, volume, speed).await
+    }
+
+    /// [`Self::play_queue`] for a caller that already holds the track list. The playlist detail
+    /// does — its rows are the same songs, title through artwork — so a click there costs a stream
+    /// ticket instead of a whole `song/detail` round trip for a list the screen is showing.
+    /// `shuffle` distinguishes a row activation from an explicit order selection.
+    pub async fn play_queue_tracks(
+        &self,
+        tracks: Vec<TrackSummary>,
+        selected_song_id: i64,
+        shuffle: CloudQueueShuffle,
+        volume: f64,
+        speed: f64,
+    ) -> AppResult<CloudPlaybackResult> {
+        if tracks.is_empty() {
+            return Err(AppError::Queue("云端播放列表没有歌曲".to_owned()));
+        }
+        self.queue_generation.fetch_add(1, Ordering::AcqRel);
+        let generation = self.engine.reserve_playback_request();
+        let tracks: Vec<Arc<TrackSummary>> = tracks.into_iter().map(Arc::new).collect();
+        self.start_cloud_queue(generation, tracks, selected_song_id, shuffle, volume, speed).await
+    }
+
+    /// Seat the queue and start `selected_song_id`, walking the candidates a repeat or shuffle
+    /// preference allows until one of them actually starts.
+    async fn start_cloud_queue(
+        &self,
+        generation: u64,
+        tracks: Vec<Arc<TrackSummary>>,
+        selected_song_id: i64,
+        shuffle: CloudQueueShuffle,
+        volume: f64,
+        speed: f64,
+    ) -> AppResult<CloudPlaybackResult> {
         let start_index = tracks
             .iter()
             .position(|track| track.id == selected_song_id)
@@ -342,8 +412,12 @@ impl CloudPlayback {
             let state = lock_state(&self.player_state);
             (state.queue.repeat_mode, state.queue.shuffle_enabled)
         };
-        let candidates =
-            playback_candidates(tracks.len(), start_index, repeat_mode, shuffle || shuffle_enabled);
+        let candidates = playback_candidates(
+            tracks.len(),
+            start_index,
+            repeat_mode,
+            shuffle.enabled(shuffle_enabled),
+        );
         let quality = self.quality();
         let mut last_error = None;
         for candidate in candidates {
@@ -714,12 +788,7 @@ impl CloudPlayback {
                     QueueUpdate::Clear => state.queue.clear(),
                     QueueUpdate::Preserve => {}
                     QueueUpdate::Replace(plan) => {
-                        state.queue.clear();
-                        state.queue.add_tracks(plan.tracks);
-                        let _ = state.queue.skip_to_index(plan.start_index);
-                        if plan.shuffle || state.queue.shuffle_enabled {
-                            state.queue.shuffle_play_order_in_place(&mut rand::rng(), true);
-                        }
+                        plan.apply(&mut state.queue, &mut rand::rng());
                     }
                 }
                 state.source = Some(summary);

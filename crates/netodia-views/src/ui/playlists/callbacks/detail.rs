@@ -3,17 +3,18 @@
 
 use std::sync::Arc;
 
-use slint::{ComponentHandle, Global as _};
+use slint::{ComponentHandle, Global as _, Model, ModelExt};
 
 use super::artwork::open_edit_artwork;
 use crate::ui::callbacks::track_detail;
 use crate::ui::callbacks::{DialogClaim, collect_track_ids};
 use crate::ui::playlists::{self as playlists_ui_mod, PlaylistsUi};
+use netodia_app::cloud_playback::CloudQueueShuffle;
 use netodia_app::library;
 use netodia_app::state::AppState;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
-use netodia_ui::{AppWindow, PlaylistDetail};
+use netodia_ui::{AppWindow, PlayerVm, PlaylistDetail, PlaylistPlaybackAction, TrackListRow};
 
 /// Wire the `PlaylistDetail` callbacks. See [`super::wire`].
 pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
@@ -25,9 +26,13 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
     wire_remove_track(ui, state, playlists_ui);
 }
 
-/// Cloud playlist rows do not exist in `SQLite`, so activation and shuffle use the buffered
-/// `NetEase` source instead of the local queue API.
+/// Cloud playlist rows do not exist in `SQLite`, so activation, Play All and Shuffle seat the
+/// queue from the rows the detail is already showing — the same songs `song/detail` would return —
+/// which leaves only the stream ticket between the click and the first sound.
 fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
+    ui.global::<PlaylistDetail>().on_resolve_playback_action(|player, rows, cloud, ready| {
+        playback_action(&player, &rows, cloud, ready)
+    });
     let s = state.clone();
     let pu = playlists_ui.clone();
     ui.global::<PlaylistDetail>().on_play_cloud_row(move |remote_id, _index| {
@@ -35,26 +40,117 @@ fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Play
             log::warn!("playlists::play_cloud_song: invalid NetEase song ID");
             return;
         };
-        play_cloud_song(&s, pu.detail.cache.track_ids(), song_id, false);
+        play_cloud_track(&s, &pu, song_id, CloudQueueShuffle::Preserve);
     });
 
+    // Shuffle All: one row at random, shuffle forced on, and the pill row follows the choice it
+    // just made so the next Play pressing the same button starts the same way.
     let s = state.clone();
     let pu = playlists_ui.clone();
+    let weak = ui.as_weak();
     ui.global::<PlaylistDetail>().on_shuffle_all(move || {
         use rand::RngExt;
-        let ids = pu.detail.cache.track_ids();
-        if ids.is_empty() {
+        let rows = pu.detail.cache.displayed_rows();
+        if rows.is_empty() {
             return;
         }
-        let id = ids[rand::rng().random_range(..ids.len())];
-        play_cloud_song(&s, ids, id, true);
+        let first = rows[rand::rng().random_range(..rows.len())].id;
+        set_play_mode(&weak, PLAY_MODE_SHUFFLE);
+        play_cloud_track(&s, &pu, first, CloudQueueShuffle::Shuffle);
+    });
+
+    // Play All: the list in its own order, from the first row.
+    let s = state.clone();
+    let pu = playlists_ui.clone();
+    let weak = ui.as_weak();
+    ui.global::<PlaylistDetail>().on_play_all(move || {
+        let Some(first) = pu.detail.cache.displayed_rows().first().map(|row| row.id) else {
+            return;
+        };
+        set_play_mode(&weak, PLAY_MODE_ORDERED);
+        play_cloud_track(&s, &pu, first, CloudQueueShuffle::Ordered);
+    });
+
+    // The one button that has to know what "play" means right now: with one of this playlist's
+    // rows already playing it toggles the transport, and otherwise it starts the list the way the
+    // pill row is set. Stopped is the third case — a restored cloud queue with no source.
+    let s = state.clone();
+    let pu = playlists_ui.clone();
+    let weak = ui.as_weak();
+    ui.global::<PlaylistDetail>().on_toggle_playback(move || {
+        let Some(ui) = weak.upgrade() else { return };
+        let action = ui.global::<PlaylistDetail>().get_playback_action();
+        if action == PlaylistPlaybackAction::Unavailable {
+            return;
+        }
+        if matches!(action, PlaylistPlaybackAction::Pause | PlaylistPlaybackAction::Resume) {
+            let state = s.clone();
+            s.runtime.spawn(async move {
+                if let Err(error) =
+                    library::playback::player_toggle_play_pause(&state.playback_ctx())
+                {
+                    log::warn!("playlists::toggle_playback: {}", describe(&error));
+                }
+            });
+            return;
+        }
+        let shuffle = ui.global::<PlaylistDetail>().get_play_mode() == PLAY_MODE_SHUFFLE;
+        let rows = pu.detail.cache.displayed_rows();
+        let Some(first) = rows.first().map(|row| row.id) else { return };
+        let first = if shuffle {
+            use rand::RngExt;
+            rows[rand::rng().random_range(..rows.len())].id
+        } else {
+            first
+        };
+        let mode = if shuffle { CloudQueueShuffle::Shuffle } else { CloudQueueShuffle::Ordered };
+        play_cloud_track(&s, &pu, first, mode);
     });
 }
 
-fn play_cloud_song(state: &AppState, ids: Vec<i64>, song_id: i64, shuffle: bool) {
+fn playback_action(
+    player: &PlayerVm,
+    rows: &slint::ModelRc<TrackListRow>,
+    cloud: bool,
+    ready: bool,
+) -> PlaylistPlaybackAction {
+    rows.model_tracker().track_row_count_changes();
+    if !ready || rows.row_count() == 0 {
+        return PlaylistPlaybackAction::Unavailable;
+    }
+    let owns_source = player.has_track
+        && player.track.file_path.is_empty() == cloud
+        && (0..rows.row_count()).any(|index| {
+            rows.row_data_tracked(index).is_some_and(|row| row.remote_id == player.track.remote_id)
+        });
+    match (owns_source, player.status.as_str()) {
+        (true, "playing") => PlaylistPlaybackAction::Pause,
+        (true, "paused") => PlaylistPlaybackAction::Resume,
+        _ => PlaylistPlaybackAction::Start,
+    }
+}
+
+/// Which way the detail's Play / Shuffle pills fill the queue. Slint shows the choice; this is the
+/// spelling both sides compare, so a typo can't quietly make them disagree.
+const PLAY_MODE_ORDERED: &str = "ordered";
+const PLAY_MODE_SHUFFLE: &str = "shuffle";
+
+fn set_play_mode(weak: &slint::Weak<AppWindow>, mode: &str) {
+    if let Some(ui) = weak.upgrade() {
+        ui.global::<PlaylistDetail>().set_play_mode(slint::SharedString::from(mode));
+    }
+}
+
+fn play_cloud_track(
+    state: &AppState,
+    playlists_ui: &PlaylistsUi,
+    song_id: i64,
+    shuffle: CloudQueueShuffle,
+) {
     if song_id <= 0 {
         return;
     }
+    let tracks = super::super::track_summaries(&playlists_ui.detail.cache.displayed_rows());
     let state = state.clone();
     let runtime = state.runtime.clone();
     runtime.spawn(async move {
@@ -63,12 +159,16 @@ fn play_cloud_song(state: &AppState, ids: Vec<i64>, song_id: i64, shuffle: bool)
             (player.effective_volume(), player.playback_speed)
         };
         if let Err(error) =
-            state.cloud_playback.play_queue(&ids, song_id, shuffle, volume, speed).await
+            state.cloud_playback.play_queue_tracks(tracks, song_id, shuffle, volume, speed).await
         {
             log::warn!("playlists::play_cloud_song({song_id}): {}", describe(&error));
         }
     });
 }
+
+#[cfg(test)]
+#[path = "tests/detail_tests.rs"]
+mod tests;
 
 /// The header's back button.
 ///

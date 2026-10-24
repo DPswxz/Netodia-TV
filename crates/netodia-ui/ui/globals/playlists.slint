@@ -1,4 +1,7 @@
-import { PlaylistRow, PlaylistGridRow, TrackListRow, TrackColumns } from "../models.slint";
+import { PlaylistRow, PlaylistGridRow, TrackListRow, TrackColumns, PlayerVm } from "../models.slint";
+import { Player } from "player.slint";
+
+export enum PlaylistPlaybackAction { unavailable, start, pause, resume }
 
 // The Playlist grid view, on the `Albums` / `Artists` ownership contract: Rust owns the flat list
 // and `apply-filter` re-derives `grid-rows` with no DB hit. Sorted by most-recently-updated and
@@ -27,6 +30,10 @@ export global Playlists {
     in-out property <string> filter;
     in-out property <string> sort-field: "updated"; // "name" | "track_count" | "updated"
     in-out property <string> sort-dir: "desc";
+    // The grid's scroll position. It lives here because the detail **unmounts** the grid branch:
+    // the `ListView` loses `viewport-y` with its instance, so backing out of a playlist landed on
+    // the first row again however far down the user had scrolled.
+    in-out property <length> scroll-offset: 0;
 
     callback columns-changed(int);
     callback apply-filter(string);
@@ -165,6 +172,19 @@ export global PlaylistDetail {
 
     callback close-detail();
     callback shuffle-all();
+    // The list in its own order, from the first row.
+    callback play-all();
+    // Toggles the transport when one of these rows is the current track, and otherwise starts the
+    // list the way `play-mode` says.
+    callback toggle-playback();
+    // One decision drives the label, enabled state and Rust click handler. Pending headers from
+    // an asynchronous open must not reuse the previous playlist's transport or rows.
+    pure callback resolve-playback-action(PlayerVm, [TrackListRow], bool, bool) -> PlaylistPlaybackAction;
+    out property <PlaylistPlaybackAction> playback-action: root.resolve-playback-action(
+        Player.vm, root.tracks, root.cloud-collection, root.playlist-id >= 0 && !root.loading);
+    // `"ordered"` or `"shuffle"` — which pill the row highlights, and how `toggle-playback` fills
+    // the queue when it has to start one. Rust writes it on Play All / Shuffle All.
+    in-out property <string> play-mode: "ordered";
     callback play-row(int /*track_id*/, int /*index*/);
     // Cloud rows carry exact 64-bit NetEase IDs as decimal strings.
     callback play-cloud-row(string /*song_id*/, int /*index*/);
