@@ -1,9 +1,58 @@
 use std::sync::Arc;
 
-use super::{queue_cloud_tracks, track_summary};
+use super::{
+    CloudQueuePlan, CloudQueueShuffle, playback_candidates, queue_cloud_tracks, track_summary,
+};
 use netodia_core::entities::cloud::Song;
 use netodia_core::entities::track::TrackSummary;
 use netodia_engine::player::engine::queue::QueueState;
+use netodia_engine::player::engine::types::RepeatMode;
+use rand::{SeedableRng, rngs::StdRng};
+
+fn replace(queue: &mut QueueState, shuffle: CloudQueueShuffle, start_index: usize) {
+    CloudQueuePlan {
+        tracks: vec![track(19), track(20), track(21), track(22)],
+        start_index,
+        shuffle,
+    }
+    .apply(queue, &mut StdRng::seed_from_u64(42));
+}
+
+#[test]
+fn explicit_ordered_playback_leaves_shuffle_and_starts_at_the_selected_row() {
+    let mut queue = QueueState::default();
+    queue.set_repeat_mode(RepeatMode::All);
+    replace(&mut queue, CloudQueueShuffle::Shuffle, 2);
+    assert!(queue.shuffle_enabled);
+    assert_eq!(queue.get_current().map(|track| track.id), Some(21));
+
+    replace(&mut queue, CloudQueueShuffle::Ordered, 0);
+
+    assert!(!queue.shuffle_enabled);
+    assert_eq!(ids(&queue), [19, 20, 21, 22]);
+    assert_eq!(queue.get_current().map(|track| track.id), Some(19));
+    assert_eq!(queue.repeat_mode, RepeatMode::All);
+    assert_eq!(
+        playback_candidates(4, 1, RepeatMode::Off, CloudQueueShuffle::Ordered.enabled(true)),
+        [1, 2, 3]
+    );
+}
+
+#[test]
+fn row_activation_preserves_both_transport_shuffle_preferences() {
+    let mut queue = QueueState::default();
+    replace(&mut queue, CloudQueueShuffle::Shuffle, 0);
+
+    replace(&mut queue, CloudQueueShuffle::Preserve, 2);
+    assert!(queue.shuffle_enabled);
+    assert_eq!(queue.get_current().map(|track| track.id), Some(21));
+
+    replace(&mut queue, CloudQueueShuffle::Ordered, 0);
+    replace(&mut queue, CloudQueueShuffle::Preserve, 2);
+    assert!(!queue.shuffle_enabled);
+    assert_eq!(ids(&queue), [19, 20, 21, 22]);
+    assert_eq!(queue.get_current().map(|track| track.id), Some(21));
+}
 
 fn track(id: i64) -> Arc<TrackSummary> {
     Arc::new(track_summary(Song { id, name: format!("Song {id}"), ..Song::default() }, None, false))

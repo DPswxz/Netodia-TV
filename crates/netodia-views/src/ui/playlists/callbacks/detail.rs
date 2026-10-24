@@ -3,18 +3,18 @@
 
 use std::sync::Arc;
 
-use slint::{ComponentHandle, Global as _};
+use slint::{ComponentHandle, Global as _, Model, ModelExt};
 
 use super::artwork::open_edit_artwork;
 use crate::ui::callbacks::track_detail;
 use crate::ui::callbacks::{DialogClaim, collect_track_ids};
 use crate::ui::playlists::{self as playlists_ui_mod, PlaylistsUi};
+use netodia_app::cloud_playback::CloudQueueShuffle;
 use netodia_app::library;
 use netodia_app::state::AppState;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
-use netodia_engine::player::engine::types::PlaybackStatus;
-use netodia_ui::{AppWindow, PlaylistDetail};
+use netodia_ui::{AppWindow, PlayerVm, PlaylistDetail, PlaylistPlaybackAction, TrackListRow};
 
 /// Wire the `PlaylistDetail` callbacks. See [`super::wire`].
 pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
@@ -30,6 +30,9 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Playlist
 /// queue from the rows the detail is already showing — the same songs `song/detail` would return —
 /// which leaves only the stream ticket between the click and the first sound.
 fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<PlaylistsUi>) {
+    ui.global::<PlaylistDetail>().on_resolve_playback_action(|player, rows, cloud, ready| {
+        playback_action(&player, &rows, cloud, ready)
+    });
     let s = state.clone();
     let pu = playlists_ui.clone();
     ui.global::<PlaylistDetail>().on_play_cloud_row(move |remote_id, _index| {
@@ -37,7 +40,7 @@ fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Play
             log::warn!("playlists::play_cloud_song: invalid NetEase song ID");
             return;
         };
-        play_cloud_track(&s, &pu, song_id, false);
+        play_cloud_track(&s, &pu, song_id, CloudQueueShuffle::Preserve);
     });
 
     // Shuffle All: one row at random, shuffle forced on, and the pill row follows the choice it
@@ -53,7 +56,7 @@ fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Play
         }
         let first = rows[rand::rng().random_range(..rows.len())].id;
         set_play_mode(&weak, PLAY_MODE_SHUFFLE);
-        play_cloud_track(&s, &pu, first, true);
+        play_cloud_track(&s, &pu, first, CloudQueueShuffle::Shuffle);
     });
 
     // Play All: the list in its own order, from the first row.
@@ -65,7 +68,7 @@ fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Play
             return;
         };
         set_play_mode(&weak, PLAY_MODE_ORDERED);
-        play_cloud_track(&s, &pu, first, false);
+        play_cloud_track(&s, &pu, first, CloudQueueShuffle::Ordered);
     });
 
     // The one button that has to know what "play" means right now: with one of this playlist's
@@ -76,14 +79,11 @@ fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Play
     let weak = ui.as_weak();
     ui.global::<PlaylistDetail>().on_toggle_playback(move || {
         let Some(ui) = weak.upgrade() else { return };
-        let playing_here = {
-            let player = lock_state(&s.player_state);
-            let current = player.source.as_ref().map(|track| track.id);
-            let holds_one_of_ours =
-                current.is_some_and(|id| pu.detail.cache.track_ids().contains(&id));
-            holds_one_of_ours && player.status != PlaybackStatus::Stopped
-        };
-        if playing_here {
+        let action = ui.global::<PlaylistDetail>().get_playback_action();
+        if action == PlaylistPlaybackAction::Unavailable {
+            return;
+        }
+        if matches!(action, PlaylistPlaybackAction::Pause | PlaylistPlaybackAction::Resume) {
             let state = s.clone();
             s.runtime.spawn(async move {
                 if let Err(error) =
@@ -103,8 +103,31 @@ fn wire_cloud_playback(ui: &AppWindow, state: &AppState, playlists_ui: &Arc<Play
         } else {
             first
         };
-        play_cloud_track(&s, &pu, first, shuffle);
+        let mode = if shuffle { CloudQueueShuffle::Shuffle } else { CloudQueueShuffle::Ordered };
+        play_cloud_track(&s, &pu, first, mode);
     });
+}
+
+fn playback_action(
+    player: &PlayerVm,
+    rows: &slint::ModelRc<TrackListRow>,
+    cloud: bool,
+    ready: bool,
+) -> PlaylistPlaybackAction {
+    rows.model_tracker().track_row_count_changes();
+    if !ready || rows.row_count() == 0 {
+        return PlaylistPlaybackAction::Unavailable;
+    }
+    let owns_source = player.has_track
+        && player.track.file_path.is_empty() == cloud
+        && (0..rows.row_count()).any(|index| {
+            rows.row_data_tracked(index).is_some_and(|row| row.remote_id == player.track.remote_id)
+        });
+    match (owns_source, player.status.as_str()) {
+        (true, "playing") => PlaylistPlaybackAction::Pause,
+        (true, "paused") => PlaylistPlaybackAction::Resume,
+        _ => PlaylistPlaybackAction::Start,
+    }
 }
 
 /// Which way the detail's Play / Shuffle pills fill the queue. Slint shows the choice; this is the
@@ -118,7 +141,12 @@ fn set_play_mode(weak: &slint::Weak<AppWindow>, mode: &str) {
     }
 }
 
-fn play_cloud_track(state: &AppState, playlists_ui: &PlaylistsUi, song_id: i64, shuffle: bool) {
+fn play_cloud_track(
+    state: &AppState,
+    playlists_ui: &PlaylistsUi,
+    song_id: i64,
+    shuffle: CloudQueueShuffle,
+) {
     if song_id <= 0 {
         return;
     }
@@ -137,6 +165,10 @@ fn play_cloud_track(state: &AppState, playlists_ui: &PlaylistsUi, song_id: i64, 
         }
     });
 }
+
+#[cfg(test)]
+#[path = "tests/detail_tests.rs"]
+mod tests;
 
 /// The header's back button.
 ///

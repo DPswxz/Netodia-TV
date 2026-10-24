@@ -3,8 +3,7 @@ import { Tracks } from "../../globals/tracks.slint";
 import { AlbumDetail, Albums } from "../../globals/albums.slint";
 import { ArtistDetail, Artists } from "../../globals/artists.slint";
 import { GenreDetail, Genres } from "../../globals/genres.slint";
-import { PlaylistDetail, Playlists } from "../../globals/playlists.slint";
-import { Player } from "../../globals/player.slint";
+import { PlaylistDetail, Playlists, PlaylistPlaybackAction } from "../../globals/playlists.slint";
 import { Dialog } from "../../globals/dialog.slint";
 import { ActionPill, PillButton, PillDivider } from "../../components/action-pill.slint";
 import { MenuItem } from "../../components/context-menu.slint";
@@ -136,12 +135,10 @@ export component MyLibraryTabPills inherits Rectangle {
         }
 
         if root.playlist-open: ActionPill {
-            // The one button that always answers: pause/resume while this playlist is the source,
-            // and otherwise the way in. `Player.vm.is-playing` is the transport's own state, so the
-            // glyph can't disagree with the bar at the foot of the window.
             PillButton {
-                icon: Player.vm.is-playing ? "pause" : "play_arrow";
-                text: Player.vm.is-playing ? @tr("Pause") : @tr("Play");
+                enabled: PlaylistDetail.playback-action != PlaylistPlaybackAction.unavailable;
+                icon: PlaylistDetail.playback-action == PlaylistPlaybackAction.pause ? "pause" : "play_arrow";
+                text: PlaylistDetail.playback-action == PlaylistPlaybackAction.pause ? @tr("Pause") : @tr("Play");
                 clicked => { PlaylistDetail.toggle-playback(); }
             }
             PillDivider { }

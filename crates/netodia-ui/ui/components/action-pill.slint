@@ -41,6 +41,7 @@ export component ActionPill inherits Rectangle {
 // the icon *and* label to `Theme.danger`. `icon-size` corrects a glyph whose optical weight is off
 // at the default, and `icon-filled` selects the filled Material Symbols variant.
 export component PillButton inherits Rectangle {
+    in property <bool> enabled: true;
     in property <string> text: "";
     in property <string> icon: "";
     in property <length> icon-size: 14px;
@@ -73,6 +74,7 @@ export component PillButton inherits Rectangle {
 
     height: 32px;
     width: chrome.width;
+    opacity: root.enabled ? 1 : 0.4;
 
     VerticalLayout {
         alignment: center;
@@ -158,6 +160,7 @@ export component PillButton inherits Rectangle {
             }
 
             touch := TouchArea {
+                enabled: root.enabled;
                 mouse-cursor: pointer;
                 clicked => { root.clicked(); }
             }
