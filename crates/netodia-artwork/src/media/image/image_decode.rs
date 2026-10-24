@@ -102,7 +102,15 @@ fn decode_jpeg_scaled(path: &Path, max_dim: u32, target: u32) -> Option<DynamicI
         return None;
     }
     let file = std::fs::File::open(path).ok()?;
-    let mut decoder = jpeg_decoder::Decoder::new(std::io::BufReader::new(file));
+    decode_jpeg_reader(std::io::BufReader::new(file), max_dim, target)
+}
+
+fn decode_jpeg_reader(
+    reader: impl std::io::Read,
+    max_dim: u32,
+    target: u32,
+) -> Option<DynamicImage> {
+    let mut decoder = jpeg_decoder::Decoder::new(reader);
     decoder.read_info().ok()?;
     let info = decoder.info()?;
     if u32::from(info.width) > max_dim || u32::from(info.height) > max_dim {
@@ -155,6 +163,20 @@ fn short_edge_request(width: u16, height: u16, target: u32) -> u16 {
 /// `Option`.
 pub fn decode_memory_capped(bytes: &[u8], max_dim: u32) -> Option<DynamicImage> {
     memory_reader(bytes, max_dim)?.decode().ok()
+}
+
+/// [`decode_capped_to`] for a remote body or embedded cover already in memory.
+///
+/// JPEG thumbnails use the same reduced IDCT as local files, avoiding a full-resolution bitmap.
+/// Other formats and unsupported JPEG colour spaces retain the bounded decoder fallback.
+/// Blocking — call from a decoder worker, never the UI thread.
+pub fn decode_memory_capped_to(bytes: &[u8], max_dim: u32, target: u32) -> Option<DynamicImage> {
+    if bytes.starts_with(&[0xff, 0xd8])
+        && let Some(decoded) = decode_jpeg_reader(std::io::Cursor::new(bytes), max_dim, target)
+    {
+        return Some(decoded);
+    }
+    decode_memory_capped(bytes, max_dim)
 }
 
 /// The source's dimensions from its header alone — [`source_pixels`] for bytes in hand, and the

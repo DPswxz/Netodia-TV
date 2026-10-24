@@ -80,7 +80,7 @@ async fn fetch_playlist_detail(
         playlists_ui.grid_stats_by_id(playlist_id).and_then(|stats| stats.thumbnail_path);
     let detail = cloud_playlist_stats(playlist, thumbnail_path, &songs);
     let tracks = songs
-        .into_iter()
+        .iter()
         .map(|song| {
             let is_favorite = liked_ids.contains(&song.id);
             let artwork_path = song
@@ -117,17 +117,17 @@ fn cloud_playlist_stats(
     }
 }
 
-fn cloud_song_row(song: Song, is_favorite: bool, artwork_path: Option<String>) -> RsTrackListRow {
+fn cloud_song_row(song: &Song, is_favorite: bool, artwork_path: Option<String>) -> RsTrackListRow {
     let artist = song.artist_names();
     let artist_id = song.artists.first().map(|artist| artist.id);
     RsTrackListRow {
         id: song.id,
         file_path: String::new(),
         file_name: song.name.clone(),
-        title: song.name,
+        title: song.name.clone(),
         artist: (!artist.is_empty()).then_some(artist),
         album_artist: None,
-        album: (!song.album.name.is_empty()).then_some(song.album.name),
+        album: (!song.album.name.is_empty()).then(|| song.album.name.clone()),
         genre: None,
         track_number: None,
         disc_number: None,

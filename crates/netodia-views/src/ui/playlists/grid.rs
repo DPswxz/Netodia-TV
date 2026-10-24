@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
+use futures_util::{StreamExt, stream};
 use slint::{ComponentHandle, Model, ModelRc, VecModel, Weak};
 
 use super::state::{GRID_PREWARM_AHEAD, GridData, GridIndexCache};
@@ -183,6 +184,9 @@ async fn cache_playlist_covers(
     playlists: &[CloudPlaylist],
 ) -> HashMap<i64, String> {
     const COVER_LIMIT: usize = 60;
+    // Include the decode/store step in the bound: queued compressed bodies otherwise accumulate
+    // while the blocking pool waits for its oversized-image gate.
+    const COVER_CONCURRENCY: usize = 4;
     let mut urls = Vec::new();
     let mut seen = HashSet::new();
     for playlist in playlists {
@@ -197,11 +201,13 @@ async fn cache_playlist_covers(
     }
     let client = state.http_client().clone();
     let dir = state.paths.data_dir.join("netease-artwork");
-    let cached = futures_util::future::join_all(urls.into_iter().map(|url| {
+    let cached: Vec<_> = stream::iter(urls.into_iter().map(|url| {
         let client = client.clone();
         let dir = dir.clone();
         async move { (url.clone(), download_cover(&client, &url, &dir).await) }
     }))
+    .buffer_unordered(COVER_CONCURRENCY)
+    .collect()
     .await;
     let by_url: HashMap<String, String> =
         cached.into_iter().filter_map(|(url, path)| path.map(|path| (url, path))).collect();

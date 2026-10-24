@@ -34,11 +34,49 @@ const PLAYLIST_CACHE_CAP: NonZeroUsize = match NonZeroUsize::new(4) {
     Some(cap) => cap,
     None => panic!("PLAYLIST_CACHE_CAP > 0"),
 };
+// Entry count alone cannot bound a cache whose playlists can contain tens of thousands of songs.
+const PLAYLIST_CACHE_BYTES: usize = 8 * 1024 * 1024;
 type LikedIdsCache = Arc<parking_lot::RwLock<Option<(i64, u64, HashSet<i64>)>>>;
 type RecentSongsCache = Arc<parking_lot::RwLock<Option<(i64, u64, Vec<RecentSong>)>>>;
 /// `(account, generation, playlist id)` → when it was fetched, and the response itself.
-type PlaylistCache =
-    Arc<parking_lot::Mutex<LruCache<(i64, u64, i64), (Instant, (Playlist, Vec<Song>))>>>;
+type PlaylistCache = Arc<parking_lot::Mutex<LruCache<(i64, u64, i64), CachedPlaylist>>>;
+
+struct CachedPlaylist {
+    fetched_at: Instant,
+    playlist: Playlist,
+    songs: Arc<[Song]>,
+    bytes: usize,
+}
+
+fn playlist_bytes(playlist: &Playlist, songs: &[Song]) -> usize {
+    let optional = |value: &Option<String>| value.as_ref().map_or(0, String::capacity);
+    let artists = |artists: &Vec<Artist>| {
+        artists.capacity() * std::mem::size_of::<Artist>()
+            + artists
+                .iter()
+                .map(|artist| {
+                    artist.name.capacity()
+                        + optional(&artist.cover_url)
+                        + optional(&artist.alternate_cover_url)
+                })
+                .sum::<usize>()
+    };
+    std::mem::size_of_val(songs)
+        + std::mem::size_of::<CachedPlaylist>()
+        + playlist.name.capacity()
+        + optional(&playlist.cover_url)
+        + optional(&playlist.description)
+        + songs
+            .iter()
+            .map(|song| {
+                song.name.capacity()
+                    + song.album.name.capacity()
+                    + optional(&song.album.cover_url)
+                    + artists(&song.artists)
+                    + artists(&song.album.artists)
+            })
+            .sum::<usize>()
+}
 
 /// Whether a cached playlist is still worth serving. Pure, so both sides of the TTL boundary are
 /// table-testable without a clock to steer.
@@ -224,15 +262,16 @@ impl CloudService {
     /// track list costs a round trip plus one per 300 songs, so flipping back to a list you just
     /// looked at pays that again. The cache is keyed by account *and* generation, and cleared on
     /// every transition, so a stale entry can't outlive the session that fetched it.
-    pub async fn saved_playlist(&self, id: i64) -> AppResult<(Playlist, Vec<Song>)> {
+    pub async fn saved_playlist(&self, id: i64) -> AppResult<(Playlist, Arc<[Song]>)> {
         validate_id("歌单", id)?;
         let (account, cancellation) = self.account_snapshot()?;
         let generation = self.status().generation;
         if let Some(cached) = self.cached_playlist(account.id, generation, id) {
             return Ok(cached);
         }
-        let loaded =
+        let (playlist, songs) =
             self.account_request_in_generation(self.client.playlist(id), cancellation).await?;
+        let loaded = (playlist, songs.into());
         self.store_playlist(account.id, generation, id, &loaded);
         Ok(loaded)
     }
@@ -242,12 +281,12 @@ impl CloudService {
         account_id: i64,
         generation: u64,
         playlist_id: i64,
-    ) -> Option<(Playlist, Vec<Song>)> {
+    ) -> Option<(Playlist, Arc<[Song]>)> {
         let key = (account_id, generation, playlist_id);
         let mut cache = self.playlist_cache.lock();
-        match cache.peek(&key).map(|(at, _)| *at) {
+        match cache.peek(&key).map(|entry| entry.fetched_at) {
             Some(at) if playlist_cache_is_fresh(at, Instant::now()) => {
-                cache.get(&key).map(|(_, loaded)| (loaded.0.clone(), loaded.1.clone()))
+                cache.get(&key).map(|entry| (entry.playlist.clone(), Arc::clone(&entry.songs)))
             }
             Some(_) => {
                 cache.pop(&key);
@@ -265,10 +304,29 @@ impl CloudService {
         account_id: i64,
         generation: u64,
         playlist_id: i64,
-        loaded: &(Playlist, Vec<Song>),
+        loaded: &(Playlist, Arc<[Song]>),
     ) {
         let key = (account_id, generation, playlist_id);
-        self.playlist_cache.lock().put(key, (Instant::now(), loaded.clone()));
+        let bytes = playlist_bytes(&loaded.0, &loaded.1);
+        let mut cache = self.playlist_cache.lock();
+        cache.pop(&key);
+        if bytes > PLAYLIST_CACHE_BYTES {
+            return;
+        }
+        let mut retained: usize = cache.iter().map(|(_, entry)| entry.bytes).sum();
+        while retained + bytes > PLAYLIST_CACHE_BYTES {
+            let Some((_, evicted)) = cache.pop_lru() else { break };
+            retained -= evicted.bytes;
+        }
+        cache.put(
+            key,
+            CachedPlaylist {
+                fetched_at: Instant::now(),
+                playlist: loaded.0.clone(),
+                songs: Arc::clone(&loaded.1),
+                bytes,
+            },
+        );
     }
 
     pub async fn album(&self, id: i64) -> AppResult<(Album, Vec<Song>)> {
@@ -291,7 +349,7 @@ impl CloudService {
     }
 
     /// Daily recommendations use the same detail surface as ordinary remote playlists.
-    pub async fn library_playlist(&self, id: i64) -> AppResult<(Playlist, Vec<Song>)> {
+    pub async fn library_playlist(&self, id: i64) -> AppResult<(Playlist, Arc<[Song]>)> {
         if id != DAILY_PLAYLIST_ID {
             return self.saved_playlist(id).await;
         }
@@ -303,7 +361,7 @@ impl CloudService {
             cover_url: songs.first().and_then(|song| song.album.cover_url.clone()),
             ..Playlist::default()
         };
-        Ok((playlist, songs))
+        Ok((playlist, songs.into()))
     }
 
     pub async fn recommendations(&self) -> AppResult<Vec<Playlist>> {
@@ -1044,7 +1102,7 @@ mod tests {
             generation: 7,
             ..SessionStatus::default()
         });
-        let loaded = (Playlist { id: 500, ..Playlist::default() }, Vec::new());
+        let loaded = (Playlist { id: 500, ..Playlist::default() }, Arc::from([]));
         service.store_playlist(42, 7, 500, &loaded);
 
         assert!(service.cached_playlist(42, 7, 500).is_some());
@@ -1061,6 +1119,52 @@ mod tests {
         assert!(playlist_cache_is_fresh(fetched, fetched));
         assert!(playlist_cache_is_fresh(fetched, fetched + inside));
         assert!(!playlist_cache_is_fresh(fetched, fetched + PLAYLIST_CACHE_TTL));
+    }
+
+    fn playlist_fixture(id: i64, name: String) -> (Playlist, Arc<[Song]>) {
+        (
+            Playlist { id, ..Playlist::default() },
+            vec![Song { id: 1, name, ..Song::default() }].into(),
+        )
+    }
+
+    #[test]
+    fn reopening_a_playlist_shares_its_song_storage() -> Result<(), &'static str> {
+        let service = service_for_test();
+        let loaded = playlist_fixture(500, "Cached song".to_owned());
+        service.store_playlist(42, 7, 500, &loaded);
+
+        let reopened = service.cached_playlist(42, 7, 500).ok_or("playlist not cached")?;
+
+        assert!(Arc::ptr_eq(&loaded.1, &reopened.1));
+        Ok(())
+    }
+
+    #[test]
+    fn a_playlist_larger_than_the_byte_budget_is_not_retained() {
+        let service = service_for_test();
+        let loaded = playlist_fixture(500, "x".repeat(PLAYLIST_CACHE_BYTES));
+
+        service.store_playlist(42, 7, 500, &loaded);
+
+        assert!(service.cached_playlist(42, 7, 500).is_none());
+    }
+
+    #[test]
+    fn playlist_bytes_evict_the_least_recently_used_entry_before_the_count_cap() {
+        let service = service_for_test();
+        let first = playlist_fixture(500, "a".repeat(3 * 1024 * 1024));
+        let second = playlist_fixture(501, "b".repeat(3 * 1024 * 1024));
+        let third = playlist_fixture(502, "c".repeat(3 * 1024 * 1024));
+        service.store_playlist(42, 7, 500, &first);
+        service.store_playlist(42, 7, 501, &second);
+        assert!(service.cached_playlist(42, 7, 500).is_some());
+
+        service.store_playlist(42, 7, 502, &third);
+
+        assert!(service.cached_playlist(42, 7, 500).is_some());
+        assert!(service.cached_playlist(42, 7, 501).is_none());
+        assert!(service.cached_playlist(42, 7, 502).is_some());
     }
 
     #[test]

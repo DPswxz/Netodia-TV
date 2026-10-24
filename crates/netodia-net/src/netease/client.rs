@@ -503,16 +503,18 @@ impl Client {
         // Owned batches rather than borrowed ones: an async block over a `&[i64]` makes this
         // future's type depend on one slice lifetime, which callers spawning it can't satisfy.
         let batches = ids.chunks(SONG_BATCH).map(<[i64]>::to_vec).collect::<Vec<_>>();
-        let fetched: Vec<Vec<Song>> = futures_util::stream::iter(batches)
+        let mut fetched = futures_util::stream::iter(batches)
             .map(|batch| self.song_batch(batch))
             // A playlist open is the one caller that pays for more than a batch or two, and the
             // batches are independent: sequentially, a 600-track playlist waits out two round
             // trips for no ordering benefit. `buffered` keeps them in playlist order however they
             // interleave.
-            .buffered(SONG_BATCH_CONCURRENCY)
-            .try_collect()
-            .await?;
-        Ok(fetched.into_iter().flatten().collect())
+            .buffered(SONG_BATCH_CONCURRENCY);
+        let mut songs = Vec::with_capacity(ids.len());
+        while let Some(batch) = fetched.try_next().await? {
+            songs.extend(batch);
+        }
+        Ok(songs)
     }
 
     async fn song_batch(&self, ids: Vec<i64>) -> Result<Vec<Song>> {
@@ -523,7 +525,7 @@ impl Client {
                 json!({"c":serde_json::to_string(&c).map_err(|_|Error::InvalidResponse)?}),
             )
             .await?;
-        let mut songs: Vec<Song> = field(body.clone(), "songs")?;
+        let mut songs: Vec<Song> = decode_ref(&body["songs"])?;
         let privileges: Vec<netodia_core::entities::cloud::Privilege> =
             field(body, "privileges").unwrap_or_default();
         for song in &mut songs {
@@ -546,6 +548,9 @@ impl Client {
             .iter()
             .filter_map(|v| v["id"].as_i64())
             .collect::<Vec<_>>();
+        // Detail can include a full track array as well as IDs. Release that response before
+        // fetching the batches, rather than keeping both representations for the entire load.
+        drop(body);
         let songs = self.songs(&ids).await?;
         Ok((playlist, songs))
     }
@@ -553,7 +558,7 @@ impl Client {
     pub async fn album(&self, id: i64) -> Result<(Album, Vec<Song>)> {
         let path = format!("/api/v1/album/{id}");
         let body = self.request_path(&path, json!({})).await?;
-        let album: Album = field(body.clone(), "album")?;
+        let album: Album = decode_ref(&body["album"])?;
         let mut songs: Vec<Song> = field(body, "songs")?;
         fill_album_covers(&album, &mut songs);
         Ok((album, songs))
@@ -562,7 +567,7 @@ impl Client {
     pub async fn artist(&self, id: i64) -> Result<(Artist, Vec<Song>)> {
         let path = format!("/api/v1/artist/{id}");
         let body = self.request_path(&path, json!({})).await?;
-        Ok((field(body.clone(), "artist")?, field(body, "hotSongs")?))
+        Ok((decode_ref(&body["artist"])?, field(body, "hotSongs")?))
     }
 
     async fn request_at(&self, path: &str, protocol: Protocol, data: Value) -> Result<Value> {
@@ -612,7 +617,7 @@ impl Client {
 
     pub async fn daily(&self) -> Result<Vec<Song>> {
         let body = self.request(ep::DAILY, json!({"afresh":false})).await?;
-        decode(body["data"]["dailySongs"].clone())
+        decode_ref(&body["data"]["dailySongs"])
     }
 
     pub async fn recommendations(&self) -> Result<Vec<Playlist>> {
@@ -796,7 +801,7 @@ fn fill_album_covers(album: &Album, songs: &mut [Song]) {
 }
 
 fn decode_playlist_header(body: &Value, requested_id: i64) -> Result<Playlist> {
-    let playlist: Playlist = decode(body.get("playlist").cloned().ok_or(Error::InvalidResponse)?)?;
+    let playlist: Playlist = decode_ref(body.get("playlist").ok_or(Error::InvalidResponse)?)?;
     if playlist.id != requested_id {
         return Err(Error::InvalidResponse);
     }
@@ -818,6 +823,12 @@ fn decode<T: DeserializeOwned>(body: Value) -> Result<T> {
     serde_json::from_value(body).map_err(|_| Error::InvalidResponse)
 }
 
+// Deserializing a borrowed Value copies only fields the DTO keeps; cloning the DOM first also
+// copies every ignored track, privilege and metadata subtree in large API responses.
+fn decode_ref<T: DeserializeOwned>(body: &Value) -> Result<T> {
+    T::deserialize(body).map_err(|_| Error::InvalidResponse)
+}
+
 fn decode_saved_playlists(body: &Value, uid: i64) -> Result<(Vec<Playlist>, bool)> {
     decode_playlist_page(body, |playlist| {
         playlist["creator"]["userId"].as_i64().is_none_or(|owner| owner != uid)
@@ -830,7 +841,7 @@ fn decode_created_playlists(body: &Value, uid: i64) -> Result<(Vec<Playlist>, bo
 
 fn decode_intelligence_songs(body: &Value) -> Result<Vec<Song>> {
     let entries = body["data"].as_array().ok_or(Error::InvalidResponse)?;
-    entries.iter().map(|entry| decode(entry["songInfo"].clone())).collect()
+    entries.iter().map(|entry| decode_ref(&entry["songInfo"])).collect()
 }
 
 fn decode_playlist_page(
@@ -839,8 +850,8 @@ fn decode_playlist_page(
 ) -> Result<(Vec<Playlist>, bool)> {
     let raw = body["playlist"].as_array().ok_or(Error::InvalidResponse)?;
     let page_len = raw.len();
-    let collected = raw.iter().filter(|playlist| include(playlist)).cloned().collect::<Vec<_>>();
-    let playlists = decode(Value::Array(collected))?;
+    let playlists =
+        raw.iter().filter(|playlist| include(playlist)).map(decode_ref).collect::<Result<_>>()?;
     let more = body["more"].as_bool().unwrap_or(page_len >= 30);
     Ok((playlists, more))
 }
@@ -899,7 +910,7 @@ fn decode_recent_songs(body: &Value) -> Result<Vec<RecentSong>> {
             continue;
         }
         let Some(played_at_ms) = entry["playTime"].as_i64() else { continue };
-        let song: Song = decode(entry["data"].clone())?;
+        let song: Song = decode_ref(&entry["data"])?;
         if song.id > 0 {
             songs.push(RecentSong { song, played_at_ms });
         }
