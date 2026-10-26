@@ -706,6 +706,7 @@ msgstr ""
 #: ui/components/now-playing/play-button.slint
 #: ui/components/track-list/cloud-track-context-menu.slint
 #: ui/components/track-list/track-context-menu.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Play"
 msgstr ""
 
@@ -1096,6 +1097,7 @@ msgid "Play (hold to stop)"
 msgstr ""
 
 #: ui/components/now-playing/play-button.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Pause"
 msgstr ""
 
@@ -1175,12 +1177,49 @@ msgstr ""
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr ""
 
-#: ui/views/settings/library-section.slint
-msgid "Add a folder to scan for music files."
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in to NetEase Music"
 msgstr ""
 
-#: ui/views/settings/library-section.slint
-msgid "Add Folder"
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Connect an account to use personal recommendations, collections and playback permissions"
+msgstr ""
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Refresh code"
+msgstr ""
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Generating QR code…"
+msgstr ""
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app."
+msgstr ""
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scanned. Confirm login on your phone."
+msgstr ""
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code expired. Refresh to try again."
+msgstr ""
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Login successful."
+msgstr ""
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Could not start QR login."
 msgstr ""
 
 #. Translators: Netodia is the product name and stays as is
@@ -1745,6 +1784,11 @@ msgstr ""
 msgid "List view"
 msgstr ""
 
+#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
+#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+msgid "Albums"
+msgstr ""
+
 #: ui/views/favorites-view.slint ui/views/recently-played-view.slint
 #: ui/views/search/songs-section.slint
 msgid "Songs"
@@ -1767,12 +1811,16 @@ msgid "Top songs"
 msgstr ""
 
 #: ui/views/favorites/cloud-entity-detail-view.slint
-#: ui/views/my-library/playlists-tab.slint
-#: ui/views/my-library/roaming-tab.slint
-msgid "Loading…"
+msgid "Favorite album"
 msgstr ""
 
 #: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Unfavorite album"
+msgstr ""
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
 #: ui/views/favorites/cloud-favorites-songs-tab.slint
 #: ui/views/my-library/playlists-tab.slint
 #: ui/views/recently-played/songs-tab.slint
@@ -1780,7 +1828,27 @@ msgid "Retry"
 msgstr ""
 
 #: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/my-library/playlist-detail.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/my-library/roaming-tab.slint
+msgid "Loading…"
+msgstr ""
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "No tracks available"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
 msgstr ""
 
 #: ui/views/favorites/cloud-favorites-songs-tab.slint
@@ -1871,11 +1939,6 @@ msgstr ""
 msgid "Add a music folder in Settings to start building your library."
 msgstr ""
 
-#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
-#: ui/views/search-view.slint
-msgid "Albums"
-msgstr ""
-
 #: ui/views/my-library/artists-tab.slint
 msgid "No artists yet"
 msgstr ""
@@ -1962,6 +2025,10 @@ msgstr ""
 
 #: ui/views/my-library/tab-pills.slint
 msgid "Tracks"
+msgstr ""
+
+#: ui/views/my-library/tab-pills.slint
+msgid "In order"
 msgstr ""
 
 #: ui/views/my-library/tab-pills.slint
@@ -2256,6 +2323,10 @@ msgid "Manage Folders"
 msgstr ""
 
 #: ui/views/settings/library-section.slint
+msgid "Add Folder"
+msgstr ""
+
+#: ui/views/settings/library-section.slint
 msgid "Library Folders"
 msgstr ""
 
@@ -2270,6 +2341,10 @@ msgstr ""
 
 #: ui/views/settings/library-section.slint
 msgid "No folders added"
+msgstr ""
+
+#: ui/views/settings/library-section.slint
+msgid "Add a folder to scan for music files."
 msgstr ""
 
 #: ui/views/settings/lyrics-section.slint
@@ -2318,14 +2393,6 @@ msgstr ""
 
 #: ui/views/settings/netease-account-section.slint
 msgid "NetEase Music account"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Sign in to NetEase Music"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Connect an account to use personal recommendations, collections and playback permissions"
 msgstr ""
 
 #: ui/views/settings/netease-account-section.slint
@@ -2381,35 +2448,7 @@ msgid "Enter your email address"
 msgstr ""
 
 #: ui/views/settings/netease-account-section.slint
-msgid "Refresh code"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
 msgid "Connecting…"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Generating QR code…"
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scan this code with the NetEase Music app."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scanned. Confirm login on your phone."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "QR code expired. Refresh to try again."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Login successful."
-msgstr ""
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Could not start QR login."
 msgstr ""
 
 #: ui/views/settings/output-section.slint
@@ -2961,28 +3000,4 @@ msgstr ""
 
 #: ui/views/settings/window-chrome-section.slint
 msgid "Changing the system tray icon requires restarting Netodia. Restart now?"
-msgstr ""
-
-#: ui/views/my-library/tab-pills.slint
-msgid "In order"
-msgstr ""
-
-#: ui/views/favorites/cloud-entity-detail-view.slint
-msgid "Favorite album"
-msgstr ""
-
-#: ui/views/favorites/cloud-entity-detail-view.slint
-msgid "Unfavorite album"
-msgstr ""
-
-#: ui/views/favorites/cloud-favorites-albums-tab.slint
-msgid "No favorite albums yet"
-msgstr ""
-
-#: ui/views/favorites/cloud-favorites-albums-tab.slint
-msgid "No matching albums"
-msgstr ""
-
-#: ui/views/favorites/cloud-favorites-albums-tab.slint
-msgid "Favorite an album from its detail page."
 msgstr ""

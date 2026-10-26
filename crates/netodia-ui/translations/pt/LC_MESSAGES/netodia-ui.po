@@ -28,7 +28,8 @@ msgstr "Favoritos"
 msgid "My Library"
 msgstr "A minha biblioteca"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/recently-played-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
+#: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "Ouvidas recentemente"
 
@@ -36,19 +37,24 @@ msgstr "Ouvidas recentemente"
 msgid "Settings"
 msgstr "Definições"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Minimize"
 msgstr "Minimizar"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Maximize"
 msgstr "Maximizar"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Restore"
 msgstr "Restaurar"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint ui/components/onboarding/onboarding-overlay.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
+#: ui/components/onboarding/onboarding-overlay.slint
 msgid "Close"
 msgstr "Fechar"
 
@@ -70,11 +76,14 @@ msgstr "Adicionar aos favoritos"
 msgid "Remove from Favorites"
 msgstr "Remover dos favoritos"
 
-#: ui/components/dialog/credit-editor.slint ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
+#: ui/components/dialog/credit-editor.slint
+#: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
 msgid "Add"
 msgstr "Adicionar"
 
-#: ui/components/dialog/dialog.slint ui/components/dialog/smart-playlist-editor-body.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/dialog.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "Nome"
 
@@ -142,7 +151,10 @@ msgstr "Repor"
 msgid "No playlists to export"
 msgstr "Nenhuma playlist para exportar"
 
-#: ui/components/dialog/export-playlist-picker.slint ui/components/grid/artist-grid.slint ui/components/grid/genre-grid.slint ui/components/grid/playlist-grid.slint ui/globals/hero-chips.slint ui/globals/search.slint ui/views/queue-sheet.slint
+#: ui/components/dialog/export-playlist-picker.slint
+#: ui/components/grid/artist-grid.slint ui/components/grid/genre-grid.slint
+#: ui/components/grid/playlist-grid.slint ui/globals/hero-chips.slint
+#: ui/globals/search.slint ui/views/queue-sheet.slint
 msgid "{n} track"
 msgid_plural "{n} tracks"
 msgstr[0] "{n} faixa"
@@ -184,11 +196,19 @@ msgstr "{} de {} já adicionadas"
 msgid "Preamp"
 msgstr "Pré-amplificação"
 
-#: ui/components/dialog/replaygain-body.slint ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/grid/card-context-menu.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/replaygain-body.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
 msgid "Album"
 msgstr "Álbum"
 
-#: ui/components/dialog/replaygain-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/replaygain-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Track"
 msgstr "Faixa"
 
@@ -208,7 +228,9 @@ msgstr "Evitar saturação"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "O ReplayGain só afeta faixas que já têm etiquetas de volume. Analise a sua biblioteca com uma ferramenta como o rsgain ou o loudgain para as adicionar."
 
-#: ui/components/dialog/selectable-picker.slint ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/dialog/selectable-picker.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "Selecionar tudo"
 
@@ -232,40 +254,60 @@ msgstr "dias"
 msgid "number"
 msgstr "número"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Album Artist"
 msgstr "Artista do álbum"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/grid/card-context-menu.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/my-library/tab-pills.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/my-library/tab-pills.slint ui/views/search/top-result-card.slint
 msgid "Artist"
 msgstr "Artista"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
 msgid "Title"
 msgstr "Título"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Credits"
 msgstr "Créditos"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "Género"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "ISRC"
 msgstr "ISRC"
 
 #. Translators: a musical key, as in A minor
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Key"
 msgstr "Tonalidade"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Mood"
 msgstr "Ambiente"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "BPM"
 msgstr "BPM"
 
@@ -277,7 +319,11 @@ msgstr "Duração (s)"
 msgid "Plays"
 msgstr "Reproduções"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Year"
 msgstr "Ano"
 
@@ -297,7 +343,11 @@ msgstr "Saltos"
 msgid "Date added"
 msgstr "Data de adição"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Favorite"
 msgstr "Favorito"
 
@@ -485,7 +535,9 @@ msgstr "Autor da remistura"
 msgid "Replace…"
 msgstr "Substituir…"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/settings/folder-row.slint ui/views/settings/library-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/settings/folder-row.slint
+#: ui/views/settings/library-section.slint
 msgid "Remove"
 msgstr "Remover"
 
@@ -494,7 +546,9 @@ msgid "Details"
 msgstr "Detalhes"
 
 #. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/components/dialog/tag-editor-body.slint ui/components/now-playing/lyrics-menu.slint ui/settings.slint ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/now-playing/lyrics-menu.slint ui/settings.slint
+#: ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
 msgid "Lyrics"
 msgstr "Letra"
 
@@ -547,7 +601,9 @@ msgstr "Andamento"
 msgid "Number"
 msgstr "Número"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/onboarding/appearance-panel.slint ui/settings.slint ui/views/settings/language-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/onboarding/appearance-panel.slint ui/settings.slint
+#: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "Idioma"
 
@@ -600,7 +656,8 @@ msgstr "Codec"
 msgid "Bitrate"
 msgstr "Taxa de bits"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/settings/output-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/settings/output-section.slint
 msgid "Sample Rate"
 msgstr "Taxa de amostragem"
 
@@ -608,7 +665,8 @@ msgstr "Taxa de amostragem"
 msgid "Bit Depth"
 msgstr "Profundidade de bits"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/settings/output-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/settings/output-section.slint
 msgid "Channels"
 msgstr "Canais"
 
@@ -616,7 +674,8 @@ msgstr "Canais"
 msgid "Size"
 msgstr "Tamanho"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Duration"
 msgstr "Duração"
 
@@ -628,11 +687,13 @@ msgstr "Modificado"
 msgid "BLAKE3"
 msgstr "BLAKE3"
 
-#: ui/components/grid/album-grid.slint ui/components/track-list/track-list-row.slint ui/globals/player.slint
+#: ui/components/grid/album-grid.slint
+#: ui/components/track-list/track-list-row.slint ui/globals/player.slint
 msgid "Unknown artist"
 msgstr "Artista desconhecido"
 
-#: ui/components/grid/artist-grid.slint ui/globals/hero-chips.slint ui/globals/search.slint ui/views/my-library-view.slint
+#: ui/components/grid/artist-grid.slint ui/globals/hero-chips.slint
+#: ui/globals/search.slint ui/views/my-library-view.slint
 msgid "{n} album"
 msgid_plural "{n} albums"
 msgstr[0] "{n} álbum"
@@ -642,58 +703,80 @@ msgstr[1] "{n} álbuns"
 msgid "Folder"
 msgstr "Pasta"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/play-button.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/play-button.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Play"
 msgstr "Reproduzir"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/overflow-menu.slint ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Shuffle"
 msgstr "Aleatório"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Play {} Next"
 msgstr "Reproduzir {} a seguir"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Play Next"
 msgstr "Reproduzir a seguir"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add {} to Queue"
 msgstr "Adicionar {} à fila"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add to Queue"
 msgstr "Adicionar à fila"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "New Playlist…"
 msgstr "Nova playlist…"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add to Playlist"
 msgstr "Adicionar à playlist"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Tags for {}"
 msgstr "Editar etiquetas de {}"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Tags…"
 msgstr "Editar etiquetas…"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit {} Tracks"
 msgstr "Editar {} faixas"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/lyrics-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Track Information"
 msgstr "Editar informações da faixa"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "Copiar"
 
@@ -705,7 +788,8 @@ msgstr "Copiar nome"
 msgid "Copy Path"
 msgstr "Copiar caminho"
 
-#: ui/components/grid/card-context-menu.slint ui/settings.slint ui/views/settings/diagnostics-section.slint
+#: ui/components/grid/card-context-menu.slint ui/settings.slint
+#: ui/views/settings/diagnostics-section.slint
 msgid "Open Folder"
 msgstr "Abrir pasta"
 
@@ -713,15 +797,18 @@ msgstr "Abrir pasta"
 msgid "Show in File Manager"
 msgstr "Mostrar no gestor de ficheiros"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Open Containing Folder"
 msgstr "Abrir localização do ficheiro"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Go to Artist"
 msgstr "Ir para o artista"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "Limpar seleção"
 
@@ -761,15 +848,22 @@ msgstr "Leitor completo"
 msgid "Show Up Next"
 msgstr "Mostrar próximas faixas"
 
-#: ui/components/mini-player/mini-captions.slint ui/components/now-playing/lyrics-controls.slint ui/views/settings/lyrics-section.slint
+#: ui/components/mini-player/mini-captions.slint
+#: ui/components/now-playing/lyrics-controls.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Show lyrics"
 msgstr "Mostrar letra"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Pin on Top"
 msgstr "Afixar no topo"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Unpin from Top"
 msgstr "Desafixar do topo"
 
@@ -781,31 +875,40 @@ msgstr "Fundo do álbum: desativado"
 msgid "Album Backdrop: on"
 msgstr "Fundo do álbum: ativado"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Unfavorite"
 msgstr "Remover dos favoritos"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Shuffle: off"
 msgstr "Aleatório: desativado"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Shuffle: on"
 msgstr "Aleatório: ativado"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: off"
 msgstr "Repetir: desativado"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: one"
 msgstr "Repetir: uma"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: all"
 msgstr "Repetir: todas"
 
-#: ui/components/now-playing/flyout-presets.slint ui/components/now-playing/overflow-menu.slint ui/components/now-playing/visualizer-flyout.slint
+#: ui/components/now-playing/flyout-presets.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/components/now-playing/visualizer-flyout.slint
 msgid "Off"
 msgstr "Desativado"
 
@@ -861,11 +964,14 @@ msgstr "Espelhado"
 msgid "Waveform"
 msgstr "Forma de onda"
 
-#: ui/components/now-playing/lyrics-menu.slint ui/views/settings/lyrics-section.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Show romanization"
 msgstr "Mostrar romanização"
 
-#: ui/components/now-playing/lyrics-menu.slint ui/components/onboarding/features-panel.slint ui/views/settings/lyrics-section.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Look up lyrics online"
 msgstr "Procurar letras online"
 
@@ -919,7 +1025,8 @@ msgstr "Tente novamente a partir do menu Letra"
 msgid "More"
 msgstr "Mais opções"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
 msgid "Speed"
 msgstr "Velocidade"
 
@@ -931,7 +1038,9 @@ msgstr "Temporizador"
 msgid "Track end"
 msgstr "Fim da faixa"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint ui/views/settings/playback-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "Equalizer"
 msgstr "Equalizador"
 
@@ -939,11 +1048,13 @@ msgstr "Equalizador"
 msgid "On"
 msgstr "Ativado"
 
-#: ui/components/now-playing/overflow-menu.slint ui/components/onboarding/onboarding-overlay.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/components/onboarding/onboarding-overlay.slint
 msgid "Done"
 msgstr "Concluído"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
 msgid "ReplayGain"
 msgstr "ReplayGain"
 
@@ -967,11 +1078,14 @@ msgstr "Sem perdas"
 msgid "Very high"
 msgstr "Muito alta"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Repeat"
 msgstr "Repetir"
 
-#: ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/queue-sheet.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint ui/views/queue-sheet.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Queue"
 msgstr "Fila"
 
@@ -984,6 +1098,7 @@ msgid "Play (hold to stop)"
 msgstr "Reproduzir (mantenha premido para parar)"
 
 #: ui/components/now-playing/play-button.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Pause"
 msgstr "Pausar"
 
@@ -995,11 +1110,13 @@ msgstr "Iniciar"
 msgid "No tracks up next"
 msgstr "Nenhuma faixa a seguir"
 
-#: ui/components/now-playing/visualizer-picker.slint ui/views/settings/playback-section.slint
+#: ui/components/now-playing/visualizer-picker.slint
+#: ui/views/settings/playback-section.slint
 msgid "Visualizer"
 msgstr "Visualizador"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Appearance"
 msgstr "Aspeto"
 
@@ -1007,27 +1124,34 @@ msgstr "Aspeto"
 msgid "Pick how Netodia looks. Every change applies as you make it."
 msgstr "Escolha o aspeto do Netodia. Cada alteração é aplicada de imediato."
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Theme"
 msgstr "Tema"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Theme Variant"
 msgstr "Variante do tema"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "System"
 msgstr "Sistema"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Dark"
 msgstr "Escuro"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Light"
 msgstr "Claro"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Accent Color"
 msgstr "Cor de destaque"
 
@@ -1039,25 +1163,65 @@ msgstr "A que o Netodia pode aceder"
 msgid "Netodia works offline. These are the parts that reach out."
 msgstr "O Netodia funciona offline. Estas são as partes que se ligam à internet."
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/lyrics-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "Quando uma faixa não traz a própria letra, pede-a ao lrclib.net"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/update-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/update-section.slint
 msgid "Check for updates automatically"
 msgstr "Procurar atualizações automaticamente"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/update-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/update-section.slint
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Uma vez por dia, o Netodia pergunta ao GitHub se há uma versão mais recente."
 
-#: ui/views/settings/library-section.slint
-msgid "Add a folder to scan for music files."
-msgstr "Adicione uma pasta para procurar ficheiros de música."
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in to NetEase Music"
+msgstr "Iniciar sessão no NetEase Music"
 
-#: ui/views/settings/library-section.slint
-msgid "Add Folder"
-msgstr "Adicionar pasta"
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Connect an account to use personal recommendations, collections and playback permissions"
+msgstr "Ligue uma conta para recomendações pessoais, coleções e permissões de reprodução"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Refresh code"
+msgstr "Atualizar código"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Generating QR code…"
+msgstr "A gerar código QR…"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app."
+msgstr "Leia este código com a aplicação NetEase Music."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scanned. Confirm login on your phone."
+msgstr "Código lido. Confirme o início de sessão no telemóvel."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code expired. Refresh to try again."
+msgstr "Código QR expirado. Atualize para tentar novamente."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Login successful."
+msgstr "Sessão iniciada."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Could not start QR login."
+msgstr "Não foi possível iniciar a sessão por QR."
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint
@@ -1068,7 +1232,8 @@ msgstr "Bem-vindo ao Netodia"
 msgid "Skip"
 msgstr "Saltar"
 
-#: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "Back"
 msgstr "Voltar"
 
@@ -1108,7 +1273,11 @@ msgstr "{} / {} ficheiros · {}"
 msgid "{} / {} files"
 msgstr "{} / {} ficheiros"
 
-#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint ui/views/settings/library-section.slint ui/views/settings/output-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint
+#: ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/library-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -1124,7 +1293,8 @@ msgstr "Artista - Título"
 msgid "File Path"
 msgstr "Caminho do ficheiro"
 
-#: ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Remove from Queue"
 msgstr "Remover da fila"
 
@@ -1136,7 +1306,8 @@ msgstr "Colunas"
 msgid "Artwork"
 msgstr "Capa"
 
-#: ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint
 msgid "Length"
 msgstr "Duração"
 
@@ -1380,7 +1551,8 @@ msgstr "Atualização instalada"
 msgid "Restart Netodia to start using the new version."
 msgstr "Reinicie o Netodia para começar a usar a nova versão."
 
-#: ui/settings.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/settings.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Restart"
 msgstr "Reiniciar"
 
@@ -1516,7 +1688,8 @@ msgstr "A saída exclusiva foi recusada, por isso o Netodia está a reproduzir e
 msgid "{} refused exclusive output, so Netodia is playing shared for now. The Output section of Settings says why."
 msgstr "{} recusou a saída exclusiva, por isso o Netodia está a reproduzir em modo partilhado por agora. A secção Saída das Definições explica porquê."
 
-#: ui/settings.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/settings.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Restart Required"
 msgstr "É necessário reiniciar"
 
@@ -1612,7 +1785,13 @@ msgstr "Vista de cartões"
 msgid "List view"
 msgstr "Vista de lista"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
+#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+msgid "Albums"
+msgstr "Álbuns"
+
+#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
+#: ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "Músicas"
 
@@ -1632,17 +1811,46 @@ msgstr "Marque uma música como favorita e o artista dela aparece aqui."
 msgid "Top songs"
 msgstr "Músicas populares"
 
-#: ui/views/favorites/cloud-entity-detail-view.slint ui/views/my-library/playlists-tab.slint ui/views/my-library/roaming-tab.slint
-msgid "Loading…"
-msgstr "A carregar…"
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Adicionar álbum aos favoritos"
 
-#: ui/views/favorites/cloud-entity-detail-view.slint ui/views/favorites/cloud-favorites-songs-tab.slint ui/views/my-library/playlists-tab.slint ui/views/recently-played/songs-tab.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Unfavorite album"
+msgstr "Remover álbum dos favoritos"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/recently-played/songs-tab.slint
 msgid "Retry"
 msgstr "Tentar novamente"
 
 #: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/my-library/playlist-detail.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/my-library/roaming-tab.slint
+msgid "Loading…"
+msgstr "A carregar…"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "No tracks available"
 msgstr "Sem músicas disponíveis"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Ainda não há álbuns favoritos"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Nenhum álbum correspondente"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Adicione um álbum aos favoritos na sua página de detalhes."
 
 #: ui/views/favorites/cloud-favorites-songs-tab.slint
 msgid "Loading favorites…"
@@ -1652,7 +1860,8 @@ msgstr "A carregar favoritos…"
 msgid "No NetEase favorites yet"
 msgstr "Ainda sem favoritos do NetEase"
 
-#: ui/views/favorites/most-played-tab.slint ui/views/recently-played/most-played-tab.slint
+#: ui/views/favorites/most-played-tab.slint
+#: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "Ainda não ouviu nada"
 
@@ -1726,13 +1935,10 @@ msgstr "Filtrar playlists…"
 msgid "No albums yet"
 msgstr "Ainda sem álbuns"
 
-#: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint ui/views/my-library/genres-tab.slint
+#: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint
+#: ui/views/my-library/genres-tab.slint
 msgid "Add a music folder in Settings to start building your library."
 msgstr "Adicione uma pasta de música nas Definições para começar a construir a sua biblioteca."
-
-#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint ui/views/search-view.slint
-msgid "Albums"
-msgstr "Álbuns"
 
 #: ui/views/my-library/artists-tab.slint
 msgid "No artists yet"
@@ -1821,6 +2027,10 @@ msgstr "Parar"
 #: ui/views/my-library/tab-pills.slint
 msgid "Tracks"
 msgstr "Faixas"
+
+#: ui/views/my-library/tab-pills.slint
+msgid "In order"
+msgstr "Em ordem"
 
 #: ui/views/my-library/tab-pills.slint
 msgid "Edit artwork"
@@ -1954,11 +2164,13 @@ msgstr "Interface"
 msgid "Library"
 msgstr "Biblioteca"
 
-#: ui/views/settings-view.slint ui/views/settings/pages/playback-page.slint ui/views/settings/playback-section.slint
+#: ui/views/settings-view.slint ui/views/settings/pages/playback-page.slint
+#: ui/views/settings/playback-section.slint
 msgid "Playback"
 msgstr "Reprodução"
 
-#: ui/views/settings-view.slint ui/views/settings/about-section.slint ui/views/settings/pages/about-page.slint
+#: ui/views/settings-view.slint ui/views/settings/about-section.slint
+#: ui/views/settings/pages/about-page.slint
 msgid "About"
 msgstr "Acerca de"
 
@@ -2022,7 +2234,8 @@ msgstr "Fundo aurora"
 msgid "Paint album, playlist and Now Playing headers with a wash of the album's own colors, instead of a blurred copy of its cover art. Nothing needs blurring, so headers appear sooner and Netodia stays lighter. Restart required to apply."
 msgstr "Pinta os cabeçalhos de álbum, de playlist e de Em reprodução com as cores do próprio álbum, em vez de uma cópia desfocada da capa. Como nada precisa de ser desfocado, os cabeçalhos aparecem mais depressa e o Netodia fica mais leve. É necessário reiniciar para aplicar."
 
-#: ui/views/settings/appearance-section.slint ui/views/settings/playback-section.slint
+#: ui/views/settings/appearance-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "None"
 msgstr "Nenhum"
 
@@ -2111,6 +2324,10 @@ msgid "Manage Folders"
 msgstr "Gerir pastas"
 
 #: ui/views/settings/library-section.slint
+msgid "Add Folder"
+msgstr "Adicionar pasta"
+
+#: ui/views/settings/library-section.slint
 msgid "Library Folders"
 msgstr "Pastas da biblioteca"
 
@@ -2126,6 +2343,10 @@ msgstr "Remover “{}” da sua biblioteca? Todas as faixas desta pasta serão r
 #: ui/views/settings/library-section.slint
 msgid "No folders added"
 msgstr "Nenhuma pasta adicionada"
+
+#: ui/views/settings/library-section.slint
+msgid "Add a folder to scan for music files."
+msgstr "Adicione uma pasta para procurar ficheiros de música."
 
 #: ui/views/settings/lyrics-section.slint
 msgid "Show the playing track's words in Now Playing instead of Up Next"
@@ -2174,14 +2395,6 @@ msgstr "Conta NetEase"
 #: ui/views/settings/netease-account-section.slint
 msgid "NetEase Music account"
 msgstr "Conta NetEase Music"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Sign in to NetEase Music"
-msgstr "Iniciar sessão no NetEase Music"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Connect an account to use personal recommendations, collections and playback permissions"
-msgstr "Ligue uma conta para recomendações pessoais, coleções e permissões de reprodução"
 
 #: ui/views/settings/netease-account-section.slint
 msgid "Country code"
@@ -2236,36 +2449,8 @@ msgid "Enter your email address"
 msgstr "Introduza o endereço de e-mail"
 
 #: ui/views/settings/netease-account-section.slint
-msgid "Refresh code"
-msgstr "Atualizar código"
-
-#: ui/views/settings/netease-account-section.slint
 msgid "Connecting…"
 msgstr "A ligar…"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Generating QR code…"
-msgstr "A gerar código QR…"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scan this code with the NetEase Music app."
-msgstr "Leia este código com a aplicação NetEase Music."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scanned. Confirm login on your phone."
-msgstr "Código lido. Confirme o início de sessão no telemóvel."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "QR code expired. Refresh to try again."
-msgstr "Código QR expirado. Atualize para tentar novamente."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Login successful."
-msgstr "Sessão iniciada."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Could not start QR login."
-msgstr "Não foi possível iniciar a sessão por QR."
 
 #: ui/views/settings/output-section.slint
 msgid "Output"
@@ -2351,7 +2536,8 @@ msgstr "Seguir a taxa de amostragem do ficheiro"
 msgid "Reopen the audio device at each track's own rate, so the system doesn't resample it. The system has to allow that rate"
 msgstr "Reabre o dispositivo de áudio na taxa de cada faixa, para que o sistema não a reamostre. O sistema tem de permitir essa taxa"
 
-#: ui/views/settings/output-section.slint ui/views/settings/overflow-menu-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Signal Path"
 msgstr "Caminho do sinal"
 
@@ -2491,7 +2677,8 @@ msgstr "{}% no dispositivo"
 msgid "{}% (the device at {}%)"
 msgstr "{}% (dispositivo a {}%)"
 
-#: ui/views/settings/output-section.slint ui/views/settings/playback-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "Crossfade"
 msgstr "Crossfade"
 
@@ -2815,27 +3002,3 @@ msgstr "Direita"
 #: ui/views/settings/window-chrome-section.slint
 msgid "Changing the system tray icon requires restarting Netodia. Restart now?"
 msgstr "Alterar o ícone da área de notificação requer reiniciar o Netodia. Reiniciar agora?"
-
-#: ui/views/my-library/tab-pills.slint
-msgid "In order"
-msgstr "Em ordem"
-
-#: ui/views/favorites/cloud-entity-detail-view.slint
-msgid "Favorite album"
-msgstr "Adicionar álbum aos favoritos"
-
-#: ui/views/favorites/cloud-entity-detail-view.slint
-msgid "Unfavorite album"
-msgstr "Remover álbum dos favoritos"
-
-#: ui/views/favorites/cloud-favorites-albums-tab.slint
-msgid "No favorite albums yet"
-msgstr "Ainda não há álbuns favoritos"
-
-#: ui/views/favorites/cloud-favorites-albums-tab.slint
-msgid "No matching albums"
-msgstr "Nenhum álbum correspondente"
-
-#: ui/views/favorites/cloud-favorites-albums-tab.slint
-msgid "Favorite an album from its detail page."
-msgstr "Adicione um álbum aos favoritos na sua página de detalhes."
