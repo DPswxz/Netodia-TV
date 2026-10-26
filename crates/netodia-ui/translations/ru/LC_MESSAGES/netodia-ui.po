@@ -28,7 +28,8 @@ msgstr "Избранное"
 msgid "My Library"
 msgstr "Моя медиатека"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/recently-played-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
+#: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "Недавно прослушанное"
 
@@ -36,19 +37,24 @@ msgstr "Недавно прослушанное"
 msgid "Settings"
 msgstr "Настройки"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Minimize"
 msgstr "Свернуть"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Maximize"
 msgstr "Развернуть"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Restore"
 msgstr "Восстановить"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint ui/components/onboarding/onboarding-overlay.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
+#: ui/components/onboarding/onboarding-overlay.slint
 msgid "Close"
 msgstr "Закрыть"
 
@@ -70,11 +76,14 @@ msgstr "Добавить в избранное"
 msgid "Remove from Favorites"
 msgstr "Удалить из избранного"
 
-#: ui/components/dialog/credit-editor.slint ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
+#: ui/components/dialog/credit-editor.slint
+#: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
 msgid "Add"
 msgstr "Добавить"
 
-#: ui/components/dialog/dialog.slint ui/components/dialog/smart-playlist-editor-body.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/dialog.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "Название"
 
@@ -142,7 +151,10 @@ msgstr "Сбросить"
 msgid "No playlists to export"
 msgstr "Нет плейлистов для экспорта"
 
-#: ui/components/dialog/export-playlist-picker.slint ui/components/grid/artist-grid.slint ui/components/grid/genre-grid.slint ui/components/grid/playlist-grid.slint ui/globals/hero-chips.slint ui/globals/search.slint ui/views/queue-sheet.slint
+#: ui/components/dialog/export-playlist-picker.slint
+#: ui/components/grid/artist-grid.slint ui/components/grid/genre-grid.slint
+#: ui/components/grid/playlist-grid.slint ui/globals/hero-chips.slint
+#: ui/globals/search.slint ui/views/queue-sheet.slint
 msgid "{n} track"
 msgid_plural "{n} tracks"
 msgstr[0] "{n} трек"
@@ -185,11 +197,19 @@ msgstr "{} из {} уже добавлено"
 msgid "Preamp"
 msgstr "Предусиление"
 
-#: ui/components/dialog/replaygain-body.slint ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/grid/card-context-menu.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/replaygain-body.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
 msgid "Album"
 msgstr "Альбом"
 
-#: ui/components/dialog/replaygain-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/replaygain-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Track"
 msgstr "Трек"
 
@@ -209,7 +229,9 @@ msgstr "Предотвращать клиппинг"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "ReplayGain действует только на треки, в которых уже есть теги громкости. Чтобы добавить их, просканируйте медиатеку программой вроде rsgain или loudgain."
 
-#: ui/components/dialog/selectable-picker.slint ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/dialog/selectable-picker.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "Выбрать все"
 
@@ -233,40 +255,60 @@ msgstr "дн."
 msgid "number"
 msgstr "число"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Album Artist"
 msgstr "Исполнитель альбома"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/grid/card-context-menu.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/my-library/tab-pills.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/my-library/tab-pills.slint ui/views/search/top-result-card.slint
 msgid "Artist"
 msgstr "Исполнитель"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
 msgid "Title"
 msgstr "Название"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Credits"
 msgstr "Участники"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "Жанр"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "ISRC"
 msgstr "ISRC"
 
 #. Translators: a musical key, as in A minor
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Key"
 msgstr "Тональность"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Mood"
 msgstr "Настроение"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "BPM"
 msgstr "BPM"
 
@@ -278,7 +320,11 @@ msgstr "Длительность (с)"
 msgid "Plays"
 msgstr "Прослушивания"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Year"
 msgstr "Год"
 
@@ -298,7 +344,11 @@ msgstr "Пропуски"
 msgid "Date added"
 msgstr "Дата добавления"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Favorite"
 msgstr "Избранное"
 
@@ -486,7 +536,9 @@ msgstr "Автор ремикса"
 msgid "Replace…"
 msgstr "Заменить…"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/settings/folder-row.slint ui/views/settings/library-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/settings/folder-row.slint
+#: ui/views/settings/library-section.slint
 msgid "Remove"
 msgstr "Удалить"
 
@@ -495,7 +547,9 @@ msgid "Details"
 msgstr "Подробности"
 
 #. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/components/dialog/tag-editor-body.slint ui/components/now-playing/lyrics-menu.slint ui/settings.slint ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/now-playing/lyrics-menu.slint ui/settings.slint
+#: ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
 msgid "Lyrics"
 msgstr "Текст песни"
 
@@ -548,7 +602,9 @@ msgstr "Часть"
 msgid "Number"
 msgstr "Номер"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/onboarding/appearance-panel.slint ui/settings.slint ui/views/settings/language-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/onboarding/appearance-panel.slint ui/settings.slint
+#: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "Язык"
 
@@ -601,7 +657,8 @@ msgstr "Кодек"
 msgid "Bitrate"
 msgstr "Битрейт"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/settings/output-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/settings/output-section.slint
 msgid "Sample Rate"
 msgstr "Частота дискретизации"
 
@@ -609,7 +666,8 @@ msgstr "Частота дискретизации"
 msgid "Bit Depth"
 msgstr "Разрядность"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/settings/output-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/settings/output-section.slint
 msgid "Channels"
 msgstr "Каналы"
 
@@ -617,7 +675,8 @@ msgstr "Каналы"
 msgid "Size"
 msgstr "Размер"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Duration"
 msgstr "Длительность"
 
@@ -629,11 +688,13 @@ msgstr "Изменён"
 msgid "BLAKE3"
 msgstr "BLAKE3"
 
-#: ui/components/grid/album-grid.slint ui/components/track-list/track-list-row.slint ui/globals/player.slint
+#: ui/components/grid/album-grid.slint
+#: ui/components/track-list/track-list-row.slint ui/globals/player.slint
 msgid "Unknown artist"
 msgstr "Неизвестный исполнитель"
 
-#: ui/components/grid/artist-grid.slint ui/globals/hero-chips.slint ui/globals/search.slint ui/views/my-library-view.slint
+#: ui/components/grid/artist-grid.slint ui/globals/hero-chips.slint
+#: ui/globals/search.slint ui/views/my-library-view.slint
 msgid "{n} album"
 msgid_plural "{n} albums"
 msgstr[0] "{n} альбом"
@@ -644,58 +705,80 @@ msgstr[2] "{n} альбомов"
 msgid "Folder"
 msgstr "Папка"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/play-button.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/play-button.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Play"
 msgstr "Воспроизвести"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/overflow-menu.slint ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Shuffle"
 msgstr "Перемешать"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Play {} Next"
 msgstr "Воспроизвести следующими ({})"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Play Next"
 msgstr "Воспроизвести следующим"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add {} to Queue"
 msgstr "Добавить в очередь ({})"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add to Queue"
 msgstr "Добавить в очередь"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "New Playlist…"
 msgstr "Новый плейлист…"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add to Playlist"
 msgstr "Добавить в плейлист"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Tags for {}"
 msgstr "Изменить теги ({})"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Tags…"
 msgstr "Изменить теги…"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit {} Tracks"
 msgstr "Изменить треки ({})"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/lyrics-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Track Information"
 msgstr "Изменить сведения о треке"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "Копировать"
 
@@ -707,7 +790,8 @@ msgstr "Копировать название"
 msgid "Copy Path"
 msgstr "Копировать путь"
 
-#: ui/components/grid/card-context-menu.slint ui/settings.slint ui/views/settings/diagnostics-section.slint
+#: ui/components/grid/card-context-menu.slint ui/settings.slint
+#: ui/views/settings/diagnostics-section.slint
 msgid "Open Folder"
 msgstr "Открыть папку"
 
@@ -715,15 +799,18 @@ msgstr "Открыть папку"
 msgid "Show in File Manager"
 msgstr "Показать в файловом менеджере"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Open Containing Folder"
 msgstr "Открыть папку с файлом"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Go to Artist"
 msgstr "Перейти к исполнителю"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "Снять выделение"
 
@@ -763,15 +850,22 @@ msgstr "Полный плеер"
 msgid "Show Up Next"
 msgstr "Показать «Далее»"
 
-#: ui/components/mini-player/mini-captions.slint ui/components/now-playing/lyrics-controls.slint ui/views/settings/lyrics-section.slint
+#: ui/components/mini-player/mini-captions.slint
+#: ui/components/now-playing/lyrics-controls.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Show lyrics"
 msgstr "Показать текст"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Pin on Top"
 msgstr "Поверх всех окон"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Unpin from Top"
 msgstr "Не поверх всех окон"
 
@@ -783,31 +877,40 @@ msgstr "Фон из обложки: выкл."
 msgid "Album Backdrop: on"
 msgstr "Фон из обложки: вкл."
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Unfavorite"
 msgstr "Убрать из избранного"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Shuffle: off"
 msgstr "Перемешивание: выкл."
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Shuffle: on"
 msgstr "Перемешивание: вкл."
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: off"
 msgstr "Повтор: выкл."
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: one"
 msgstr "Повтор: один трек"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: all"
 msgstr "Повтор: все"
 
-#: ui/components/now-playing/flyout-presets.slint ui/components/now-playing/overflow-menu.slint ui/components/now-playing/visualizer-flyout.slint
+#: ui/components/now-playing/flyout-presets.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/components/now-playing/visualizer-flyout.slint
 msgid "Off"
 msgstr "Выкл."
 
@@ -863,11 +966,14 @@ msgstr "Зеркальный"
 msgid "Waveform"
 msgstr "Волна"
 
-#: ui/components/now-playing/lyrics-menu.slint ui/views/settings/lyrics-section.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Show romanization"
 msgstr "Показать транслитерацию"
 
-#: ui/components/now-playing/lyrics-menu.slint ui/components/onboarding/features-panel.slint ui/views/settings/lyrics-section.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Look up lyrics online"
 msgstr "Искать тексты в интернете"
 
@@ -921,7 +1027,8 @@ msgstr "Повторите попытку из меню «Текст песни�
 msgid "More"
 msgstr "Ещё"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
 msgid "Speed"
 msgstr "Скорость"
 
@@ -933,7 +1040,9 @@ msgstr "Таймер сна"
 msgid "Track end"
 msgstr "Конец трека"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint ui/views/settings/playback-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "Equalizer"
 msgstr "Эквалайзер"
 
@@ -941,11 +1050,13 @@ msgstr "Эквалайзер"
 msgid "On"
 msgstr "Вкл."
 
-#: ui/components/now-playing/overflow-menu.slint ui/components/onboarding/onboarding-overlay.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/components/onboarding/onboarding-overlay.slint
 msgid "Done"
 msgstr "Готово"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
 msgid "ReplayGain"
 msgstr "ReplayGain"
 
@@ -969,11 +1080,14 @@ msgstr "Без потерь"
 msgid "Very high"
 msgstr "Очень высокое"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Repeat"
 msgstr "Повтор"
 
-#: ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/queue-sheet.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint ui/views/queue-sheet.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Queue"
 msgstr "Очередь"
 
@@ -986,6 +1100,7 @@ msgid "Play (hold to stop)"
 msgstr "Воспроизвести (удерживайте, чтобы остановить)"
 
 #: ui/components/now-playing/play-button.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Pause"
 msgstr "Пауза"
 
@@ -997,11 +1112,13 @@ msgstr "Запустить"
 msgid "No tracks up next"
 msgstr "Дальше треков нет"
 
-#: ui/components/now-playing/visualizer-picker.slint ui/views/settings/playback-section.slint
+#: ui/components/now-playing/visualizer-picker.slint
+#: ui/views/settings/playback-section.slint
 msgid "Visualizer"
 msgstr "Визуализатор"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Appearance"
 msgstr "Внешний вид"
 
@@ -1009,27 +1126,34 @@ msgstr "Внешний вид"
 msgid "Pick how Netodia looks. Every change applies as you make it."
 msgstr "Выберите, как будет выглядеть Netodia. Каждое изменение применяется сразу."
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Theme"
 msgstr "Тема"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Theme Variant"
 msgstr "Вариант темы"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "System"
 msgstr "Системный"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Dark"
 msgstr "Тёмный"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Light"
 msgstr "Светлый"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Accent Color"
 msgstr "Акцентный цвет"
 
@@ -1041,25 +1165,65 @@ msgstr "Куда может обращаться Netodia"
 msgid "Netodia works offline. These are the parts that reach out."
 msgstr "Netodia работает без интернета. Вот что обращается к сети."
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/lyrics-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "Если в треке нет своего текста, запрашивать его у lrclib.net"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/update-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/update-section.slint
 msgid "Check for updates automatically"
 msgstr "Автоматически проверять обновления"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/update-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/update-section.slint
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Раз в день Netodia спрашивает у GitHub, не вышла ли новая версия."
 
-#: ui/views/settings/library-section.slint
-msgid "Add a folder to scan for music files."
-msgstr "Добавьте папку для поиска музыкальных файлов."
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in to NetEase Music"
+msgstr "Войти в NetEase Music"
 
-#: ui/views/settings/library-section.slint
-msgid "Add Folder"
-msgstr "Добавить папку"
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Connect an account to use personal recommendations, collections and playback permissions"
+msgstr "Подключите аккаунт для личных рекомендаций, коллекций и доступа к воспроизведению"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Refresh code"
+msgstr "Обновить код"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Generating QR code…"
+msgstr "Создание QR-кода…"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app."
+msgstr "Отсканируйте этот код приложением NetEase Music."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scanned. Confirm login on your phone."
+msgstr "Код отсканирован. Подтвердите вход на телефоне."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code expired. Refresh to try again."
+msgstr "Срок действия QR-кода истёк. Обновите его."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Login successful."
+msgstr "Вход выполнен."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Could not start QR login."
+msgstr "Не удалось начать вход по QR-коду."
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint
@@ -1070,7 +1234,8 @@ msgstr "Добро пожаловать в Netodia"
 msgid "Skip"
 msgstr "Пропустить"
 
-#: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "Back"
 msgstr "Назад"
 
@@ -1111,7 +1276,11 @@ msgstr "Файлов: {} / {} · {}"
 msgid "{} / {} files"
 msgstr "Файлов: {} / {}"
 
-#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint ui/views/settings/library-section.slint ui/views/settings/output-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint
+#: ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/library-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -1127,7 +1296,8 @@ msgstr "Исполнитель - Название"
 msgid "File Path"
 msgstr "Путь к файлу"
 
-#: ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Remove from Queue"
 msgstr "Удалить из очереди"
 
@@ -1139,7 +1309,8 @@ msgstr "Столбцы"
 msgid "Artwork"
 msgstr "Обложка"
 
-#: ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint
 msgid "Length"
 msgstr "Длина"
 
@@ -1387,7 +1558,8 @@ msgstr "Обновление установлено"
 msgid "Restart Netodia to start using the new version."
 msgstr "Перезапустите Netodia, чтобы начать пользоваться новой версией."
 
-#: ui/settings.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/settings.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Restart"
 msgstr "Перезапустить"
 
@@ -1527,7 +1699,8 @@ msgstr "В монопольном выводе отказано, поэтому 
 msgid "{} refused exclusive output, so Netodia is playing shared for now. The Output section of Settings says why."
 msgstr "Устройство {} отказало в монопольном выводе, поэтому Netodia пока играет в общем режиме. Причина указана в разделе «Вывод» настроек."
 
-#: ui/settings.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/settings.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Restart Required"
 msgstr "Требуется перезапуск"
 
@@ -1627,7 +1800,13 @@ msgstr "Карточки"
 msgid "List view"
 msgstr "Список"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
+#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+msgid "Albums"
+msgstr "Альбомы"
+
+#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
+#: ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "Песни"
 
@@ -1647,17 +1826,46 @@ msgstr "Добавьте песню в избранное, и её исполн�
 msgid "Top songs"
 msgstr "Популярные песни"
 
-#: ui/views/favorites/cloud-entity-detail-view.slint ui/views/my-library/playlists-tab.slint ui/views/my-library/roaming-tab.slint
-msgid "Loading…"
-msgstr "Загрузка…"
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Добавить альбом в избранное"
 
-#: ui/views/favorites/cloud-entity-detail-view.slint ui/views/favorites/cloud-favorites-songs-tab.slint ui/views/my-library/playlists-tab.slint ui/views/recently-played/songs-tab.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Unfavorite album"
+msgstr "Удалить альбом из избранного"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/recently-played/songs-tab.slint
 msgid "Retry"
 msgstr "Повторить"
 
 #: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/my-library/playlist-detail.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/my-library/roaming-tab.slint
+msgid "Loading…"
+msgstr "Загрузка…"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "No tracks available"
 msgstr "Нет доступных треков"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Пока нет избранных альбомов"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Нет подходящих альбомов"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Добавьте альбом в избранное на странице с его информацией."
 
 #: ui/views/favorites/cloud-favorites-songs-tab.slint
 msgid "Loading favorites…"
@@ -1667,7 +1875,8 @@ msgstr "Загрузка избранного…"
 msgid "No NetEase favorites yet"
 msgstr "В NetEase пока нет избранного"
 
-#: ui/views/favorites/most-played-tab.slint ui/views/recently-played/most-played-tab.slint
+#: ui/views/favorites/most-played-tab.slint
+#: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "Пока ничего не прослушано"
 
@@ -1744,13 +1953,10 @@ msgstr "Фильтр плейлистов…"
 msgid "No albums yet"
 msgstr "Альбомов пока нет"
 
-#: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint ui/views/my-library/genres-tab.slint
+#: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint
+#: ui/views/my-library/genres-tab.slint
 msgid "Add a music folder in Settings to start building your library."
 msgstr "Добавьте папку с музыкой в настройках, чтобы начать собирать медиатеку."
-
-#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint ui/views/search-view.slint
-msgid "Albums"
-msgstr "Альбомы"
 
 #: ui/views/my-library/artists-tab.slint
 msgid "No artists yet"
@@ -1839,6 +2045,10 @@ msgstr "Остановить"
 #: ui/views/my-library/tab-pills.slint
 msgid "Tracks"
 msgstr "Треки"
+
+#: ui/views/my-library/tab-pills.slint
+msgid "In order"
+msgstr "По порядку"
 
 #: ui/views/my-library/tab-pills.slint
 msgid "Edit artwork"
@@ -1972,11 +2182,13 @@ msgstr "Интерфейс"
 msgid "Library"
 msgstr "Медиатека"
 
-#: ui/views/settings-view.slint ui/views/settings/pages/playback-page.slint ui/views/settings/playback-section.slint
+#: ui/views/settings-view.slint ui/views/settings/pages/playback-page.slint
+#: ui/views/settings/playback-section.slint
 msgid "Playback"
 msgstr "Воспроизведение"
 
-#: ui/views/settings-view.slint ui/views/settings/about-section.slint ui/views/settings/pages/about-page.slint
+#: ui/views/settings-view.slint ui/views/settings/about-section.slint
+#: ui/views/settings/pages/about-page.slint
 msgid "About"
 msgstr "О программе"
 
@@ -2040,7 +2252,8 @@ msgstr "Фон «Аврора»"
 msgid "Paint album, playlist and Now Playing headers with a wash of the album's own colors, instead of a blurred copy of its cover art. Nothing needs blurring, so headers appear sooner and Netodia stays lighter. Restart required to apply."
 msgstr "Заливать заголовки альбомов, плейлистов и экрана «Сейчас играет» собственными цветами альбома вместо размытой копии обложки. Размывать ничего не нужно, поэтому заголовки появляются быстрее, а Netodia расходует меньше ресурсов. Чтобы применить, нужен перезапуск."
 
-#: ui/views/settings/appearance-section.slint ui/views/settings/playback-section.slint
+#: ui/views/settings/appearance-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "None"
 msgstr "Нет"
 
@@ -2129,6 +2342,10 @@ msgid "Manage Folders"
 msgstr "Управление папками"
 
 #: ui/views/settings/library-section.slint
+msgid "Add Folder"
+msgstr "Добавить папку"
+
+#: ui/views/settings/library-section.slint
 msgid "Library Folders"
 msgstr "Папки медиатеки"
 
@@ -2144,6 +2361,10 @@ msgstr "Удалить «{}» из медиатеки? Все треки из э
 #: ui/views/settings/library-section.slint
 msgid "No folders added"
 msgstr "Папки не добавлены"
+
+#: ui/views/settings/library-section.slint
+msgid "Add a folder to scan for music files."
+msgstr "Добавьте папку для поиска музыкальных файлов."
 
 #: ui/views/settings/lyrics-section.slint
 msgid "Show the playing track's words in Now Playing instead of Up Next"
@@ -2192,14 +2413,6 @@ msgstr "Аккаунт NetEase"
 #: ui/views/settings/netease-account-section.slint
 msgid "NetEase Music account"
 msgstr "Аккаунт NetEase Music"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Sign in to NetEase Music"
-msgstr "Войти в NetEase Music"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Connect an account to use personal recommendations, collections and playback permissions"
-msgstr "Подключите аккаунт для личных рекомендаций, коллекций и доступа к воспроизведению"
 
 #: ui/views/settings/netease-account-section.slint
 msgid "Country code"
@@ -2254,36 +2467,8 @@ msgid "Enter your email address"
 msgstr "Введите адрес эл. почты"
 
 #: ui/views/settings/netease-account-section.slint
-msgid "Refresh code"
-msgstr "Обновить код"
-
-#: ui/views/settings/netease-account-section.slint
 msgid "Connecting…"
 msgstr "Подключение…"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Generating QR code…"
-msgstr "Создание QR-кода…"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scan this code with the NetEase Music app."
-msgstr "Отсканируйте этот код приложением NetEase Music."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scanned. Confirm login on your phone."
-msgstr "Код отсканирован. Подтвердите вход на телефоне."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "QR code expired. Refresh to try again."
-msgstr "Срок действия QR-кода истёк. Обновите его."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Login successful."
-msgstr "Вход выполнен."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Could not start QR login."
-msgstr "Не удалось начать вход по QR-коду."
 
 #: ui/views/settings/output-section.slint
 msgid "Output"
@@ -2369,7 +2554,8 @@ msgstr "Частота как у файла"
 msgid "Reopen the audio device at each track's own rate, so the system doesn't resample it. The system has to allow that rate"
 msgstr "Заново открывать аудиоустройство с частотой каждого трека, чтобы система не передискретизировала его. Система должна разрешать эту частоту"
 
-#: ui/views/settings/output-section.slint ui/views/settings/overflow-menu-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Signal Path"
 msgstr "Тракт сигнала"
 
@@ -2509,7 +2695,8 @@ msgstr "{}% на устройстве"
 msgid "{}% (the device at {}%)"
 msgstr "{}% (устройство на {}%)"
 
-#: ui/views/settings/output-section.slint ui/views/settings/playback-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "Crossfade"
 msgstr "Плавный переход"
 
@@ -2645,6 +2832,18 @@ msgstr "{} с"
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"
 msgstr "Подходящих настроек нет"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "UI Scale"
+msgstr "Масштаб интерфейса"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Text and interface size"
+msgstr "Размер текста и интерфейса"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Scale fonts and controls together. Applies immediately, in addition to system display scaling."
+msgstr "Масштабирует шрифты и элементы управления вместе. Применяется сразу, дополнительно к системному масштабированию экрана."
 
 #: ui/views/settings/update-section.slint
 msgid "Updates"
@@ -2833,19 +3032,3 @@ msgstr "Справа"
 #: ui/views/settings/window-chrome-section.slint
 msgid "Changing the system tray icon requires restarting Netodia. Restart now?"
 msgstr "Чтобы изменить значок в системном трее, нужно перезапустить Netodia. Перезапустить сейчас?"
-
-#: ui/views/my-library/tab-pills.slint
-msgid "In order"
-msgstr "По порядку"
-
-#: ui/views/settings/ui-scale-section.slint
-msgid "UI Scale"
-msgstr "Масштаб интерфейса"
-
-#: ui/views/settings/ui-scale-section.slint
-msgid "Text and interface size"
-msgstr "Размер текста и интерфейса"
-
-#: ui/views/settings/ui-scale-section.slint
-msgid "Scale fonts and controls together. Applies immediately, in addition to system display scaling."
-msgstr "Масштабирует шрифты и элементы управления вместе. Применяется сразу, дополнительно к системному масштабированию экрана."

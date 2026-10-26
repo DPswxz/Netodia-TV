@@ -595,6 +595,28 @@ impl CloudService {
         self.private_request(self.client.saved_albums(offset)).await
     }
 
+    /// Read the entire collection in server order under one account cancellation scope.
+    pub async fn all_saved_albums(&self) -> AppResult<Vec<Album>> {
+        self.private_request(async {
+            let mut albums = Vec::new();
+            let mut seen = HashSet::new();
+            let mut offset = 0;
+            loop {
+                let (page, more) = self.client.saved_albums_page(offset).await?;
+                let page_len = page.len();
+                let before = albums.len();
+                albums.extend(page.into_iter().filter(|album| seen.insert(album.id)));
+                // A repeated page must not spin forever if the server ignores its offset.
+                if !more || page_len == 0 || albums.len() == before {
+                    break;
+                }
+                offset += u64::try_from(page_len).unwrap_or(u64::MAX);
+            }
+            Ok(albums)
+        })
+        .await
+    }
+
     pub async fn saved_artists(&self, offset: u64) -> AppResult<Vec<Artist>> {
         self.private_request(self.client.saved_artists(offset)).await
     }

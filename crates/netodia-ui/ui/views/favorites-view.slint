@@ -3,9 +3,9 @@ import { MosaicTabHero } from "../components/hero/mosaic-tab-hero.slint";
 import { FilterThrottle } from "../components/filter-throttle.slint";
 import { ViewTransition } from "../components/view-transition.slint";
 import { CloudFavoritesSongsTab } from "favorites/cloud-favorites-songs-tab.slint";
+import { CloudFavoritesAlbumsTab } from "favorites/cloud-favorites-albums-tab.slint";
 
-// NetEase favorites are a single cloud-backed song list. Keep the shared hero styling while
-// removing local-only queue, artist-grid and playlist controls from this page.
+// NetEase liked songs and saved albums share the page's filter and tab bar.
 export component FavoritesView inherits Rectangle {
     property <int> filter-tick-pending: 0;
 
@@ -20,14 +20,14 @@ export component FavoritesView inherits Rectangle {
 
     VerticalLayout {
         hero := MosaicTabHero {
-            tab-labels: [@tr("Songs")];
-            tab-icons: ["music_note"];
+            tab-labels: [@tr("Songs"), @tr("Albums")];
+            tab-icons: ["music_note", "album"];
             tab-idx <=> Favorites.tab-idx;
             title: @tr("Favorites");
             filter-placeholder: @tr("Filter favorites…");
             show-empty-copy: false;
             empty-copy: "";
-            mosaic-count: max(Favorites.track-count, 0);
+            mosaic-count: Favorites.tab-idx == Favorites.tab-albums ? max(Favorites.album-count, 0) : max(Favorites.track-count, 0);
             mosaic-cover: Favorites.cover;
             empty-glyph: "favorite";
             empty-glyph-filled: true;
@@ -70,6 +70,18 @@ export component FavoritesView inherits Rectangle {
                     remove-favorite(id) => { Favorites.toggle-cloud-favorite(id, false); }
                     request-sort(field) => { Favorites.request-sort(field); }
                     request-blur-search => { Favorites.blur-search-tick += 1; }
+                }
+            }
+
+            if Favorites.tab-idx == Favorites.tab-albums: ViewTransition {
+                width: parent.width;
+                height: parent.height;
+                enter-from: hero.tab-enter-from;
+                enabled: hero.tab-anim-armed;
+
+                CloudFavoritesAlbumsTab {
+                    width: 100%;
+                    height: 100%;
                 }
             }
         }

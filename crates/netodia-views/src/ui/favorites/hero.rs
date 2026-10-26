@@ -75,7 +75,9 @@ pub async fn refresh_from_tracks(
     // stats tick usually returns the same top four, and an unchanged banner is still
     // correct. The matching *claim* is in `publish_hero_artwork`, for `MosaicGuard`'s
     // reason.
-    if !fav_ui.state().last_mosaic_paths.is_stale(&paths) {
+    if fav_ui.active_tab() != super::FavoritesTab::Songs
+        || !fav_ui.state().last_mosaic_paths.is_stale(&paths)
+    {
         return;
     }
 
@@ -87,6 +89,7 @@ pub async fn refresh_from_tracks(
     if state.cloud.status().generation != generation
         || state.cloud.liked_ids_revision() != liked_revision
         || !fav_ui.section_active()
+        || fav_ui.active_tab() != super::FavoritesTab::Songs
     {
         return;
     }

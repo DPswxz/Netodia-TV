@@ -28,6 +28,12 @@ const MAX_PENDING: usize = 128;
 const MAX_IN_FLIGHT: usize = 6;
 const MAX_SOURCE_BYTES: usize = 1_048_576;
 const THUMB_SIZE: u32 = 72;
+const CARD_THUMB_SIZE: u32 = 512;
+// 64 full-resolution RGB covers occupy at most 48 MiB, separately from the row tier.
+const CARD_CACHE_CAP: NonZeroUsize = match NonZeroUsize::new(64) {
+    Some(cap) => cap,
+    None => panic!("card cover cache capacity must be non-zero"),
+};
 const NEGATIVE_CACHE_TTL: Duration = Duration::from_secs(30);
 
 struct CachedCover {
@@ -44,6 +50,7 @@ pub struct RemoteCoverThumbs {
     pending: Mutex<HashSet<String>>,
     permits: Arc<Semaphore>,
     notify: Arc<dyn Fn() + Send + Sync>,
+    thumb_size: u32,
 }
 
 impl RemoteCoverThumbs {
@@ -52,10 +59,30 @@ impl RemoteCoverThumbs {
         runtime: Handle,
         notify: impl Fn() + Send + Sync + 'static,
     ) -> Self {
+        Self::with_size(client, runtime, notify, THUMB_SIZE, CACHE_CAP)
+    }
+
+    /// A bounded, sharp tier for album cards and online detail artwork.
+    pub fn new_for_cards(
+        client: reqwest::Client,
+        runtime: Handle,
+        notify: impl Fn() + Send + Sync + 'static,
+    ) -> Self {
+        Self::with_size(client, runtime, notify, CARD_THUMB_SIZE, CARD_CACHE_CAP)
+    }
+
+    fn with_size(
+        client: reqwest::Client,
+        runtime: Handle,
+        notify: impl Fn() + Send + Sync + 'static,
+        thumb_size: u32,
+        capacity: NonZeroUsize,
+    ) -> Self {
         Self {
             client,
             runtime,
-            cache: Mutex::new(LruCache::new(CACHE_CAP)),
+            thumb_size,
+            cache: Mutex::new(LruCache::new(capacity)),
             pending: Mutex::new(HashSet::new()),
             permits: Arc::new(Semaphore::new(MAX_IN_FLIGHT)),
             notify: Arc::new(notify),
@@ -68,6 +95,12 @@ impl RemoteCoverThumbs {
             return Image::default();
         }
 
+        let source = if self.thumb_size > THUMB_SIZE {
+            card_artwork_url(url).unwrap_or_else(|| url.to_owned())
+        } else {
+            url.to_owned()
+        };
+        let url = source.as_str();
         {
             let mut cache = self.cache.lock();
             if let Some(entry) = cache.get(url) {
@@ -98,12 +131,13 @@ impl RemoteCoverThumbs {
     }
 
     async fn fetch_and_cache(self: Arc<Self>, url: String) {
+        let thumb_size = self.thumb_size;
         let permit = self.permits.clone().acquire_owned().await;
         let pixels = match permit {
             Ok(_permit) => match fetch_image_bytes(&self.client, &url).await {
                 Some(bytes) => self
                     .runtime
-                    .spawn_blocking(move || decode_thumbnail(&bytes))
+                    .spawn_blocking(move || decode_thumbnail(&bytes, thumb_size))
                     .await
                     .ok()
                     .flatten(),
@@ -153,15 +187,39 @@ fn parsed_http_url(source: &str) -> Option<reqwest::Url> {
     netodia_app::cloud::cover_request_url(source)
 }
 
-fn decode_thumbnail(bytes: &[u8]) -> Option<SharedPixelBuffer<Rgb8Pixel>> {
+fn card_artwork_url(source: &str) -> Option<String> {
+    let mut url = parsed_http_url(source)?;
+    let host = url.host_str()?;
+    if host == "music.126.net" || host.ends_with(".music.126.net") {
+        let pairs = url
+            .query_pairs()
+            .filter(|(key, _)| key != "param")
+            .map(|(key, value)| (key.into_owned(), value.into_owned()))
+            .collect::<Vec<_>>();
+        url.set_query(None);
+        url.query_pairs_mut().extend_pairs(pairs).append_pair("param", "512y512");
+    }
+    Some(url.into())
+}
+
+fn decode_thumbnail(bytes: &[u8], thumb_size: u32) -> Option<SharedPixelBuffer<Rgb8Pixel>> {
     let _oversized = memory_dimensions(bytes, MAX_SOURCE_DIM)
         .map(|(width, height)| u64::from(width) * u64::from(height))
         .and_then(large_decode_guard);
-    let decoded = decode_memory_capped_to(bytes, MAX_SOURCE_DIM, THUMB_SIZE)?;
-    let side = THUMB_SIZE.min(decoded.width().max(decoded.height()));
-    let thumbnail = resize_rgb8(&decoded, side, side, FilterType::Box)?;
+    let decoded = decode_memory_capped_to(bytes, MAX_SOURCE_DIM, thumb_size)?;
+    let (width, height) = netodia_artwork::media::image::image_decode::fit_within(
+        decoded.width(),
+        decoded.height(),
+        thumb_size,
+        thumb_size,
+    );
+    let thumbnail = resize_rgb8(&decoded, width, height, FilterType::Lanczos3)?;
     let (width, height) = thumbnail.dimensions();
     let mut buffer = SharedPixelBuffer::<Rgb8Pixel>::new(width, height);
     buffer.make_mut_bytes().copy_from_slice(thumbnail.as_raw());
     Some(buffer)
 }
+
+#[cfg(test)]
+#[path = "tests/remote_covers_tests.rs"]
+mod tests;

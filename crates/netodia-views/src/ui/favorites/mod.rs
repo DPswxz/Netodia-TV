@@ -1,20 +1,17 @@
-//! The Favorites page: a pinned hero over three mutually exclusive tabs.
+//! The Favorites page: cloud liked songs and saved albums under a shared tab bar.
 //!
-//! The hero's mosaic tiles are the first 4 *distinct* covers of the Most Played tab's own walk —
-//! both rank through one shared clause (`queries::track::MOST_PLAYED_ORDER`) rather than two
-//! hand-matched ones, so they can't disagree about a tie — topped up from the favourites that tab
-//! excludes once the played covers run out. Songs binds a `TrackList` whose search *and* sort run
-//! in memory off [`crate::ui::track_list_cache`]; Most Played and Favorite Artists are virtualized
-//! grids over uncapped fetches. There is no Favorite Albums tab, the Albums page covering that.
+//! Songs filters and sorts an account's liked tracks in memory through
+//! [`crate::ui::track_list_cache`]. [`albums`] fetches every page of saved albums and owns the
+//! membership actions, account invalidation and cover grid. Each tab's banner uses its own
+//! first four distinct covers. Legacy local-curation helpers remain in `grids/`.
 //!
 //! The page's shared contract — counts, dirty flags, signature skips, cover generations — is
 //! `.claude/rules/ui-patterns.md`'s "three tabbed pages" block; the deltas below are this page's.
 //!
-//! The tree is split by the question each file answers rather than by tab. This file is the handle
-//! and its teardown; `tabs.rs` the sub-view enum and its seeding, `covers.rs` the three tiers,
-//! `rows.rs` the Slint models, `hero.rs` the band, `songs.rs` the Songs tab, and `grids/` the two
-//! grid tabs in four parts — `fetch`, `apply`, `warm` and `sort`.
+//! This file owns the shared handle and teardown; `tabs.rs` owns sub-view restoration and
+//! `callbacks/` owns the page lifecycle and interactions.
 
+pub(super) mod albums;
 mod callbacks;
 mod covers;
 mod grids;
@@ -71,10 +68,10 @@ pub fn install(cx: ViewCtx<'_>, artists_ui: &Arc<ArtistsUi>) -> Arc<FavoritesUi>
     rows::install_favorites_models(cx.app);
     let favorites_ui =
         Arc::new(FavoritesUi::new(cx.cover_thumbs.clone(), detail_artwork::blur_spec(cx.app)));
-    callbacks::wire(cx.app, cx.state, cx.view_state, &favorites_ui, artists_ui);
     if let Some(vs) = cx.view_state {
         seed_tab(cx.app, &favorites_ui, vs.favorites_tab);
     }
+    callbacks::wire(cx.app, cx.state, cx.view_state, &favorites_ui, artists_ui);
     favorites_ui
 }
 

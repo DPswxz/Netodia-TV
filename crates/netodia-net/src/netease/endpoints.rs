@@ -57,5 +57,11 @@ pub const LIKE: Endpoint<'static> = Endpoint::write("/api/radio/like", Weapi);
 pub const PLAYLIST_SUBSCRIBE: Endpoint<'static> = Endpoint::write("/api/playlist/subscribe", Weapi);
 pub const ALBUMS: Endpoint<'static> = Endpoint::read("/api/album/sublist", Weapi);
 pub const ARTISTS: Endpoint<'static> = Endpoint::read("/api/artist/sublist", Weapi);
+pub const ALBUM_UNSUBSCRIBE: Endpoint<'static> = Endpoint::write("/api/album/unsub", Weapi);
 pub const ALBUM_SUBSCRIBE: Endpoint<'static> = Endpoint::write("/api/album/sub", Weapi);
 pub const ARTIST_SUBSCRIBE: Endpoint<'static> = Endpoint::write("/api/artist/sub", Weapi);
+
+/// Collection writes use separate upstream routes, rather than a `t` flag on the subscribe route.
+pub const fn album_subscription(saved: bool) -> Endpoint<'static> {
+    if saved { ALBUM_SUBSCRIBE } else { ALBUM_UNSUBSCRIBE }
+}

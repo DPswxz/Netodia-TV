@@ -12,6 +12,10 @@ export global CloudEntityDetail {
     in-out property <[TrackListRow]> tracks;
     in-out property <bool> loading: false;
     in-out property <string> error;
+    in-out property <bool> album-favorite: false;
+    in-out property <bool> album-favorite-known: false;
+    in-out property <bool> album-favorite-pending: false;
+    in-out property <string> album-favorite-error;
 
     callback close();
     callback retry();
