@@ -1,19 +1,29 @@
-import { TrackListRow, TrackColumns, EntityStripRow, EntityGridRow } from "../models.slint";
+import { TrackListRow, TrackColumns, EntityStripRow, EntityGridRow, CloudAlbumGridRow } from "../models.slint";
 
 // The two curated pages, both wearing `MosaicTabHero` over their sub-views. Two globals rather
 // than one because a Slint component can't be parameterised over a global — the wall Rust
 // answers with a trait over the generated globals (`ui::detail_view::HeroSlots`); what the pages
 // genuinely share is in the component.
 
-// Favorites currently exposes one NetEase-backed song list. The older local-curation state remains
+// Favorites exposes NetEase songs and saved albums. The older local-curation state remains
 // in the shared global while the neighboring Recently Played page still uses the same models.
 export global Favorites {
     // **`tab-count` is the sole definition of how many there are** — Rust clamps the persisted
     // index against it, so a build with fewer tabs can't restore onto an unmounted branch.
     out property <int> tab-songs: 0;
-    out property <int> tab-most-played: 1;
-    out property <int> tab-artists: 2;
-    out property <int> tab-count: 1;
+    out property <int> tab-albums: 1;
+    out property <int> tab-most-played: 2;
+    out property <int> tab-artists: 3;
+    out property <int> tab-count: 2;
+
+    in-out property <[CloudAlbumGridRow]> album-rows;
+    in-out property <int> album-count: -1;
+    in-out property <int> filtered-album-count: 0;
+    in-out property <bool> albums-loading: false;
+    in-out property <string> albums-error;
+    callback retry-albums();
+    callback load-album-favorite(string /*album ID*/);
+    callback set-album-favorite(string /*album ID*/, bool /*saved*/);
 
     in-out property <int> tab-idx: 0;
     // **Fires after the bar has already moved `tab-idx`.** Rust persists the pick and builds

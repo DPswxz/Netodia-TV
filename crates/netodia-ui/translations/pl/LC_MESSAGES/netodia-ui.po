@@ -2837,3 +2837,23 @@ msgstr "Zmiana ikony w zasobniku systemowym wymaga ponownego uruchomienia Melodi
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Po kolei"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Dodaj album do ulubionych"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Usuń album z ulubionych"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Brak ulubionych albumów"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Brak pasujących albumów"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Dodaj album do ulubionych na stronie jego szczegółów."

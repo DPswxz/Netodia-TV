@@ -2819,3 +2819,23 @@ msgstr "Cambiar el icono de la bandeja del sistema requiere reiniciar Netodia. �
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "En orden"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Añadir álbum a favoritos"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Quitar álbum de favoritos"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Aún no hay álbumes favoritos"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "No hay álbumes coincidentes"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Añade un álbum a favoritos desde su página de detalles."

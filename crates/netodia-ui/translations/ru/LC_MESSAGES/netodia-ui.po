@@ -2837,3 +2837,23 @@ msgstr "Чтобы изменить значок в системном трее,
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "По порядку"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Добавить альбом в избранное"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Удалить альбом из избранного"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Пока нет избранных альбомов"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Нет подходящих альбомов"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Добавьте альбом в избранное на странице с его информацией."

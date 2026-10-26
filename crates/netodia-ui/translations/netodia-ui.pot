@@ -2966,3 +2966,23 @@ msgstr ""
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr ""
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr ""
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr ""
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr ""

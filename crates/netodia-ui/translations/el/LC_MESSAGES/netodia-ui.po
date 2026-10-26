@@ -2822,3 +2822,23 @@ msgstr "Η αλλαγή του εικονιδίου περιοχής ειδοπ�
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Σε σειρά"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Προσθήκη άλμπουμ στα αγαπημένα"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Αφαίρεση άλμπουμ από τα αγαπημένα"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Δεν υπάρχουν αγαπημένα άλμπουμ ακόμα"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Δεν βρέθηκαν άλμπουμ"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Προσθέστε ένα άλμπουμ στα αγαπημένα από τη σελίδα του."

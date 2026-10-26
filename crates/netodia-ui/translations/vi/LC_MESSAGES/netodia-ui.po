@@ -2801,3 +2801,23 @@ msgstr "Thay đổi biểu tượng khay hệ thống cần khởi động lại
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Theo thứ tự"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Yêu thích album"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Bỏ yêu thích album"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Chưa có album yêu thích"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Không có album phù hợp"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Thêm album vào yêu thích từ trang chi tiết của album."

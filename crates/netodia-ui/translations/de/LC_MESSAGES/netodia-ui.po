@@ -2820,3 +2820,23 @@ msgstr "Das Ändern des Systembereich-Symbols erfordert einen Neustart von Netod
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "In Reihenfolge"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Album favorisieren"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Album aus Favoriten entfernen"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Noch keine Lieblingsalben"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Keine passenden Alben"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Füge ein Album auf seiner Detailseite zu den Favoriten hinzu."

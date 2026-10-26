@@ -2826,3 +2826,23 @@ msgstr "Sistem tepsisi simgesini değiştirmek Netodia'yı yeniden başlatmayı 
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Sırayla"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Albümü favorilere ekle"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Albümü favorilerden kaldır"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Henüz favori albüm yok"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Eşleşen albüm yok"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Albümü ayrıntılar sayfasından favorilere ekleyin."

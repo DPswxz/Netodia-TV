@@ -2819,3 +2819,23 @@ msgstr "La modifica dell'icona nell'area di notifica richiede il riavvio di Neto
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "In ordine"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Aggiungi album ai preferiti"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Rimuovi album dai preferiti"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Nessun album preferito"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Nessun album corrispondente"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Aggiungi un album ai preferiti dalla sua pagina dei dettagli."

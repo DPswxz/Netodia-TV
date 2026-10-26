@@ -2819,3 +2819,23 @@ msgstr "Het pictogram in het systeemvak wijzigen vereist dat Netodia opnieuw sta
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Op volgorde"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Album aan favorieten toevoegen"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Album uit favorieten verwijderen"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Nog geen favoriete albums"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Geen overeenkomende albums"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Voeg een album toe aan favorieten via de detailpagina."

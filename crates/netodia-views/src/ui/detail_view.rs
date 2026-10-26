@@ -153,9 +153,13 @@ macro_rules! impl_curated_hero_helpers {
         ) {
             let view = view.clone();
             let weak = weak.clone();
+            let tab = view.active_tab();
             let _ = slint::invoke_from_event_loop(move || {
                 let Some(ui) = weak.upgrade() else { return };
-                if !view.section_active() || !view.state().last_mosaic_paths.claim(paths) {
+                if !view.section_active()
+                    || view.active_tab() != tab
+                    || !view.state().last_mosaic_paths.claim(paths)
+                {
                     return;
                 }
                 $crate::ui::detail_view::apply_detail_artwork(

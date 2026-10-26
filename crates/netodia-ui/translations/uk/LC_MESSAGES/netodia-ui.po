@@ -2837,3 +2837,23 @@ msgstr "Щоб змінити значок у системному лотку, �
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "За порядком"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Додати альбом до улюблених"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Вилучити альбом з улюблених"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Ще немає улюблених альбомів"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Немає відповідних альбомів"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Додайте альбом до улюблених на сторінці з його відомостями."

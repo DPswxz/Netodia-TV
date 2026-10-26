@@ -2801,3 +2801,23 @@ msgstr "更改系统托盘图标需要重启 Netodia。现在重启？"
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "顺序"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "收藏专辑"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "取消收藏专辑"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "还没有收藏专辑"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "没有匹配的专辑"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "在专辑详情页收藏喜欢的专辑。"

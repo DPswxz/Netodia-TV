@@ -2821,3 +2821,23 @@ msgstr "A rendszertálca-ikon módosításához újra kell indítani a Melodiát
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Sorrendben"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Album kedvencekhez adása"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Album eltávolítása a kedvencekből"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Még nincsenek kedvenc albumok"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Nincs megfelelő album"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Adjon hozzá egy albumot a kedvencekhez a részletek oldalán."

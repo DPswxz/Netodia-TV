@@ -184,6 +184,14 @@ fn open_entity_detail(ui: &AppWindow, state: &AppState, kind: &str, remote_id: S
     detail.set_loading(true);
     detail.set_error(SharedString::default());
 
+    detail.set_album_favorite(false);
+    detail.set_album_favorite_known(false);
+    detail.set_album_favorite_pending(false);
+    detail.set_album_favorite_error(SharedString::default());
+    if kind == "album" {
+        ui.global::<Favorites>().invoke_load_album_favorite(remote_id.clone().into());
+    }
+
     let state = state.clone();
     let weak = ui.as_weak();
     state.runtime.clone().spawn(async move {

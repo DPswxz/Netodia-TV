@@ -80,7 +80,7 @@ fn the_songs_model_is_written_only_while_its_tab_is_mounted() {
 
 /// The tab count Slint declares today. Kept local so a change to
 /// `Favorites.tab-count` doesn't silently rewrite what this asserts.
-const TABS: usize = 1;
+const TABS: usize = 2;
 
 /// The `N` in `Favorites`'s `tab-count: N;`.
 fn declared_tab_count() -> Option<usize> {
@@ -357,8 +357,11 @@ fn a_grid_pick_rewinds_the_count_it_could_not_answer() {
         .map(|(body, _)| body)
         .unwrap_or_default();
 
-    let (before_fetch, after_fetch) =
-        pick.split_once("if needs_fetch || songs {").unwrap_or_default();
+    let (before_fetch, after_fetch) = pick
+        .split_once(
+            "if (needs_fetch || songs) && entering != favorites_ui_mod::FavoritesTab::Albums {",
+        )
+        .unwrap_or_default();
     assert!(
         before_fetch.contains("fu.take_songs_dirty()")
             && before_fetch.contains("fu.take_grids_dirty()"),

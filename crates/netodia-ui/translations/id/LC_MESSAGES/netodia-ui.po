@@ -2801,3 +2801,23 @@ msgstr "Mengubah ikon baki sistem memerlukan mulai ulang Netodia. Mulai ulang se
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Berurutan"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Favoritkan album"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Hapus album dari favorit"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Belum ada album favorit"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Tidak ada album yang cocok"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Favoritkan album dari halaman detailnya."

@@ -352,6 +352,19 @@ export struct EntityGridRow {
     entities: [EntityStripRow],
 }
 
+// Cloud IDs stay strings across the Slint boundary, including IDs beyond i32::MAX.
+export struct CloudAlbumRow {
+    remote_id: string,
+    title: string,
+    artist: string,
+    artwork_path: string,
+    pending: bool,
+}
+
+export struct CloudAlbumGridRow {
+    albums: [CloudAlbumRow],
+}
+
 // One segment in Browse's breadcrumb bar: `label` is the path basename, `path` the
 // absolute target. Rebuilt on every `current-path` change from reversed `ancestors()`
 // with the final segment dropped — that one is the rendered title, not a click target.

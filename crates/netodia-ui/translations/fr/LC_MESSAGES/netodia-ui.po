@@ -2819,3 +2819,23 @@ msgstr "Changer l'icône de la zone de notification nécessite de redémarrer Ne
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Dans l’ordre"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Ajouter cet album aux favoris"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Unfavorite album"
+msgstr "Retirer cet album des favoris"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Aucun album favori pour le moment"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Aucun album correspondant"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Ajoutez un album aux favoris depuis sa page de détails."

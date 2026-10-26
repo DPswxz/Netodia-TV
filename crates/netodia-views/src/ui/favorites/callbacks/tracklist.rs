@@ -76,6 +76,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
         g.on_filter_changed(move |text| {
             let Some(ui) = weak.upgrade() else { return };
             favorites_ui_mod::set_filter(&fav_ui, &text);
+            favorites_ui_mod::albums::apply_now(&ui, &fav_ui);
             favorites_ui_mod::apply_filtered_tracks(&fav_ui, &weak);
             favorites_ui_mod::apply_filtered_grids_now(&ui, &fav_ui);
         });
