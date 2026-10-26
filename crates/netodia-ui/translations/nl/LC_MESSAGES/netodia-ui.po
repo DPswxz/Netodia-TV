@@ -2815,6 +2815,18 @@ msgstr "{} s"
 msgid "No matching settings"
 msgstr "Geen overeenkomende instellingen"
 
+#: ui/views/settings/ui-scale-section.slint
+msgid "UI Scale"
+msgstr "Interfaceschaal"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Text and interface size"
+msgstr "Tekst- en interfacegrootte"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Scale fonts and controls together. Applies immediately, in addition to system display scaling."
+msgstr "Schaal lettertypen en bedieningselementen samen. Wordt direct toegepast, bovenop de schermschaal van het systeem."
+
 #: ui/views/settings/update-section.slint
 msgid "Updates"
 msgstr "Updates"

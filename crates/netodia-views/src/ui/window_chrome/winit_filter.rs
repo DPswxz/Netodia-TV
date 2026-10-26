@@ -167,6 +167,12 @@ pub(super) fn install(app: &AppWindow, state: &AppState, targets: PressTargets) 
             _ => {}
         }
         match event {
+            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                if let Some(ui) = weak.upgrade() {
+                    crate::ui::appearance::ui_scale::sync(&ui, Some(*scale_factor));
+                }
+                EventResult::PreventDefault
+            }
             // Ahead of the drag arm: the miniplayer's drag region runs right up to the edge, and its
             // hover can still read true for a tick after the pointer reaches a grab.
             WindowEvent::MouseInput {
@@ -239,6 +245,9 @@ pub(super) fn install(app: &AppWindow, state: &AppState, targets: PressTargets) 
             // landed its size and `draw()` has not run yet: a handler firing here sees the frame
             // it is about to be painted into.
             WindowEvent::RedrawRequested => {
+                if let Some(ui) = weak.upgrade() {
+                    crate::ui::appearance::ui_scale::sync(&ui, None);
+                }
                 #[cfg(target_os = "windows")]
                 parked_loop::pump();
                 EventResult::Propagate
@@ -328,22 +337,30 @@ fn on_resized(w: &slint::Window, weak: &slint::Weak<AppWindow>) -> EventResult {
         && let Some(ui) = weak.upgrade()
     {
         let chrome = ui.global::<netodia_ui::WindowChrome>();
-        chrome.set_frame_allowance_w(frame.width);
-        chrome.set_frame_allowance_h(frame.height);
+        let ratio = os_to_ui_ratio(w);
+        chrome.set_frame_allowance_w(frame.width * ratio);
+        chrome.set_frame_allowance_h(frame.height * ratio);
     }
     let _ = weak.upgrade_in_event_loop(move |ui| {
         let chrome = ui.global::<netodia_ui::WindowChrome>();
         chrome.set_is_maximized(maximized);
         if let Some(margins) = margins {
-            chrome.set_frame_margin_left(margins.left);
-            chrome.set_frame_margin_right(margins.right);
-            chrome.set_frame_margin_bottom(margins.bottom);
+            let ratio = os_to_ui_ratio(ui.window());
+            chrome.set_frame_margin_left(margins.left * ratio);
+            chrome.set_frame_margin_right(margins.right * ratio);
+            chrome.set_frame_margin_bottom(margins.bottom * ratio);
         }
         // The cover tiers size themselves against the window, so this is the edge
         // that re-derives them — see the handler in `boot::ui_setup`.
         chrome.invoke_display_changed();
     });
     EventResult::Propagate
+}
+
+/// Frame measurements use OS logical pixels; Slint layout includes the user's UI zoom.
+#[allow(clippy::cast_possible_truncation, reason = "monitor DPI fits in f32")]
+fn os_to_ui_ratio(window: &slint::Window) -> f32 {
+    window.with_winit_window(|w| w.scale_factor() as f32 / window.scale_factor()).unwrap_or(1.0)
 }
 
 fn on_focus(weak: &slint::Weak<AppWindow>, focused: bool) -> EventResult {
