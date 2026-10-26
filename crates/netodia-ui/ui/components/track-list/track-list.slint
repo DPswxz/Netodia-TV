@@ -54,7 +54,7 @@ export component TrackList inherits Rectangle {
     in property <bool> cloud-entity-links: true;
     in property <bool> cloud-single-click: true;
     in property <bool> cloud-favorite-clickable: false;
-    in property <bool> show-favorite-indicator: !root.cloud-rows;
+    in property <bool> show-favorite-indicator: false;
     callback play-cloud-row(string, int);
     callback toggle-cloud-favorite(string, bool);
 
@@ -139,8 +139,8 @@ export component TrackList inherits Rectangle {
                 cloud-row: root.cloud-rows;
                 cloud-entity-links: root.cloud-entity-links;
                 single-click-play: root.cloud-single-click;
-                favorite-clickable: !root.cloud-rows || root.cloud-favorite-clickable;
-                show-favorite-indicator: root.show-favorite-indicator;
+                favorite-clickable: root.cloud-rows && root.cloud-favorite-clickable;
+                show-favorite-indicator: root.cloud-rows && root.show-favorite-indicator;
                 view-context: root.view-context;
                 current-playlist-id: root.current-playlist-id;
                 view-selected-ids: root.view-selected-ids;
@@ -148,12 +148,10 @@ export component TrackList inherits Rectangle {
                 clicked-row => { root.play-cloud-row(r.remote_id, idx); }
                 toggle-favorite => {
                     if (root.cloud-rows) { root.toggle-cloud-favorite(r.remote_id, !r.is_favorite); }
-                    else { root.toggle-row-favorite([r.id], !r.is_favorite); }
                 }
                 play-row(id, i) => { root.play-row(id, i); }
                 play-next(ids) => { root.play-next(ids); }
                 add-to-queue(ids) => { root.add-to-queue(ids); }
-                toggle-row-favorite(ids, on) => { root.toggle-row-favorite(ids, on); }
                 select-row(i, id, sh, ct) => { root.select-row(i, id, sh, ct); }
                 select-all => { root.select-all(); }
                 clear-selection => { root.clear-selection(); }

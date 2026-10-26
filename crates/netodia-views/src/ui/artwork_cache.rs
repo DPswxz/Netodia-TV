@@ -150,7 +150,7 @@ pub(crate) fn pair_from_image(
     // Aspect-preserving, so a non-square cover keeps its ratio and the Slint side's
     // `image-fit: cover` crops it to the square tile.
     let (cover_w, cover_h) = fit_within(decoded.width(), decoded.height(), COVER_SIZE, COVER_SIZE);
-    let cover = buffer_from_rgb(&resize_rgb8(decoded, cover_w, cover_h, FilterType::Box)?);
+    let cover = buffer_from_rgb(&resize_rgb8(decoded, cover_w, cover_h, FilterType::Lanczos3)?);
 
     let Some(spec) = blur_spec else {
         let sample = BackdropSample::quantize(cover.as_bytes());

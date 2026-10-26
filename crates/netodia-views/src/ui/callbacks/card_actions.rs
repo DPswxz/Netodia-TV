@@ -19,7 +19,6 @@ use netodia_ui::{AppWindow, CardActions, Dialog, Playlists, TagEditor};
 pub fn wire(ui: &AppWindow, state: &AppState) {
     let actions = ui.global::<CardActions>();
     wire_transport(&actions, state);
-    wire_set_favorites(&actions, state);
     wire_create_playlist_from(ui, state);
     wire_add_to_playlist(ui, state);
     wire_edit_tags(ui, state);
@@ -81,21 +80,6 @@ fn wire_transport(actions: &CardActions<'_>, state: &AppState) {
             );
         });
     }
-}
-
-fn wire_set_favorites(actions: &CardActions<'_>, state: &AppState) {
-    let state = state.clone();
-    actions.on_set_favorites(move |kind, ids, favorite| {
-        spawn_with_track_ids(
-            &state,
-            "card favorite",
-            &kind,
-            &ids,
-            move |state, track_ids| async move {
-                library::favorites::set_favorite(&state, track_ids, favorite).await
-            },
-        );
-    });
 }
 
 fn wire_create_playlist_from(ui: &AppWindow, state: &AppState) {

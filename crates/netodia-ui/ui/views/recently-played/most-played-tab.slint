@@ -29,7 +29,6 @@ export component RecentlyPlayedMostPlayedTab inherits Rectangle {
         card-kind: "track";
         selection-scope: "rp-most-played";
         // The ranking spans the whole library, so a heart left up marks which cards are kept.
-        show-favorite: true;
         covers-generation: RecentlyPlayed.covers-generation;
         request-cover(p, gen) => { RecentlyPlayed.request-most-played-cover(p, gen) }
         row-clicked(id) => { RecentlyPlayed.play-track(id); }

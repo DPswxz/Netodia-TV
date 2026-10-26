@@ -219,7 +219,7 @@ export component ShortcutScope inherits FocusScope {
 
         // The bare letters.
         if (ev.text == "m") { Player.toggle-mute();     return accept; }
-        if (ev.text == "l") { Player.toggle-favorite(); return accept; }
+        if (ev.text == "l" && Player.can-favorite) { Player.toggle-favorite(); return accept; }
         if (ev.text == "n") { Player.next();            return accept; }
         if (ev.text == "p") { Player.previous();        return accept; }
         if (ev.text == "s") { Player.toggle-shuffle();  return accept; }

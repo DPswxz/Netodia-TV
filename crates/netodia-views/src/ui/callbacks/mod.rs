@@ -42,7 +42,7 @@ use macros::{spawn_logged, spawn_logged_sync, wire_pb, wire_sync, wire_sync_pb};
 
 pub use cross_tab_nav::wire_cross_tab_nav;
 pub use library_settings::wire_library_settings;
-pub use now_playing::{RowFlagHandles, wire_now_playing_favorite};
+pub use now_playing::wire_now_playing_favorite;
 pub use tags::wire_tags;
 pub use updater::{check_painter, wire as wire_updater};
 
@@ -230,8 +230,7 @@ pub fn wire_all(ui: &AppWindow, state: &AppState) {
     wire_set_volume(&player, state);
     wire_set_playback_speed(&player, state);
     // Player.toggle-favorite is wired in `wire_now_playing_favorite` after the
-    // per-view handles exist. That single handler routes cloud songs to
-    // NetEase and mirrors local-file favorites into their row caches.
+    // per-view handles exist. Only cloud songs can change favorite membership.
 
     wire_persist_selected_index(ui, state);
     wire_reveal_in_folder(ui, state);

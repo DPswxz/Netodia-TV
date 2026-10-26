@@ -2,7 +2,7 @@ import { TagEditor } from "../../globals/dialog-forms.slint";
 import { Dialog } from "../../globals/dialog.slint";
 import { Nav } from "../../globals/nav.slint";
 import { Playlists } from "../../globals/playlists.slint";
-import { ContextMenuMetrics, FavoriteMenuItem, MenuFlyout, MenuItem, MenuSeparator } from "../context-menu.slint";
+import { ContextMenuMetrics, MenuFlyout, MenuItem, MenuSeparator } from "../context-menu.slint";
 import { TrackCopyFields, TrackCopyItems } from "../track-copy-items.slint";
 import { PopupSurface } from "../popup-surface.slint";
 import { PopupDismissCatcher } from "../popup-dismiss-catcher.slint";
@@ -23,7 +23,6 @@ import { FocusLossWatcher } from "../focus-loss-watcher.slint";
 // declared inside a `PopupWindow`, so anything a host reads back is declared on this root.
 export component TrackContextMenu inherits Rectangle {
     in property <int> row-id;
-    in property <bool> row-is-favorite;
     in property <bool> row-selected;
     // FK targets; 0 means no linkage and hides the entry.
     in property <int> album-id;
@@ -94,7 +93,6 @@ export component TrackContextMenu inherits Rectangle {
     // handlers a single/batch dispatch branch.
     callback play-next([int]);
     callback add-to-queue([int]);
-    callback toggle-favorite([int] /*track_ids*/, bool /*new_state*/);
     // Playlist Detail removes from the open playlist, the queue sheet from the queue.
     callback request-remove([int] /*track_ids*/);
     // Take every displayed row, and drop the whole set. No payload either way: the host owns
@@ -246,15 +244,6 @@ export component TrackContextMenu inherits Rectangle {
                 }
 
                 MenuSeparator {}
-                FavoriteMenuItem {
-                    is-favorite: root.row-is-favorite;
-                    multi-active: root.multi-active;
-                    multi-count: root.multi-count;
-                    clicked => {
-                        root.toggle-favorite(pop.effective-ids, !root.row-is-favorite);
-                        root.dismiss();
-                    }
-                }
 
                 // Opens the tag editor over the right-clicked row or the whole selection — batch
                 // editing is the point. **Don't set `Dialog.open` here**: `request-edit` fetches

@@ -52,7 +52,7 @@ export component OverflowMenu inherits Rectangle {
     // pin and quality rows are gated on more than their setting, so each counts **only when
     // mounted** — otherwise the menu reserves an empty slot.
     property <int> overflow-count:
-        (Settings.overflow-favorite ? 1 : 0)
+        (Settings.overflow-favorite && Player.can-favorite ? 1 : 0)
         + (Settings.overflow-repeat ? 1 : 0)
         + (Settings.overflow-shuffle ? 1 : 0)
         + ((WindowChrome.always-on-top-supported && Settings.overflow-pin) ? 1 : 0)
@@ -294,7 +294,7 @@ export component OverflowMenu inherits Rectangle {
                     }
                 }
 
-                if Settings.overflow-favorite: OverflowRow {
+                if Settings.overflow-favorite && Player.can-favorite: OverflowRow {
                     icon: Player.vm.track.is_favorite ? "favorite" : "favorite_border";
                     label: Player.vm.track.is_favorite ? @tr("Unfavorite") : @tr("Favorite");
                     active: Player.vm.track.is_favorite;

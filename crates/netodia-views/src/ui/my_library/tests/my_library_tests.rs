@@ -72,9 +72,10 @@ fn declared_tab_count() -> usize {
     parsed.unwrap_or_default()
 }
 
-/// The contents of an inline `name: [ … ]` array in the mount sheet, `""` if it is gone.
+/// The account branch's inline tab array; local drill headings use separate single-item arrays.
 fn sheet_array(name: &str) -> &'static str {
-    VIEW.split_once(&format!("{name}: ["))
+    VIEW.split_once(&format!("tab-{name}: root.account-surface"))
+        .and_then(|(_, rest)| rest.split_once('['))
         .and_then(|(_, rest)| rest.split_once(']'))
         .map_or("", |(items, _)| items)
 }

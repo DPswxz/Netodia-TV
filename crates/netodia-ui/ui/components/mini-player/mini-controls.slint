@@ -120,7 +120,7 @@ export component MiniTrailingControls inherits HorizontalLayout {
             clicked => { root.toggle-backdrop(); }
         }
     }
-    VerticalLayout {
+    if Player.can-favorite: VerticalLayout {
         alignment: center;
         MiniIconButton {
             icon: Player.vm.track.is_favorite ? "favorite" : "favorite_border";
