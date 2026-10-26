@@ -37,6 +37,36 @@ fn row(id: i64) -> RsTrackListRow {
     }
 }
 
+#[test]
+fn refresh_keeps_only_requested_missing_rows_and_their_filter_keys() {
+    let cache = TrackListCache::new();
+    cache.store(vec![row(1), row(2), row(3)], "artist", "asc");
+    let mut updated = row(1);
+    updated.title = "Updated title".to_owned();
+    updated.artist = Some("Updated artist".to_owned());
+
+    cache.store_retaining(vec![updated], &HashSet::from([1, 2]), "artist", "asc");
+
+    let snapshot = cache.snapshot();
+    assert_eq!(snapshot.ids_filtered(&row_match::fold_needle("")), vec![2, 1]);
+    assert_eq!(snapshot.ids_filtered(&row_match::fold_needle("ghost")), vec![2]);
+    assert_eq!(snapshot.ids_filtered(&row_match::fold_needle("updated")), vec![1]);
+}
+
+#[test]
+fn refreshed_membership_replaces_a_retained_unliked_row_without_duplicates() {
+    let cache = TrackListCache::new();
+    cache.store(vec![row(1)], "title", "asc");
+    let mut restored = row(1);
+    restored.is_favorite = true;
+
+    cache.store_retaining(vec![restored], &HashSet::from([1]), "title", "asc");
+
+    let rows = cache.snapshot().visible(&row_match::fold_needle(""));
+    assert_eq!(rows.len(), 1);
+    assert!(rows[0].is_favorite);
+}
+
 // --- RowSearchKey --------------------------------------------------------
 
 #[test]

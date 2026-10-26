@@ -21,6 +21,8 @@ pub(crate) struct FavoritesUiState {
     /// Retaining the unfiltered set is what lets a keystroke re-walk without hitting `SQLite` and
     /// a header click re-sort in memory rather than re-issuing the query.
     pub tracks_all: TrackListCache,
+    /// Unliked rows kept for undo until the user leaves Favorites.
+    pub retained_tracks: Mutex<HashSet<i64>>,
     /// Active filter needle — cached so the live-refresh subscriber re-applies it without reading
     /// the Slint property from a tokio thread.
     pub filter: Mutex<Needle>,
@@ -66,6 +68,7 @@ impl FavoritesUiState {
     pub(super) fn new() -> Self {
         Self {
             tracks_all: TrackListCache::new(),
+            retained_tracks: Mutex::new(HashSet::new()),
             filter: Mutex::new(Needle::default()),
             sort: Mutex::new(ViewSort { field: "track_number".to_owned(), dir: SortDir::Asc }),
             artist_sort: Mutex::new(ViewSort {

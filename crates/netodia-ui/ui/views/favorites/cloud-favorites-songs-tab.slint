@@ -4,7 +4,7 @@ import { ActionPill, PillButton } from "../../components/action-pill.slint";
 import { CloudPlaylistTracks } from "../my-library/cloud-playlist-tracks.slint";
 
 // The liked-song page shares the standard column header with playlist details.
-// Its heart action keeps the cloud unlike behavior.
+// Membership can be toggled both ways while an unliked row remains in this visit's list.
 export component CloudFavoritesSongsTab inherits Rectangle {
     in property <[TrackListRow]> rows;
     in-out property <TrackColumns> columns;
@@ -15,7 +15,7 @@ export component CloudFavoritesSongsTab inherits Rectangle {
 
     callback retry();
     callback play-track(string, int);
-    callback remove-favorite(string);
+    callback toggle-favorite(string, bool);
     callback request-sort(string);
     callback request-blur-search();
 
@@ -29,10 +29,11 @@ export component CloudFavoritesSongsTab inherits Rectangle {
         position-field: "track_number";
         show-number: true;
         favorite-clickable: true;
+        show-favorite-indicator: false;
         cloud-entity-links: true;
         request-sort(field) => { root.request-sort(field); }
         play-track(id, index) => { root.play-track(id, index); }
-        toggle-favorite(id, liked) => { if (!liked) { root.remove-favorite(id); } }
+        toggle-favorite(id, liked) => { root.toggle-favorite(id, liked); }
         request-blur-search => { root.request-blur-search(); }
     }
 

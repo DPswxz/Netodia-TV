@@ -45,6 +45,7 @@ export component TrackListRowItem inherits Rectangle {
     in property <bool> cloud-entity-links: false;
     in property <bool> single-click-play: true;
     in property <bool> favorite-clickable: true;
+    in property <bool> show-favorite-indicator: true;
 
     // Merge contiguous selected rows into one continuous pill: top corners square when
     // the row above is selected, bottom when the row below is. `TrackList` computes both
@@ -452,8 +453,10 @@ export component TrackListRowItem inherits Rectangle {
                             overflow: elide;
                         }
                     }
-                    if root.row-data.is_favorite: VerticalLayout {
+                    if root.show-favorite-indicator && root.row-data.is_favorite: VerticalLayout {
                         alignment: center;
+                        // Keep the title width stable while the hover action shows the same heart.
+                        opacity: touch.has-hover && root.favorite-clickable ? 0.0 : 1.0;
                         MaterialIcon {
                             name: "favorite";
                             icon-size: 18px;
@@ -517,8 +520,7 @@ export component TrackListRowItem inherits Rectangle {
             }
 
             // The duration is fully replaced by the favourite toggle on hover. The
-            // persistent "this is a favorite" indicator lives beside the title; this
-            // swap is only the action button.
+            // idle favorite indicator beside the title is hidden during this swap.
             Rectangle {
                 x: root.layout.length_x;
                 y: 0;

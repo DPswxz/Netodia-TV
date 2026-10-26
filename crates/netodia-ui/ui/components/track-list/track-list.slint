@@ -54,6 +54,7 @@ export component TrackList inherits Rectangle {
     in property <bool> cloud-entity-links: true;
     in property <bool> cloud-single-click: true;
     in property <bool> cloud-favorite-clickable: false;
+    in property <bool> show-favorite-indicator: !root.cloud-rows;
     callback play-cloud-row(string, int);
     callback toggle-cloud-favorite(string, bool);
 
@@ -139,6 +140,7 @@ export component TrackList inherits Rectangle {
                 cloud-entity-links: root.cloud-entity-links;
                 single-click-play: root.cloud-single-click;
                 favorite-clickable: !root.cloud-rows || root.cloud-favorite-clickable;
+                show-favorite-indicator: root.show-favorite-indicator;
                 view-context: root.view-context;
                 current-playlist-id: root.current-playlist-id;
                 view-selected-ids: root.view-selected-ids;

@@ -67,7 +67,7 @@ export component FavoritesView inherits Rectangle {
                     error: Favorites.cloud-error;
                     retry => { Favorites.retry-cloud(); }
                     play-track(id, index) => { Favorites.play-cloud-row(id, index); }
-                    remove-favorite(id) => { Favorites.toggle-cloud-favorite(id, false); }
+                    toggle-favorite(id, liked) => { Favorites.toggle-cloud-favorite(id, liked); }
                     request-sort(field) => { Favorites.request-sort(field); }
                     request-blur-search => { Favorites.blur-search-tick += 1; }
                 }

@@ -1,11 +1,94 @@
 use std::sync::Arc;
 
 use super::{FavoritesTab, FavoritesUi};
+use crate::ui::row_match::Needle;
 use netodia_artwork::media::image::cover_thumbs::CoverThumbs;
 use netodia_core::entities::artist::FavoriteArtist;
 use netodia_testkit::write_test_png;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
+
+fn favorite_row(id: i64) -> netodia_core::entities::track::TrackListRow {
+    netodia_core::entities::track::TrackListRow {
+        id,
+        file_path: String::new(),
+        file_name: format!("Song {id}"),
+        title: format!("Song {id}"),
+        artist: None,
+        album_artist: None,
+        album: None,
+        genre: None,
+        track_number: Some(i32::try_from(id).unwrap_or_default()),
+        disc_number: Some(1),
+        year: None,
+        duration_ms: 0,
+        artwork_path: None,
+        is_favorite: true,
+        rating: 0,
+        album_id: None,
+        artist_id: None,
+        genre_id: None,
+        date_added: String::new(),
+        sort_key: None,
+    }
+}
+
+fn favorites_with_songs() -> FavoritesUi {
+    let ui = FavoritesUi::new(Arc::new(CoverThumbs::new()), None);
+    ui.set_section_active(true);
+    ui.state().tracks_all.store(vec![favorite_row(1), favorite_row(2)], "track_number", "asc");
+    ui
+}
+
+#[test]
+fn unlike_keeps_the_row_and_restoring_it_survives_the_visit() {
+    let ui = favorites_with_songs();
+    assert!(!ui.reconcile_likes(&std::collections::HashSet::from([2])));
+    let snapshot = ui.state().tracks_all.snapshot();
+    let needle = Needle::default();
+    assert_eq!(snapshot.ids_filtered(&needle), vec![1, 2]);
+    assert!(!snapshot.visible(&needle)[0].is_favorite);
+
+    assert!(!ui.reconcile_likes(&std::collections::HashSet::from([1, 2])));
+    assert!(ui.state().tracks_all.snapshot().visible(&needle)[0].is_favorite);
+    ui.finish_visit();
+    assert_eq!(ui.state().tracks_all.snapshot().ids_filtered(&needle), vec![1, 2]);
+}
+
+#[test]
+fn leaving_favorites_removes_unliked_rows_from_the_next_visits_cache() {
+    let ui = favorites_with_songs();
+    ui.reconcile_likes(&std::collections::HashSet::from([2]));
+    ui.set_section_active(false);
+
+    ui.finish_visit();
+
+    assert_eq!(ui.state().tracks_all.snapshot().ids_filtered(&Needle::default()), vec![2]);
+    assert!(ui.state().retained_tracks.lock().is_empty());
+    assert!(!ui.reconcile_likes(&std::collections::HashSet::new()));
+    assert!(ui.state().retained_tracks.lock().is_empty());
+}
+
+#[test]
+fn removing_the_last_favorites_still_leaves_rows_available_for_undo() {
+    let ui = favorites_with_songs();
+
+    assert!(!ui.reconcile_likes(&std::collections::HashSet::new()));
+
+    assert_eq!(ui.state().tracks_all.snapshot().ids_filtered(&Needle::default()), vec![1, 2]);
+    ui.finish_visit();
+    assert!(ui.state().tracks_all.snapshot().is_empty());
+}
+
+#[test]
+fn liking_an_absent_song_requests_metadata_without_removing_unliked_rows() {
+    let ui = favorites_with_songs();
+
+    assert!(ui.reconcile_likes(&std::collections::HashSet::from([2, 3])));
+
+    assert_eq!(ui.state().tracks_all.snapshot().ids_filtered(&Needle::default()), vec![1, 2]);
+    assert_eq!(*ui.state().retained_tracks.lock(), std::collections::HashSet::from([1]));
+}
 
 const GLOBAL: &str = include_str!("../../../../../netodia-ui/ui/globals/curated.slint");
 const VIEW: &str = include_str!("../../../../../netodia-ui/ui/views/favorites-view.slint");
@@ -75,7 +158,7 @@ fn the_songs_model_is_written_only_while_its_tab_is_mounted() {
     );
     assert!(CLOUD_TRACKS.contains("root.play-track(id, index)"));
     assert!(VIEW.contains("Favorites.play-cloud-row(id, index)"));
-    assert!(VIEW.contains("Favorites.toggle-cloud-favorite(id, false)"));
+    assert!(VIEW.contains("Favorites.toggle-cloud-favorite(id, liked)"));
 }
 
 /// The tab count Slint declares today. Kept local so a change to

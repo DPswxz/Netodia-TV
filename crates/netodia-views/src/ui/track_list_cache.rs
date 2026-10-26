@@ -21,6 +21,7 @@
 //! row; `rows` is the only one ever patched and holds its own, so a re-sort — replacing
 //! `order` alone — stops paying for the row copy `Arc::make_mut` would make for it.
 
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -270,6 +271,29 @@ impl TrackListCache {
         self.install(display, search, sort, order);
     }
 
+    /// Refresh a list while keeping selected old rows that disappeared from the response.
+    /// Favorites uses this for unliked rows that can still be restored during the current visit.
+    pub fn store_retaining(
+        &self,
+        rows: Vec<RsTrackListRow>,
+        retained: &HashSet<i64>,
+        field: &str,
+        dir: &str,
+    ) {
+        let (mut display, mut search, mut sort) = convert(rows);
+        let incoming: HashSet<i64> = sort.iter().map(|key| key.id).collect();
+        let old = self.snapshot();
+        for (index, key) in old.sort.iter().enumerate() {
+            if retained.contains(&key.id) && !incoming.contains(&key.id) {
+                display.push(old.rows[index].clone());
+                search.push(old.search[index].clone());
+                sort.push(key.clone());
+            }
+        }
+        let order = compute_order(&display, &sort, field, dir);
+        self.install(display, search, sort, order);
+    }
+
     fn install(
         &self,
         rows: Vec<UiTrackListRow>,
@@ -317,8 +341,8 @@ impl TrackListCache {
         self.patch(id, |row| row.rating = rating);
     }
 
-    /// Drop one row from all four vectors, keeping them aligned — Favorites needs it,
-    /// unfavouriting removing a track from the set the list is defined by. `order` is
+    /// Drop one row from all four vectors, keeping them aligned — Favorites removes its
+    /// unliked rows when a visit ends. `order` is
     /// rebuilt rather than recomputed: shifting the indices past the removed slot preserves
     /// the current sort exactly, where a re-sort needs a field and direction the caller
     /// doesn't have.
