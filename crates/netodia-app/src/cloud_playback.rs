@@ -81,11 +81,22 @@ struct ReservedPlayback {
     queue_update: QueueUpdate,
 }
 
-#[derive(Clone)]
 struct ActiveStreamTicket {
     ticket: StreamTicket,
     quality: Quality,
     expires_at: Instant,
+    reader: Option<RangeReader>,
+}
+
+impl Clone for ActiveStreamTicket {
+    fn clone(&self) -> Self {
+        Self {
+            ticket: self.ticket.clone(),
+            quality: self.quality,
+            expires_at: self.expires_at,
+            reader: self.reader.as_ref().map(RangeReader::reopen),
+        }
+    }
 }
 
 struct ResolvedCloudTrack {
@@ -588,6 +599,8 @@ impl CloudPlayback {
     /// action, so seeking is a new range-backed decoder generation. The current-track check and
     /// generation reservation happen before the first await, preventing a delayed slider task
     /// from taking over a song selected after the user dragged it.
+    /// Reuse the active ticket and its HTTP cache: resolving another URL here adds an API round
+    /// trip and discards the media bytes the outgoing decoder has already downloaded.
     pub async fn seek(&self, song_id: i64, position: Duration) -> AppResult<CloudPlaybackResult> {
         let (generation, volume, speed, was_paused, position) = {
             let _exec = self.player_state.lock_exec();
@@ -611,16 +624,21 @@ impl CloudPlayback {
             let generation = self.engine.reserve_playback_request();
             (generation, volume, speed, was_paused, position)
         };
-        self.play_reserved(ReservedPlayback {
-            song_id,
-            quality: self.quality(),
-            volume,
-            speed,
-            start_position: Some(position),
-            generation,
-            keep_paused: was_paused,
-            queue_update: QueueUpdate::Preserve,
-        })
+        let quality = self.quality();
+        let cached_ticket = self.valid_stream_ticket(song_id, quality);
+        self.play_reserved_with_ticket(
+            ReservedPlayback {
+                song_id,
+                quality,
+                volume,
+                speed,
+                start_position: Some(position),
+                generation,
+                keep_paused: was_paused,
+                queue_update: QueueUpdate::Preserve,
+            },
+            cached_ticket,
+        )
         .await
     }
 
@@ -658,7 +676,7 @@ impl CloudPlayback {
             let expires_at = issued_at
                 .checked_add(Duration::from_secs(ticket.expires_after_seconds))
                 .unwrap_or(issued_at);
-            Ok::<_, AppError>(ActiveStreamTicket { ticket, quality, expires_at })
+            Ok::<_, AppError>(ActiveStreamTicket { ticket, quality, expires_at, reader: None })
         };
         let metadata_request = resolve_track_metadata(&self.cloud, song_id, known_summary);
         let (active_ticket, (mut summary, cover_url)) =
@@ -692,8 +710,9 @@ impl CloudPlayback {
             let url = active_ticket.ticket.url.clone();
             let extension = decoder_extension(&active_ticket.ticket.format).to_owned();
             let reported_size = active_ticket.ticket.size;
+            let reader = active_ticket.reader.as_ref().map(RangeReader::reopen);
             let source_task = tokio::task::spawn_blocking(move || {
-                open_buffered_source(&url, &extension, reported_size, start)
+                open_buffered_source(&url, &extension, reported_size, start, reader)
             });
             let source_result = tokio::select! {
                 () = cancellation.cancelled() => {
@@ -704,8 +723,17 @@ impl CloudPlayback {
                 }
             };
             match source_result {
-                Ok(source) => break source,
-                Err(error) if used_cached_ticket && is_expired_stream_url_error(&error) => {
+                Ok((source, reader)) => {
+                    active_ticket.reader = Some(reader);
+                    break source;
+                }
+                Err(error) if used_cached_ticket => {
+                    // A cached URL may expire during a probe or seek, where the decoder's error
+                    // no longer carries the HTTP status. Retry it once with fresh credentials.
+                    log::debug!(
+                        "Cached cloud source failed; refreshing ticket: {}",
+                        netodia_core::error::describe(&error)
+                    );
                     self.clear_stream_ticket_if_matches(&active_ticket);
                     let ticket = tokio::select! {
                         () = cancellation.cancelled() => {
@@ -717,7 +745,8 @@ impl CloudPlayback {
                     let expires_at = issued_at
                         .checked_add(Duration::from_secs(ticket.expires_after_seconds))
                         .unwrap_or(issued_at);
-                    active_ticket = ActiveStreamTicket { ticket, quality, expires_at };
+                    active_ticket =
+                        ActiveStreamTicket { ticket, quality, expires_at, reader: None };
                     used_cached_ticket = false;
                 }
                 Err(error) => return Err(error),
@@ -1132,27 +1161,6 @@ async fn download_cover(
     .flatten()
 }
 
-fn is_expired_stream_url_error(error: &AppError) -> bool {
-    let mut cause: Option<&(dyn std::error::Error + 'static)> = Some(error);
-    while let Some(current) = cause {
-        if current
-            .downcast_ref::<netodia_net::services::net::range_reader::MediaError>()
-            .is_some_and(|error| {
-                matches!(
-                    error,
-                    netodia_net::services::net::range_reader::MediaError::HttpStatus(
-                        401 | 403 | 404 | 410
-                    )
-                )
-            })
-        {
-            return true;
-        }
-        cause = std::error::Error::source(current);
-    }
-    false
-}
-
 /// Candidate order for a newly selected cloud queue item. Repeat-off respects the tail the user
 /// selected from; looping modes wrap once. Shuffle anchors the requested item and randomizes the
 /// remaining candidates before any network resolution begins.
@@ -1243,9 +1251,14 @@ fn open_buffered_source(
     extension: &str,
     reported_size: Option<u64>,
     start: Duration,
-) -> AppResult<BufferedAudioSource> {
-    let reader =
-        RangeReader::open(url).map_err(|error| AppError::network("在线播放源加载失败", error))?;
+    reader: Option<RangeReader>,
+) -> AppResult<(BufferedAudioSource, RangeReader)> {
+    let reader = match reader {
+        Some(reader) => reader,
+        None => RangeReader::open(url)
+            .map_err(|error| AppError::network("在线播放源加载失败", error))?,
+    };
+    let reusable = reader.reopen();
     let byte_len = reader.byte_len().or(reported_size);
     let mut decoder = FileDecoder::open_reader(reader, extension, byte_len)?;
     if !start.is_zero() {
@@ -1253,7 +1266,8 @@ fn open_buffered_source(
             .try_seek(start)
             .map_err(|error| AppError::Player(format!("在线播放定位失败：{error}")))?;
     }
-    BufferedAudioSource::open(move || Ok(decoder))
+    let source = BufferedAudioSource::open(move || Ok(decoder))?;
+    Ok((source, reusable))
 }
 
 fn queue_cloud_tracks(
@@ -1384,13 +1398,86 @@ mod tests {
         let url = format!("http://{}/track.wav", listener.local_addr()?);
         let server = serve_media(listener, bytes);
 
-        let mut source = open_buffered_source(&url, "wav", Some(length), Duration::ZERO)?;
+        let (mut source, reader) =
+            open_buffered_source(&url, "wav", Some(length), Duration::ZERO, None)?;
 
         assert_eq!(source.sample_rate().get(), 44_100);
         assert_eq!(source.channels().get(), 1);
         assert_eq!(source.total_duration(), Some(Duration::from_secs(1)));
         assert!(source.next().is_some());
         server.join().map_err(|_| std::io::Error::other("media server panicked"))??;
+
+        // A non-range host used to download the whole track again for every slider release.
+        // Its server is now gone, but both decoders can still read independent positions.
+        let (mut sought, _) = open_buffered_source(
+            &url,
+            "wav",
+            Some(length),
+            Duration::from_millis(500),
+            Some(reader),
+        )?;
+        assert!(sought.next().is_some());
+        assert!(source.next().is_some());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn an_active_ticket_resolves_without_an_api_request()
+    -> Result<(), Box<dyn std::error::Error>> {
+        use super::{ActiveStreamTicket, CloudPlayback};
+        use crate::state::fixtures::TestPlayback;
+        use netodia_core::entities::cloud::{Quality, StreamTicket};
+        use netodia_engine::player::engine::state::lock_state;
+        use std::sync::Arc;
+        use std::time::Instant;
+
+        let fixture = TestPlayback::empty().await?;
+        let cloud = crate::cloud::tests::service_without_network_for_test();
+        let playback = CloudPlayback::new(
+            cloud,
+            reqwest::Client::new(),
+            fixture.tmp.path().join("artwork"),
+            fixture.ctx.engine.clone(),
+            fixture.ctx.player_state.clone(),
+            fixture.ctx.sinks.clone(),
+        );
+        let summary = Arc::new(track_summary(
+            Song { id: 812, name: "Cloud song".into(), ..Song::default() },
+            None,
+            false,
+        ));
+        lock_state(&fixture.ctx.player_state).source = Some(summary.clone());
+        let ticket = ActiveStreamTicket {
+            ticket: StreamTicket {
+                song_id: 812,
+                url: "http://127.0.0.1:1/track.mp3".into(),
+                format: "mp3".into(),
+                expires_after_seconds: 3600,
+                trial: false,
+                size: None,
+            },
+            quality: Quality::default(),
+            expires_at: Instant::now() + Duration::from_hours(1),
+            reader: None,
+        };
+        *playback.active_stream_ticket.write() = Some(ticket.clone());
+        let cached = playback.valid_stream_ticket(812, Quality::default());
+
+        let resolved =
+            playback.resolve_playback_track(812, Quality::default(), cached, None).await?;
+
+        assert!(resolved.used_cached_ticket);
+        assert!(Arc::ptr_eq(&resolved.summary, &summary));
+        assert!(playback.valid_stream_ticket(813, Quality::default()).is_none());
+        assert!(playback.valid_stream_ticket(812, Quality::Lossless).is_none());
+
+        let mut expired = ticket;
+        expired.expires_at = Instant::now();
+        *playback.active_stream_ticket.write() = Some(expired);
+        assert!(playback.valid_stream_ticket(812, Quality::default()).is_none());
+        assert!(
+            playback.resolve_playback_track(812, Quality::default(), None, None).await.is_err()
+        );
         Ok(())
     }
 }
