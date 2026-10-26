@@ -2819,3 +2819,15 @@ msgstr "La modifica dell'icona nell'area di notifica richiede il riavvio di Neto
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "In ordine"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "UI Scale"
+msgstr "Scala dell’interfaccia"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Text and interface size"
+msgstr "Dimensione del testo e dell’interfaccia"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Scale fonts and controls together. Applies immediately, in addition to system display scaling."
+msgstr "Ridimensiona insieme caratteri e controlli. Si applica subito, oltre al ridimensionamento dello schermo di sistema."

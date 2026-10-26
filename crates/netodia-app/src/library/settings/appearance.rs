@@ -89,6 +89,13 @@ pub fn set_corner_radius(paths: &Paths, px: u32) -> Result<(), AppError> {
     })
 }
 
+/// Persist UI zoom; runtime application belongs to the views layer.
+pub fn set_ui_scale_percent(paths: &Paths, percent: i32) -> Result<(), AppError> {
+    services::settings::mutate_settings(paths, move |settings| {
+        settings.ui_scale_percent = services::settings::ui_scale_preset(percent);
+    })
+}
+
 #[cfg(test)]
 #[path = "tests/appearance_tests.rs"]
 mod tests;

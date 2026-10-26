@@ -5,10 +5,13 @@
 //! already correct, so nothing on screen depends on the disk hop landing. What does
 //! depend on it is the next launch, and there the only value that matters is the last
 //! one the UI published.
+//!
+//! The UI zoom picker uses the same ordering for its preset index, persisting the corresponding
+//! percentage in `settings.json` instead of an index in `views.json`.
 
 use std::sync::atomic::{AtomicI32, Ordering};
 
-/// Shadow of a persisted `views.json` index, plus the lock its writes serialize on.
+/// Shadow of a persisted selection index, plus the lock its writes serialize on.
 ///
 /// Two `spawn_blocking` tasks have no ordering of their own, so a burst can land its
 /// values reversed and the next launch restores somewhere the user only passed through.

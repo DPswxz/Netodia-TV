@@ -2837,3 +2837,15 @@ msgstr "Zmiana ikony w zasobniku systemowym wymaga ponownego uruchomienia Melodi
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Po kolei"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "UI Scale"
+msgstr "Skala interfejsu"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Text and interface size"
+msgstr "Rozmiar tekstu i interfejsu"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Scale fonts and controls together. Applies immediately, in addition to system display scaling."
+msgstr "Skaluje razem czcionki i elementy sterujące. Działa natychmiast, dodatkowo do systemowego skalowania ekranu."

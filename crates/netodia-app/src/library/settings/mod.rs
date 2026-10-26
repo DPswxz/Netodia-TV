@@ -38,7 +38,7 @@ pub mod visualizer;
 
 pub use appearance::{
     seed_theme_preference, set_appearance, set_corner_radius, set_dynamic_color_style,
-    set_match_unfocused_to_system_bg,
+    set_match_unfocused_to_system_bg, set_ui_scale_percent,
 };
 pub use crossfade::{
     set_crossfade_duration_ms, set_crossfade_enabled, set_crossfade_fade_on_pause,

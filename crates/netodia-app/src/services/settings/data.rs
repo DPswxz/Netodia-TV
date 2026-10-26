@@ -140,6 +140,8 @@ pub struct SettingsData {
     pub full_player_geometry: Option<FullPlayerGeometry>,
     pub volume: u32,
     pub corner_radius: u32,
+    /// UI zoom relative to the monitor's DPI, in percent.
+    pub ui_scale_percent: i32,
     pub play_button_animation: String,
     pub dynamic_color_style: String,
     #[serde(default)]
@@ -209,6 +211,7 @@ impl Default for SettingsData {
             // Tracks the host desktop so the window outline feels native out of
             // the box; a returning install already has the field written.
             corner_radius: get_os_corner_radius(),
+            ui_scale_percent: 100,
             play_button_animation: "none".to_owned(),
             dynamic_color_style: "none".to_owned(),
             theme_preferences: HashMap::new(),

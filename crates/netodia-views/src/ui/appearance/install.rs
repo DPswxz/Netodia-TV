@@ -56,6 +56,7 @@ pub fn install(ui: &AppWindow, state: &AppState) -> Result<AppearanceHandles, Ap
     window_border::seed(ui, &settings.window);
     apply_settings(ui, &settings, &initial_state);
     seed_window_rows(ui, &settings);
+    super::ui_scale::install(ui, state, settings.ui_scale_percent);
 
     // The boot migration for a `settings.json` written before `theme_preferences`
     // existed.

@@ -34,6 +34,7 @@ use std::sync::{Once, OnceLock};
 use std::time::{Duration, Instant};
 
 use parking_lot::Mutex;
+use slint::winit_030::WinitWindowAccessor;
 #[cfg(target_os = "windows")]
 use slint::winit_030::winit::dpi::PhysicalInsets as WinitPhysicalInsets;
 use slint::winit_030::winit::dpi::{
@@ -336,7 +337,18 @@ pub fn restore_full_player(app: &AppWindow) {
     let placement = (*held().lock()).unwrap_or_else(Placement::first_launch);
     let (size, position) = logical_placement(placement.geom, MIN_FULL_PLAYER);
     let window = app.window();
-    window.set_size(with_returning_frame(app, size));
+    // Placement is persisted in OS logical pixels; the live layout includes the user's zoom.
+    // Use physical pixels at this boundary, and still clear the miniplayer's logical exit edge.
+    #[allow(clippy::cast_possible_truncation, reason = "monitor DPI fits in f32")]
+    let os_scale = window
+        .with_winit_window(|w| w.scale_factor() as f32)
+        .unwrap_or_else(|| window.scale_factor());
+    let ratio = os_scale / window.scale_factor();
+    let size = LogicalSize::new(
+        (size.width * ratio).max(MIN_FULL_PLAYER.width),
+        (size.height * ratio).max(MIN_FULL_PLAYER.height),
+    );
+    window.set_size(with_returning_frame(app, size).to_physical(window.scale_factor()));
     if placement.position_known {
         window.set_position(position);
     }

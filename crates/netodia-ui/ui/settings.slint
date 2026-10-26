@@ -212,6 +212,10 @@ export global Settings {
     in-out property <int> corner-radius: 6;
     callback corner-radius-changed(int);
 
+    in property <[string]> ui-scale-options;
+    in-out property <int> ui-scale-index: 1;
+    callback ui-scale-changed(int);
+
     // 0 = Windows (its caption glyphs), 1 = macOS (traffic lights with hover-reveal glyphs),
     // 2 = KDE (Breeze's glyphs and hover disc).
     // Mirrored into `Theme.titlebar-button-style` so `custom-titlebar.slint` reads it through
