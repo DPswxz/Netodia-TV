@@ -60,6 +60,8 @@ struct CuratedPage {
     view: &'static str,
     lifecycle: &'static str,
     counts: &'static [&'static str],
+    /// Every count the hero can select must clamp the unfetched sentinel.
+    mosaic_counts: &'static [&'static str],
 }
 
 const CURATED_PAGES: [CuratedPage; 2] = [
@@ -69,6 +71,7 @@ const CURATED_PAGES: [CuratedPage; 2] = [
         view: include_str!("../../../../netodia-ui/ui/views/favorites-view.slint"),
         lifecycle: include_str!("../favorites/callbacks/lifecycle.rs"),
         counts: &["track-count", "most-played-count", "artist-count"],
+        mosaic_counts: &["track-count", "album-count"],
     },
     CuratedPage {
         label: "recently-played",
@@ -76,6 +79,7 @@ const CURATED_PAGES: [CuratedPage; 2] = [
         view: include_str!("../../../../netodia-ui/ui/views/recently-played-view.slint"),
         lifecycle: include_str!("../recently_played/callbacks/lifecycle.rs"),
         counts: &["track-count", "most-played-count"],
+        mosaic_counts: &["track-count"],
     },
 ];
 
@@ -138,13 +142,15 @@ fn both_mosaic_mounts_clamp_the_unfetched_sentinel() {
             .split_once("mosaic-count:")
             .and_then(|(_, rest)| rest.split_once(';'))
             .map_or("", |(value, _)| value);
-        assert!(
-            mount.contains(&format!("max({}.track-count, 0)", page.global)),
-            "{}-view.slint must clamp `mosaic-count` with `max({}.track-count, 0)` — \
-             `MosaicHeroTile` splits on both comparisons and renders nothing for a negative count",
-            page.label,
-            page.global
-        );
+        for count in page.mosaic_counts {
+            assert!(
+                mount.contains(&format!("max({}.{count}, 0)", page.global)),
+                "{}-view.slint must clamp `mosaic-count` with `max({}.{count}, 0)` — \
+                 `MosaicHeroTile` splits on both comparisons and renders nothing for a negative count",
+                page.label,
+                page.global
+            );
+        }
     }
 }
 

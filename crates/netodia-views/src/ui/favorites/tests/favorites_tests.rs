@@ -202,9 +202,21 @@ fn favorites_view_uses_cloud_rows_with_sortable_netease_columns() {
     assert!(SONGS.contains("state.cloud.liked_songs().await?"));
     assert_eq!(
         VIEW.matches("if Favorites.tab-idx == Favorites.tab-").count(),
-        1,
-        "Favorites has one cloud-backed tab and no local-only grid tabs"
+        2,
+        "Favorites has cloud-backed Songs and Albums tabs and no local-only grid tabs"
     );
+}
+
+/// The album tab must have its own mount and index rather than replacing the song list.
+#[test]
+fn favorites_view_exposes_the_cloud_album_collection_beside_songs() {
+    assert!(VIEW.contains("if Favorites.tab-idx == Favorites.tab-songs:"));
+    assert!(VIEW.contains("if Favorites.tab-idx == Favorites.tab-albums:"));
+    assert!(VIEW.contains("CloudFavoritesAlbumsTab {"));
+    assert!(VIEW.contains("tab-labels: [@tr(\"Songs\"), @tr(\"Albums\")];"));
+    assert!(GLOBAL.contains("out property <int> tab-songs: 0;"));
+    assert!(GLOBAL.contains("out property <int> tab-albums: 1;"));
+    assert!(GLOBAL.contains("out property <int> tab-count: 2;"));
 }
 
 /// A `pure` callback's result is cached until a dependency is dirtied, so the

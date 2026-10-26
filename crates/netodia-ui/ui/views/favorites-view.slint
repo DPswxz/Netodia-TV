@@ -27,7 +27,7 @@ export component FavoritesView inherits Rectangle {
             filter-placeholder: @tr("Filter favorites…");
             show-empty-copy: false;
             empty-copy: "";
-            mosaic-count: max(Favorites.tab-idx == Favorites.tab-albums ? Favorites.album-count : Favorites.track-count, 0);
+            mosaic-count: Favorites.tab-idx == Favorites.tab-albums ? max(Favorites.album-count, 0) : max(Favorites.track-count, 0);
             mosaic-cover: Favorites.cover;
             empty-glyph: "favorite";
             empty-glyph-filled: true;
