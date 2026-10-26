@@ -14,6 +14,7 @@ mod repaint;
 mod system_watcher;
 pub mod theme_apply;
 mod theme_picker;
+pub(crate) mod ui_scale;
 pub mod window_border;
 mod window_settings;
 

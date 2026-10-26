@@ -136,7 +136,9 @@ pub fn install(
             let Some(ui) = weak.upgrade() else { return };
             let window = ui.window();
             let width = window.size().to_logical(window.scale_factor()).width;
-            window.set_size(slint::LogicalSize::new(width, height));
+            window.set_size(
+                slint::LogicalSize::new(width, height).to_physical(window.scale_factor()),
+            );
         });
     }
 

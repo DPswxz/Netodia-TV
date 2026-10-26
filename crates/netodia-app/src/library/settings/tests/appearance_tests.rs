@@ -13,6 +13,40 @@ use netodia_core::themes::MATERIAL_YOU_ACCENT_ID;
 
 use super::{ThemePreference, seed_theme_preference, set_appearance};
 
+#[test]
+fn ui_scale_round_trips_without_changing_the_theme() -> Result<(), AppError> {
+    let (_tmp, paths) = rooted_at_accent(STATIC_ACCENT)?;
+
+    super::set_ui_scale_percent(&paths, 150)?;
+
+    let settings = services::settings::read_settings(&paths)?;
+    assert_eq!(settings.ui_scale_percent, 150);
+    assert_eq!(settings.accent_color, STATIC_ACCENT);
+    Ok(())
+}
+
+#[test]
+fn ui_scale_validates_both_loaded_and_requested_percentages() -> Result<(), AppError> {
+    let (_tmp, paths) = seeded_root_with(|s| s.ui_scale_percent = i32::MAX)?;
+    assert_eq!(services::settings::read_settings(&paths)?.ui_scale_percent, 200);
+
+    super::set_ui_scale_percent(&paths, i32::MIN)?;
+
+    assert_eq!(services::settings::read_settings(&paths)?.ui_scale_percent, 75);
+    Ok(())
+}
+
+#[test]
+fn settings_written_before_ui_scale_keep_the_original_size() -> Result<(), AppError> {
+    let (_tmp, paths) = seeded_root()?;
+    std::fs::write(&paths.settings_path, r#"{"theme_id":"catppuccin"}"#)?;
+
+    let settings = services::settings::read_settings(&paths)?;
+
+    assert_eq!(settings.ui_scale_percent, 100);
+    Ok(())
+}
+
 const THEME: &str = "catppuccin";
 const VARIANT: &str = "mocha";
 const STATIC_ACCENT: &str = "yellow";

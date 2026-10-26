@@ -5,6 +5,18 @@ use serde::{Deserialize, Serialize};
 
 use netodia_platform::services::platform::desktop::{HostDesktop, is_kde_desktop};
 
+/// The zoom choices shared by the settings picker, load validation and persistence.
+pub const UI_SCALE_PRESETS: [i32; 6] = [75, 100, 125, 150, 175, 200];
+
+/// Snap a stored or requested zoom to a supported percentage. Integer percentages keep
+/// malformed floating-point values out of the settings file and bound glyph-cache growth.
+pub fn ui_scale_preset(percent: i32) -> i32 {
+    UI_SCALE_PRESETS
+        .into_iter()
+        .min_by_key(|preset| (i64::from(*preset) - i64::from(percent)).abs())
+        .unwrap_or(100)
+}
+
 /// Style of the custom titlebar's decoration buttons: `Standard` paints
 /// Windows 11's caption glyphs, `Macos` the three traffic-light circles,
 /// `Kde` Breeze's glyphs. Persisted as a token so a future style needs no

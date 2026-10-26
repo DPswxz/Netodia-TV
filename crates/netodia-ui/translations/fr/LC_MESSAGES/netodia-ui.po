@@ -2819,3 +2819,15 @@ msgstr "Changer l'icône de la zone de notification nécessite de redémarrer Ne
 #: ui/views/my-library/tab-pills.slint
 msgid "In order"
 msgstr "Dans l’ordre"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "UI Scale"
+msgstr "Échelle de l’interface"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Text and interface size"
+msgstr "Taille du texte et de l’interface"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Scale fonts and controls together. Applies immediately, in addition to system display scaling."
+msgstr "Redimensionne les polices et les commandes ensemble. S’applique immédiatement, en plus de la mise à l’échelle de l’écran du système."
