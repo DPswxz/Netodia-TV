@@ -71,7 +71,7 @@ export component CloudFavoritesAlbumsTab inherits Rectangle {
                                 card-width: geometry.card-w;
                                 card-height: geometry.card-h;
                                 artwork-path: album.artwork_path;
-                                cover: Favorites.request-album-cover(album.artwork_path, Favorites.covers-generation);
+                                cover: Favorites.request-album-cover(album.artwork_path, Favorites.album-covers-generation);
                                 fallback-icon: "album";
                                 title: album.title;
                                 subtitle: album.artist;

@@ -239,3 +239,40 @@ fn only_the_boot_install_answers_for_the_grid_tier() {
          the two only ever disagree"
     );
 }
+
+/// The online album cards own a remote cache, so their notifier must not claim a decode from
+/// the shared on-disk grid tier. Every remote consumer must read the private token instead.
+#[test]
+fn remote_album_covers_use_their_own_repaint_token() {
+    let slint = stripped_sources(UI_DIR, "slint", MIN_SLINT_SOURCES);
+    let declaring: BTreeSet<String> = slint
+        .iter()
+        .flat_map(|(_, src)| globals_declaring(src, "property <int> album-covers-generation"))
+        .collect();
+    assert_eq!(declaring, BTreeSet::from(["Favorites".to_owned()]));
+
+    let sources = rust_sources();
+    let wiring = sources
+        .iter()
+        .find(|(path, _)| path == "ui/favorites/albums.rs")
+        .map_or("", |(_, src)| src.as_str());
+    let install = netodia_testkit::block_after(wiring, "fn wire_covers(");
+    assert!(install.contains("set_album_covers_generation("));
+    assert!(!install.contains("set_covers_generation("));
+
+    let mut consumers = 0;
+    for (path, src) in &slint {
+        for (at, marker) in src.match_indices("Favorites.request-album-cover(") {
+            consumers += 1;
+            let call = src
+                .get(at + marker.len()..)
+                .and_then(|rest| rest.split_once(");"))
+                .map_or("", |(args, _)| args);
+            assert!(
+                call.contains("Favorites.album-covers-generation"),
+                "{path}: a private remote cover lookup must read its cache's repaint token"
+            );
+        }
+    }
+    assert!(consumers >= 2, "both the album cards and online detail must use the private cache");
+}

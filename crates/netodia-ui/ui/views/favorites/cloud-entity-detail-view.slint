@@ -24,7 +24,7 @@ export component CloudEntityDetailView inherits Rectangle {
                 fallback-icon: CloudEntityDetail.kind == "artist" ? "person" : "album";
                 artwork-path: CloudEntityDetail.artwork-path;
                 cover: Favorites.request-album-cover(
-                    CloudEntityDetail.artwork-path, Favorites.covers-generation,
+                    CloudEntityDetail.artwork-path, Favorites.album-covers-generation,
                 );
             }
 

@@ -47,7 +47,7 @@ fn wire_covers(ui: &AppWindow, state: &AppState) {
         move || {
             let _ = weak.upgrade_in_event_loop(|ui| {
                 let g = ui.global::<Favorites>();
-                g.set_covers_generation(g.get_covers_generation().wrapping_add(1));
+                g.set_album_covers_generation(g.get_album_covers_generation().wrapping_add(1));
             });
         },
     ));

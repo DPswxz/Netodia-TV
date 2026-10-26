@@ -21,6 +21,8 @@ export global Favorites {
     in-out property <int> filtered-album-count: 0;
     in-out property <bool> albums-loading: false;
     in-out property <string> albums-error;
+    // The private remote card cache has its own repaint token, separate from the shared grid tier.
+    in-out property <int> album-covers-generation: 0;
     callback retry-albums();
     pure callback request-album-cover(string /*source*/, int /*generation*/) -> image;
     callback load-album-favorite(string /*album ID*/);
