@@ -66,6 +66,7 @@ pub async fn refresh_tracks(
     fav_ui: &Arc<FavoritesUi>,
     weak: &Weak<AppWindow>,
 ) -> AppResult<()> {
+    restore_cached_tracks(state, fav_ui, weak).await;
     let account_generation = state.cloud.status().generation;
     let liked_revision = state.cloud.liked_ids_revision();
     let sort = current_sort(fav_ui);
@@ -93,8 +94,7 @@ pub async fn refresh_tracks(
         return Ok(());
     }
 
-    // A leave landing while the query was in flight has already wiped `tracks_all` and emptied the
-    // model, so everything below would undo that teardown behind a view nobody can see.
+    // A hidden view retains the last successful snapshot but must not rebuild its model.
     if !fav_ui.section_active() {
         fav_ui.mark_songs_dirty();
         return Ok(());
@@ -179,6 +179,37 @@ pub async fn refresh_tracks(
     let count = fav_ui.state().tracks_all.snapshot().total();
     set_cloud_state(weak, false, None, count);
     Ok(())
+}
+
+async fn restore_cached_tracks(
+    state: &AppState,
+    fav_ui: &Arc<FavoritesUi>,
+    weak: &Weak<AppWindow>,
+) {
+    if !fav_ui.state().tracks_all.snapshot().is_empty() || !fav_ui.section_active() {
+        return;
+    }
+    let generation = state.cloud.status().generation;
+    let revision = state.cloud.liked_ids_revision();
+    let Some(songs) = state.cloud.cached_liked_songs().await else { return };
+    let rows: Vec<_> = songs.into_iter().map(cloud_song_row).collect();
+    let sort = current_sort(fav_ui);
+    let fold = crate::ui::hero_folds::fold_tracks(&rows);
+    {
+        let _gate = fav_ui.gate();
+        if state.cloud.status().generation != generation
+            || state.cloud.liked_ids_revision() != revision
+            || !fav_ui.section_active()
+            || !fav_ui.state().tracks_all.snapshot().is_empty()
+        {
+            return;
+        }
+        fav_ui.state().tracks_all.store(rows, &sort.field, dir_token(sort.dir));
+        *fav_ui.state().songs_fold.lock() = fold;
+    }
+    apply_filtered_tracks(fav_ui, weak);
+    super::hero::republish_chips(fav_ui, weak);
+    set_cloud_state(weak, true, None, fav_ui.state().tracks_all.snapshot().total());
 }
 
 /// Fetch the signed-in account's liked songs from `NetEase` and adapt their identities to the

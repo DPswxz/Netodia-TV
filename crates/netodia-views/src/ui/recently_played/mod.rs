@@ -242,6 +242,18 @@ impl RecentlyPlayedUi {
             .collect()
     }
 
+    /// Reuses recent-history metadata, preserving its filtered display order in the queue.
+    pub fn filtered_cloud_tracks(&self) -> Vec<netodia_core::entities::track::TrackSummary> {
+        let needle = self.inner.filter.lock().clone();
+        self.inner
+            .tracks_all
+            .lock()
+            .iter()
+            .filter(|row| crate::ui::row_match::track_matches(row, &needle))
+            .map(crate::ui::cloud_queue::track_summary)
+            .collect()
+    }
+
     /// Flip `is_favorite` on a cached row so a single-row toggle lands without a
     /// re-fetch. Unlike Favorites it never removes the row — recency membership
     /// is independent of both flags.

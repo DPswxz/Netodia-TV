@@ -8,7 +8,9 @@ use crate::ui::callbacks::collect_track_ids;
 use crate::ui::callbacks::{next_sort, persist_view_sort};
 use crate::ui::favorites::{self as favorites_ui_mod, FavoritesUi};
 use crate::ui::track_list_view::view_id;
+use netodia_app::cloud_playback::CloudQueueShuffle;
 use netodia_app::state::AppState;
+use netodia_core::entities::track::TrackSummary;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, CloudTrackActions, Favorites};
@@ -110,7 +112,7 @@ fn wire_playback(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
             log::warn!("favorites::play_cloud_song: invalid NetEase song ID");
             return;
         };
-        play_favorite_song(&state_for_remote, fav_ui_for_remote.filtered_track_ids(), song_id);
+        play_favorite_song(&state_for_remote, fav_ui_for_remote.filtered_cloud_tracks(), song_id);
     });
 
     let state = state.clone();
@@ -118,20 +120,22 @@ fn wire_playback(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
     g.on_play_row(move |track_id, _index| {
         let song_id = i64::from(track_id);
         if song_id > 0 {
-            play_favorite_song(&state, fav_ui.filtered_track_ids(), song_id);
+            play_favorite_song(&state, fav_ui.filtered_cloud_tracks(), song_id);
         }
     });
 }
 
-fn play_favorite_song(state: &AppState, ids: Vec<i64>, song_id: i64) {
+fn play_favorite_song(state: &AppState, tracks: Vec<TrackSummary>, song_id: i64) {
     let state = state.clone();
     state.runtime.spawn(async move {
         let (volume, speed) = {
             let player = lock_state(&state.player_state);
             (player.effective_volume(), player.playback_speed)
         };
-        if let Err(error) =
-            state.cloud_playback.play_queue(&ids, song_id, false, volume, speed).await
+        if let Err(error) = state
+            .cloud_playback
+            .play_queue_tracks(tracks, song_id, CloudQueueShuffle::Preserve, volume, speed)
+            .await
         {
             log::warn!("favorites::play_cloud_song({song_id}): {}", describe(&error));
         }
