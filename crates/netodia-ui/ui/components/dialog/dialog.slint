@@ -3,6 +3,7 @@ import { SmartEditor, TagEditor } from "../../globals/dialog-forms.slint";
 import { Dialog as DialogGlobal, DialogKind } from "../../globals/dialog.slint";
 import { SectionButton } from "../settings/section-button.slint";
 import { PlaylistMosaicPicker } from "playlist-mosaic-picker.slint";
+import { ArtistPickerBody } from "artist-picker.slint";
 import { PlaylistPicker } from "playlist-picker.slint";
 import { ExportPlaylistPicker } from "export-playlist-picker.slint";
 import { EqualizerBody } from "equalizer-body.slint";
@@ -214,6 +215,8 @@ export component DialogOverlay inherits Rectangle {
             // Multi-select; the footer's primary button commits through the dispatcher,
             // as the Export picker does.
             if DialogGlobal.kind == DialogKind.add-to-playlist: PlaylistPicker { }
+
+            if DialogGlobal.kind == DialogKind.select-artist: ArtistPickerBody { }
 
             // The same toolkit, committing through its own primary button.
             if DialogGlobal.kind == DialogKind.export-playlists: ExportPlaylistPicker { }

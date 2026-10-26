@@ -123,3 +123,50 @@ async fn a_library_with_no_favorites_has_no_favorite_artists() -> Result<(), App
     assert!(queries::artist::get_favorite_artists(&db).await?.is_empty());
     Ok(())
 }
+
+#[tokio::test]
+async fn track_artist_choices_follow_credit_order_instead_of_name_order() -> Result<(), AppError> {
+    use netodia_core::entities::artist::ArtistCredit;
+
+    let db = crate::database::DbPool::test_pool().await?;
+    let mut meta = make_test_metadata("Duet");
+    meta.artist = ArtistCredit::from_tags("Zed feat. Amy", &["Zed".to_owned(), "Amy".to_owned()]);
+    meta.album_artist = ArtistCredit::from_name("Album artist");
+    let path = std::path::Path::new("music").join("duet.mp3");
+    let id = insert_tagged_track(&db, &path.to_string_lossy(), &meta).await?;
+
+    let artists = queries::artist::get_track_artists(&db, id).await?;
+
+    assert_eq!(
+        artists.iter().map(|artist| artist.name.as_str()).collect::<Vec<_>>(),
+        ["Zed", "Amy"]
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn untagged_tracks_keep_their_primary_artist_target() -> Result<(), AppError> {
+    use netodia_core::entities::artist::ArtistCredit;
+
+    let db = crate::database::DbPool::test_pool().await?;
+    let mut meta = make_test_metadata("Untagged");
+    meta.artist = ArtistCredit::default();
+    let path = std::path::Path::new("music").join("untagged.mp3");
+    let id = insert_tagged_track(&db, &path.to_string_lossy(), &meta).await?;
+
+    let artists = queries::artist::get_track_artists(&db, id).await?;
+
+    assert_eq!(
+        artists.iter().map(|artist| artist.id).collect::<Vec<_>>(),
+        [queries::artist::UNKNOWN_ARTIST_ID]
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn a_missing_track_has_no_artist_choices() -> Result<(), AppError> {
+    let db = setup_seeded_db().await?;
+
+    assert!(queries::artist::get_track_artists(&db, i64::MAX).await?.is_empty());
+    Ok(())
+}

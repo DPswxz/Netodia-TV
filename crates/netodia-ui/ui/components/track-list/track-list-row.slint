@@ -5,6 +5,7 @@ import { MaterialIcon } from "../material-icon.slint";
 import { ArtworkImage } from "../artwork-image.slint";
 import { TrackContextMenu } from "track-context-menu.slint";
 import { CloudTrackContextMenu } from "cloud-track-context-menu.slint";
+import { ArtistPicker } from "../../globals/artist-picker.slint";
 import { CloudTrackActions } from "../../globals/cloud-track-actions.slint";
 import { DataCell } from "track-list-cell.slint";
 import { Checkbox } from "../checkbox.slint";
@@ -252,9 +253,9 @@ export component TrackListRowItem inherits Rectangle {
             clicked => {
                 if (root.enabled && !root.drag-started && root.artist-link-pressed) {
                     if (root.cloud-row) {
-                        CloudTrackActions.open-artist(root.row-data.artist_remote_id);
+                        ArtistPicker.request-cloud(root.row-data.remote_id);
                     } else {
-                        root.go-to-artist(root.row-data.artist_id);
+                        ArtistPicker.request-local(root.row-data.id);
                     }
                 } else if (root.enabled && !root.drag-started && root.album-link-pressed) {
                     if (root.cloud-row) {
@@ -594,7 +595,7 @@ export component TrackListRowItem inherits Rectangle {
             select-all => { root.select-all(); }
             clear-selection => { root.clear-selection(); }
             go-to-album(aid) => { root.go-to-album(aid); }
-            go-to-artist(aid) => { root.go-to-artist(aid); }
+            go-to-artist(aid) => { ArtistPicker.request-local(root.row-data.id); }
             go-to-genre(gid) => { root.go-to-genre(gid); }
         }
     }
