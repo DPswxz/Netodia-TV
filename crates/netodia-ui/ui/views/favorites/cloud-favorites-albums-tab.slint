@@ -2,7 +2,6 @@ import { ListView } from "std-widgets.slint";
 import { Theme } from "../../theme.slint";
 import { Favorites } from "../../globals/curated.slint";
 import { CloudTrackActions } from "../../globals/cloud-track-actions.slint";
-import { RowCovers } from "../../globals/tracks.slint";
 import { GridGeometry } from "../../components/grid-geometry.slint";
 import { GridColumnsSync } from "../../components/grid-columns-sync.slint";
 import { EntityCard } from "../../components/grid/entity-card.slint";
@@ -72,7 +71,7 @@ export component CloudFavoritesAlbumsTab inherits Rectangle {
                                 card-width: geometry.card-w;
                                 card-height: geometry.card-h;
                                 artwork-path: album.artwork_path;
-                                cover: RowCovers.request(album.artwork_path, "", album.title, RowCovers.generation);
+                                cover: Favorites.request-album-cover(album.artwork_path, Favorites.covers-generation);
                                 fallback-icon: "album";
                                 title: album.title;
                                 subtitle: album.artist;

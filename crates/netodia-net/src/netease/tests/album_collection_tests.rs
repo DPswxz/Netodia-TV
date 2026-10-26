@@ -41,3 +41,14 @@ fn collection_page_uses_more_or_page_size_when_has_more_is_missing()
     assert!(decode_saved_albums_page(&json!({"hasMore": false})).is_err());
     Ok(())
 }
+
+#[test]
+fn subscribe_and_unsubscribe_use_distinct_write_routes() {
+    let saved = super::ep::album_subscription(true);
+    let removed = super::ep::album_subscription(false);
+    assert_eq!(saved.path, "/api/album/sub");
+    assert_eq!(removed.path, "/api/album/unsub");
+    assert!(!saved.read_only);
+    assert!(!removed.read_only);
+    assert_eq!(removed.protocol, super::ep::Protocol::Weapi);
+}

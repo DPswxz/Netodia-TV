@@ -22,6 +22,7 @@ export global Favorites {
     in-out property <bool> albums-loading: false;
     in-out property <string> albums-error;
     callback retry-albums();
+    pure callback request-album-cover(string /*source*/, int /*generation*/) -> image;
     callback load-album-favorite(string /*album ID*/);
     callback set-album-favorite(string /*album ID*/, bool /*saved*/);
 

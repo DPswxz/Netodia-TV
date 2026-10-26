@@ -766,7 +766,7 @@ impl Client {
         Ok(())
     }
     pub async fn subscribe_album(&self, id: i64, subscribe: bool) -> Result<()> {
-        self.request(ep::ALBUM_SUBSCRIBE, json!({"id":id,"t":if subscribe {1}else{2}})).await?;
+        self.request(ep::album_subscription(subscribe), json!({"id":id})).await?;
         Ok(())
     }
     pub async fn subscribe_artist(&self, id: i64, subscribe: bool) -> Result<()> {

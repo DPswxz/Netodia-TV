@@ -33,9 +33,26 @@ impl AlbumsState {
 }
 
 pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {
+    wire_covers(ui, state);
     wire_load(ui, state, fav_ui);
     wire_membership(ui, state, fav_ui);
     wire_account_updates(ui, state, fav_ui);
+}
+
+fn wire_covers(ui: &AppWindow, state: &AppState) {
+    let weak = ui.as_weak();
+    let covers = Arc::new(crate::ui::remote_covers::RemoteCoverThumbs::new_for_cards(
+        state.http_client().clone(),
+        state.runtime.clone(),
+        move || {
+            let _ = weak.upgrade_in_event_loop(|ui| {
+                let g = ui.global::<Favorites>();
+                g.set_covers_generation(g.get_covers_generation().wrapping_add(1));
+            });
+        },
+    ));
+    ui.global::<Favorites>()
+        .on_request_album_cover(move |source, _| covers.get_or_schedule(source.as_str()));
 }
 
 fn wire_load(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) {

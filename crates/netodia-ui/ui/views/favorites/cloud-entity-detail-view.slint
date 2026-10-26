@@ -1,7 +1,6 @@
 import { Theme } from "../../theme.slint";
 import { Favorites } from "../../globals/curated.slint";
 import { CloudEntityDetail } from "../../globals/cloud-entity-detail.slint";
-import { RowCovers } from "../../globals/tracks.slint";
 import { CloudTrackActions } from "../../globals/cloud-track-actions.slint";
 import { ArtworkImage } from "../../components/artwork-image.slint";
 import { ActionPill, PillButton } from "../../components/action-pill.slint";
@@ -24,11 +23,8 @@ export component CloudEntityDetailView inherits Rectangle {
                 tile-size: 88px;
                 fallback-icon: CloudEntityDetail.kind == "artist" ? "person" : "album";
                 artwork-path: CloudEntityDetail.artwork-path;
-                cover: RowCovers.request(
-                    CloudEntityDetail.artwork-path,
-                    "",
-                    CloudEntityDetail.title,
-                    RowCovers.generation,
+                cover: Favorites.request-album-cover(
+                    CloudEntityDetail.artwork-path, Favorites.covers-generation,
                 );
             }
 
