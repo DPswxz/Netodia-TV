@@ -236,7 +236,7 @@ impl AppState {
         let http = http_client.get_or_init(netodia_net::services::net::build_http_client).clone();
         let (cloud, cloud_playback) = initialize_cloud_playback(
             http,
-            paths.data_dir.join("netease-artwork"),
+            &paths,
             engine.clone(),
             player_state.clone(),
             sinks.clone(),
@@ -321,7 +321,7 @@ impl AppState {
 
 async fn initialize_cloud_playback(
     http: reqwest::Client,
-    artwork_dir: std::path::PathBuf,
+    paths: &Paths,
     engine: Arc<PlaybackEngine>,
     player_state: Arc<PlayerStateHandle>,
     sinks: Arc<PlayerSinks>,
@@ -329,7 +329,7 @@ async fn initialize_cloud_playback(
     quality: netodia_core::entities::cloud::Quality,
 ) -> (CloudService, CloudPlayback) {
     let (cloud, cloud_playback) =
-        CloudPlayback::initialize(http, artwork_dir, engine, player_state, sinks.clone()).await;
+        CloudPlayback::initialize(http, paths, engine, player_state, sinks.clone()).await;
     cloud_playback.set_quality(quality);
     sinks.set_external_track_playback(cloud_playback.external_track_handler(runtime));
     (cloud, cloud_playback)

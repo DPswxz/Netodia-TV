@@ -9,7 +9,9 @@ use crate::ui::callbacks::track_list::wire_toggle_column;
 use crate::ui::recently_played::{
     self as recently_played_ui_mod, RecentlyPlayedTab, RecentlyPlayedUi,
 };
+use netodia_app::cloud_playback::CloudQueueShuffle;
 use netodia_app::state::AppState;
+use netodia_core::entities::track::TrackSummary;
 use netodia_core::error::describe;
 use netodia_engine::player::engine::state::lock_state;
 use netodia_ui::{AppWindow, RecentlyPlayed};
@@ -34,29 +36,37 @@ fn wire_play_row(g: &RecentlyPlayed<'_>, state: &AppState, rp_ui: &Arc<RecentlyP
     let cloud_ui = rp_ui.clone();
     g.on_play_cloud_row(move |remote_id, _index| {
         let Some(song_id) = crate::ui::util::parse_cloud_id(remote_id.as_str()) else { return };
-        let ids = cloud_ui.filtered_track_ids();
-        if ids.contains(&song_id) {
-            play_recent_queue(&cloud_state, ids, song_id, false);
+        let tracks = cloud_ui.filtered_cloud_tracks();
+        if tracks.iter().any(|track| track.id == song_id) {
+            play_recent_queue(&cloud_state, tracks, song_id, CloudQueueShuffle::Preserve);
         }
     });
     let state = state.clone();
     let rp_ui = rp_ui.clone();
     g.on_play_row(move |track_id, index| {
-        let ids = rp_ui.filtered_track_ids();
+        let tracks = rp_ui.filtered_cloud_tracks();
         let selected = usize::try_from(index)
             .ok()
-            .and_then(|position| ids.get(position).copied())
+            .and_then(|position| tracks.get(position).map(|track| track.id))
             .filter(|id| crate::ui::util::clamp_i64_to_i32(*id) == track_id)
             .or_else(|| {
-                ids.iter().copied().find(|id| crate::ui::util::clamp_i64_to_i32(*id) == track_id)
+                tracks
+                    .iter()
+                    .map(|track| track.id)
+                    .find(|id| crate::ui::util::clamp_i64_to_i32(*id) == track_id)
             });
         if let Some(selected) = selected {
-            play_recent_queue(&state, ids, selected, false);
+            play_recent_queue(&state, tracks, selected, CloudQueueShuffle::Preserve);
         }
     });
 }
 
-fn play_recent_queue(state: &AppState, ids: Vec<i64>, selected: i64, shuffle: bool) {
+fn play_recent_queue(
+    state: &AppState,
+    tracks: Vec<TrackSummary>,
+    selected: i64,
+    shuffle: CloudQueueShuffle,
+) {
     let state = state.clone();
     state.runtime.clone().spawn(async move {
         let (volume, speed) = {
@@ -64,7 +74,7 @@ fn play_recent_queue(state: &AppState, ids: Vec<i64>, selected: i64, shuffle: bo
             (player.effective_volume(), player.playback_speed)
         };
         if let Err(error) =
-            state.cloud_playback.play_queue(&ids, selected, shuffle, volume, speed).await
+            state.cloud_playback.play_queue_tracks(tracks, selected, shuffle, volume, speed).await
         {
             log::warn!("recently_played::play_cloud_queue({selected}): {}", describe(&error));
         }
@@ -167,8 +177,8 @@ fn wire_shuffle(g: &RecentlyPlayed<'_>, state: &AppState, rp_ui: &Arc<RecentlyPl
     let state = state.clone();
     let rp_ui = rp_ui.clone();
     g.on_shuffle_all(move || {
-        let ids = rp_ui.filtered_track_ids();
-        let Some(selected) = ids.first().copied() else { return };
-        play_recent_queue(&state, ids, selected, true);
+        let tracks = rp_ui.filtered_cloud_tracks();
+        let Some(selected) = tracks.first().map(|track| track.id) else { return };
+        play_recent_queue(&state, tracks, selected, CloudQueueShuffle::Shuffle);
     });
 }

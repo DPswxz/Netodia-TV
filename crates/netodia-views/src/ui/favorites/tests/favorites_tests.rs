@@ -163,7 +163,7 @@ fn the_songs_model_is_written_only_while_its_tab_is_mounted() {
 
 /// The tab count Slint declares today. Kept local so a change to
 /// `Favorites.tab-count` doesn't silently rewrite what this asserts.
-const TABS: usize = 1;
+const TABS: usize = 2;
 
 /// The `N` in `Favorites`'s `tab-count: N;`.
 fn declared_tab_count() -> Option<usize> {
@@ -285,9 +285,21 @@ fn favorites_view_uses_cloud_rows_with_sortable_netease_columns() {
     assert!(SONGS.contains("state.cloud.liked_songs().await?"));
     assert_eq!(
         VIEW.matches("if Favorites.tab-idx == Favorites.tab-").count(),
-        1,
-        "Favorites has one cloud-backed tab and no local-only grid tabs"
+        2,
+        "Favorites has cloud-backed Songs and Albums tabs and no local-only grid tabs"
     );
+}
+
+/// The album tab must have its own mount and index rather than replacing the song list.
+#[test]
+fn favorites_view_exposes_the_cloud_album_collection_beside_songs() {
+    assert!(VIEW.contains("if Favorites.tab-idx == Favorites.tab-songs:"));
+    assert!(VIEW.contains("if Favorites.tab-idx == Favorites.tab-albums:"));
+    assert!(VIEW.contains("CloudFavoritesAlbumsTab {"));
+    assert!(VIEW.contains("tab-labels: [@tr(\"Songs\"), @tr(\"Albums\")];"));
+    assert!(GLOBAL.contains("out property <int> tab-songs: 0;"));
+    assert!(GLOBAL.contains("out property <int> tab-albums: 1;"));
+    assert!(GLOBAL.contains("out property <int> tab-count: 2;"));
 }
 
 /// A `pure` callback's result is cached until a dependency is dirtied, so the
@@ -440,8 +452,11 @@ fn a_grid_pick_rewinds_the_count_it_could_not_answer() {
         .map(|(body, _)| body)
         .unwrap_or_default();
 
-    let (before_fetch, after_fetch) =
-        pick.split_once("if needs_fetch || songs {").unwrap_or_default();
+    let (before_fetch, after_fetch) = pick
+        .split_once(
+            "if (needs_fetch || songs) && entering != favorites_ui_mod::FavoritesTab::Albums {",
+        )
+        .unwrap_or_default();
     assert!(
         before_fetch.contains("fu.take_songs_dirty()")
             && before_fetch.contains("fu.take_grids_dirty()"),

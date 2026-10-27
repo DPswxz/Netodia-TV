@@ -53,6 +53,7 @@ pub(super) fn wire(
     hero::wire(ui, state, fav_ui);
     subviews::wire(ui, state, fav_ui, artists_ui);
     tracklist::wire(ui, state, fav_ui);
+    super::albums::wire(ui, state, fav_ui);
     lifecycle::wire(ui, state, fav_ui);
 }
 

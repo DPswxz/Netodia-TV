@@ -371,6 +371,16 @@ pub fn publish_playlist(
 /// value its owning fetch already folded, so a publish beating a sibling fetch is a tick
 /// stale, never half-built.
 pub fn publish_favorites(ui: &AppWindow, fav_ui: &FavoritesUi) {
+    if fav_ui.active_tab() == FavoritesTab::Albums {
+        let count = ui.global::<netodia_ui::Favorites>().get_album_count();
+        let chips = if count > 0 {
+            vec![ui.global::<HeroChips>().invoke_albums(count)]
+        } else {
+            Vec::new()
+        };
+        publish(ui, ChipOwner::Favorites, chips, fav_ui.section_active());
+        return;
+    }
     let state = fav_ui.state();
     // One at a time: four sibling locks with no argued ordering, and a struct literal
     // would hold every guard it built until the statement ended.

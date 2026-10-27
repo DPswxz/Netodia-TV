@@ -69,7 +69,7 @@ impl Origin {
     /// inside the fetch's completion closure — moving them after they navigated away
     /// mid-fetch is exactly what this exists to prevent, and the nav index alone stopped
     /// being able to tell once the four destinations became tabs of one page.
-    fn still_current(self, ui: &AppWindow) -> bool {
+    pub(super) fn still_current(self, ui: &AppWindow) -> bool {
         ui.global::<Nav>().get_selected_index() == self.nav
             && (self.nav != NAV_MY_LIBRARY || ui.global::<MyLibrary>().get_tab_idx() == self.tab)
     }
@@ -96,6 +96,7 @@ pub fn wire_cross_tab_nav(
     artists_ui: &Arc<ArtistsUi>,
     genres_ui: &Arc<GenresUi>,
 ) {
+    super::artist_picker::wire(ui, state, artists_ui);
     let weak = ui.as_weak();
 
     // One trio per global, spelled once. A `macro_rules!` rather than a generic fn: these

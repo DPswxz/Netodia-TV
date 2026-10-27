@@ -20,6 +20,10 @@ use super::{Error, Result, crypto};
 #[path = "tests/library_tests.rs"]
 mod library_tests;
 
+#[cfg(test)]
+#[path = "tests/album_collection_tests.rs"]
+mod album_collection_tests;
+
 const ANDROID_UA: &str = "NeteaseMusic/9.5.61.260802021928(9005061);Dalvik/2.1.0 (Linux; U; Android 12; HBN-AL00 Build/cd737a2.0)";
 const WEAPI_UA: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0";
 const EAPI_UA: &str = "NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)";
@@ -741,10 +745,13 @@ impl Client {
         Ok(())
     }
     pub async fn saved_albums(&self, offset: u64) -> Result<Vec<Album>> {
-        field(
-            self.request(ep::ALBUMS, json!({"offset":offset,"limit":30,"total":true})).await?,
-            "data",
-        )
+        self.saved_albums_page(offset).await.map(|(albums, _)| albums)
+    }
+
+    pub async fn saved_albums_page(&self, offset: u64) -> Result<(Vec<Album>, bool)> {
+        let body =
+            self.request(ep::ALBUMS, json!({"offset":offset,"limit":30,"total":true})).await?;
+        decode_saved_albums_page(&body)
     }
     pub async fn saved_artists(&self, offset: u64) -> Result<Vec<Artist>> {
         field(
@@ -759,7 +766,7 @@ impl Client {
         Ok(())
     }
     pub async fn subscribe_album(&self, id: i64, subscribe: bool) -> Result<()> {
-        self.request(ep::ALBUM_SUBSCRIBE, json!({"id":id,"t":if subscribe {1}else{2}})).await?;
+        self.request(ep::album_subscription(subscribe), json!({"id":id})).await?;
         Ok(())
     }
     pub async fn subscribe_artist(&self, id: i64, subscribe: bool) -> Result<()> {
@@ -842,6 +849,13 @@ fn decode_created_playlists(body: &Value, uid: i64) -> Result<(Vec<Playlist>, bo
 fn decode_intelligence_songs(body: &Value) -> Result<Vec<Song>> {
     let entries = body["data"].as_array().ok_or(Error::InvalidResponse)?;
     entries.iter().map(|entry| decode_ref(&entry["songInfo"])).collect()
+}
+
+fn decode_saved_albums_page(body: &Value) -> Result<(Vec<Album>, bool)> {
+    let albums: Vec<Album> = decode_ref(&body["data"])?;
+    let more =
+        body["hasMore"].as_bool().or_else(|| body["more"].as_bool()).unwrap_or(albums.len() >= 30);
+    Ok((albums, more))
 }
 
 fn decode_playlist_page(

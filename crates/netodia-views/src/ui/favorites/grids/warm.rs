@@ -21,6 +21,6 @@ pub(super) fn mounted_content(tab: FavoritesTab, prepared: &PreparedGrids) -> u6
     match tab {
         FavoritesTab::MostPlayed => prepared.most_played_content,
         FavoritesTab::Artists => prepared.artists_content,
-        FavoritesTab::Songs => 0,
+        FavoritesTab::Songs | FavoritesTab::Albums => 0,
     }
 }

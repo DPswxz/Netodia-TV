@@ -4164,6 +4164,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tray-icon",
+ "windows 0.62.2",
  "windows-sys 0.61.2",
  "zbus 5.18.0",
 ]

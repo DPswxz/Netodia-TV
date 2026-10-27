@@ -107,6 +107,12 @@ fn wire_tab_changed(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>)
         // run off the UI thread where the global isn't reachable.
         fu.set_active_tab(entering);
         favorites_ui_mod::set_filter(&fu, "");
+        if entering == favorites_ui_mod::FavoritesTab::Albums {
+            favorites_ui_mod::albums::apply_now(&ui, &fu);
+            favorites_ui_mod::albums::spawn_refresh(&s, &fu, &weak);
+        } else {
+            g.set_album_rows(slint::ModelRc::default());
+        }
 
         // Asked *before* the applies below, because they are what has to
         // know: the answer decides whether the counts they write stand for
@@ -154,7 +160,7 @@ fn wire_tab_changed(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>)
         // stays quiet until the fetch answers. Songs owes no equivalent:
         // `Favorites.track-count` is written by `refresh_hero`, which is
         // never gated, so it is answered on every tab either way.
-        if needs_fetch || songs {
+        if (needs_fetch || songs) && entering != favorites_ui_mod::FavoritesTab::Albums {
             match entering {
                 favorites_ui_mod::FavoritesTab::MostPlayed => {
                     g.set_most_played_count(UNFETCHED_COUNT);
@@ -162,7 +168,7 @@ fn wire_tab_changed(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>)
                 favorites_ui_mod::FavoritesTab::Artists => {
                     g.set_artist_count(UNFETCHED_COUNT);
                 }
-                favorites_ui_mod::FavoritesTab::Songs => {}
+                favorites_ui_mod::FavoritesTab::Songs | favorites_ui_mod::FavoritesTab::Albums => {}
             }
             spawn_tab_fetch(&s, &fu, &weak, songs);
         }
@@ -237,6 +243,7 @@ fn wire_columns_changed(ui: &AppWindow, fav_ui: &Arc<FavoritesUi>) {
     let weak = ui.as_weak();
     ui.global::<Favorites>().on_columns_changed(move |_cols| {
         let Some(ui) = weak.upgrade() else { return };
+        favorites_ui_mod::albums::apply_now(&ui, &fu);
         favorites_ui_mod::apply_filtered_grids_now(&ui, &fu);
     });
 }

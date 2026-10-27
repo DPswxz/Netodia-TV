@@ -14,15 +14,16 @@ use netodia_ui::{AppWindow, Favorites};
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum FavoritesTab {
     Songs,
+    Albums,
     MostPlayed,
     Artists,
 }
 
 impl FavoritesTab {
     /// Every mounted variant. The legacy local-only variants remain available
-    /// to old callbacks, but `NetEase` Favorites mounts only the cloud Songs tab.
+    /// to old callbacks; `NetEase` Favorites mounts Songs and Albums.
     /// Pinned against `tab-count`.
-    pub const ALL: [Self; 1] = [Self::Songs];
+    pub const ALL: [Self; 2] = [Self::Songs, Self::Albums];
 
     /// Storage code for the atomic shadow. Deliberately *not* the Slint index
     /// — that lives in the Slint, and these two numbering schemes agreeing
@@ -30,6 +31,7 @@ impl FavoritesTab {
     pub(super) fn as_code(self) -> u8 {
         match self {
             Self::Songs => 0,
+            Self::Albums => 3,
             Self::MostPlayed => 1,
             Self::Artists => 2,
         }
@@ -37,6 +39,7 @@ impl FavoritesTab {
 
     pub(super) fn from_code(code: u8) -> Self {
         match code {
+            3 => Self::Albums,
             1 => Self::MostPlayed,
             2 => Self::Artists,
             _ => Self::Songs,
@@ -47,7 +50,9 @@ impl FavoritesTab {
 /// Resolve a `Favorites.tab-idx` value against the global's own `tab-*`
 /// constants. UI thread only — that's where the global is reachable.
 pub fn tab_from_index(g: &Favorites<'_>, idx: i32) -> FavoritesTab {
-    if idx == g.get_tab_most_played() {
+    if idx == g.get_tab_albums() {
+        FavoritesTab::Albums
+    } else if idx == g.get_tab_most_played() {
         FavoritesTab::MostPlayed
     } else if idx == g.get_tab_artists() {
         FavoritesTab::Artists
@@ -60,7 +65,7 @@ pub fn tab_from_index(g: &Favorites<'_>, idx: i32) -> FavoritesTab {
 /// `tab-count` (see [`crate::ui::tab_bar::clamp_tab`]).
 ///
 /// Seeds **both** the Slint property and the [`FavoritesUi`] shadow, which is
-/// why it takes the handle and why it runs as the last statement of
+/// why it takes the handle and runs before lifecycle callbacks are installed in
 /// [`super::install`] rather than alongside its siblings in
 /// `hydrate_ui_from_settings` — that runs after the handle has gone out of
 /// scope, and a shadow left at its `Songs` default would have the first fetch

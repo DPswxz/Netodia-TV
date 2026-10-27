@@ -11,6 +11,7 @@ pub fn read_settings(paths: &Paths) -> AppResult<SettingsData> {
         netodia_core::utils::atomic_file::load_json_or_default_sync(&paths.settings_path)?;
     settings.volume = settings.volume.min(netodia_engine::player::engine::state::MAX_VOLUME);
     settings.corner_radius = settings.corner_radius.min(MAX_CORNER_RADIUS);
+    settings.ui_scale_percent = super::ui_scale_preset(settings.ui_scale_percent);
     Ok(settings)
 }
 

@@ -28,7 +28,8 @@ msgstr "收藏"
 msgid "My Library"
 msgstr "我的音乐库"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/recently-played-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
+#: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "最近播放"
 
@@ -36,19 +37,24 @@ msgstr "最近播放"
 msgid "Settings"
 msgstr "设置"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Minimize"
 msgstr "最小化"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Maximize"
 msgstr "最大化"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Restore"
 msgstr "还原"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint ui/components/onboarding/onboarding-overlay.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
+#: ui/components/onboarding/onboarding-overlay.slint
 msgid "Close"
 msgstr "关闭"
 
@@ -62,19 +68,22 @@ msgstr "从收藏中移除 {} 项"
 msgid "Add {} to Favorites"
 msgstr "将 {} 项加入收藏"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Add to Favorites"
 msgstr "加入收藏"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Remove from Favorites"
 msgstr "从收藏中移除"
 
-#: ui/components/dialog/credit-editor.slint ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
+#: ui/components/dialog/credit-editor.slint
+#: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
 msgid "Add"
 msgstr "添加"
 
-#: ui/components/dialog/dialog.slint ui/components/dialog/smart-playlist-editor-body.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/dialog.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "名称"
 
@@ -142,7 +151,10 @@ msgstr "重置"
 msgid "No playlists to export"
 msgstr "没有可导出的播放列表"
 
-#: ui/components/dialog/export-playlist-picker.slint ui/components/grid/artist-grid.slint ui/components/grid/genre-grid.slint ui/components/grid/playlist-grid.slint ui/globals/hero-chips.slint ui/globals/search.slint ui/views/queue-sheet.slint
+#: ui/components/dialog/export-playlist-picker.slint
+#: ui/components/grid/artist-grid.slint ui/components/grid/genre-grid.slint
+#: ui/components/grid/playlist-grid.slint ui/globals/hero-chips.slint
+#: ui/globals/search.slint ui/views/queue-sheet.slint
 msgid "{n} track"
 msgid_plural "{n} tracks"
 msgstr[0] "{n} 首曲目"
@@ -183,11 +195,19 @@ msgstr "已添加 {} 首，共 {}"
 msgid "Preamp"
 msgstr "前置放大"
 
-#: ui/components/dialog/replaygain-body.slint ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/grid/card-context-menu.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/replaygain-body.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
 msgid "Album"
 msgstr "专辑"
 
-#: ui/components/dialog/replaygain-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/replaygain-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Track"
 msgstr "曲目"
 
@@ -207,7 +227,9 @@ msgstr "防止削波"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "ReplayGain 仅对已有响度标签的曲目生效。可使用 rsgain 或 loudgain 等工具扫描音乐库并添加标签。"
 
-#: ui/components/dialog/selectable-picker.slint ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/dialog/selectable-picker.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "全选"
 
@@ -231,40 +253,60 @@ msgstr "天"
 msgid "number"
 msgstr "数字"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Album Artist"
 msgstr "专辑艺人"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/grid/card-context-menu.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/my-library/tab-pills.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/my-library/tab-pills.slint ui/views/search/top-result-card.slint
 msgid "Artist"
 msgstr "艺人"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
 msgid "Title"
 msgstr "标题"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Credits"
 msgstr "创作人员"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "流派"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "ISRC"
 msgstr "ISRC"
 
 #. Translators: a musical key, as in A minor
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Key"
 msgstr "调性"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Mood"
 msgstr "情绪"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "BPM"
 msgstr "节拍数"
 
@@ -276,7 +318,11 @@ msgstr "时长（秒）"
 msgid "Plays"
 msgstr "播放次数"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Year"
 msgstr "年份"
 
@@ -296,7 +342,11 @@ msgstr "跳过次数"
 msgid "Date added"
 msgstr "添加日期"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Favorite"
 msgstr "收藏"
 
@@ -484,7 +534,9 @@ msgstr "混音改编"
 msgid "Replace…"
 msgstr "替换…"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/settings/folder-row.slint ui/views/settings/library-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/settings/folder-row.slint
+#: ui/views/settings/library-section.slint
 msgid "Remove"
 msgstr "移除"
 
@@ -493,7 +545,9 @@ msgid "Details"
 msgstr "详情"
 
 #. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/components/dialog/tag-editor-body.slint ui/components/now-playing/lyrics-menu.slint ui/settings.slint ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/now-playing/lyrics-menu.slint ui/settings.slint
+#: ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
 msgid "Lyrics"
 msgstr "歌词"
 
@@ -546,7 +600,9 @@ msgstr "乐章"
 msgid "Number"
 msgstr "编号"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/onboarding/appearance-panel.slint ui/settings.slint ui/views/settings/language-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/onboarding/appearance-panel.slint ui/settings.slint
+#: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "语言"
 
@@ -599,7 +655,8 @@ msgstr "编码格式"
 msgid "Bitrate"
 msgstr "比特率"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/settings/output-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/settings/output-section.slint
 msgid "Sample Rate"
 msgstr "采样率"
 
@@ -607,7 +664,8 @@ msgstr "采样率"
 msgid "Bit Depth"
 msgstr "位深"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/settings/output-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/settings/output-section.slint
 msgid "Channels"
 msgstr "声道"
 
@@ -615,7 +673,8 @@ msgstr "声道"
 msgid "Size"
 msgstr "大小"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Duration"
 msgstr "时长"
 
@@ -627,11 +686,13 @@ msgstr "修改时间"
 msgid "BLAKE3"
 msgstr "BLAKE3"
 
-#: ui/components/grid/album-grid.slint ui/components/track-list/track-list-row.slint ui/globals/player.slint
+#: ui/components/grid/album-grid.slint
+#: ui/components/track-list/track-list-row.slint ui/globals/player.slint
 msgid "Unknown artist"
 msgstr "未知艺人"
 
-#: ui/components/grid/artist-grid.slint ui/globals/hero-chips.slint ui/globals/search.slint ui/views/my-library-view.slint
+#: ui/components/grid/artist-grid.slint ui/globals/hero-chips.slint
+#: ui/globals/search.slint ui/views/my-library-view.slint
 msgid "{n} album"
 msgid_plural "{n} albums"
 msgstr[0] "{n} 张专辑"
@@ -640,58 +701,80 @@ msgstr[0] "{n} 张专辑"
 msgid "Folder"
 msgstr "文件夹"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/play-button.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/play-button.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Play"
 msgstr "播放"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/overflow-menu.slint ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Shuffle"
 msgstr "随机播放"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Play {} Next"
 msgstr "接下来播放 {}"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Play Next"
 msgstr "接下来播放"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add {} to Queue"
 msgstr "将 {} 项加入队列"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add to Queue"
 msgstr "加入队列"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "New Playlist…"
 msgstr "新建播放列表…"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add to Playlist"
 msgstr "添加到播放列表"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Tags for {}"
 msgstr "编辑 {} 的标签"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Tags…"
 msgstr "编辑标签…"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit {} Tracks"
 msgstr "编辑 {} 首曲目"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/lyrics-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Track Information"
 msgstr "编辑曲目信息"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "复制"
 
@@ -703,7 +786,8 @@ msgstr "复制名称"
 msgid "Copy Path"
 msgstr "复制路径"
 
-#: ui/components/grid/card-context-menu.slint ui/settings.slint ui/views/settings/diagnostics-section.slint
+#: ui/components/grid/card-context-menu.slint ui/settings.slint
+#: ui/views/settings/diagnostics-section.slint
 msgid "Open Folder"
 msgstr "打开文件夹"
 
@@ -711,15 +795,18 @@ msgstr "打开文件夹"
 msgid "Show in File Manager"
 msgstr "在文件管理器中显示"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Open Containing Folder"
 msgstr "打开所在文件夹"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Go to Artist"
 msgstr "前往艺人"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "清除选择"
 
@@ -759,15 +846,22 @@ msgstr "完整播放器"
 msgid "Show Up Next"
 msgstr "显示下一首"
 
-#: ui/components/mini-player/mini-captions.slint ui/components/now-playing/lyrics-controls.slint ui/views/settings/lyrics-section.slint
+#: ui/components/mini-player/mini-captions.slint
+#: ui/components/now-playing/lyrics-controls.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Show lyrics"
 msgstr "显示歌词"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Pin on Top"
 msgstr "置顶"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Unpin from Top"
 msgstr "取消置顶"
 
@@ -779,31 +873,40 @@ msgstr "专辑背景：关"
 msgid "Album Backdrop: on"
 msgstr "专辑背景：开"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Unfavorite"
 msgstr "取消收藏"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Shuffle: off"
 msgstr "随机播放：关"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Shuffle: on"
 msgstr "随机播放：开"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: off"
 msgstr "重复：关"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: one"
 msgstr "重复：单曲"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: all"
 msgstr "重复：全部"
 
-#: ui/components/now-playing/flyout-presets.slint ui/components/now-playing/overflow-menu.slint ui/components/now-playing/visualizer-flyout.slint
+#: ui/components/now-playing/flyout-presets.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/components/now-playing/visualizer-flyout.slint
 msgid "Off"
 msgstr "关"
 
@@ -859,11 +962,14 @@ msgstr "镜像"
 msgid "Waveform"
 msgstr "波形"
 
-#: ui/components/now-playing/lyrics-menu.slint ui/views/settings/lyrics-section.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Show romanization"
 msgstr "显示罗马字转写"
 
-#: ui/components/now-playing/lyrics-menu.slint ui/components/onboarding/features-panel.slint ui/views/settings/lyrics-section.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Look up lyrics online"
 msgstr "在线搜索歌词"
 
@@ -917,7 +1023,8 @@ msgstr "在“歌词”菜单中重试"
 msgid "More"
 msgstr "更多"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
 msgid "Speed"
 msgstr "速度"
 
@@ -929,7 +1036,9 @@ msgstr "睡眠定时器"
 msgid "Track end"
 msgstr "曲目结束"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint ui/views/settings/playback-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "Equalizer"
 msgstr "均衡器"
 
@@ -937,11 +1046,13 @@ msgstr "均衡器"
 msgid "On"
 msgstr "开"
 
-#: ui/components/now-playing/overflow-menu.slint ui/components/onboarding/onboarding-overlay.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/components/onboarding/onboarding-overlay.slint
 msgid "Done"
 msgstr "完成"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
 msgid "ReplayGain"
 msgstr "ReplayGain"
 
@@ -965,11 +1076,14 @@ msgstr "无损"
 msgid "Very high"
 msgstr "极高"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Repeat"
 msgstr "重复"
 
-#: ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/queue-sheet.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint ui/views/queue-sheet.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Queue"
 msgstr "队列"
 
@@ -982,6 +1096,7 @@ msgid "Play (hold to stop)"
 msgstr "播放（长按以停止）"
 
 #: ui/components/now-playing/play-button.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Pause"
 msgstr "暂停"
 
@@ -993,11 +1108,13 @@ msgstr "开始"
 msgid "No tracks up next"
 msgstr "接下来没有曲目"
 
-#: ui/components/now-playing/visualizer-picker.slint ui/views/settings/playback-section.slint
+#: ui/components/now-playing/visualizer-picker.slint
+#: ui/views/settings/playback-section.slint
 msgid "Visualizer"
 msgstr "可视化效果"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Appearance"
 msgstr "外观"
 
@@ -1005,27 +1122,34 @@ msgstr "外观"
 msgid "Pick how Netodia looks. Every change applies as you make it."
 msgstr "选择 Netodia 的外观。更改会立即生效。"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Theme"
 msgstr "主题"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Theme Variant"
 msgstr "主题变体"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "System"
 msgstr "跟随系统"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Dark"
 msgstr "深色"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Light"
 msgstr "浅色"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Accent Color"
 msgstr "强调色"
 
@@ -1037,25 +1161,65 @@ msgstr "Netodia 可访问的服务"
 msgid "Netodia works offline. These are the parts that reach out."
 msgstr "Netodia 可离线使用。以下功能会连接网络。"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/lyrics-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "曲目本身没有歌词时，从 lrclib.net 获取歌词"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/update-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/update-section.slint
 msgid "Check for updates automatically"
 msgstr "自动检查更新"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/update-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/update-section.slint
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Netodia 每天会询问 GitHub 是否有新版本。"
 
-#: ui/views/settings/library-section.slint
-msgid "Add a folder to scan for music files."
-msgstr "添加用于扫描音乐文件的文件夹。"
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in to NetEase Music"
+msgstr "登录网易云音乐"
 
-#: ui/views/settings/library-section.slint
-msgid "Add Folder"
-msgstr "添加文件夹"
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Connect an account to use personal recommendations, collections and playback permissions"
+msgstr "连接账号以使用个性化推荐、收藏和播放权限"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Refresh code"
+msgstr "刷新二维码"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Generating QR code…"
+msgstr "正在生成二维码…"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app."
+msgstr "请使用网易云音乐 App 扫描此二维码。"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scanned. Confirm login on your phone."
+msgstr "已扫码，请在手机上确认登录。"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code expired. Refresh to try again."
+msgstr "二维码已过期，请刷新重试。"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Login successful."
+msgstr "登录成功。"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Could not start QR login."
+msgstr "无法发起扫码登录。"
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint
@@ -1066,7 +1230,8 @@ msgstr "欢迎使用 Netodia"
 msgid "Skip"
 msgstr "跳过"
 
-#: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "Back"
 msgstr "返回"
 
@@ -1105,7 +1270,11 @@ msgstr "{} / {} 个文件 · {}"
 msgid "{} / {} files"
 msgstr "{} / {} 个文件"
 
-#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint ui/views/settings/library-section.slint ui/views/settings/output-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint
+#: ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/library-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "取消"
 
@@ -1121,7 +1290,8 @@ msgstr "艺人 - 标题"
 msgid "File Path"
 msgstr "文件路径"
 
-#: ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Remove from Queue"
 msgstr "从队列中移除"
 
@@ -1133,7 +1303,8 @@ msgstr "列"
 msgid "Artwork"
 msgstr "封面"
 
-#: ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint
 msgid "Length"
 msgstr "长度"
 
@@ -1172,6 +1343,11 @@ msgstr "未知专辑"
 msgid "{n} favorite"
 msgid_plural "{n} favorites"
 msgstr[0] "{n} 项收藏"
+
+#: ui/globals/dialog.slint ui/views/my-library-view.slint
+#: ui/views/search-view.slint
+msgid "Artists"
+msgstr "艺人"
 
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
@@ -1373,7 +1549,8 @@ msgstr "已安装更新"
 msgid "Restart Netodia to start using the new version."
 msgstr "重启 Netodia 以使用新版本。"
 
-#: ui/settings.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/settings.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Restart"
 msgstr "重启"
 
@@ -1505,7 +1682,8 @@ msgstr "独占输出不可用，因此 Netodia 暂时通过共享模式播放。
 msgid "{} refused exclusive output, so Netodia is playing shared for now. The Output section of Settings says why."
 msgstr "{} 拒绝了独占输出，因此 Netodia 暂时通过共享模式播放。原因请见“设置”中的“输出”部分。"
 
-#: ui/settings.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/settings.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Restart Required"
 msgstr "需要重启"
 
@@ -1597,7 +1775,14 @@ msgstr "卡片视图"
 msgid "List view"
 msgstr "列表视图"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
+msgid "Albums"
+msgstr "专辑"
+
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "歌曲"
 
@@ -1617,17 +1802,46 @@ msgstr "收藏一首歌曲后，其艺人会显示在这里。"
 msgid "Top songs"
 msgstr "热门歌曲"
 
-#: ui/views/favorites/cloud-entity-detail-view.slint ui/views/my-library/playlists-tab.slint ui/views/my-library/roaming-tab.slint
-msgid "Loading…"
-msgstr "加载中…"
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "收藏专辑"
 
-#: ui/views/favorites/cloud-entity-detail-view.slint ui/views/favorites/cloud-favorites-songs-tab.slint ui/views/my-library/playlists-tab.slint ui/views/recently-played/songs-tab.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Unfavorite album"
+msgstr "取消收藏专辑"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/recently-played/songs-tab.slint
 msgid "Retry"
 msgstr "重试"
 
 #: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/my-library/playlist-detail.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/my-library/roaming-tab.slint
+msgid "Loading…"
+msgstr "加载中…"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "No tracks available"
 msgstr "暂无可播放的歌曲"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "还没有收藏专辑"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "没有匹配的专辑"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "在专辑详情页收藏喜欢的专辑。"
 
 #: ui/views/favorites/cloud-favorites-songs-tab.slint
 msgid "Loading favorites…"
@@ -1637,7 +1851,8 @@ msgstr "正在加载喜欢的歌曲…"
 msgid "No NetEase favorites yet"
 msgstr "网易云暂时没有喜欢的歌曲"
 
-#: ui/views/favorites/most-played-tab.slint ui/views/recently-played/most-played-tab.slint
+#: ui/views/favorites/most-played-tab.slint
+#: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "还没有播放记录"
 
@@ -1681,6 +1896,10 @@ msgid "Recommendations"
 msgstr "推荐"
 
 #: ui/views/my-library-view.slint
+msgid "Genres"
+msgstr "流派"
+
+#: ui/views/my-library-view.slint
 msgid "Filter tracks & albums…"
 msgstr "筛选曲目和专辑…"
 
@@ -1708,13 +1927,10 @@ msgstr "筛选播放列表…"
 msgid "No albums yet"
 msgstr "还没有专辑"
 
-#: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint ui/views/my-library/genres-tab.slint
+#: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint
+#: ui/views/my-library/genres-tab.slint
 msgid "Add a music folder in Settings to start building your library."
 msgstr "在“设置”中添加音乐文件夹以开始建立音乐库。"
-
-#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint ui/views/search-view.slint
-msgid "Albums"
-msgstr "专辑"
 
 #: ui/views/my-library/artists-tab.slint
 msgid "No artists yet"
@@ -1803,6 +2019,10 @@ msgstr "停止"
 #: ui/views/my-library/tab-pills.slint
 msgid "Tracks"
 msgstr "曲目"
+
+#: ui/views/my-library/tab-pills.slint
+msgid "In order"
+msgstr "顺序"
 
 #: ui/views/my-library/tab-pills.slint
 msgid "Edit artwork"
@@ -1896,10 +2116,6 @@ msgstr "正在加载网易云播放记录…"
 msgid "Searching…"
 msgstr "正在搜索…"
 
-#: ui/views/search-view.slint
-msgid "Artists"
-msgstr "艺人"
-
 #: ui/views/search/no-results.slint
 msgid "No results found"
 msgstr "未找到结果"
@@ -1936,11 +2152,13 @@ msgstr "界面"
 msgid "Library"
 msgstr "音乐库"
 
-#: ui/views/settings-view.slint ui/views/settings/pages/playback-page.slint ui/views/settings/playback-section.slint
+#: ui/views/settings-view.slint ui/views/settings/pages/playback-page.slint
+#: ui/views/settings/playback-section.slint
 msgid "Playback"
 msgstr "播放"
 
-#: ui/views/settings-view.slint ui/views/settings/about-section.slint ui/views/settings/pages/about-page.slint
+#: ui/views/settings-view.slint ui/views/settings/about-section.slint
+#: ui/views/settings/pages/about-page.slint
 msgid "About"
 msgstr "关于"
 
@@ -2004,7 +2222,8 @@ msgstr "极光背景"
 msgid "Paint album, playlist and Now Playing headers with a wash of the album's own colors, instead of a blurred copy of its cover art. Nothing needs blurring, so headers appear sooner and Netodia stays lighter. Restart required to apply."
 msgstr "用专辑自身的色彩渐变绘制专辑、播放列表和“正在播放”页眉，而不是模糊封面副本。无需模糊处理，因此页眉显示更快，也更省资源。需要重启后生效。"
 
-#: ui/views/settings/appearance-section.slint ui/views/settings/playback-section.slint
+#: ui/views/settings/appearance-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "None"
 msgstr "无"
 
@@ -2093,6 +2312,10 @@ msgid "Manage Folders"
 msgstr "管理文件夹"
 
 #: ui/views/settings/library-section.slint
+msgid "Add Folder"
+msgstr "添加文件夹"
+
+#: ui/views/settings/library-section.slint
 msgid "Library Folders"
 msgstr "音乐库文件夹"
 
@@ -2108,6 +2331,10 @@ msgstr "从音乐库中移除“{}”？此文件夹下的所有曲目都会从�
 #: ui/views/settings/library-section.slint
 msgid "No folders added"
 msgstr "尚未添加文件夹"
+
+#: ui/views/settings/library-section.slint
+msgid "Add a folder to scan for music files."
+msgstr "添加用于扫描音乐文件的文件夹。"
 
 #: ui/views/settings/lyrics-section.slint
 msgid "Show the playing track's words in Now Playing instead of Up Next"
@@ -2156,14 +2383,6 @@ msgstr "网易云账号"
 #: ui/views/settings/netease-account-section.slint
 msgid "NetEase Music account"
 msgstr "网易云音乐账号"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Sign in to NetEase Music"
-msgstr "登录网易云音乐"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Connect an account to use personal recommendations, collections and playback permissions"
-msgstr "连接账号以使用个性化推荐、收藏和播放权限"
 
 #: ui/views/settings/netease-account-section.slint
 msgid "Country code"
@@ -2218,36 +2437,8 @@ msgid "Enter your email address"
 msgstr "输入邮箱地址"
 
 #: ui/views/settings/netease-account-section.slint
-msgid "Refresh code"
-msgstr "刷新二维码"
-
-#: ui/views/settings/netease-account-section.slint
 msgid "Connecting…"
 msgstr "正在连接…"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Generating QR code…"
-msgstr "正在生成二维码…"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scan this code with the NetEase Music app."
-msgstr "请使用网易云音乐 App 扫描此二维码。"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scanned. Confirm login on your phone."
-msgstr "已扫码，请在手机上确认登录。"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "QR code expired. Refresh to try again."
-msgstr "二维码已过期，请刷新重试。"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Login successful."
-msgstr "登录成功。"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Could not start QR login."
-msgstr "无法发起扫码登录。"
 
 #: ui/views/settings/output-section.slint
 msgid "Output"
@@ -2333,7 +2524,8 @@ msgstr "匹配文件采样率"
 msgid "Reopen the audio device at each track's own rate, so the system doesn't resample it. The system has to allow that rate"
 msgstr "每首曲目都以其自身采样率重新打开音频设备，避免系统重新采样。设备和系统必须支持该采样率"
 
-#: ui/views/settings/output-section.slint ui/views/settings/overflow-menu-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Signal Path"
 msgstr "信号路径"
 
@@ -2473,7 +2665,8 @@ msgstr "设备音量 {}%"
 msgid "{}% (the device at {}%)"
 msgstr "{}%（设备音量为 {}%）"
 
-#: ui/views/settings/output-section.slint ui/views/settings/playback-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "Crossfade"
 msgstr "交叉淡化"
 
@@ -2609,6 +2802,18 @@ msgstr "{} 秒"
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"
 msgstr "没有匹配的设置"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "UI Scale"
+msgstr "界面缩放"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Text and interface size"
+msgstr "字体和界面大小"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Scale fonts and controls together. Applies immediately, in addition to system display scaling."
+msgstr "同步缩放字体和控件，在系统显示缩放的基础上立即生效。"
 
 #: ui/views/settings/update-section.slint
 msgid "Updates"
@@ -2797,7 +3002,3 @@ msgstr "右"
 #: ui/views/settings/window-chrome-section.slint
 msgid "Changing the system tray icon requires restarting Netodia. Restart now?"
 msgstr "更改系统托盘图标需要重启 Netodia。现在重启？"
-
-#: ui/views/my-library/tab-pills.slint
-msgid "In order"
-msgstr "顺序"

@@ -328,11 +328,9 @@ async fn ids_whose_rows_are_gone_drop_out_of_the_restore() -> Result<(), AppErro
     Ok(())
 }
 
-/// `original_order` is not persisted, so a restored queue with shuffle still on would leave
-/// "unshuffle" a no-op against a sequence nobody kept. The file is rewritten to match, or the next
-/// launch reads back the value this one just refused.
+/// Restoring a queue keeps both playback preferences and preserves the saved current track.
 #[tokio::test]
-async fn a_restored_queue_turns_shuffle_off_in_the_state_and_in_the_file() -> Result<(), AppError> {
+async fn a_restored_queue_keeps_playback_preferences() -> Result<(), AppError> {
     let (_tmp, paths) = seeded_paths(true)?;
     let db = DbPool::test_pool().await?;
     queries::folder::insert_folder(&db, "/music", true).await?;
@@ -340,9 +338,18 @@ async fn a_restored_queue_turns_shuffle_off_in_the_state_and_in_the_file() -> Re
 
     let plan = plan_restore(&db, &paths, Some(persisted(vec![id], 0))).await?;
 
-    assert!(!plan.shuffle_enabled);
-    assert!(!read_settings(&paths)?.queue.shuffle_enabled);
+    assert!(plan.shuffle_enabled);
+    assert!(read_settings(&paths)?.queue.shuffle_enabled);
     assert_eq!(plan.repeat_mode, RepeatMode::All);
+
+    let mut state = PlayerState::default();
+    apply_restore(&mut state, plan);
+    assert!(state.queue.shuffle_enabled);
+    assert_eq!(state.queue.repeat_mode, RepeatMode::All);
+    assert_eq!(state.current_track().map(|track| track.id), Some(id));
+    state.queue.unshuffle();
+    assert!(!state.queue.shuffle_enabled);
+    assert_eq!(state.current_track().map(|track| track.id), Some(id));
     Ok(())
 }
 

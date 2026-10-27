@@ -17,6 +17,7 @@ use netodia_core::entities::track::{FavoriteStats, MostPlayedFavorite};
 /// Rust data without round-tripping through Slint. Each field is mutated only on its own fetch
 /// path; the `Mutex`es keep them callable from any tokio worker without pinning the UI thread.
 pub(crate) struct FavoritesUiState {
+    pub albums: super::albums::AlbumsState,
     /// All favourites *before* the in-memory filter, plus the keys a filter and a sort need.
     /// Retaining the unfiltered set is what lets a keystroke re-walk without hitting `SQLite` and
     /// a header click re-sort in memory rather than re-issuing the query.
@@ -67,6 +68,7 @@ pub(crate) struct FavoritesUiState {
 impl FavoritesUiState {
     pub(super) fn new() -> Self {
         Self {
+            albums: super::albums::AlbumsState::default(),
             tracks_all: TrackListCache::new(),
             retained_tracks: Mutex::new(HashSet::new()),
             filter: Mutex::new(Needle::default()),

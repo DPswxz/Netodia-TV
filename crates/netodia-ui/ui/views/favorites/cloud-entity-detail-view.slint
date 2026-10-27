@@ -1,7 +1,6 @@
 import { Theme } from "../../theme.slint";
 import { Favorites } from "../../globals/curated.slint";
 import { CloudEntityDetail } from "../../globals/cloud-entity-detail.slint";
-import { RowCovers } from "../../globals/tracks.slint";
 import { CloudTrackActions } from "../../globals/cloud-track-actions.slint";
 import { ArtworkImage } from "../../components/artwork-image.slint";
 import { ActionPill, PillButton } from "../../components/action-pill.slint";
@@ -24,11 +23,8 @@ export component CloudEntityDetailView inherits Rectangle {
                 tile-size: 88px;
                 fallback-icon: CloudEntityDetail.kind == "artist" ? "person" : "album";
                 artwork-path: CloudEntityDetail.artwork-path;
-                cover: RowCovers.request(
-                    CloudEntityDetail.artwork-path,
-                    "",
-                    CloudEntityDetail.title,
-                    RowCovers.generation,
+                cover: Favorites.request-album-cover(
+                    CloudEntityDetail.artwork-path, Favorites.album-covers-generation,
                 );
             }
 
@@ -52,11 +48,42 @@ export component CloudEntityDetailView inherits Rectangle {
                 }
             }
 
+            if CloudEntityDetail.kind == "album": ActionPill {
+                PillButton {
+                    icon: CloudEntityDetail.album-favorite ? "favorite" : "favorite_border";
+                    icon-filled: CloudEntityDetail.album-favorite;
+                    active: CloudEntityDetail.album-favorite;
+                    text: CloudEntityDetail.album-favorite ? @tr("Unfavorite album") : @tr("Favorite album");
+                    enabled: CloudEntityDetail.album-favorite-known && !CloudEntityDetail.album-favorite-pending;
+                    clicked => {
+                        Favorites.set-album-favorite(CloudEntityDetail.remote-id, !CloudEntityDetail.album-favorite);
+                    }
+                }
+            }
+
             ActionPill {
                 PillButton {
                     icon: "arrow_back";
                     text: @tr("Back");
                     clicked => { CloudEntityDetail.close(); }
+                }
+            }
+        }
+
+        if CloudEntityDetail.kind == "album" && CloudEntityDetail.album-favorite-error != "": HorizontalLayout {
+            spacing: Theme.pad-md;
+            Text {
+                text: CloudEntityDetail.album-favorite-error;
+                color: Theme.subtext0;
+                wrap: word-wrap;
+                horizontal-stretch: 1;
+            }
+            ActionPill {
+                PillButton {
+                    icon: "refresh";
+                    text: @tr("Retry");
+                    enabled: !CloudEntityDetail.album-favorite-pending;
+                    clicked => { Favorites.load-album-favorite(CloudEntityDetail.remote-id); }
                 }
             }
         }

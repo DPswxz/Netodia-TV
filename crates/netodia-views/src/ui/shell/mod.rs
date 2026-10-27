@@ -11,4 +11,6 @@ pub mod bridge;
 pub mod event_sink;
 pub mod mini_player;
 pub mod notifications;
+#[cfg(target_os = "windows")]
+pub mod taskbar;
 pub mod tray_bridge;

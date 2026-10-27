@@ -15,6 +15,54 @@ const SUBVIEWS: &str = include_str!("../callbacks/subviews.rs");
 /// silently rewrite the assertion it is checked against.
 const TABS: usize = 2;
 
+#[test]
+fn recent_queue_reuses_metadata_in_filtered_recency_order() {
+    use crate::ui::recently_played::RecentlyPlayedUi;
+    use netodia_artwork::media::image::cover_thumbs::CoverThumbs;
+    use netodia_core::entities::track::TrackListRow;
+
+    let recent = RecentlyPlayedUi::new(std::sync::Arc::new(CoverThumbs::new()), None);
+    let row = |id, title: &str, artist: &str| TrackListRow {
+        id,
+        file_path: String::new(),
+        file_name: title.to_owned(),
+        title: title.to_owned(),
+        artist: Some(artist.to_owned()),
+        album_artist: None,
+        album: None,
+        genre: None,
+        track_number: None,
+        disc_number: None,
+        year: None,
+        duration_ms: 123_456,
+        artwork_path: None,
+        is_favorite: true,
+        rating: 0,
+        album_id: None,
+        artist_id: None,
+        genre_id: None,
+        date_added: String::new(),
+        sort_key: None,
+    };
+    *recent.state().tracks_all.lock() = vec![
+        row(3_000_000_002, "First", "Match"),
+        row(3_000_000_003, "Other", "Other"),
+        row(3_000_000_001, "Last", "Match"),
+    ];
+    *recent.state().filter.lock() = crate::ui::row_match::fold_needle("match");
+
+    let tracks = recent.filtered_cloud_tracks();
+
+    assert_eq!(
+        tracks.iter().map(|track| track.id).collect::<Vec<_>>(),
+        [3_000_000_002, 3_000_000_001]
+    );
+    assert_eq!(tracks[0].title, "First");
+    assert_eq!(tracks[0].duration_ms, 123_456);
+    assert!(tracks[0].is_favorite);
+    assert_eq!(tracks[1].title, "Last");
+}
+
 /// The text between `open` and the next `close`. Bounding at a real closing
 /// brace is what keeps these pins honest — an unbounded split runs to EOF, so
 /// whatever is declared *after* the block gets scanned as if it were inside it.

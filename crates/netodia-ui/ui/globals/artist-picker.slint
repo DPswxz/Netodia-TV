@@ -1,0 +1,13 @@
+export struct ArtistChoice {
+    id: string,
+    name: string,
+}
+
+// Song identities and artist identities stay strings across the Slint boundary.
+export global ArtistPicker {
+    in-out property <[ArtistChoice]> rows;
+    in-out property <bool> cloud;
+    callback request-local(int /*track ID*/);
+    callback request-cloud(string /*song ID*/);
+    callback choose(int /*row index*/);
+}

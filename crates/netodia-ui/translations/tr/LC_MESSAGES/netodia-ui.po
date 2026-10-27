@@ -28,7 +28,8 @@ msgstr "Favoriler"
 msgid "My Library"
 msgstr "Kitaplığım"
 
-#: ui/app-window.slint ui/layout/sidebar.slint ui/views/recently-played-view.slint
+#: ui/app-window.slint ui/layout/sidebar.slint
+#: ui/views/recently-played-view.slint
 msgid "Recently Played"
 msgstr "Son Çalınanlar"
 
@@ -36,19 +37,24 @@ msgstr "Son Çalınanlar"
 msgid "Settings"
 msgstr "Ayarlar"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Minimize"
 msgstr "Simge Durumuna Küçült"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Maximize"
 msgstr "Ekranı Kapla"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
 msgid "Restore"
 msgstr "Geri Yükle"
 
-#: ui/components/caption-buttons.slint ui/components/macos-titlebar-cluster.slint ui/components/onboarding/onboarding-overlay.slint
+#: ui/components/caption-buttons.slint
+#: ui/components/macos-titlebar-cluster.slint
+#: ui/components/onboarding/onboarding-overlay.slint
 msgid "Close"
 msgstr "Kapat"
 
@@ -62,19 +68,22 @@ msgstr "{} Favorilerden Çıkar"
 msgid "Add {} to Favorites"
 msgstr "{} Favorilere Ekle"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Add to Favorites"
 msgstr "Favorilere Ekle"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Remove from Favorites"
 msgstr "Favorilerden Kaldır"
 
-#: ui/components/dialog/credit-editor.slint ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
+#: ui/components/dialog/credit-editor.slint
+#: ui/components/dialog/name-list-editor.slint ui/globals/dialog.slint
 msgid "Add"
 msgstr "Ekle"
 
-#: ui/components/dialog/dialog.slint ui/components/dialog/smart-playlist-editor-body.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/dialog.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Name"
 msgstr "Ad"
 
@@ -144,7 +153,10 @@ msgstr "Dışa aktarılacak çalma listesi yok"
 
 # Turkish doesn't pluralize a noun after a numeral ("3 parça", not "3 parçalar"),
 # so both forms are the same.
-#: ui/components/dialog/export-playlist-picker.slint ui/components/grid/artist-grid.slint ui/components/grid/genre-grid.slint ui/components/grid/playlist-grid.slint ui/globals/hero-chips.slint ui/globals/search.slint ui/views/queue-sheet.slint
+#: ui/components/dialog/export-playlist-picker.slint
+#: ui/components/grid/artist-grid.slint ui/components/grid/genre-grid.slint
+#: ui/components/grid/playlist-grid.slint ui/globals/hero-chips.slint
+#: ui/globals/search.slint ui/views/queue-sheet.slint
 msgid "{n} track"
 msgid_plural "{n} tracks"
 msgstr[0] "{n} parça"
@@ -186,11 +198,19 @@ msgstr "{} / {} zaten ekli"
 msgid "Preamp"
 msgstr "Ön yükseltici"
 
-#: ui/components/dialog/replaygain-body.slint ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/grid/card-context-menu.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/replaygain-body.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
 msgid "Album"
 msgstr "Albüm"
 
-#: ui/components/dialog/replaygain-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/replaygain-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Track"
 msgstr "Parça"
 
@@ -210,7 +230,9 @@ msgstr "Kırpılmayı önle"
 msgid "ReplayGain only affects tracks that already have loudness tags. Scan your library with a tool like rsgain or loudgain to add them."
 msgstr "ReplayGain yalnızca ses düzeyi etiketleri olan parçaları etkiler. Bunları eklemek için kitaplığınızı rsgain veya loudgain gibi bir araçla tarayın."
 
-#: ui/components/dialog/selectable-picker.slint ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/dialog/selectable-picker.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Select all"
 msgstr "Tümünü seç"
 
@@ -234,40 +256,60 @@ msgstr "gün"
 msgid "number"
 msgstr "sayı"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Album Artist"
 msgstr "Albüm Sanatçısı"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/grid/card-context-menu.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/my-library/tab-pills.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/my-library/tab-pills.slint ui/views/search/top-result-card.slint
 msgid "Artist"
 msgstr "Sanatçı"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-copy-items.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-copy-items.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
 msgid "Title"
 msgstr "Başlık"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
 msgid "Credits"
 msgstr "Katkıda bulunanlar"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/search/top-result-card.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/search/top-result-card.slint
 msgid "Genre"
 msgstr "Tür"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "ISRC"
 msgstr "ISRC"
 
 #. Translators: a musical key, as in A minor
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Key"
 msgstr "Ton"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "Mood"
 msgstr "Ruh hali"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/settings.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint ui/settings.slint
 msgid "BPM"
 msgstr "BPM"
 
@@ -279,7 +321,11 @@ msgstr "Süre (sn)"
 msgid "Plays"
 msgstr "Çalınma"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/dialog/tag-editor-body.slint ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint ui/settings.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint ui/settings.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Year"
 msgstr "Yıl"
 
@@ -299,7 +345,11 @@ msgstr "Atlanan"
 msgid "Date added"
 msgstr "Eklenme tarihi"
 
-#: ui/components/dialog/smart-playlist-editor-body.slint ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/dialog/smart-playlist-editor-body.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Favorite"
 msgstr "Favoriye Ekle"
 
@@ -487,7 +537,9 @@ msgstr "Remiksçi"
 msgid "Replace…"
 msgstr "Değiştir…"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/settings/folder-row.slint ui/views/settings/library-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/settings/folder-row.slint
+#: ui/views/settings/library-section.slint
 msgid "Remove"
 msgstr "Kaldır"
 
@@ -496,7 +548,9 @@ msgid "Details"
 msgstr "Ayrıntılar"
 
 #. Translators: a heading in place of "Up Next", so keep it as short
-#: ui/components/dialog/tag-editor-body.slint ui/components/now-playing/lyrics-menu.slint ui/settings.slint ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/now-playing/lyrics-menu.slint ui/settings.slint
+#: ui/views/now-playing-view.slint ui/views/settings/lyrics-section.slint
 msgid "Lyrics"
 msgstr "Şarkı Sözleri"
 
@@ -549,7 +603,9 @@ msgstr "Bölüm"
 msgid "Number"
 msgstr "Numara"
 
-#: ui/components/dialog/tag-editor-body.slint ui/components/onboarding/appearance-panel.slint ui/settings.slint ui/views/settings/language-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/components/onboarding/appearance-panel.slint ui/settings.slint
+#: ui/views/settings/language-section.slint
 msgid "Language"
 msgstr "Dil"
 
@@ -602,7 +658,8 @@ msgstr "Codec"
 msgid "Bitrate"
 msgstr "Bit Hızı"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/settings/output-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/settings/output-section.slint
 msgid "Sample Rate"
 msgstr "Örnekleme Hızı"
 
@@ -610,7 +667,8 @@ msgstr "Örnekleme Hızı"
 msgid "Bit Depth"
 msgstr "Bit Derinliği"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/settings/output-section.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/settings/output-section.slint
 msgid "Channels"
 msgstr "Kanallar"
 
@@ -618,7 +676,8 @@ msgstr "Kanallar"
 msgid "Size"
 msgstr "Boyut"
 
-#: ui/components/dialog/tag-editor-body.slint ui/views/my-library/tab-pills.slint
+#: ui/components/dialog/tag-editor-body.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Duration"
 msgstr "Süre"
 
@@ -630,11 +689,13 @@ msgstr "Değiştirilme"
 msgid "BLAKE3"
 msgstr "BLAKE3"
 
-#: ui/components/grid/album-grid.slint ui/components/track-list/track-list-row.slint ui/globals/player.slint
+#: ui/components/grid/album-grid.slint
+#: ui/components/track-list/track-list-row.slint ui/globals/player.slint
 msgid "Unknown artist"
 msgstr "Bilinmeyen sanatçı"
 
-#: ui/components/grid/artist-grid.slint ui/globals/hero-chips.slint ui/globals/search.slint ui/views/my-library-view.slint
+#: ui/components/grid/artist-grid.slint ui/globals/hero-chips.slint
+#: ui/globals/search.slint ui/views/my-library-view.slint
 msgid "{n} album"
 msgid_plural "{n} albums"
 msgstr[0] "{n} albüm"
@@ -644,58 +705,80 @@ msgstr[1] "{n} albüm"
 msgid "Folder"
 msgstr "Klasör"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/play-button.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/play-button.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Play"
 msgstr "Çal"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/overflow-menu.slint ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/my-library/tab-pills.slint ui/views/recently-played-view.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Shuffle"
 msgstr "Karıştır"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Play {} Next"
 msgstr "{} Sırada Çal"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Play Next"
 msgstr "Sonra Çal"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add {} to Queue"
 msgstr "{} Sıraya Ekle"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add to Queue"
 msgstr "Sıraya Ekle"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "New Playlist…"
 msgstr "Yeni Çalma Listesi…"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Add to Playlist"
 msgstr "Çalma listesine ekle"
 
 #. Translators: `{}` is how many items are selected
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Tags for {}"
 msgstr "{} için Etiketleri Düzenle"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Tags…"
 msgstr "Etiketleri Düzenle…"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit {} Tracks"
 msgstr "{} Parçayı Düzenle"
 
-#: ui/components/grid/card-context-menu.slint ui/components/now-playing/lyrics-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Edit Track Information"
 msgstr "Parça Bilgilerini Düzenle"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Copy"
 msgstr "Kopyala"
 
@@ -707,7 +790,8 @@ msgstr "Adı Kopyala"
 msgid "Copy Path"
 msgstr "Yolu Kopyala"
 
-#: ui/components/grid/card-context-menu.slint ui/settings.slint ui/views/settings/diagnostics-section.slint
+#: ui/components/grid/card-context-menu.slint ui/settings.slint
+#: ui/views/settings/diagnostics-section.slint
 msgid "Open Folder"
 msgstr "Klasörü Aç"
 
@@ -715,15 +799,18 @@ msgstr "Klasörü Aç"
 msgid "Show in File Manager"
 msgstr "Dosya yöneticisinde göster"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Open Containing Folder"
 msgstr "Bulunduğu Klasörü Aç"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Go to Artist"
 msgstr "Sanatçıya Git"
 
-#: ui/components/grid/card-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/grid/card-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Clear selection"
 msgstr "Seçimi temizle"
 
@@ -763,15 +850,22 @@ msgstr "Tam oynatıcı"
 msgid "Show Up Next"
 msgstr "Sıradakileri göster"
 
-#: ui/components/mini-player/mini-captions.slint ui/components/now-playing/lyrics-controls.slint ui/views/settings/lyrics-section.slint
+#: ui/components/mini-player/mini-captions.slint
+#: ui/components/now-playing/lyrics-controls.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Show lyrics"
 msgstr "Şarkı sözlerini göster"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Pin on Top"
 msgstr "Üste Sabitle"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Unpin from Top"
 msgstr "Üst Sabitlemeyi Kaldır"
 
@@ -783,31 +877,40 @@ msgstr "Albüm arka planı: kapalı"
 msgid "Album Backdrop: on"
 msgstr "Albüm arka planı: açık"
 
-#: ui/components/mini-player/mini-controls.slint ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Unfavorite"
 msgstr "Favoriden Çıkar"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Shuffle: off"
 msgstr "Karıştır: kapalı"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Shuffle: on"
 msgstr "Karıştır: açık"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: off"
 msgstr "Tekrarla: kapalı"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: one"
 msgstr "Tekrarla: bir"
 
-#: ui/components/mini-player/mini-controls.slint ui/layout/now-playing-bar.slint
+#: ui/components/mini-player/mini-controls.slint
+#: ui/layout/now-playing-bar.slint
 msgid "Repeat: all"
 msgstr "Tekrarla: tümü"
 
-#: ui/components/now-playing/flyout-presets.slint ui/components/now-playing/overflow-menu.slint ui/components/now-playing/visualizer-flyout.slint
+#: ui/components/now-playing/flyout-presets.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/components/now-playing/visualizer-flyout.slint
 msgid "Off"
 msgstr "Kapalı"
 
@@ -863,11 +966,14 @@ msgstr "Aynalı"
 msgid "Waveform"
 msgstr "Dalga formu"
 
-#: ui/components/now-playing/lyrics-menu.slint ui/views/settings/lyrics-section.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Show romanization"
 msgstr "Latin harfli okunuşu göster"
 
-#: ui/components/now-playing/lyrics-menu.slint ui/components/onboarding/features-panel.slint ui/views/settings/lyrics-section.slint
+#: ui/components/now-playing/lyrics-menu.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "Look up lyrics online"
 msgstr "Şarkı sözlerini çevrimiçi ara"
 
@@ -921,7 +1027,8 @@ msgstr "Şarkı Sözleri menüsünden tekrar deneyin"
 msgid "More"
 msgstr "Diğer Seçenekler"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
 msgid "Speed"
 msgstr "Hız"
 
@@ -933,7 +1040,9 @@ msgstr "Uyku zamanlayıcısı"
 msgid "Track end"
 msgstr "Parça sonu"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint ui/views/settings/playback-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "Equalizer"
 msgstr "Ekolayzer"
 
@@ -941,11 +1050,13 @@ msgstr "Ekolayzer"
 msgid "On"
 msgstr "Açık"
 
-#: ui/components/now-playing/overflow-menu.slint ui/components/onboarding/onboarding-overlay.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/components/onboarding/onboarding-overlay.slint
 msgid "Done"
 msgstr "Tamam"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/output-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/output-section.slint
 msgid "ReplayGain"
 msgstr "ReplayGain"
 
@@ -969,11 +1080,14 @@ msgstr "Kayıpsız"
 msgid "Very high"
 msgstr "Çok yüksek"
 
-#: ui/components/now-playing/overflow-menu.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Repeat"
 msgstr "Tekrarla"
 
-#: ui/components/now-playing/overflow-menu.slint ui/layout/now-playing-bar.slint ui/views/queue-sheet.slint ui/views/settings/overflow-menu-section.slint
+#: ui/components/now-playing/overflow-menu.slint
+#: ui/layout/now-playing-bar.slint ui/views/queue-sheet.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Queue"
 msgstr "Sıra"
 
@@ -986,6 +1100,7 @@ msgid "Play (hold to stop)"
 msgstr "Çal (durdurmak için basılı tut)"
 
 #: ui/components/now-playing/play-button.slint
+#: ui/views/my-library/tab-pills.slint
 msgid "Pause"
 msgstr "Duraklat"
 
@@ -997,11 +1112,13 @@ msgstr "Başlat"
 msgid "No tracks up next"
 msgstr "Sırada başka parça yok"
 
-#: ui/components/now-playing/visualizer-picker.slint ui/views/settings/playback-section.slint
+#: ui/components/now-playing/visualizer-picker.slint
+#: ui/views/settings/playback-section.slint
 msgid "Visualizer"
 msgstr "Görselleştirici"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Appearance"
 msgstr "Görünüm"
 
@@ -1009,27 +1126,34 @@ msgstr "Görünüm"
 msgid "Pick how Netodia looks. Every change applies as you make it."
 msgstr "Netodia'nın görünümünü seçin. Her değişiklik anında uygulanır."
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Theme"
 msgstr "Tema"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Theme Variant"
 msgstr "Tema Çeşidi"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "System"
 msgstr "Sistem"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Dark"
 msgstr "Koyu"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Light"
 msgstr "Açık"
 
-#: ui/components/onboarding/appearance-panel.slint ui/views/settings/appearance-section.slint
+#: ui/components/onboarding/appearance-panel.slint
+#: ui/views/settings/appearance-section.slint
 msgid "Accent Color"
 msgstr "Vurgu Rengi"
 
@@ -1041,25 +1165,65 @@ msgstr "Netodia'nın erişebilecekleri"
 msgid "Netodia works offline. These are the parts that reach out."
 msgstr "Netodia çevrimdışı çalışır. Ağa çıkan bölümler bunlardır."
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/lyrics-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/lyrics-section.slint
 msgid "When a track carries no words of its own, ask lrclib.net for them"
 msgstr "Bir parça kendi sözlerini içermiyorsa lrclib.net'ten iste"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/update-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/update-section.slint
 msgid "Check for updates automatically"
 msgstr "Güncellemeleri otomatik denetle"
 
-#: ui/components/onboarding/features-panel.slint ui/views/settings/update-section.slint
+#: ui/components/onboarding/features-panel.slint
+#: ui/views/settings/update-section.slint
 msgid "Once a day, Netodia asks GitHub whether a newer version is out."
 msgstr "Netodia günde bir kez GitHub'a daha yeni bir sürüm olup olmadığını sorar."
 
-#: ui/views/settings/library-section.slint
-msgid "Add a folder to scan for music files."
-msgstr "Müzik dosyalarını taramak için bir klasör ekle."
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Sign in to NetEase Music"
+msgstr "NetEase Music hesabına giriş yap"
 
-#: ui/views/settings/library-section.slint
-msgid "Add Folder"
-msgstr "Klasör Ekle"
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Connect an account to use personal recommendations, collections and playback permissions"
+msgstr "Kişisel öneriler, koleksiyonlar ve çalma izinleri için bir hesap bağlayın"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Refresh code"
+msgstr "Kodu yenile"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Generating QR code…"
+msgstr "QR kodu oluşturuluyor…"
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scan this code with the NetEase Music app."
+msgstr "Bu kodu NetEase Music uygulamasıyla tarayın."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Scanned. Confirm login on your phone."
+msgstr "Tarandı. Telefonunuzda girişi onaylayın."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "QR code expired. Refresh to try again."
+msgstr "QR kodunun süresi doldu. Yeniden denemek için yenileyin."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Login successful."
+msgstr "Giriş başarılı."
+
+#: ui/components/onboarding/login-panel.slint
+#: ui/views/settings/netease-account-section.slint
+msgid "Could not start QR login."
+msgstr "QR ile giriş başlatılamadı."
 
 #. Translators: Netodia is the product name and stays as is
 #: ui/components/onboarding/onboarding-overlay.slint
@@ -1070,7 +1234,8 @@ msgstr "Netodia'ya hoş geldiniz"
 msgid "Skip"
 msgstr "Atla"
 
-#: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/components/onboarding/onboarding-overlay.slint ui/views/browse-view.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "Back"
 msgstr "Geri"
 
@@ -1111,7 +1276,11 @@ msgstr "{} / {} dosya · {}"
 msgid "{} / {} files"
 msgstr "{} / {} dosya"
 
-#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint ui/views/settings/library-section.slint ui/views/settings/output-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/components/settings/scan-progress.slint ui/globals/dialog.slint
+#: ui/views/queue-sheet.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/library-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Cancel"
 msgstr "İptal"
 
@@ -1127,7 +1296,8 @@ msgstr "Sanatçı - Başlık"
 msgid "File Path"
 msgstr "Dosya Yolu"
 
-#: ui/components/track-list/cloud-track-context-menu.slint ui/components/track-list/track-context-menu.slint
+#: ui/components/track-list/cloud-track-context-menu.slint
+#: ui/components/track-list/track-context-menu.slint
 msgid "Remove from Queue"
 msgstr "Sıradan çıkar"
 
@@ -1139,7 +1309,8 @@ msgstr "Sütunlar"
 msgid "Artwork"
 msgstr "Kapak"
 
-#: ui/components/track-list/column-toggle-popup.slint ui/components/track-list/track-list-header.slint
+#: ui/components/track-list/column-toggle-popup.slint
+#: ui/components/track-list/track-list-header.slint
 msgid "Length"
 msgstr "Süre"
 
@@ -1180,6 +1351,11 @@ msgid "{n} favorite"
 msgid_plural "{n} favorites"
 msgstr[0] "{n} favori"
 msgstr[1] "{n} favori"
+
+#: ui/globals/dialog.slint ui/views/my-library-view.slint
+#: ui/views/search-view.slint
+msgid "Artists"
+msgstr "Sanatçılar"
 
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
@@ -1387,7 +1563,8 @@ msgstr "Güncelleme yüklendi"
 msgid "Restart Netodia to start using the new version."
 msgstr "Yeni sürümü kullanmak için Netodia'yı yeniden başlatın."
 
-#: ui/settings.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/settings.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Restart"
 msgstr "Yeniden Başlat"
 
@@ -1523,7 +1700,8 @@ msgstr "Özel çıkış reddedildi, bu yüzden Netodia şimdilik paylaşımlı �
 msgid "{} refused exclusive output, so Netodia is playing shared for now. The Output section of Settings says why."
 msgstr "{} özel çıkışı reddetti, bu yüzden Netodia şimdilik paylaşımlı çalıyor. Nedeni Ayarlar'daki Çıkış bölümünde yazıyor."
 
-#: ui/settings.slint ui/views/settings/appearance-section.slint ui/views/settings/window-chrome-section.slint
+#: ui/settings.slint ui/views/settings/appearance-section.slint
+#: ui/views/settings/window-chrome-section.slint
 msgid "Restart Required"
 msgstr "Yeniden Başlatma Gerekli"
 
@@ -1619,7 +1797,14 @@ msgstr "Kart görünümü"
 msgid "List view"
 msgstr "Liste görünümü"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
+msgid "Albums"
+msgstr "Albümler"
+
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "Şarkılar"
 
@@ -1639,17 +1824,46 @@ msgstr "Bir şarkıyı favorilere ekle, sanatçısı burada görünsün."
 msgid "Top songs"
 msgstr "Popüler şarkılar"
 
-#: ui/views/favorites/cloud-entity-detail-view.slint ui/views/my-library/playlists-tab.slint ui/views/my-library/roaming-tab.slint
-msgid "Loading…"
-msgstr "Yükleniyor…"
+#: ui/views/favorites/cloud-entity-detail-view.slint
+msgid "Favorite album"
+msgstr "Albümü favorilere ekle"
 
-#: ui/views/favorites/cloud-entity-detail-view.slint ui/views/favorites/cloud-favorites-songs-tab.slint ui/views/my-library/playlists-tab.slint ui/views/recently-played/songs-tab.slint
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Unfavorite album"
+msgstr "Albümü favorilerden kaldır"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/favorites/cloud-favorites-songs-tab.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/recently-played/songs-tab.slint
 msgid "Retry"
 msgstr "Yeniden dene"
 
 #: ui/views/favorites/cloud-entity-detail-view.slint
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+#: ui/views/my-library/playlist-detail.slint
+#: ui/views/my-library/playlists-tab.slint
+#: ui/views/my-library/roaming-tab.slint
+msgid "Loading…"
+msgstr "Yükleniyor…"
+
+#: ui/views/favorites/cloud-entity-detail-view.slint
 msgid "No tracks available"
 msgstr "Kullanılabilir parça yok"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No favorite albums yet"
+msgstr "Henüz favori albüm yok"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "No matching albums"
+msgstr "Eşleşen albüm yok"
+
+#: ui/views/favorites/cloud-favorites-albums-tab.slint
+msgid "Favorite an album from its detail page."
+msgstr "Albümü ayrıntılar sayfasından favorilere ekleyin."
 
 #: ui/views/favorites/cloud-favorites-songs-tab.slint
 msgid "Loading favorites…"
@@ -1659,7 +1873,8 @@ msgstr "Favoriler yükleniyor…"
 msgid "No NetEase favorites yet"
 msgstr "Henüz NetEase favorisi yok"
 
-#: ui/views/favorites/most-played-tab.slint ui/views/recently-played/most-played-tab.slint
+#: ui/views/favorites/most-played-tab.slint
+#: ui/views/recently-played/most-played-tab.slint
 msgid "Nothing played yet"
 msgstr "Henüz hiçbir şey çalınmadı"
 
@@ -1706,6 +1921,10 @@ msgid "Recommendations"
 msgstr "Öneriler"
 
 #: ui/views/my-library-view.slint
+msgid "Genres"
+msgstr "Türler"
+
+#: ui/views/my-library-view.slint
 msgid "Filter tracks & albums…"
 msgstr "Parça ve albümleri filtrele…"
 
@@ -1733,13 +1952,10 @@ msgstr "Çalma listelerini filtrele…"
 msgid "No albums yet"
 msgstr "Henüz albüm yok"
 
-#: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint ui/views/my-library/genres-tab.slint
+#: ui/views/my-library/albums-tab.slint ui/views/my-library/artists-tab.slint
+#: ui/views/my-library/genres-tab.slint
 msgid "Add a music folder in Settings to start building your library."
 msgstr "Kitaplığınızı oluşturmaya başlamak için Ayarlar'dan bir müzik klasörü ekleyin."
-
-#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint ui/views/search-view.slint
-msgid "Albums"
-msgstr "Albümler"
 
 #: ui/views/my-library/artists-tab.slint
 msgid "No artists yet"
@@ -1828,6 +2044,10 @@ msgstr "Durdur"
 #: ui/views/my-library/tab-pills.slint
 msgid "Tracks"
 msgstr "Parçalar"
+
+#: ui/views/my-library/tab-pills.slint
+msgid "In order"
+msgstr "Sırayla"
 
 #: ui/views/my-library/tab-pills.slint
 msgid "Edit artwork"
@@ -1921,10 +2141,6 @@ msgstr "NetEase geçmişi yükleniyor…"
 msgid "Searching…"
 msgstr "Aranıyor…"
 
-#: ui/views/search-view.slint
-msgid "Artists"
-msgstr "Sanatçılar"
-
 #: ui/views/search/no-results.slint
 msgid "No results found"
 msgstr "Sonuç bulunamadı"
@@ -1961,11 +2177,13 @@ msgstr "Arayüz"
 msgid "Library"
 msgstr "Kitaplık"
 
-#: ui/views/settings-view.slint ui/views/settings/pages/playback-page.slint ui/views/settings/playback-section.slint
+#: ui/views/settings-view.slint ui/views/settings/pages/playback-page.slint
+#: ui/views/settings/playback-section.slint
 msgid "Playback"
 msgstr "Oynatma"
 
-#: ui/views/settings-view.slint ui/views/settings/about-section.slint ui/views/settings/pages/about-page.slint
+#: ui/views/settings-view.slint ui/views/settings/about-section.slint
+#: ui/views/settings/pages/about-page.slint
 msgid "About"
 msgstr "Hakkında"
 
@@ -2029,7 +2247,8 @@ msgstr "Aurora Arka Planı"
 msgid "Paint album, playlist and Now Playing headers with a wash of the album's own colors, instead of a blurred copy of its cover art. Nothing needs blurring, so headers appear sooner and Netodia stays lighter. Restart required to apply."
 msgstr "Albüm, çalma listesi ve “Şimdi Çalıyor” başlıklarını, kapak görselinin bulanık bir kopyası yerine albümün kendi renkleriyle boya. Bulanıklaştırılacak bir şey olmadığı için başlıklar daha erken görünür ve Netodia daha hafif kalır. Uygulamak için yeniden başlatma gerekir."
 
-#: ui/views/settings/appearance-section.slint ui/views/settings/playback-section.slint
+#: ui/views/settings/appearance-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "None"
 msgstr "Yok"
 
@@ -2118,6 +2337,10 @@ msgid "Manage Folders"
 msgstr "Klasörleri Yönet"
 
 #: ui/views/settings/library-section.slint
+msgid "Add Folder"
+msgstr "Klasör Ekle"
+
+#: ui/views/settings/library-section.slint
 msgid "Library Folders"
 msgstr "Kitaplık Klasörleri"
 
@@ -2133,6 +2356,10 @@ msgstr "\"{}\" kitaplığınızdan kaldırılsın mı? Bu klasördeki tüm parç
 #: ui/views/settings/library-section.slint
 msgid "No folders added"
 msgstr "Klasör eklenmedi"
+
+#: ui/views/settings/library-section.slint
+msgid "Add a folder to scan for music files."
+msgstr "Müzik dosyalarını taramak için bir klasör ekle."
 
 #: ui/views/settings/lyrics-section.slint
 msgid "Show the playing track's words in Now Playing instead of Up Next"
@@ -2181,14 +2408,6 @@ msgstr "NetEase hesabı"
 #: ui/views/settings/netease-account-section.slint
 msgid "NetEase Music account"
 msgstr "NetEase Music hesabı"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Sign in to NetEase Music"
-msgstr "NetEase Music hesabına giriş yap"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Connect an account to use personal recommendations, collections and playback permissions"
-msgstr "Kişisel öneriler, koleksiyonlar ve çalma izinleri için bir hesap bağlayın"
 
 #: ui/views/settings/netease-account-section.slint
 msgid "Country code"
@@ -2243,36 +2462,8 @@ msgid "Enter your email address"
 msgstr "E-posta adresinizi girin"
 
 #: ui/views/settings/netease-account-section.slint
-msgid "Refresh code"
-msgstr "Kodu yenile"
-
-#: ui/views/settings/netease-account-section.slint
 msgid "Connecting…"
 msgstr "Bağlanıyor…"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Generating QR code…"
-msgstr "QR kodu oluşturuluyor…"
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scan this code with the NetEase Music app."
-msgstr "Bu kodu NetEase Music uygulamasıyla tarayın."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Scanned. Confirm login on your phone."
-msgstr "Tarandı. Telefonunuzda girişi onaylayın."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "QR code expired. Refresh to try again."
-msgstr "QR kodunun süresi doldu. Yeniden denemek için yenileyin."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Login successful."
-msgstr "Giriş başarılı."
-
-#: ui/views/settings/netease-account-section.slint
-msgid "Could not start QR login."
-msgstr "QR ile giriş başlatılamadı."
 
 #: ui/views/settings/output-section.slint
 msgid "Output"
@@ -2358,7 +2549,8 @@ msgstr "Dosyanın Örnekleme Hızına Uy"
 msgid "Reopen the audio device at each track's own rate, so the system doesn't resample it. The system has to allow that rate"
 msgstr "Ses aygıtını her parçanın kendi hızında yeniden açar, böylece sistem yeniden örneklemez. Sistemin bu hıza izin vermesi gerekir"
 
-#: ui/views/settings/output-section.slint ui/views/settings/overflow-menu-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/overflow-menu-section.slint
 msgid "Signal Path"
 msgstr "Sinyal Yolu"
 
@@ -2498,7 +2690,8 @@ msgstr "aygıtta %{}"
 msgid "{}% (the device at {}%)"
 msgstr "%{} (aygıt %{} düzeyinde)"
 
-#: ui/views/settings/output-section.slint ui/views/settings/playback-section.slint
+#: ui/views/settings/output-section.slint
+#: ui/views/settings/playback-section.slint
 msgid "Crossfade"
 msgstr "Çapraz Geçiş"
 
@@ -2634,6 +2827,18 @@ msgstr "{} sn"
 #: ui/views/settings/settings-tabs.slint
 msgid "No matching settings"
 msgstr "Eşleşen ayar yok"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "UI Scale"
+msgstr "Arayüz ölçeği"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Text and interface size"
+msgstr "Metin ve arayüz boyutu"
+
+#: ui/views/settings/ui-scale-section.slint
+msgid "Scale fonts and controls together. Applies immediately, in addition to system display scaling."
+msgstr "Yazı tiplerini ve denetimleri birlikte ölçekler. Sistem ekran ölçeklendirmesine ek olarak hemen uygulanır."
 
 #: ui/views/settings/update-section.slint
 msgid "Updates"
@@ -2822,7 +3027,3 @@ msgstr "Sağ"
 #: ui/views/settings/window-chrome-section.slint
 msgid "Changing the system tray icon requires restarting Netodia. Restart now?"
 msgstr "Sistem tepsisi simgesini değiştirmek Netodia'yı yeniden başlatmayı gerektirir. Şimdi yeniden başlatılsın mı?"
-
-#: ui/views/my-library/tab-pills.slint
-msgid "In order"
-msgstr "Sırayla"

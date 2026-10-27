@@ -83,7 +83,7 @@ pub struct Song {
 /// `favorite_order` is the one-based position in the `trackIds` array returned by `NetEase` for
 /// that playlist. `added_at_ms` keeps the server's favorite timestamp when the endpoint supplies
 /// it; the client must not infer favorite order from a later song-detail response.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LikedSong {
     pub song: Song,
     pub favorite_order: i32,

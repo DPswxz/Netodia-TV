@@ -25,7 +25,7 @@ impl FavoritesUi {
                 self.state().fav_artists.lock().iter().map(|a| a.image_path.as_deref()),
                 GRID_PREWARM_AHEAD,
             ),
-            FavoritesTab::Songs => Vec::new(),
+            FavoritesTab::Songs | FavoritesTab::Albums => Vec::new(),
         }
     }
 

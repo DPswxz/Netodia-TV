@@ -3,6 +3,8 @@
 //! This module is the application boundary for login and session lifetime. Views receive typed
 //! account state and never see cookies, device credentials, or raw HTTP responses.
 
+mod favorites_cache;
+
 use std::collections::HashSet;
 use std::future::Future;
 use std::num::NonZeroUsize;
@@ -20,6 +22,8 @@ use netodia_net::netease::{Client, QrStatus as NetEaseQrStatus};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, watch};
 use tokio_util::sync::CancellationToken;
+
+use favorites_cache::FavoritesCache;
 
 const KEYRING_SERVICE: &str = "Netodia";
 const KEYRING_USER: &str = "netease-session";
@@ -145,6 +149,8 @@ pub struct CloudService {
     liked_ids_revision: Arc<AtomicU64>,
     recent_songs_cache: RecentSongsCache,
     playlist_cache: PlaylistCache,
+    // Serializes disk reads, atomic writes and invalidation, including logout racing a fetch.
+    favorites_cache: Arc<Mutex<FavoritesCache>>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -157,7 +163,7 @@ struct StoredSession {
 impl CloudService {
     /// Reads only the OS credential store. If it is unavailable, the service remains usable and
     /// reports that this process cannot remember a login.
-    pub async fn new(http: reqwest::Client) -> Self {
+    pub async fn new(http: reqwest::Client, favorites_cache_path: std::path::PathBuf) -> Self {
         let read = tokio::task::spawn_blocking(read_credential).await;
         let (stored, remember_available, notice) = match read {
             Ok(Ok(Some(secret))) => {
@@ -196,6 +202,7 @@ impl CloudService {
             liked_ids_revision: Arc::new(AtomicU64::new(0)),
             recent_songs_cache: Arc::new(parking_lot::RwLock::new(None)),
             playlist_cache: Arc::new(parking_lot::Mutex::new(LruCache::new(PLAYLIST_CACHE_CAP))),
+            favorites_cache: Arc::new(Mutex::new(FavoritesCache::new(favorites_cache_path))),
         }
     }
 
@@ -497,8 +504,92 @@ impl CloudService {
         {
             *self.liked_ids_cache.write() =
                 Some((account.id, generation, songs.iter().map(|entry| entry.song.id).collect()));
+            self.persist_liked_songs(account.id, generation, revision, &songs).await;
         }
         Ok(songs)
+    }
+
+    /// Reads the last successful list for this account without treating it as a fresh response.
+    /// Views paint it first and still refresh from `NetEase` on entry. Session validation remains
+    /// the credential store's responsibility; this file contains display metadata only.
+    pub async fn cached_liked_songs(&self) -> Option<Vec<LikedSong>> {
+        let status = self.status();
+        let account = status.account?;
+        let generation = status.generation;
+        let revision = self.liked_ids_revision();
+        let cache = self.favorites_cache.clone().lock_owned().await;
+        let result = tokio::task::spawn_blocking(move || cache.load(account.id)).await;
+        if !self.liked_snapshot_current(generation, revision) {
+            return None;
+        }
+        match result {
+            Ok(Ok(songs)) => songs,
+            Ok(Err(error)) => {
+                log::warn!("cloud::cached_liked_songs: {}", netodia_core::error::describe(&error));
+                None
+            }
+            Err(error) => {
+                log::warn!("cloud::cached_liked_songs: {}", netodia_core::error::describe(&error));
+                None
+            }
+        }
+    }
+
+    fn liked_snapshot_current(&self, generation: u64, revision: u64) -> bool {
+        self.status().generation == generation && self.liked_ids_revision() == revision
+    }
+
+    async fn persist_liked_songs(
+        &self,
+        account_id: i64,
+        generation: u64,
+        revision: u64,
+        songs: &[LikedSong],
+    ) {
+        let cache = self.favorites_cache.clone().lock_owned().await;
+        let cloud = self.clone();
+        let songs = songs.to_vec();
+        let result = tokio::task::spawn_blocking(move || {
+            if cloud.liked_snapshot_current(generation, revision) {
+                cache.store(account_id, &songs)
+            } else {
+                Ok(())
+            }
+        })
+        .await;
+        match result {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => {
+                log::warn!("cloud::persist_liked_songs: {}", netodia_core::error::describe(&error));
+            }
+            Err(error) => {
+                log::warn!("cloud::persist_liked_songs: {}", netodia_core::error::describe(&error));
+            }
+        }
+    }
+
+    async fn clear_liked_songs_cache(&self, generation: u64) {
+        let cache = self.favorites_cache.clone().lock_owned().await;
+        let cloud = self.clone();
+        match tokio::task::spawn_blocking(move || {
+            if cloud.status().generation == generation { cache.clear() } else { Ok(()) }
+        })
+        .await
+        {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => {
+                log::warn!(
+                    "cloud::clear_liked_songs_cache: {}",
+                    netodia_core::error::describe(&error)
+                );
+            }
+            Err(error) => {
+                log::warn!(
+                    "cloud::clear_liked_songs_cache: {}",
+                    netodia_core::error::describe(&error)
+                );
+            }
+        }
     }
 
     /// Fetch the signed-in account's `NetEase` play history, preserving the order returned by the
@@ -597,11 +688,36 @@ impl CloudService {
                 }
             }
         }
+        // A successful mutation invalidates the disk snapshot even when Favorites is hidden.
+        // The next successful list refresh writes the new server order.
+        self.clear_liked_songs_cache(generation).await;
         Ok(())
     }
 
     pub async fn saved_albums(&self, offset: u64) -> AppResult<Vec<Album>> {
         self.private_request(self.client.saved_albums(offset)).await
+    }
+
+    /// Read the entire collection in server order under one account cancellation scope.
+    pub async fn all_saved_albums(&self) -> AppResult<Vec<Album>> {
+        self.private_request(async {
+            let mut albums = Vec::new();
+            let mut seen = HashSet::new();
+            let mut offset = 0;
+            loop {
+                let (page, more) = self.client.saved_albums_page(offset).await?;
+                let page_len = page.len();
+                let before = albums.len();
+                albums.extend(page.into_iter().filter(|album| seen.insert(album.id)));
+                // A repeated page must not spin forever if the server ignores its offset.
+                if !more || page_len == 0 || albums.len() == before {
+                    break;
+                }
+                offset += u64::try_from(page_len).unwrap_or(u64::MAX);
+            }
+            Ok(albums)
+        })
+        .await
     }
 
     pub async fn saved_artists(&self, offset: u64) -> AppResult<Vec<Artist>> {
@@ -807,6 +923,7 @@ impl CloudService {
         let device_id = self.client.device_id().to_owned();
         let http = self.http.clone();
         self.begin_transition().await;
+        self.clear_liked_songs_cache(self.status().generation).await;
         if !cookie.is_empty()
             && let Ok(remote_client) = Client::with_device_id(http, device_id)
         {
@@ -838,6 +955,7 @@ impl CloudService {
 
     async fn begin_login(&self) {
         self.begin_transition().await;
+        self.clear_liked_songs_cache(self.status().generation).await;
         self.pending_restore.lock().await.take();
         let deleted =
             tokio::task::spawn_blocking(delete_credential).await.is_ok_and(|result| result.is_ok());
@@ -933,7 +1051,11 @@ fn delete_credential() -> Result<(), ()> {
 }
 
 #[cfg(test)]
-mod tests {
+#[path = "tests/cloud_favorites_tests.rs"]
+mod favorites_tests;
+
+#[cfg(test)]
+pub(crate) mod tests {
     use super::*;
 
     #[test]
@@ -970,7 +1092,7 @@ mod tests {
 
     const DEVICE_ID: &str = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123";
 
-    fn service_for_test() -> CloudService {
+    pub(super) fn service_for_test() -> CloudService {
         let http = reqwest::Client::new();
         let (status, _) =
             watch::channel(SessionStatus { remember_available: true, ..SessionStatus::default() });
@@ -986,7 +1108,16 @@ mod tests {
             liked_ids_revision: Arc::new(AtomicU64::new(0)),
             recent_songs_cache: Arc::new(parking_lot::RwLock::new(None)),
             playlist_cache: Arc::new(parking_lot::Mutex::new(LruCache::new(PLAYLIST_CACHE_CAP))),
+            favorites_cache: Arc::new(Mutex::new(FavoritesCache::new(std::path::PathBuf::new()))),
         }
+    }
+
+    // A cancelled account token makes an accidental metadata fetch fail before any HTTP traffic.
+    pub(crate) fn service_without_network_for_test() -> CloudService {
+        let service = service_for_test();
+        service.guest_initialized.store(true, Ordering::Release);
+        service.account_tasks_token().cancel();
+        service
     }
 
     #[tokio::test]

@@ -10,6 +10,7 @@
 // inside `ui::` — nothing in `library/`, `player/` or `boot/` can name either.
 pub(in crate::ui) mod macros;
 
+mod artist_picker;
 pub(in crate::ui) mod card_actions;
 pub(in crate::ui) mod card_selection;
 mod clipboard;

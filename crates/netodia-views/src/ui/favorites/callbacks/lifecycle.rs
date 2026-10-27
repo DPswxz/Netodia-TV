@@ -69,6 +69,9 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
                 g.set_artist_count(UNFETCHED_COUNT);
                 g.set_cloud_loading(false);
                 g.set_cloud_error(slint::SharedString::default());
+                g.set_album_rows(slint::ModelRc::default());
+                g.set_albums_loading(false);
+                g.set_albums_error(slint::SharedString::default());
                 // The Slint projection is temporary; `FavoritesUi.tracks_all` retains the last
                 // successful cloud snapshot for immediate paint on the next visit.
                 clear_vec_model::<UiTrackListRow>(&g.get_tracks(), "favorites: clear tracks");
@@ -98,6 +101,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
                     g.set_cloud_error(slint::SharedString::default());
                 }
                 let runtime = s.runtime.clone();
+                favorites_ui_mod::albums::paint_on_enter(&weak, &fu);
                 runtime.spawn(async move {
                     let dirty = fu.take_dirty();
                     if dirty || fu.active_tab() == favorites_ui_mod::FavoritesTab::Songs {
@@ -173,7 +177,9 @@ fn wire_account_updates(
                 fav_ui.mark_dirty();
                 continue;
             }
-            if let Err(error) = favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await {
+            if fav_ui.active_tab() == favorites_ui_mod::FavoritesTab::Songs
+                && let Err(error) = favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await
+            {
                 log::warn!("favorites::account_changed: {}", describe(&error));
             }
         }
@@ -251,6 +257,10 @@ async fn kick_full_refresh(
     fav_ui: &Arc<FavoritesUi>,
     weak: &slint::Weak<AppWindow>,
 ) {
+    if fav_ui.active_tab() == favorites_ui_mod::FavoritesTab::Albums {
+        favorites_ui_mod::albums::refresh(state, fav_ui, weak).await;
+        return;
+    }
     fav_ui.take_songs_dirty();
     if let Err(error) = favorites_ui_mod::refresh_tracks(state, fav_ui, weak).await {
         log::warn!("favorites::refresh_tracks: {}", describe(&error));

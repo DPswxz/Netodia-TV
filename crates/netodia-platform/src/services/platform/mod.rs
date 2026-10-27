@@ -27,6 +27,8 @@ mod registry;
 pub mod single_instance;
 #[cfg(target_os = "linux")]
 pub mod system_theme;
+#[cfg(target_os = "windows")]
+pub mod taskbar;
 pub mod tray;
 #[cfg(target_os = "windows")]
 pub mod window_border;

@@ -1,3 +1,4 @@
+import { ArtistPicker } from "artist-picker.slint";
 import { PlaylistPickRow, PlaylistExportPickRow } from "../models.slint";
 import { SmartEditor, TagEditor } from "dialog-forms.slint";
 import { LibrarySettings } from "library-settings.slint";
@@ -22,6 +23,7 @@ export enum DialogKind {
     edit-playlist-artwork,
     export-playlists,
     add-to-playlist,
+    select-artist,
     smart-playlist-editor,
     edit-tags,
     equalizer,
@@ -191,6 +193,8 @@ export global Dialog {
     public function closed-teardown() {
         // Routing / kind-gated body branches.
         root.kind = DialogKind.none;
+        ArtistPicker.rows = [];
+        ArtistPicker.cloud = false;
         root.target-id = -1;
         // Text-input dialog state.
         root.input-text = "";
@@ -237,6 +241,18 @@ export global Dialog {
     // opens with it, which is the whole of what `request-generation` needs to be true.
     function claim-request() {
         root.request-generation += 1;
+    }
+
+    // Resolves the song before deciding whether a chooser is necessary.
+    public function prepare-artist-picker() {
+        root.claim-request();
+        root.title = @tr("Artists");
+        root.message = "";
+        root.confirm-label = @tr("Cancel");
+        root.cancel-label = "";
+        root.destructive = false;
+        root.kind = DialogKind.select-artist;
+        ArtistPicker.rows = [];
     }
 
     // Three call sites: the Playlists tab's New pill, Ctrl+N, and a track row's Add-to-Playlist →
