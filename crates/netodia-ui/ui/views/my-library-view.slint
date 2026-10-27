@@ -171,13 +171,25 @@ export component MyLibraryView inherits Rectangle {
     // over a grid that is still filtered, or hold a grid needle over an unfiltered detail.
     // Mirrors rather than `changed AlbumDetail.album-id`, which Slint rejects on a global.
     property <int> watched-album-id: AlbumDetail.album-id;
-    changed watched-album-id => { MyLibrary.detail-scope-changed(); }
+    changed watched-album-id => {
+        if (root.album-open) { root.body-anim-armed = true; }
+        MyLibrary.detail-scope-changed();
+    }
     property <int> watched-artist-id: ArtistDetail.artist-id;
-    changed watched-artist-id => { MyLibrary.detail-scope-changed(); }
+    changed watched-artist-id => {
+        if (root.artist-open) { root.body-anim-armed = true; }
+        MyLibrary.detail-scope-changed();
+    }
     property <int> watched-genre-id: GenreDetail.genre-id;
-    changed watched-genre-id => { MyLibrary.detail-scope-changed(); }
+    changed watched-genre-id => {
+        if (root.genre-open) { root.body-anim-armed = true; }
+        MyLibrary.detail-scope-changed();
+    }
     property <string> watched-playlist-id: PlaylistDetail.playlist.remote_id;
-    changed watched-playlist-id => { MyLibrary.detail-scope-changed(); }
+    changed watched-playlist-id => {
+        if (root.playlist-open) { root.body-anim-armed = true; }
+        MyLibrary.detail-scope-changed();
+    }
 
     // **A tab move is the other way the surface under the box changes.** A cross-tab drill
     // and a Mouse-4/5 walk go through `persist-tab-idx` rather than `tab-changed`, so they
@@ -503,7 +515,10 @@ export component MyLibraryView inherits Rectangle {
                 enter-from: NavEnterFrom.above;
                 enabled: root.body-anim-armed;
                 slide: !band.morphing;
-                replay-key: "playlist:" + PlaylistDetail.playlist-id;
+                // Exact cloud IDs can share the same clamped legacy int. A slow fetch also
+                // reveals its arriving list after the pending header's entrance has settled.
+                replay-key: "playlist:" + PlaylistDetail.playlist.remote_id + ":"
+                    + PlaylistDetail.playlist-id + (PlaylistDetail.loading ? ":loading" : ":ready");
                 PlaylistDetailBody { width: 100%; height: 100%; }
             }
         }
