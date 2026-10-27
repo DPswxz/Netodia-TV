@@ -9,18 +9,25 @@ use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::sync::{Arc, Mutex, MutexGuard};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use reqwest::StatusCode;
 use reqwest::blocking::{Client, Response};
 use reqwest::header::{CONTENT_RANGE, RANGE};
 
 const CHUNK_BYTES: u64 = 64 * 1024;
+// Stream a larger HTTP range in small chunks. Accurate MP3 seeks scan the frame headers from
+// the top; separate 64 KiB requests made a three-minute seek pay ~100 network round trips.
+// The response stays streamed, so this changes request count rather than the RAM cache's bound.
+const REQUEST_BYTES: u64 = 4 * 1024 * 1024;
 // 2 MiB per active stream, including its pinned header. Keeping the header avoids re-fetching it
 // after a demuxer probes trailing tags or a replacement decoder opens at a new playback position.
 const CACHED_CHUNKS: usize = 32;
 const MAX_SPOOL_BYTES: u64 = 1024 * 1024 * 1024;
 const REQUEST_TIMEOUT: Duration = Duration::from_mins(1);
+// A producer can sit idle behind the bounded PCM queue, or while paused. Reopen at its current
+// byte offset before the HTTP request's whole-body deadline, instead of resuming an expired body.
+const RESPONSE_REUSE_TIME: Duration = Duration::from_secs(REQUEST_TIMEOUT.as_secs() / 2);
 
 /// A sanitized failure from an HTTP media source. It deliberately omits the URL, which may contain
 /// a signed CDN token.
@@ -58,12 +65,32 @@ struct CachedMedia {
     byte_len: Option<u64>,
 }
 
+struct RangeResponse {
+    response: Response,
+    next: u64,
+    end: u64,
+    opened_at: Instant,
+}
+
+impl RangeResponse {
+    fn read_chunk(&mut self) -> Result<RangeChunk, MediaError> {
+        let count = usize::try_from((self.end - self.next + 1).min(CHUNK_BYTES))
+            .map_err(|_| MediaError::InvalidRange)?;
+        let mut bytes = vec![0; count];
+        self.response.read_exact(&mut bytes).map_err(|_| MediaError::Transport)?;
+        let chunk = RangeChunk { start: self.next, bytes: bytes.into() };
+        self.next += count as u64;
+        Ok(chunk)
+    }
+}
+
 /// A blocking, seekable media source. Call it from a decoder worker, never from an audio callback.
 pub struct RangeReader {
     client: Client,
     url: reqwest::Url,
     media: Arc<Mutex<CachedMedia>>,
     position: u64,
+    response: Option<RangeResponse>,
 }
 
 impl RangeReader {
@@ -95,6 +122,7 @@ impl RangeReader {
                     byte_len,
                 })),
                 position: 0,
+                response: None,
             })
         } else if response.status().is_success() {
             let (file, byte_len) = spool(response)?;
@@ -106,6 +134,7 @@ impl RangeReader {
                     byte_len: Some(byte_len),
                 })),
                 position: 0,
+                response: None,
             })
         } else {
             Err(MediaError::HttpStatus(response.status().as_u16()))
@@ -127,6 +156,7 @@ impl RangeReader {
             url: self.url.clone(),
             media: Arc::clone(&self.media),
             position: 0,
+            response: None,
         }
     }
 
@@ -134,9 +164,9 @@ impl RangeReader {
         self.media.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
-    fn fill_range(&self) -> Result<Option<RangeChunk>, MediaError> {
+    fn fill_range(&mut self) -> Result<Option<RangeChunk>, MediaError> {
         let start = self.position / CHUNK_BYTES * CHUNK_BYTES;
-        let mut end = start.saturating_add(CHUNK_BYTES - 1);
+        let mut end = start.saturating_add(REQUEST_BYTES - 1);
         if let Some(byte_len) = self.byte_len() {
             if start >= byte_len {
                 return Ok(None);
@@ -144,6 +174,17 @@ impl RangeReader {
             end = end.min(byte_len - 1);
         }
 
+        if let Some(response) = self.response.as_mut()
+            && response.next == start
+            && start <= response.end
+            && response.opened_at.elapsed() < RESPONSE_REUSE_TIME
+        {
+            let chunk = response.read_chunk()?;
+            self.cache_range(&chunk, None);
+            return Ok(Some(chunk));
+        }
+        self.response = None;
+        let opened_at = Instant::now();
         let response = send_range(&self.client, &self.url, start, end)?;
         if response.status() == StatusCode::PARTIAL_CONTENT {
             let (actual_start, actual_end, byte_len) = content_range(&response)?;
@@ -153,23 +194,13 @@ impl RangeReader {
             if self.byte_len().is_some_and(|known| byte_len.is_some_and(|actual| actual != known)) {
                 return Err(MediaError::InvalidRange);
             }
-            let bytes = bounded_chunk(response)?;
-            if bytes.len() as u64 != actual_end - actual_start + 1 {
+            if response.content_length().is_some_and(|len| len != actual_end - actual_start + 1) {
                 return Err(MediaError::InvalidRange);
             }
-            let chunk = RangeChunk { start, bytes: bytes.into() };
-            let mut media = self.lock_media();
-            if media.byte_len.is_none() {
-                media.byte_len = byte_len;
-            }
-            if let Storage::Range { recent, .. } = &mut media.storage {
-                // Concurrent decoders may finish the same range. Keep only one cached copy.
-                recent.retain(|chunk| chunk.start != start);
-                if recent.len() == CACHED_CHUNKS - 1 {
-                    recent.pop_back();
-                }
-                recent.push_front(chunk.clone());
-            }
+            let mut response = RangeResponse { response, next: start, end: actual_end, opened_at };
+            let chunk = response.read_chunk()?;
+            self.cache_range(&chunk, byte_len);
+            self.response = Some(response);
             // Keep the just-fetched chunk through this read even if another decoder immediately
             // evicts it from the shared cache.
             Ok(Some(chunk))
@@ -181,6 +212,21 @@ impl RangeReader {
             Ok(None)
         } else {
             Err(MediaError::HttpStatus(response.status().as_u16()))
+        }
+    }
+
+    fn cache_range(&self, chunk: &RangeChunk, byte_len: Option<u64>) {
+        let mut media = self.lock_media();
+        if media.byte_len.is_none() {
+            media.byte_len = byte_len;
+        }
+        if let Storage::Range { recent, .. } = &mut media.storage {
+            // Concurrent decoders may finish the same range. Keep only one cached copy.
+            recent.retain(|cached| cached.start != chunk.start);
+            if recent.len() == CACHED_CHUNKS - 1 {
+                recent.pop_back();
+            }
+            recent.push_front(chunk.clone());
         }
     }
 
@@ -362,6 +408,96 @@ mod tests {
         Ok(format!("http://{}/track.mp3", listener.local_addr()?))
     }
 
+    fn serve_ranges(
+        listener: TcpListener,
+        body: Vec<u8>,
+        count: usize,
+    ) -> thread::JoinHandle<io::Result<Vec<(usize, usize)>>> {
+        thread::spawn(move || {
+            let mut requests = Vec::new();
+            for _ in 0..count {
+                let (mut stream, _) = listener.accept()?;
+                let request = request(&mut stream)?;
+                let range = request
+                    .lines()
+                    .find_map(|line| {
+                        line.to_ascii_lowercase().strip_prefix("range: bytes=").map(str::to_owned)
+                    })
+                    .ok_or_else(|| io::Error::other("Range header missing"))?;
+                let (start, end) =
+                    range.split_once('-').ok_or_else(|| io::Error::other("range span missing"))?;
+                let start: usize = start.parse().map_err(io::Error::other)?;
+                let end = end.parse::<usize>().map_err(io::Error::other)?.min(body.len() - 1);
+                requests.push((start, end));
+                write!(
+                    stream,
+                    "HTTP/1.1 206 Partial Content\r\nContent-Range: bytes {start}-{end}/{}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    body.len(),
+                    end - start + 1
+                )?;
+                stream.write_all(&body[start..=end])?;
+            }
+            Ok::<_, io::Error>(requests)
+        })
+    }
+
+    /// A precise MP3 seek scans headers from the start. More than the cache's worth of bytes
+    /// must not mean one HTTP round trip per 64 KiB, including when a seek rebuilds the decoder.
+    #[test]
+    fn a_linear_scan_streams_beyond_the_cache_with_two_requests()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let listener = TcpListener::bind("127.0.0.1:0")?;
+        let url = listener_url(&listener)?;
+        let server = serve_ranges(listener, vec![42; 3 * 1024 * 1024], 2);
+        let mut reader = RangeReader::open(&url)?;
+
+        let scanned = io::copy(&mut reader, &mut io::sink());
+
+        let requests = server.join().map_err(|_| io::Error::other("range server panicked"))??;
+        assert_eq!(scanned?, 3 * 1024 * 1024);
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0], (0, 65_535));
+        assert_eq!(requests[1], (65_536, 3 * 1024 * 1024 - 1));
+        let media = reader.lock_media();
+        let Storage::Range { head, recent } = &media.storage else {
+            return Err(io::Error::other("range host was spooled").into());
+        };
+        assert!(
+            head.len() + recent.iter().map(|chunk| chunk.bytes.len()).sum::<usize>()
+                <= 2 * 1024 * 1024
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn an_idle_response_is_reopened_at_the_next_required_range()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let listener = TcpListener::bind("127.0.0.1:0")?;
+        let url = listener_url(&listener)?;
+        let body: Vec<u8> =
+            (0..180_000).map(|index| u8::try_from(index % 251).unwrap_or_default()).collect();
+        let server = serve_ranges(listener, body.clone(), 3);
+        let mut reader = RangeReader::open(&url)?;
+        reader.seek(SeekFrom::Start(100_000))?;
+        let mut bytes = [0; 8];
+        reader.read_exact(&mut bytes)?;
+        let response = reader
+            .response
+            .as_mut()
+            .ok_or_else(|| io::Error::other("streamed response missing"))?;
+        response.opened_at = Instant::now()
+            .checked_sub(RESPONSE_REUSE_TIME)
+            .ok_or_else(|| io::Error::other("idle interval out of range"))?;
+        reader.seek(SeekFrom::Start(140_000))?;
+
+        reader.read_exact(&mut bytes)?;
+
+        let requests = server.join().map_err(|_| io::Error::other("range server panicked"))??;
+        assert_eq!(bytes, body[140_000..140_008]);
+        assert_eq!(requests, [(0, 65_535), (65_536, 179_999), (131_072, 179_999)]);
+        Ok(())
+    }
+
     #[test]
     fn reads_and_seeks_through_bounded_range_chunks() -> Result<(), Box<dyn std::error::Error>> {
         let listener = TcpListener::bind("127.0.0.1:0")?;
@@ -431,7 +567,7 @@ mod tests {
         assert_eq!(&first, &body[..first.len()]);
         assert_eq!(
             *requests.lock().map_err(|_| io::Error::other("requests lock poisoned"))?,
-            ["bytes=0-65535", "bytes=65536-131071"]
+            ["bytes=0-65535", "bytes=65536-179999"]
         );
         Ok(())
     }
