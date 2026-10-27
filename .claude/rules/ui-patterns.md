@@ -1267,6 +1267,9 @@ My Library's visible account categories live in `Playlists.category`, persisted 
 `music_library_category`. They share the playlist grid and detail; `MyLibrary.tab-*` still routes
 the legacy cross-section detail targets. Its bar's two arrays therefore match
 `Playlists.category-count`, while section gates still follow `MyLibrary.tab-idx`.
+An explicit My Library sidebar click selects `MyLibrary.tab-playlists` before changing the
+nav index, retaining `Playlists.category`. Local detail drills and history replay keep their
+own target tab; a drill must not strand the sidebar on a local surface with no account tabs.
 
 - **`<Page>.tab-count` is the sole definition of how many tabs exist.** Rust clamps the persisted
   index through `clamp_tab`, never its own const, and a per-page test `include_str!`s the `.slint`
