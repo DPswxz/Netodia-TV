@@ -5,6 +5,7 @@ use std::ffi::c_void;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use netodia_core::error::describe;
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::Com::{CLSCTX_INPROC_SERVER, CoCreateInstance};
 use windows::Win32::UI::Shell::{
@@ -69,7 +70,7 @@ pub fn update(hwnd: *mut c_void, snapshot: Snapshot, callback: Callback) {
     // SAFETY: the caller supplies a live window on its owning thread. A successful lookup
     // returns the Box<Rc<...>> registered below, kept alive until WM_NCDESTROY.
     let existing =
-        unsafe { GetWindowSubclass(hwnd, Some(window_proc), SUBCLASS_ID, Some(&mut data)) };
+        unsafe { GetWindowSubclass(hwnd, Some(window_proc), SUBCLASS_ID, Some(&raw mut data)) };
     let state = if existing.as_bool() {
         // SAFETY: the successful lookup returned the live context installed on this UI thread.
         unsafe { (*(data as *const Shared)).clone() }
@@ -107,13 +108,13 @@ fn create_state(callback: Callback) -> Option<Shared> {
         match unsafe { CoCreateInstance(&TaskbarList, None, CLSCTX_INPROC_SERVER) } {
             Ok(value) => value,
             Err(e) => {
-                log::warn!("taskbar: COM initialization failed: {e}");
+                log::warn!("taskbar: COM initialization failed: {}", describe(&e));
                 return None;
             }
         };
     // SAFETY: the interface was created on this COM-initialized thread.
     if let Err(e) = unsafe { taskbar.HrInit() } {
-        log::warn!("taskbar: initialization failed: {e}");
+        log::warn!("taskbar: initialization failed: {}", describe(&e));
         return None;
     }
     let icons = [icon(PREVIOUS)?, icon(PLAY_PAUSE)?, icon(NEXT)?, icon(4)?];
@@ -163,7 +164,7 @@ fn icon(kind: u32) -> Option<Icon> {
     match unsafe { CreateIcon(None, 16, 16, 1, 1, and_mask.as_ptr(), xor_mask.as_ptr()) } {
         Ok(icon) => Some(Icon(icon)),
         Err(e) => {
-            log::warn!("taskbar: icon creation failed: {e}");
+            log::warn!("taskbar: icon creation failed: {}", describe(&e));
             None
         }
     }
@@ -236,17 +237,17 @@ unsafe extern "system" fn window_proc(
     if msg == WM_NCDESTROY {
         // SAFETY: unregister and reclaim exactly the Box installed in update.
         unsafe {
-            RemoveWindowSubclass(hwnd, Some(window_proc), SUBCLASS_ID);
+            let _ = RemoveWindowSubclass(hwnd, Some(window_proc), SUBCLASS_ID);
             drop(Box::from_raw(data as *mut Shared));
         }
     } else if msg != 0 && msg == created_message {
         state.borrow_mut().added = false;
         refresh(hwnd, &state);
-    } else if msg == WM_COMMAND && (wparam.0 >> 16) as u32 == THBN_CLICKED {
-        let action = match (wparam.0 & 0xffff) as u32 {
-            PREVIOUS => Some(Action::Previous),
-            PLAY_PAUSE => Some(Action::PlayPause),
-            NEXT => Some(Action::Next),
+    } else if msg == WM_COMMAND && ((wparam.0 >> 16) & 0xffff) == THBN_CLICKED as usize {
+        let action = match wparam.0 & 0xffff {
+            id if id == PREVIOUS as usize => Some(Action::Previous),
+            id if id == PLAY_PAUSE as usize => Some(Action::PlayPause),
+            id if id == NEXT as usize => Some(Action::Next),
             _ => None,
         };
         if let Some(action) = action {

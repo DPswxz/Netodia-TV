@@ -292,7 +292,7 @@ fn persist_shuffle(state: &AppState) {
     let player_state = Arc::clone(&state.player_state);
     state.persist_blocking("persist shuffle_enabled", move |paths| {
         mutate_settings(paths, |s| {
-            s.queue.shuffle_enabled = lock_state(&player_state).queue.shuffle_enabled
+            s.queue.shuffle_enabled = lock_state(&player_state).queue.shuffle_enabled;
         })
     });
 }
@@ -301,7 +301,7 @@ fn persist_repeat(state: &AppState) {
     let player_state = Arc::clone(&state.player_state);
     state.persist_blocking("persist repeat_mode", move |paths| {
         mutate_settings(paths, |s| {
-            s.queue.repeat_mode = lock_state(&player_state).queue.repeat_mode
+            s.queue.repeat_mode = lock_state(&player_state).queue.repeat_mode;
         })
     });
 }
