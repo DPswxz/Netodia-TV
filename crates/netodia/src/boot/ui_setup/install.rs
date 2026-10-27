@@ -271,6 +271,7 @@ fn install_platform_hooks(
 
     #[cfg(target_os = "windows")]
     {
+        ui::shell::taskbar::install(app, state);
         attach_media_controls_after_show(app, state);
         polish_titlebar_after_show(app);
     }

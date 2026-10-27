@@ -29,4 +29,6 @@ pub mod single_instance;
 pub mod system_theme;
 pub mod tray;
 #[cfg(target_os = "windows")]
+pub mod taskbar;
+#[cfg(target_os = "windows")]
 pub mod window_border;
