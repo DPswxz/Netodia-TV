@@ -40,6 +40,56 @@ fn row(id: i64) -> RsTrackListRow {
 // --- RowSearchKey --------------------------------------------------------
 
 #[test]
+fn cloud_queue_uses_exact_ids_in_filtered_display_order() {
+    let mut first = row(3_000_000_001);
+    first.title = "Zulu".to_owned();
+    // The title sort reads the natural-order key rather than the displayed title.
+    first.sort_key = Some("zulu".to_owned());
+    first.is_favorite = true;
+    first.duration_ms = 123_456;
+    let mut second = row(3_000_000_002);
+    second.title = "Alpha".to_owned();
+    second.sort_key = Some("alpha".to_owned());
+    let mut excluded = row(3_000_000_003);
+    excluded.artist = Some("Different".to_owned());
+    excluded.album_artist = None;
+    excluded.album = None;
+    let cache = TrackListCache::new();
+    cache.store(vec![first, excluded, second], "title", "asc");
+
+    let queue = cache.snapshot().cloud_tracks_filtered(&row_match::fold_needle("specials"));
+
+    assert_eq!(
+        queue.iter().map(|track| track.id).collect::<Vec<_>>(),
+        [3_000_000_002, 3_000_000_001]
+    );
+    assert_eq!(queue[1].title, "Zulu");
+    assert_eq!(queue[1].duration_ms, 123_456);
+    assert!(queue[1].is_favorite);
+    assert!(queue[1].file_path.is_empty());
+    assert_eq!(queue[1].replaygain_track_gain, None);
+}
+
+#[test]
+fn cloud_queue_preserves_input_order_when_sort_keys_are_missing() {
+    let mut first = row(3_000_000_001);
+    first.title = "Zulu".to_owned();
+    let mut second = row(3_000_000_002);
+    second.title = "Alpha".to_owned();
+    let cache = TrackListCache::new();
+    cache.store(vec![first, second], "title", "asc");
+
+    let queue = cache.snapshot().cloud_tracks_filtered(&row_match::fold_needle("specials"));
+
+    assert_eq!(
+        queue.iter().map(|track| track.id).collect::<Vec<_>>(),
+        [3_000_000_001, 3_000_000_002]
+    );
+    assert_eq!(queue[0].title, "Zulu");
+    assert_eq!(queue[1].title, "Alpha");
+}
+
+#[test]
 fn the_packed_key_matches_every_searchable_field() {
     let key = RowSearchKey::from_row(&row(1));
     for needle in ["ghost", "specials", "various", "more", "ska", "1981", "198"] {

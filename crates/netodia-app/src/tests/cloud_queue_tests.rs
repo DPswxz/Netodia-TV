@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use super::{
-    CloudQueuePlan, CloudQueueShuffle, playback_candidates, queue_cloud_tracks, track_summary,
+    CloudQueuePlan, CloudQueueShuffle, playback_candidates, queue_cloud_tracks,
+    queue_track_metadata, resolve_track_metadata, track_summary,
 };
 use netodia_core::entities::cloud::Song;
 use netodia_core::entities::track::TrackSummary;
@@ -56,6 +57,56 @@ fn row_activation_preserves_both_transport_shuffle_preferences() {
 
 fn track(id: i64) -> Arc<TrackSummary> {
     Arc::new(track_summary(Song { id, name: format!("Song {id}"), ..Song::default() }, None, false))
+}
+
+#[tokio::test]
+async fn known_queue_metadata_does_not_need_a_song_detail_request()
+-> netodia_core::error::AppResult<()> {
+    let cloud = crate::cloud::tests::service_without_network_for_test();
+    let cached = track(3_000_000_001);
+
+    let (summary, _) = resolve_track_metadata(&cloud, cached.id, Some(cached.clone())).await?;
+
+    assert!(Arc::ptr_eq(&summary, &cached));
+    Ok(())
+}
+
+#[tokio::test]
+async fn uncached_metadata_still_requires_a_successful_detail_request() {
+    let cloud = crate::cloud::tests::service_without_network_for_test();
+
+    assert!(resolve_track_metadata(&cloud, 3_000_000_001, None).await.is_err());
+}
+
+#[test]
+fn queued_metadata_keeps_large_ids_and_defers_remote_artwork() {
+    let mut summary = (*track(3_000_000_001)).clone();
+    summary.artwork_path = Some("https://p1.music.126.net/cover.jpg".to_owned());
+    summary.is_favorite = true;
+    let cached = Arc::new(summary);
+
+    let (playback, cover_url) = queue_track_metadata(cached.clone());
+
+    assert_eq!(playback.id, 3_000_000_001);
+    assert_eq!(playback.title, "Song 3000000001");
+    assert!(playback.is_favorite);
+    assert_eq!(playback.artwork_path, None);
+    assert_eq!(cover_url.as_deref(), Some("https://p1.music.126.net/cover.jpg"));
+    assert_eq!(cached.artwork_path.as_deref(), Some("https://p1.music.126.net/cover.jpg"));
+}
+
+#[test]
+fn queued_metadata_preserves_downloaded_artwork_without_copying() {
+    let mut summary = (*track(19)).clone();
+    summary.artwork_path =
+        Some(std::path::Path::new("artwork").join("cover.jpg").to_string_lossy().into_owned());
+    let cached = Arc::new(summary);
+
+    let (playback, cover_url) = queue_track_metadata(cached.clone());
+
+    assert!(Arc::ptr_eq(&playback, &cached));
+    assert_eq!(cover_url, None);
+    assert_eq!(playback.artwork_path, cached.artwork_path);
 }
 
 fn ids(queue: &QueueState) -> Vec<i64> {

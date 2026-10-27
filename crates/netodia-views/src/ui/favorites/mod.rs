@@ -218,6 +218,12 @@ impl FavoritesUi {
         self.inner.tracks_all.snapshot().ids_filtered(&needle)
     }
 
+    /// Reuses displayed song metadata when replacing the cloud queue.
+    pub fn filtered_cloud_tracks(&self) -> Vec<netodia_core::entities::track::TrackSummary> {
+        let needle = self.inner.filter.lock().clone();
+        self.inner.tracks_all.snapshot().cloud_tracks_filtered(&needle)
+    }
+
     /// Track ids of the Most Played grid, in card order, so a card there loads that grid rather
     /// than the Songs tab's list. Filtered through the same predicate
     /// `grids::apply::build_filtered_grids` builds the model with — the grid narrows with the

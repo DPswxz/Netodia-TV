@@ -30,7 +30,7 @@ use crate::ui::row_match::{self, Needle};
 use crate::ui::track_sort::{self, TrackSortFields};
 use crate::ui::tracks::to_slint_track_list_row;
 use crate::ui::util::{StringPool, len_as_i32};
-use netodia_core::entities::track::TrackListRow as RsTrackListRow;
+use netodia_core::entities::track::{TrackListRow as RsTrackListRow, TrackSummary};
 use netodia_ui::TrackListRow as UiTrackListRow;
 
 /// Pre-folded text columns for filtering: one packed `Box<str>` of
@@ -184,6 +184,33 @@ impl CacheData {
         let mut out = Vec::with_capacity(self.reserve_for(needle));
         out.extend(self.walk(needle).map(|(i, _)| self.sort[i].id));
         out
+    }
+
+    /// Builds cloud queue entries from the displayed snapshot, retaining exact 64-bit IDs.
+    /// Local rows must still use the database playback projection, which includes `ReplayGain`.
+    pub fn cloud_tracks_filtered(&self, needle: &Needle) -> Vec<TrackSummary> {
+        let optional = |text: &slint::SharedString| (!text.is_empty()).then(|| text.to_string());
+        let mut tracks = Vec::with_capacity(self.reserve_for(needle));
+        tracks.extend(self.walk(needle).map(|(i, row)| TrackSummary {
+            id: self.sort[i].id,
+            file_path: String::new(),
+            file_name: row.title.to_string(),
+            title: row.title.to_string(),
+            artist: optional(&row.artist),
+            album: optional(&row.album),
+            duration_ms: i64::from(row.duration_ms),
+            artwork_path: optional(&row.artwork_path),
+            track_number: (row.track_number != 0).then_some(row.track_number),
+            disc_number: (self.sort[i].disc != i32::MAX).then_some(self.sort[i].disc),
+            last_position: 0,
+            is_favorite: row.is_favorite,
+            rating: row.rating,
+            replaygain_track_gain: None,
+            replaygain_track_peak: None,
+            replaygain_album_gain: None,
+            replaygain_album_peak: None,
+        }));
+        tracks
     }
 
     /// Exact capacity for an unfiltered walk, none for a filtered one. A `Filter` adapter
