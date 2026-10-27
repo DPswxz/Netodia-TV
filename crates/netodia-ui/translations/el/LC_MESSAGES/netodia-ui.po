@@ -68,11 +68,11 @@ msgstr "Αφαίρεση {} από τα αγαπημένα"
 msgid "Add {} to Favorites"
 msgstr "Προσθήκη {} στα αγαπημένα"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Add to Favorites"
 msgstr "Προσθήκη στα αγαπημένα"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Remove from Favorites"
 msgstr "Κατάργηση από τα αγαπημένα"
 
@@ -1350,6 +1350,11 @@ msgid_plural "{n} favorites"
 msgstr[0] "{n} αγαπημένο"
 msgstr[1] "{n} αγαπημένα"
 
+#: ui/globals/dialog.slint ui/views/my-library-view.slint
+#: ui/views/search-view.slint
+msgid "Artists"
+msgstr "Καλλιτέχνες"
+
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
 msgstr "Νέα λίστα"
@@ -1787,13 +1792,14 @@ msgstr "Προβολή καρτών"
 msgid "List view"
 msgstr "Προβολή λίστας"
 
-#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
-#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
 msgid "Albums"
 msgstr "Άλμπουμ"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
-#: ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "Τραγούδια"
 
@@ -1908,6 +1914,10 @@ msgstr "Οι λίστες μου"
 #: ui/views/my-library-view.slint
 msgid "Recommendations"
 msgstr "Προτάσεις"
+
+#: ui/views/my-library-view.slint
+msgid "Genres"
+msgstr "Είδη"
 
 #: ui/views/my-library-view.slint
 msgid "Filter tracks & albums…"
@@ -2125,10 +2135,6 @@ msgstr "Φόρτωση ιστορικού NetEase…"
 #: ui/views/search-view.slint
 msgid "Searching…"
 msgstr "Αναζήτηση…"
-
-#: ui/views/search-view.slint
-msgid "Artists"
-msgstr "Καλλιτέχνες"
 
 #: ui/views/search/no-results.slint
 msgid "No results found"

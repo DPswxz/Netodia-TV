@@ -6,6 +6,9 @@ import { Settings } from "../settings.slint";
 export global Player {
     in-out property <PlayerVm> vm;
     in-out property <QueueVm> queue;
+    // Favorites belong to NetEase songs; a local file's historical flag is not actionable.
+    out property <bool> can-favorite: root.vm.has_track
+        && root.vm.track.file_path == "" && root.vm.track.remote_id != "";
 
     out property <string> source-title: root.vm.has_track ? "‎" + root.vm.track.title : @tr("No track playing");
     out property <string> source-subtitle: root.vm.has_track

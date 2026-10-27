@@ -41,6 +41,7 @@ pub(super) fn wire(ui: &AppWindow, state: &AppState, fav_ui: &Arc<FavoritesUi>) 
                 // re-enter handler reads this through `take_dirty()` and must never observe stale
                 // data because release hadn't run yet.
                 fu.mark_dirty();
+                fu.finish_visit();
             }
             if !active && let Some(ui) = weak.upgrade() {
                 // UI-thread teardown: hand back the banner's cover and blur slots so their
@@ -200,6 +201,20 @@ fn wire_liked_updates(state: &AppState, fav_ui: &Arc<FavoritesUi>, weak: &slint:
             {
                 continue;
             }
+            if let Some(liked) = state.cloud.cached_liked_ids() {
+                let needs_fetch = fav_ui.reconcile_likes(&liked);
+                favorites_ui_mod::apply_filtered_tracks(&fav_ui, &weak);
+                // A toggle of an existing row needs no whole-list request or row reordering.
+                if !needs_fetch {
+                    let fav_ui = fav_ui.clone();
+                    let _ = weak.upgrade_in_event_loop(move |ui| {
+                        if fav_ui.section_active() {
+                            ui.global::<Favorites>().set_cloud_loading(false);
+                        }
+                    });
+                    continue;
+                }
+            }
             if let Err(error) = favorites_ui_mod::refresh_tracks(&state, &fav_ui, &weak).await {
                 log::warn!("favorites::liked_changed: {}", describe(&error));
             }
@@ -212,6 +227,7 @@ fn clear_account_data(fav_ui: &FavoritesUi, weak: &slint::Weak<AppWindow>) {
     {
         let _gate = fav_ui.gate();
         fav_ui.state().tracks_all.clear();
+        fav_ui.state().retained_tracks.lock().clear();
         *fav_ui.state().songs_fold.lock() = crate::ui::hero_folds::HeroFold::default();
         *fav_ui.state().stats.lock() = netodia_core::entities::track::FavoriteStats {
             count: 0,

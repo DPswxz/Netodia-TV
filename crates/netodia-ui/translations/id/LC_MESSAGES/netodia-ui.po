@@ -68,11 +68,11 @@ msgstr "Hapus {} dari Favorit"
 msgid "Add {} to Favorites"
 msgstr "Tambahkan {} ke Favorit"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Add to Favorites"
 msgstr "Tambahkan ke Favorit"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Remove from Favorites"
 msgstr "Hapus dari Favorit"
 
@@ -1344,6 +1344,11 @@ msgid "{n} favorite"
 msgid_plural "{n} favorites"
 msgstr[0] "{n} favorit"
 
+#: ui/globals/dialog.slint ui/views/my-library-view.slint
+#: ui/views/search-view.slint
+msgid "Artists"
+msgstr "Artis"
+
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
 msgstr "Playlist Baru"
@@ -1770,13 +1775,14 @@ msgstr "Tampilan kartu"
 msgid "List view"
 msgstr "Tampilan daftar"
 
-#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
-#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
 msgid "Albums"
 msgstr "Album"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
-#: ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "Lagu"
 
@@ -1888,6 +1894,10 @@ msgstr "Daftar putar saya"
 #: ui/views/my-library-view.slint
 msgid "Recommendations"
 msgstr "Rekomendasi"
+
+#: ui/views/my-library-view.slint
+msgid "Genres"
+msgstr "Genre"
 
 #: ui/views/my-library-view.slint
 msgid "Filter tracks & albums…"
@@ -2105,10 +2115,6 @@ msgstr "Memuat riwayat NetEase…"
 #: ui/views/search-view.slint
 msgid "Searching…"
 msgstr "Mencari…"
-
-#: ui/views/search-view.slint
-msgid "Artists"
-msgstr "Artis"
 
 #: ui/views/search/no-results.slint
 msgid "No results found"

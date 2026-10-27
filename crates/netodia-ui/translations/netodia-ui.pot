@@ -67,11 +67,11 @@ msgstr ""
 msgid "Add {} to Favorites"
 msgstr ""
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Add to Favorites"
 msgstr ""
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Remove from Favorites"
 msgstr ""
 
@@ -1347,6 +1347,11 @@ msgid_plural "{n} favorites"
 msgstr[0] ""
 msgstr[1] ""
 
+#: ui/globals/dialog.slint ui/views/my-library-view.slint
+#: ui/views/search-view.slint
+msgid "Artists"
+msgstr ""
+
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
 msgstr ""
@@ -1784,13 +1789,14 @@ msgstr ""
 msgid "List view"
 msgstr ""
 
-#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
-#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
 msgid "Albums"
 msgstr ""
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
-#: ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr ""
 
@@ -1904,6 +1910,10 @@ msgstr ""
 
 #: ui/views/my-library-view.slint
 msgid "Recommendations"
+msgstr ""
+
+#: ui/views/my-library-view.slint
+msgid "Genres"
 msgstr ""
 
 #: ui/views/my-library-view.slint
@@ -2121,10 +2131,6 @@ msgstr ""
 
 #: ui/views/search-view.slint
 msgid "Searching…"
-msgstr ""
-
-#: ui/views/search-view.slint
-msgid "Artists"
 msgstr ""
 
 #: ui/views/search/no-results.slint

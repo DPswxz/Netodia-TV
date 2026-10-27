@@ -12,6 +12,7 @@ use netodia_core::entities::smart_criteria::SmartCriteria;
 /// A playlist's pre-lowercased name, computed once per `fetch_grid` so the
 /// name sort allocates nothing. Positionally aligned with
 /// [`GridData::playlists`].
+#[derive(Clone)]
 pub(super) struct PlaylistSortKey {
     pub name_lc: String,
 }
@@ -19,6 +20,7 @@ pub(super) struct PlaylistSortKey {
 /// The grid's canonical data: the playlist list plus its pre-lowercased
 /// sort keys, kept together behind one `Arc` so a rebuild is a
 /// single refcount bump (and the two halves can never drift out of sync).
+#[derive(Clone)]
 pub(super) struct GridData {
     pub playlists: Vec<PlaylistStats>,
     pub keys: Vec<PlaylistSortKey>,
@@ -44,6 +46,21 @@ impl GridData {
             })
             .collect();
         Self { playlists, keys, stat_dependent }
+    }
+
+    /// Patch measured track stats without replacing list metadata or card ordering.
+    pub(super) fn update_track_stats(&mut self, detail: &PlaylistStats) -> bool {
+        let Some(playlist) = self.playlists.iter_mut().find(|row| row.id == detail.id) else {
+            return false;
+        };
+        if playlist.track_count == detail.track_count
+            && playlist.total_duration_ms == detail.total_duration_ms
+        {
+            return false;
+        }
+        playlist.track_count = detail.track_count;
+        playlist.total_duration_ms = detail.total_duration_ms;
+        true
     }
 
     /// Whether any cached row is a stat-dependent smart playlist — the gate for

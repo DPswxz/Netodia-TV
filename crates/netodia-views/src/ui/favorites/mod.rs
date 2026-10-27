@@ -22,6 +22,7 @@ mod songs;
 mod state;
 mod tabs;
 
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
@@ -29,6 +30,7 @@ use crate::ui::artists::ArtistsUi;
 use crate::ui::artwork_cache::BlurSpec;
 use crate::ui::detail_artwork;
 use crate::ui::hero_folds::{HeroFold, MostPlayedTotals};
+use crate::ui::row_match::Needle;
 use crate::ui::section_state::{SectionState, impl_section_state_helpers};
 use crate::ui::view_ctx::ViewCtx;
 use netodia_artwork::media::image::cover_thumbs::CoverThumbs;
@@ -239,19 +241,41 @@ impl FavoritesUi {
             .collect()
     }
 
-    /// Flip `is_favorite` on a cached Songs-tab row so a single-row toggle lands without a
-    /// re-fetch. `false` removes the row outright, for parity with a fetch that only ever returns
-    /// `is_favorite = TRUE`.
-    pub fn flip_or_remove_track(&self, id: i64, fav: bool) {
-        if fav {
-            self.inner.tracks_all.set_favorite(id, true);
-        } else {
+    /// Patch membership without changing this visit's row positions; report newly liked songs
+    /// whose metadata still needs fetching.
+    pub(super) fn reconcile_likes(&self, liked: &HashSet<i64>) -> bool {
+        let _gate = self.gate();
+        if !self.section_active() {
+            return false;
+        }
+        let snapshot = self.inner.tracks_all.snapshot();
+        let needle = Needle::default();
+        let ids = snapshot.ids_filtered(&needle);
+        let displayed: HashSet<i64> = ids.iter().copied().collect();
+        let mut retained = self.inner.retained_tracks.lock();
+        for (id, row) in ids.into_iter().zip(snapshot.visible(&needle)) {
+            let fav = liked.contains(&id);
+            if fav {
+                retained.remove(&id);
+            } else {
+                retained.insert(id);
+            }
+            if row.is_favorite != fav {
+                self.inner.tracks_all.set_favorite(id, fav);
+            }
+        }
+        !liked.is_subset(&displayed)
+    }
+
+    /// End the undo window before cached rows can paint on the next section entry.
+    pub(super) fn finish_visit(&self) {
+        let _gate = self.gate();
+        for id in self.inner.retained_tracks.lock().drain() {
             self.inner.tracks_all.remove(id);
         }
     }
 
-    /// Set `rating` on a cached row. Unlike [`Self::flip_or_remove_track`], rating never affects
-    /// membership, so the row is only patched.
+    /// Set `rating` on a cached row without changing its membership.
     pub fn flip_track_rating(&self, id: i64, rating: i32) {
         self.inner.tracks_all.set_rating(id, rating);
     }

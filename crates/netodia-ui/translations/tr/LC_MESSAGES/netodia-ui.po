@@ -68,11 +68,11 @@ msgstr "{} Favorilerden Çıkar"
 msgid "Add {} to Favorites"
 msgstr "{} Favorilere Ekle"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Add to Favorites"
 msgstr "Favorilere Ekle"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Remove from Favorites"
 msgstr "Favorilerden Kaldır"
 
@@ -1352,6 +1352,11 @@ msgid_plural "{n} favorites"
 msgstr[0] "{n} favori"
 msgstr[1] "{n} favori"
 
+#: ui/globals/dialog.slint ui/views/my-library-view.slint
+#: ui/views/search-view.slint
+msgid "Artists"
+msgstr "Sanatçılar"
+
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
 msgstr "Yeni Çalma Listesi"
@@ -1792,13 +1797,14 @@ msgstr "Kart görünümü"
 msgid "List view"
 msgstr "Liste görünümü"
 
-#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
-#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
 msgid "Albums"
 msgstr "Albümler"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
-#: ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "Şarkılar"
 
@@ -1913,6 +1919,10 @@ msgstr "Çalma listelerim"
 #: ui/views/my-library-view.slint
 msgid "Recommendations"
 msgstr "Öneriler"
+
+#: ui/views/my-library-view.slint
+msgid "Genres"
+msgstr "Türler"
 
 #: ui/views/my-library-view.slint
 msgid "Filter tracks & albums…"
@@ -2130,10 +2140,6 @@ msgstr "NetEase geçmişi yükleniyor…"
 #: ui/views/search-view.slint
 msgid "Searching…"
 msgstr "Aranıyor…"
-
-#: ui/views/search-view.slint
-msgid "Artists"
-msgstr "Sanatçılar"
 
 #: ui/views/search/no-results.slint
 msgid "No results found"

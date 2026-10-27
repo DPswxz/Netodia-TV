@@ -163,10 +163,18 @@ pub async fn refresh_tracks(
         order
     };
 
+    let count = crate::ui::util::len_as_i32(rows.len());
     {
         let _gate = fav_ui.gate();
+        if !fav_ui.section_active()
+            || state.cloud.status().generation != account_generation
+            || state.cloud.liked_ids_revision() != liked_revision
+        {
+            fav_ui.mark_songs_dirty();
+            return Ok(());
+        }
         *fav_ui.state().songs_fold.lock() = fold;
-        fav_ui.state().tracks_all.store_in_order(rows, order);
+        store_refreshed_tracks(fav_ui, rows, order, &sort_used);
     }
     let sort_now = current_sort(fav_ui);
     if sort_changed(&sort_now, &sort_used) {
@@ -176,9 +184,27 @@ pub async fn refresh_tracks(
     // previous fold available while the cloud rows were being prepared.
     super::hero::republish_chips(fav_ui, weak);
     apply_filtered_tracks(fav_ui, weak);
-    let count = fav_ui.state().tracks_all.snapshot().total();
     set_cloud_state(weak, false, None, count);
     Ok(())
+}
+
+fn store_refreshed_tracks(
+    fav_ui: &FavoritesUi,
+    rows: Vec<RsTrackListRow>,
+    order: Vec<usize>,
+    sort: &ViewSort,
+) {
+    let retained = fav_ui.state().retained_tracks.lock();
+    if retained.is_empty() {
+        fav_ui.state().tracks_all.store_in_order(rows, order);
+    } else {
+        fav_ui.state().tracks_all.store_retaining(
+            rows,
+            &retained,
+            &sort.field,
+            dir_token(sort.dir),
+        );
+    }
 }
 
 async fn restore_cached_tracks(

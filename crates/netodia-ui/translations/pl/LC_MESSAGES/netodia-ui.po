@@ -68,11 +68,11 @@ msgstr "Usuń z ulubionych ({})"
 msgid "Add {} to Favorites"
 msgstr "Dodaj do ulubionych ({})"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Add to Favorites"
 msgstr "Dodaj do ulubionych"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Remove from Favorites"
 msgstr "Usuń z ulubionych"
 
@@ -1352,6 +1352,11 @@ msgstr[0] "{n} w ulubionych"
 msgstr[1] "{n} w ulubionych"
 msgstr[2] "{n} w ulubionych"
 
+#: ui/globals/dialog.slint ui/views/my-library-view.slint
+#: ui/views/search-view.slint
+msgid "Artists"
+msgstr "Wykonawcy"
+
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
 msgstr "Nowa playlista"
@@ -1800,13 +1805,14 @@ msgstr "Widok kart"
 msgid "List view"
 msgstr "Widok listy"
 
-#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
-#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
 msgid "Albums"
 msgstr "Albumy"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
-#: ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "Utwory"
 
@@ -1924,6 +1930,10 @@ msgstr "Moje playlisty"
 #: ui/views/my-library-view.slint
 msgid "Recommendations"
 msgstr "Polecane"
+
+#: ui/views/my-library-view.slint
+msgid "Genres"
+msgstr "Gatunki"
 
 #: ui/views/my-library-view.slint
 msgid "Filter tracks & albums…"
@@ -2141,10 +2151,6 @@ msgstr "Ładowanie historii NetEase…"
 #: ui/views/search-view.slint
 msgid "Searching…"
 msgstr "Wyszukiwanie…"
-
-#: ui/views/search-view.slint
-msgid "Artists"
-msgstr "Wykonawcy"
 
 #: ui/views/search/no-results.slint
 msgid "No results found"

@@ -331,7 +331,7 @@ export component QueueRowItem inherits Rectangle {
                     clip: true;
                     HorizontalLayout {
                         alignment: end;
-                        if !touch.has-hover: VerticalLayout {
+                        if !touch.has-hover || !root.row-data.is_cloud: VerticalLayout {
                             alignment: center;
                             Text {
                                 text: root.row-data.display_duration;
@@ -340,7 +340,7 @@ export component QueueRowItem inherits Rectangle {
                                 horizontal-alignment: right;
                             }
                         }
-                        if touch.has-hover: Rectangle {
+                        if touch.has-hover && root.row-data.is_cloud: Rectangle {
                             width: 26px;
                             height: 26px;
                             y: (parent.height - self.height) / 2;
@@ -357,12 +357,7 @@ export component QueueRowItem inherits Rectangle {
                             fav-touch := TouchArea {
                                 mouse-cursor: pointer;
                                 clicked => {
-                                    if (root.row-data.is_cloud) {
-                                        CloudTrackActions.toggle-favorite(root.row-data.remote_id, !root.row-data.is_favorite);
-                                    } else { Queue.toggle-row-favorite(
-                                        [root.row-data.id],
-                                        !root.row-data.is_favorite,
-                                    ); }
+                                    CloudTrackActions.toggle-favorite(root.row-data.remote_id, !root.row-data.is_favorite);
                                 }
                             }
                         }
@@ -409,7 +404,6 @@ export component QueueRowItem inherits Rectangle {
 
         ctx-menu := TrackContextMenu {
             row-id: root.row-data.id;
-            row-is-favorite: root.row-data.is_favorite;
             row-selected: root.row-data.selected;
             album-id: root.row-data.album_id;
             artist-id: root.row-data.artist_id;
@@ -421,7 +415,6 @@ export component QueueRowItem inherits Rectangle {
             at-y: touch.mouse-y;
 
             play-single => { Queue.skip-to(root.row-index); }
-            toggle-favorite(ids, on) => { Queue.toggle-row-favorite(ids, on); }
             select-all => { Queue.select-all(); }
             clear-selection => { Queue.clear-selection(); }
             // The one action that stays index-shaped: `remove-selected` reads the Rust shadow, so

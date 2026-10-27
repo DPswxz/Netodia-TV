@@ -283,6 +283,15 @@ impl CloudService {
         Ok(loaded)
     }
 
+    /// Total duration from an already loaded playlist in the current account session.
+    /// List cards can reuse this metadata without fetching every playlist's song list.
+    pub fn cached_playlist_duration(&self, id: i64) -> Option<u64> {
+        let status = self.status();
+        let account = status.account?;
+        let (_, songs) = self.cached_playlist(account.id, status.generation, id)?;
+        Some(songs.iter().fold(0_u64, |sum, song| sum.saturating_add(song.duration_ms)))
+    }
+
     fn cached_playlist(
         &self,
         account_id: i64,

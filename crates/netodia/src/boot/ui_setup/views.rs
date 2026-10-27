@@ -223,14 +223,14 @@ pub fn install_views(
     // cannot be written above `albums_ui` — so a cross-tab hand-off wired
     // against a handle that doesn't exist yet is a compile error, not a comment.
     let tracks_ui = ui::tracks::install(cx);
-    let browse_ui = ui::browse::install(cx);
+    ui::browse::install(cx);
     let albums_ui = ui::albums::install(cx);
     let artists_ui = ui::artists::install(cx, &albums_ui);
     let genres_ui = ui::genres::install(cx);
     let playlists_ui = ui::playlists::install(cx);
     ui::favorites::install(cx, &artists_ui);
     ui::recently_played::install(cx);
-    let search_ui = ui::search::install(cx, &albums_ui, &artists_ui);
+    ui::search::install(cx, &albums_ui, &artists_ui);
 
     // Every track-list view's right-click "Go to Album/Artist/Genre", after all
     // three target handles exist.
@@ -260,17 +260,7 @@ pub fn install_views(
     // lands.
     ui::nav_history::record_current(app);
 
-    // The Now-Playing heart fans into every per-row cache.
-    let row_flags = ui::callbacks::RowFlagHandles {
-        tracks: &tracks_ui,
-        browse: &browse_ui,
-        albums: &albums_ui,
-        artists: &artists_ui,
-        genres: &genres_ui,
-        playlists: &playlists_ui,
-        search: &search_ui,
-    };
-    ui::callbacks::wire_now_playing_favorite(app, state, row_flags);
+    ui::callbacks::wire_now_playing_favorite(app, state);
     // Retune the cover tiers to the real display. One call for every card grid, they all draw
     // the same card at the same size; Genres has no cover at all.
     //

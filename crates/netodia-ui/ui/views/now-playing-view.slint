@@ -110,7 +110,7 @@ export component NowPlayingView inherits Rectangle {
 
             Rectangle { horizontal-stretch: 1; }
 
-            VerticalLayout {
+            if Player.can-favorite: VerticalLayout {
                 alignment: center;
                 AccentGlyphButton {
                     icon: Player.vm.track.is_favorite ? "favorite" : "favorite_border";

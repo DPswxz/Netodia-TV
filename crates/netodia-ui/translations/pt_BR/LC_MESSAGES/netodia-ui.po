@@ -68,11 +68,11 @@ msgstr "Remover {} dos favoritos"
 msgid "Add {} to Favorites"
 msgstr "Adicionar {} aos favoritos"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Add to Favorites"
 msgstr "Adicionar aos favoritos"
 
-#: ui/components/context-menu.slint ui/components/grid/card-context-menu.slint
+#: ui/components/context-menu.slint
 msgid "Remove from Favorites"
 msgstr "Remover dos favoritos"
 
@@ -1348,6 +1348,11 @@ msgid_plural "{n} favorites"
 msgstr[0] "{n} favorito"
 msgstr[1] "{n} favoritos"
 
+#: ui/globals/dialog.slint ui/views/my-library-view.slint
+#: ui/views/search-view.slint
+msgid "Artists"
+msgstr "Artistas"
+
 #: ui/globals/dialog.slint ui/views/my-library/tab-pills.slint
 msgid "New Playlist"
 msgstr "Nova playlist"
@@ -1785,13 +1790,14 @@ msgstr "Exibição em cartões"
 msgid "List view"
 msgstr "Exibição em lista"
 
-#: ui/views/favorites-view.slint ui/views/my-library/artist-detail.slint
-#: ui/views/my-library/tab-pills.slint ui/views/search-view.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/my-library/artist-detail.slint ui/views/my-library/tab-pills.slint
+#: ui/views/search-view.slint
 msgid "Albums"
 msgstr "Álbuns"
 
-#: ui/views/favorites-view.slint ui/views/recently-played-view.slint
-#: ui/views/search/songs-section.slint
+#: ui/views/favorites-view.slint ui/views/my-library-view.slint
+#: ui/views/recently-played-view.slint ui/views/search/songs-section.slint
 msgid "Songs"
 msgstr "Músicas"
 
@@ -1906,6 +1912,10 @@ msgstr "Minhas playlists"
 #: ui/views/my-library-view.slint
 msgid "Recommendations"
 msgstr "Recomendações"
+
+#: ui/views/my-library-view.slint
+msgid "Genres"
+msgstr "Gêneros"
 
 #: ui/views/my-library-view.slint
 msgid "Filter tracks & albums…"
@@ -2123,10 +2133,6 @@ msgstr "Carregando histórico do NetEase…"
 #: ui/views/search-view.slint
 msgid "Searching…"
 msgstr "Buscando…"
-
-#: ui/views/search-view.slint
-msgid "Artists"
-msgstr "Artistas"
 
 #: ui/views/search/no-results.slint
 msgid "No results found"

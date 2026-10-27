@@ -34,9 +34,6 @@ export component CardCell inherits Rectangle {
     in property <int> card-artist-id: 0;
     // Playlist cards only.
     in property <bool> card-is-smart: false;
-    // Track cards on a grid that draws their heart: what the menu's favorite entry reads.
-    in property <bool> favorite-known: false;
-    in property <bool> card-is-favorite: false;
 
     // What the mounted card binds its own selection state to.
     out property <bool> selected:
@@ -83,8 +80,6 @@ export component CardCell inherits Rectangle {
         card-id: root.card-id;
         card-artist-id: root.card-artist-id;
         card-is-smart: root.card-is-smart;
-        favorite-known: root.favorite-known;
-        card-is-favorite: root.card-is-favorite;
         select-all => { CardSelection.select-all(root.scope); }
         clear-selection => { CardSelection.clear(); }
         card-selected: root.selected;

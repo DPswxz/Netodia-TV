@@ -2,7 +2,7 @@ import { CardActions } from "../../globals/card-actions.slint";
 import { CopyActions } from "../../globals/copy-actions.slint";
 import { Dialog } from "../../globals/dialog.slint";
 import { Nav } from "../../globals/nav.slint";
-import { ContextMenuMetrics, FavoriteMenuItem, MenuFlyout, MenuItem, MenuSeparator } from "../context-menu.slint";
+import { ContextMenuMetrics, MenuFlyout, MenuItem, MenuSeparator } from "../context-menu.slint";
 import { TrackCopyFields, TrackCopyItems } from "../track-copy-items.slint";
 import { PopupSurface } from "../popup-surface.slint";
 import { PopupDismissCatcher } from "../popup-dismiss-catcher.slint";
@@ -31,11 +31,6 @@ export component CardContextMenu inherits Rectangle {
     in property <bool> card-is-smart: false;
     // Album cards only. 0 means no linkage and hides the entry.
     in property <int> card-artist-id: 0;
-    // Whether this card's own favorite state is known, and what it is. A track card carries one,
-    // on the grids that draw its heart; an album, artist, genre or playlist is a set of tracks and
-    // has no single answer.
-    in property <bool> favorite-known: false;
-    in property <bool> card-is-favorite: false;
 
     in property <bool> card-selected;
     // The batch payload in multi mode, the host's own scope's selection.
@@ -240,39 +235,6 @@ export component CardContextMenu inherits Rectangle {
                 }
 
                 if !root.is-folder: MenuSeparator {}
-                // **One entry where the card's state is known**, the row menu's toggle.
-                if root.favorite-known: FavoriteMenuItem {
-                    is-favorite: root.card-is-favorite;
-                    multi-active: root.multi-active;
-                    multi-count: root.multi-count;
-                    clicked => {
-                        CardActions.set-favorites(
-                            root.card-kind, pop.effective-ids, !root.card-is-favorite);
-                        root.dismiss();
-                    }
-                }
-                // **Two entries where it isn't.** An album, artist, genre or playlist is a set of
-                // tracks, so the state the row menu reads off `row-is-favorite` has no honest
-                // answer here: half a playlist favourited would make either label a lie, and
-                // resolving the truth means a query per menu open, per card. Both operations are
-                // well defined over a set whatever its mixture, so offering them retires the
-                // question rather than answering it.
-                if !root.is-folder && !root.favorite-known: MenuItem {
-                    label: @tr("Add to Favorites");
-                    icon: "favorite";
-                    clicked => {
-                        CardActions.set-favorites(root.card-kind, pop.effective-ids, true);
-                        root.dismiss();
-                    }
-                }
-                if !root.is-folder && !root.favorite-known: MenuItem {
-                    label: @tr("Remove from Favorites");
-                    icon: "heart_minus";
-                    clicked => {
-                        CardActions.set-favorites(root.card-kind, pop.effective-ids, false);
-                        root.dismiss();
-                    }
-                }
                 if !root.is-folder: MenuItem {
                     label: root.multi-active
                         ? @tr("Edit Tags for {}", root.multi-count)

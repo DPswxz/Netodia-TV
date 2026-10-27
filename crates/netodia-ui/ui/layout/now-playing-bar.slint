@@ -312,7 +312,7 @@ export component NowPlayingBar inherits Rectangle {
                         clicked => { Player.toggle-shuffle(); }
                     }
                 }
-                if !Settings.overflow-favorite: VerticalLayout {
+                if !Settings.overflow-favorite && Player.can-favorite: VerticalLayout {
                     alignment: center;
                     IconButton {
                         icon: Player.vm.track.is_favorite ? "favorite" : "favorite_border";
