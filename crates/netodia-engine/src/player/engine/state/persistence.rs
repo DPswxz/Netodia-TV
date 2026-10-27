@@ -44,8 +44,8 @@ impl PlayerState {
 ///
 /// `shuffle_enabled` and `repeat_mode` are user preferences and live in
 /// `settings.json`, not `queue.json` — the caller is responsible for
-/// hydrating them. Note that `original_order` is not persisted, so a
-/// caller restoring a non-empty queue should also force shuffle off.
+/// hydrating them. The saved playback order becomes the baseline for unshuffle,
+/// since the previous original order is not persisted.
 pub fn restore_queue(
     state: &mut PlayerState,
     tracks: Vec<Arc<TrackSummary>>,

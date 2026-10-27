@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::services::settings::{mutate_settings, mutate_settings_with};
+use crate::services::settings::{mutate_settings, read_settings};
 use crate::state::{AppState, PlaybackContext};
 use netodia_artwork::media::image::artwork::CoverCache;
 use netodia_core::config::Paths;
@@ -11,7 +11,8 @@ use netodia_engine::player::engine::actions::emit_and_execute;
 use netodia_engine::player::engine::event_sink::PlayerSinks;
 use netodia_engine::player::engine::queue::current_index_to_i32;
 use netodia_engine::player::engine::state::{
-    PlayerAction, PlayerState, PlayerStateHandle, play_track_inner, restore_queue, with_state_emit,
+    PlayerAction, PlayerState, PlayerStateHandle, lock_state, play_track_inner, restore_queue,
+    with_state_emit,
 };
 use netodia_engine::player::engine::types::{PersistableQueue, PersistedPlayback, RepeatMode};
 use netodia_store::database::{DbPool, queries};
@@ -208,21 +209,21 @@ pub fn queue_skip_to_index(state: &AppState, index: usize) -> Result<(), AppErro
 pub fn queue_set_shuffle(state: &AppState, enabled: bool) -> Result<(), AppError> {
     let new_shuffle = set_shuffle(&state.player_state, &state.sinks, enabled);
     log::debug!("queue: shuffle {new_shuffle}");
-    persist_shuffle(state, new_shuffle);
+    persist_shuffle(state);
     Ok(())
 }
 
 pub fn queue_toggle_shuffle(state: &AppState) -> Result<(), AppError> {
     let new_shuffle = toggle_shuffle(&state.player_state, &state.sinks);
     log::debug!("queue: shuffle {new_shuffle}");
-    persist_shuffle(state, new_shuffle);
+    persist_shuffle(state);
     Ok(())
 }
 
 pub fn queue_cycle_repeat(state: &AppState) -> Result<(), AppError> {
     let new_mode = cycle_repeat(&state.player_state, &state.sinks);
     log::debug!("queue: repeat → {new_mode:?}");
-    persist_repeat(state, new_mode);
+    persist_repeat(state);
     Ok(())
 }
 
@@ -230,7 +231,7 @@ pub fn queue_cycle_repeat(state: &AppState) -> Result<(), AppError> {
 pub fn queue_set_repeat(state: &AppState, mode: RepeatMode) -> Result<(), AppError> {
     let new_mode = set_repeat(&state.player_state, &state.sinks, mode);
     log::debug!("queue: repeat → {new_mode:?}");
-    persist_repeat(state, new_mode);
+    persist_repeat(state);
     Ok(())
 }
 
@@ -287,15 +288,21 @@ fn set_repeat(
 /// Fire-and-forget settings.json write for shuffle, on the blocking pool so the
 /// `wire_sync!` spawn returns immediately. A failed write only logs: the
 /// in-memory state already changed and persistence is best-effort.
-fn persist_shuffle(state: &AppState, enabled: bool) {
+fn persist_shuffle(state: &AppState) {
+    let player_state = Arc::clone(&state.player_state);
     state.persist_blocking("persist shuffle_enabled", move |paths| {
-        mutate_settings(paths, |s| s.queue.shuffle_enabled = enabled)
+        mutate_settings(paths, |s| {
+            s.queue.shuffle_enabled = lock_state(&player_state).queue.shuffle_enabled
+        })
     });
 }
 
-fn persist_repeat(state: &AppState, mode: RepeatMode) {
+fn persist_repeat(state: &AppState) {
+    let player_state = Arc::clone(&state.player_state);
     state.persist_blocking("persist repeat_mode", move |paths| {
-        mutate_settings(paths, |s| s.queue.repeat_mode = mode)
+        mutate_settings(paths, |s| {
+            s.queue.repeat_mode = lock_state(&player_state).queue.repeat_mode
+        })
     });
 }
 
@@ -335,10 +342,8 @@ struct RestorePlan {
 /// `settings.json`. Local tracks refresh from `SQLite` so moved files are honored; cloud entries
 /// come directly from the disk snapshot because they have no local database row.
 ///
-/// `repeat_mode` and `shuffle_enabled` come from `settings.json`, not `queue.json`. A restored
-/// non-empty queue forces shuffle off because `original_order` isn't persisted — left on,
-/// "unshuffle" would be a no-op against an unknown original sequence. The file is rewritten to
-/// match in the same closure, so the value the state takes and the value on disk cannot disagree.
+/// Playback preferences come from `settings.json`. The saved queue order becomes the
+/// baseline for unshuffle because the earlier insertion order is not stored.
 async fn plan_restore(
     db: &DbPool,
     paths: &Arc<Paths>,
@@ -346,17 +351,10 @@ async fn plan_restore(
 ) -> AppResult<RestorePlan> {
     let (persisted, summaries) = resolve_persisted_playlist(db, persisted).await?;
 
-    // One FS round-trip, all under the same `MUTATE_LOCK` so no writer
-    // interleaves between the read and the conditional rewrite.
-    let restored_non_empty = !summaries.is_empty();
     let paths = Arc::clone(paths);
     let (repeat_mode, shuffle_enabled) = tokio::task::spawn_blocking(move || -> AppResult<_> {
-        mutate_settings_with(&paths, |s| {
-            if restored_non_empty {
-                s.queue.shuffle_enabled = false;
-            }
-            (s.queue.repeat_mode, s.queue.shuffle_enabled)
-        })
+        let settings = read_settings(&paths)?;
+        Ok((settings.queue.repeat_mode, settings.queue.shuffle_enabled))
     })
     .await
     .map_err(|e| AppError::io("restore_persisted_playback join", e))??;
