@@ -233,6 +233,17 @@ impl PlaylistsUi {
         data.playlists.iter().find(|p| p.id == id).cloned()
     }
 
+    /// Keep the card's stats aligned with a detail response, including across grid rebuilds.
+    fn update_grid_track_stats(&self, detail: &PlaylistStats) -> bool {
+        let _gate = self.section.gate();
+        let mut data = self.grid.data.lock();
+        if !Arc::make_mut(&mut data).update_track_stats(detail) {
+            return false;
+        }
+        *self.grid.index_cache.lock() = None;
+        true
+    }
+
     /// Row-tier cover lookup — backs
     /// `Playlists.request-row-cover`, used by the mosaic-picker
     /// dialog's 64 px candidate tiles and preview slots. Resolves

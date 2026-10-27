@@ -109,11 +109,12 @@ export component PlaylistGrid inherits Rectangle {
                         cover-scale-hover: playlist.artwork_path == "" ? 1.15 : 1.04;
                         title: playlist.name;
                         // Each segment translates on its own; the separator is
-                        // punctuation. An empty playlist drops the duration rather
-                        // than trailing a zero.
+                        // punctuation. List responses can omit the total duration;
+                        // do not present an unknown duration as a measured zero.
                         subtitle: playlist.track_count > 0
                             ? @tr("{n} track" | "{n} tracks" % playlist.track_count)
-                                + " · " + Theme.format-duration(playlist.total_duration_ms)
+                                + (playlist.total_duration_ms > 0
+                                    ? " · " + Theme.format-duration(playlist.total_duration_ms) : "")
                             : @tr("0 tracks");
                         badge-icon: playlist.is_smart ? "auto_awesome" : "";
                         clicked => { root.open-playlist(playlist.remote_id); }

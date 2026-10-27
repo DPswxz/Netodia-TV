@@ -158,12 +158,17 @@ async fn fetch_saved_playlists(
         .into_iter()
         .map(|playlist| {
             let cover = covers.get(&playlist.id).cloned();
-            cloud_playlist_stats(playlist, cover)
+            let duration = state.cloud.cached_playlist_duration(playlist.id);
+            cloud_playlist_stats(playlist, cover, duration)
         })
         .collect())
 }
 
-fn cloud_playlist_stats(playlist: CloudPlaylist, thumbnail_path: Option<String>) -> PlaylistStats {
+fn cloud_playlist_stats(
+    playlist: CloudPlaylist,
+    thumbnail_path: Option<String>,
+    duration_ms: Option<u64>,
+) -> PlaylistStats {
     PlaylistStats {
         id: playlist.id,
         name: playlist.name,
@@ -175,7 +180,8 @@ fn cloud_playlist_stats(playlist: CloudPlaylist, thumbnail_path: Option<String>)
         updated_at: String::new(),
         custom_thumbnail: false,
         track_count: i32::try_from(playlist.track_count).unwrap_or(i32::MAX),
-        total_duration_ms: 0,
+        total_duration_ms: duration_ms
+            .map_or(0, |duration| i64::try_from(duration).unwrap_or(i64::MAX)),
     }
 }
 

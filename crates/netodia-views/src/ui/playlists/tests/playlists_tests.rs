@@ -75,6 +75,39 @@ fn track(id: i64, title: &str, album: &str, favorite: bool, length: i64) -> Trac
 }
 
 #[test]
+fn measured_detail_stats_reach_the_card_without_changing_its_metadata_or_old_snapshot() {
+    let original = Arc::new(GridData::new(vec![
+        playlist(4_000_000_000, "Saved card title", 48, "2026-10-27"),
+        playlist(4_000_000_001, "Another playlist", 26, "2026-10-26"),
+    ]));
+    let mut current = Arc::clone(&original);
+    let mut detail = playlist(4_000_000_000, "Detail title", 47, "");
+    detail.total_duration_ms = 8_491_000;
+
+    assert!(Arc::make_mut(&mut current).update_track_stats(&detail));
+    assert_eq!(original.playlists[0].total_duration_ms, 0);
+    assert_eq!(current.playlists[0].total_duration_ms, 8_491_000);
+    assert_eq!(current.playlists[0].track_count, 47);
+    assert_eq!(current.playlists[0].name, "Saved card title");
+    assert_eq!(current.keys[0].name_lc, "saved card title");
+    assert_eq!(current.playlists[1].track_count, 26);
+    assert_eq!(current.playlists[1].total_duration_ms, 0);
+}
+
+#[test]
+fn a_detail_from_another_grid_does_not_insert_a_card_or_change_its_stats() {
+    let mut data = GridData::new(vec![playlist(1, "Current category", 48, "")]);
+    let mut other_detail = playlist(2, "Other category", 149, "");
+    other_detail.total_duration_ms = 1_234_000;
+
+    assert!(!data.update_track_stats(&other_detail));
+    assert_eq!(data.playlists.len(), 1);
+    assert_eq!(data.playlists[0].id, 1);
+    assert_eq!(data.playlists[0].track_count, 48);
+    assert_eq!(data.playlists[0].total_duration_ms, 0);
+}
+
+#[test]
 fn compute_indices_with_empty_filter_keeps_all_playlists() {
     let data = GridData::new(vec![
         playlist(1, "Alpha", 1, "2026-01-02T00:00:00Z"),

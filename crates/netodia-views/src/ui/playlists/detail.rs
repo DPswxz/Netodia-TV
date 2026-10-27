@@ -254,6 +254,10 @@ where
         let g = ui.global::<PlaylistDetail>();
         let header = to_slint_playlist_row(&detail);
         g.set_playlist(header);
+        if playlists_ui.update_grid_track_stats(&detail) {
+            super::grid::rebuild_grid(&ui, &playlists_ui);
+            super::grid::update_flat_rows(&ui, &playlists_ui);
+        }
         g.set_cloud_collection(true);
         g.set_loading(false);
         filter::install_tracks(&g, ui_tracks);
@@ -419,6 +423,10 @@ pub async fn refresh_detail(
         sort_playlist_tracks(&mut tracks, &position_order_snapshot, &field, &dir);
 
         g.set_playlist(to_slint_playlist_row(&detail));
+        if playlists_ui.update_grid_track_stats(&detail) {
+            super::grid::rebuild_grid(&ui, &playlists_ui);
+            super::grid::update_flat_rows(&ui, &playlists_ui);
+        }
         let on_screen = tab_is_mounted(&ui, MyLibraryTab::Playlists);
         crate::ui::hero_chips::publish_playlist(&ui, &detail, fold, on_screen);
         apply_detail_artwork(&ui, &g, pair, /* animate */ false, on_screen);
