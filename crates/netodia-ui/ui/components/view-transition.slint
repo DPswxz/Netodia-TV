@@ -1,8 +1,9 @@
 import { Theme } from "../theme.slint";
 import { Nav, NavEnterFrom } from "../globals/nav.slint";
 
-// Enter-only wrapper, re-instantiated on every branch mount so the flip and the animation replay
-// per nav. There is no exit half — Slint's `if` destroys the outgoing view instantly.
+// Enter-only wrapper: a branch mount or a new replay-key reveals the arriving list. There is no
+// exit half — Slint's `if` destroys the outgoing view instantly. Overlays that must retain their
+// outgoing content own their closing curve (CloudEntityDetailView).
 //
 // **A single-shot Timer, not `init`.** `init` runs *after* bindings resolve to their final values,
 // so flipping `shown` there makes `true` the initial value and the view appears instantly; the
@@ -20,12 +21,20 @@ export component ViewTransition inherits Rectangle {
     // on the other axis, and on the same axis two curves that can send it back. My Library's
     // band is the one such container.
     in property <bool> slide: true;
+    // For lists replaced in place rather than remounted (folder navigation, or another cloud
+    // entity opened from a detail). Sorting, filtering and artwork updates leave this key alone.
+    in property <string> replay-key;
     private property <bool> shown: false;
     // Disabled — or suppressed, for the launch mount and the return from the miniplayer — this is
     // `true` from the first evaluation, so the three bindings below never transition.
     private property <bool> settled: !root.enabled || root.shown || Nav.suppress-enter-animation;
 
-    Timer {
+    changed replay-key => {
+        root.shown = false;
+        reveal.running = true;
+    }
+
+    reveal := Timer {
         interval: 1ms;
         running: true;
         triggered() => {
@@ -46,7 +55,9 @@ export component ViewTransition inherits Rectangle {
                                      : enter-from == NavEnterFrom.left  ? -32px : 0px);
     y: settled || !root.slide ? 0px : (enter-from == NavEnterFrom.above ? -32px : 0px);
 
-    animate opacity { duration: Theme.dur-spatial; easing: cubic-bezier(0.2, 0, 0, 1); }
-    animate x       { duration: Theme.dur-spatial; easing: cubic-bezier(0.2, 0, 0, 1); }
-    animate y       { duration: Theme.dur-spatial; easing: cubic-bezier(0.2, 0, 0, 1); }
+    // A replay first seats the new contents at the starting edge, then reveals them on the next
+    // frame. Easing the reset would reverse the entrance before it had time to become visible.
+    animate opacity { duration: root.shown ? Theme.dur-spatial : 0ms; easing: cubic-bezier(0.2, 0, 0, 1); }
+    animate x       { duration: root.shown ? Theme.dur-spatial : 0ms; easing: cubic-bezier(0.2, 0, 0, 1); }
+    animate y       { duration: root.shown ? Theme.dur-spatial : 0ms; easing: cubic-bezier(0.2, 0, 0, 1); }
 }

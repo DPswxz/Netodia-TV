@@ -592,8 +592,9 @@ export component AppWindow inherits Window {
                     // Cloud album and artist pages sit over whichever view launched them. The
                     // current section stays mounted underneath, so Back returns to its exact scroll
                     // position and filter state.
-                    if CloudEntityDetail.open && !Nav.now-playing-open: CloudEntityDetailView {
-                        x: 0;
+                    // The controller survives a close so its exit can finish before rows and
+                    // the detail body are released.
+                    CloudEntityDetailView {
                         y: 0;
                         width: 100%;
                         height: 100%;

@@ -10,7 +10,9 @@ export component ArtistPickerBody inherits PickerListCard {
     for artist[index] in ArtistPicker.rows: Rectangle {
         height: 60px;
         border-radius: Theme.radius-md;
-        background: touch.has-hover ? Theme.surface1 : transparent;
+        background: touch.pressed ? Theme.surface2
+            : touch.has-hover ? Theme.surface1 : transparent;
+        animate background { duration: Theme.dur-fast; easing: ease-in-out; }
         HorizontalLayout {
             padding-left: Theme.pad-sm;
             padding-right: Theme.pad-md;
@@ -24,6 +26,7 @@ export component ArtistPickerBody inherits PickerListCard {
                     artwork-path: artist.artwork_path;
                     cover: RowCovers.request(artist.artwork_path, "", "", RowCovers.generation);
                     fallback-icon: "person";
+                    cover-scale: touch.pressed ? 0.96 : touch.has-hover ? 1.05 : 1.0;
                 }
             }
             VerticalLayout {

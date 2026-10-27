@@ -59,7 +59,10 @@ export component MyLibraryView inherits Rectangle {
     property <int> header-tab-idx: root.account-surface ? Playlists.category : 0;
     property <int> watched-category: Playlists.category;
     changed watched-category => {
-        if (root.account-surface) { root.header-tab-idx = Playlists.category; }
+        if (root.account-surface) {
+            root.header-tab-idx = Playlists.category;
+            root.body-anim-armed = true;
+        }
     }
     property <int> watched-surface: MyLibrary.tab-idx;
     changed watched-surface => {
@@ -427,6 +430,7 @@ export component MyLibraryView inherits Rectangle {
                 enter-from: NavEnterFrom.above;
                 enabled: root.body-anim-armed;
                 slide: !band.morphing;
+                replay-key: "album:" + AlbumDetail.album-id;
                 AlbumDetailBody { width: 100%; height: 100%; }
             }
             if MyLibrary.tab-idx == MyLibrary.tab-artists && !root.artist-open && !root.detail-restoring: ViewTransition {
@@ -450,6 +454,7 @@ export component MyLibraryView inherits Rectangle {
                 enter-from: NavEnterFrom.above;
                 enabled: root.body-anim-armed;
                 slide: !band.morphing;
+                replay-key: "artist:" + ArtistDetail.artist-id;
                 ArtistDetailBody { width: 100%; height: 100%; }
             }
             if MyLibrary.tab-idx == MyLibrary.tab-genres && !root.genre-open && !root.detail-restoring: ViewTransition {
@@ -473,6 +478,7 @@ export component MyLibraryView inherits Rectangle {
                 enter-from: NavEnterFrom.above;
                 enabled: root.body-anim-armed;
                 slide: !band.morphing;
+                replay-key: "genre:" + GenreDetail.genre-id;
                 GenreDetailBody { width: 100%; height: 100%; }
             }
             if MyLibrary.tab-idx == MyLibrary.tab-playlists && !root.playlist-open && !root.detail-restoring: ViewTransition {
@@ -481,6 +487,7 @@ export component MyLibraryView inherits Rectangle {
                 enter-from: band.tab-enter-from;
                 enabled: root.body-anim-armed;
                 slide: !band.morphing;
+                replay-key: "category:" + Playlists.category;
                 MyLibraryPlaylistsTab {
                     width: 100%;
                     height: 100%;
@@ -496,6 +503,7 @@ export component MyLibraryView inherits Rectangle {
                 enter-from: NavEnterFrom.above;
                 enabled: root.body-anim-armed;
                 slide: !band.morphing;
+                replay-key: "playlist:" + PlaylistDetail.playlist-id;
                 PlaylistDetailBody { width: 100%; height: 100%; }
             }
         }

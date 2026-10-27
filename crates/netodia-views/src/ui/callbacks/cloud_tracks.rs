@@ -129,6 +129,16 @@ fn wire_entity_detail_actions(ui: &AppWindow, state: &AppState) {
         let Some(ui) = weak.upgrade() else { return };
         let detail = ui.global::<CloudEntityDetail>();
         detail.set_open(false);
+    });
+
+    let weak = ui.as_weak();
+    ui.global::<CloudEntityDetail>().on_closed(move || {
+        let Some(ui) = weak.upgrade() else { return };
+        let detail = ui.global::<CloudEntityDetail>();
+        // A new drill can interrupt the exit. A late completion must not clear its rows.
+        if detail.get_open() {
+            return;
+        }
         detail.set_loading(false);
         detail.set_error(SharedString::default());
         detail.set_tracks(empty_track_model());
@@ -174,7 +184,6 @@ fn open_entity_detail(ui: &AppWindow, state: &AppState, kind: &str, remote_id: S
     let request = ENTITY_DETAIL_REQUEST.fetch_add(1, Ordering::Relaxed) + 1;
     let kind = kind.to_owned();
     let detail = ui.global::<CloudEntityDetail>();
-    detail.set_open(true);
     detail.set_kind(kind.clone().into());
     detail.set_remote_id(remote_id.clone().into());
     detail.set_title(SharedString::default());
@@ -188,6 +197,7 @@ fn open_entity_detail(ui: &AppWindow, state: &AppState, kind: &str, remote_id: S
     detail.set_album_favorite_known(false);
     detail.set_album_favorite_pending(false);
     detail.set_album_favorite_error(SharedString::default());
+    detail.set_open(true);
     if kind == "album" {
         ui.global::<Favorites>().invoke_load_album_favorite(remote_id.clone().into());
     }

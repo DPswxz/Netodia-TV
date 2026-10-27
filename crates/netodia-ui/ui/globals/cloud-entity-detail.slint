@@ -18,6 +18,9 @@ export global CloudEntityDetail {
     in-out property <string> album-favorite-error;
 
     callback close();
+    // The overlay calls this only after its exit curve has finished, while the outgoing rows
+    // are still available to paint the whole fade.
+    callback closed();
     callback retry();
     callback play-cloud-row(string /*song ID*/, int /*index*/);
 }
