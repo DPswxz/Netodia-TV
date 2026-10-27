@@ -4,7 +4,7 @@ use super::{
     CloudQueuePlan, CloudQueueShuffle, playback_candidates, queue_cloud_tracks,
     queue_track_metadata, resolve_track_metadata, track_summary,
 };
-use netodia_core::entities::cloud::Song;
+use netodia_core::entities::cloud::{Album, Song};
 use netodia_core::entities::track::TrackSummary;
 use netodia_engine::player::engine::queue::QueueState;
 use netodia_engine::player::engine::types::RepeatMode;
@@ -76,6 +76,42 @@ async fn uncached_metadata_still_requires_a_successful_detail_request() {
     let cloud = crate::cloud::tests::service_without_network_for_test();
 
     assert!(resolve_track_metadata(&cloud, 3_000_000_001, None).await.is_err());
+}
+
+#[tokio::test]
+async fn song_detail_covers_survive_queueing_and_defer_to_the_playback_download()
+-> netodia_core::error::AppResult<()> {
+    let cloud = crate::cloud::tests::service_without_network_for_test();
+    let mut queue = QueueState::default();
+    let cover = "https://p1.music.126.net/cover.jpg";
+    let tracks = [3_000_000_001, 3_000_000_002]
+        .into_iter()
+        .map(|id| {
+            Arc::new(track_summary(
+                Song {
+                    id,
+                    name: format!("Song {id}"),
+                    album: Album { cover_url: Some(cover.to_owned()), ..Album::default() },
+                    ..Song::default()
+                },
+                None,
+                false,
+            ))
+        })
+        .collect();
+    queue_cloud_tracks(&mut queue, tracks, false);
+
+    for queued in &queue.tracks {
+        assert_eq!(queued.artwork_path.as_deref(), Some(cover));
+        let (playback, cover_url) =
+            resolve_track_metadata(&cloud, queued.id, Some(queued.clone())).await?;
+
+        assert_eq!(playback.id, queued.id);
+        assert_eq!(playback.artwork_path, None);
+        assert_eq!(cover_url.as_deref(), Some(cover));
+        assert_eq!(queued.artwork_path.as_deref(), Some(cover));
+    }
+    Ok(())
 }
 
 #[test]

@@ -1218,13 +1218,14 @@ async fn resolve_track_metadata(
         .into_iter()
         .find(|song| song.id == song_id)
         .ok_or_else(|| AppError::network_msg("网易云未返回歌曲信息"))?;
-    let cover_url = song.album.cover_url.clone();
     let is_favorite = cloud.cached_is_liked(song_id).unwrap_or(false);
-    Ok((Arc::new(track_summary(song, None, is_favorite)), cover_url))
+    Ok(queue_track_metadata(Arc::new(track_summary(song, None, is_favorite))))
 }
 
 fn track_summary(song: Song, artwork_path: Option<String>, is_favorite: bool) -> TrackSummary {
     let artist = song.artist_names();
+    // ID-based queues must retain the URL until queue_track_metadata defers its download.
+    let artwork_path = artwork_path.or(song.album.cover_url);
     TrackSummary {
         id: song.id,
         file_path: String::new(),
@@ -1370,7 +1371,12 @@ mod tests {
                     name: "Cloud artist".to_owned(),
                     ..Artist::default()
                 }],
-                album: Album { id: 77, name: "Cloud album".to_owned(), ..Album::default() },
+                album: Album {
+                    id: 77,
+                    name: "Cloud album".to_owned(),
+                    cover_url: Some("https://p1.music.126.net/cover.jpg".to_owned()),
+                    ..Album::default()
+                },
                 duration_ms: 181_000,
                 ..Song::default()
             },
