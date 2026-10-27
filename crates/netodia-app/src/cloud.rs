@@ -520,7 +520,7 @@ impl CloudService {
                 None
             }
             Err(error) => {
-                log::warn!("cloud::cached_liked_songs: {error}");
+                log::warn!("cloud::cached_liked_songs: {}", netodia_core::error::describe(&error));
                 None
             }
         }
@@ -553,7 +553,9 @@ impl CloudService {
             Ok(Err(error)) => {
                 log::warn!("cloud::persist_liked_songs: {}", netodia_core::error::describe(&error));
             }
-            Err(error) => log::warn!("cloud::persist_liked_songs: {error}"),
+            Err(error) => {
+                log::warn!("cloud::persist_liked_songs: {}", netodia_core::error::describe(&error));
+            }
         }
     }
 
@@ -572,7 +574,12 @@ impl CloudService {
                     netodia_core::error::describe(&error)
                 );
             }
-            Err(error) => log::warn!("cloud::clear_liked_songs_cache: {error}"),
+            Err(error) => {
+                log::warn!(
+                    "cloud::clear_liked_songs_cache: {}",
+                    netodia_core::error::describe(&error)
+                );
+            }
         }
     }
 
