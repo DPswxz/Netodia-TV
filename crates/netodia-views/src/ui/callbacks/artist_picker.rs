@@ -89,17 +89,30 @@ fn request(
                     open(&ui, &state, &artists_ui, choices[0].0, source);
                 }
                 Ok(choices) if !choices.is_empty() => {
+                    let missing_cloud_images: Vec<i64> = if matches!(source, SongSource::Cloud) {
+                        choices
+                            .iter()
+                            .filter(|(_, _, path)| path.is_empty())
+                            .map(|(id, _, _)| *id)
+                            .collect()
+                    } else {
+                        Vec::new()
+                    };
                     let rows: Vec<ArtistChoice> = choices
                         .into_iter()
-                        .map(|(id, name)| ArtistChoice {
+                        .map(|(id, name, artwork_path)| ArtistChoice {
                             id: id.to_string().into(),
                             name: name.into(),
+                            artwork_path: artwork_path.into(),
                         })
                         .collect();
                     let picker = ui.global::<ArtistPicker>();
                     picker.set_rows(ModelRc::new(VecModel::from(rows)));
                     picker.set_cloud(matches!(source, SongSource::Cloud));
                     dialog.set_open(true);
+                    for artist_id in missing_cloud_images {
+                        load_cloud_image(&ui, &state, claim, origin, generation, artist_id);
+                    }
                 }
                 Ok(_) => {}
                 Err(error) => {
@@ -116,12 +129,12 @@ async fn load_choices(
     state: &AppState,
     id: i64,
     source: SongSource,
-) -> Result<Vec<(i64, String)>, AppError> {
+) -> Result<Vec<(i64, String, String)>, AppError> {
     let choices = match source {
         SongSource::Local => library::artists::get_track_artists(&state.db, id)
             .await?
             .into_iter()
-            .map(|artist| (artist.id, artist.name))
+            .map(|artist| (artist.id, artist.name, artist.image_path.unwrap_or_default()))
             .collect(),
         SongSource::Cloud => state
             .cloud
@@ -129,15 +142,72 @@ async fn load_choices(
             .await?
             .into_iter()
             .find(|song| song.id == id)
-            .map(|song| song.artists.into_iter().map(|artist| (artist.id, artist.name)).collect())
+            .map(|song| {
+                song.artists
+                    .into_iter()
+                    .map(|artist| {
+                        let artwork = artist
+                            .image_url()
+                            .filter(|url| crate::ui::remote_covers::is_remote_artwork_url(url))
+                            .unwrap_or_default()
+                            .to_owned();
+                        (artist.id, artist.name, artwork)
+                    })
+                    .collect()
+            })
             .unwrap_or_default(),
     };
     Ok(unique_choices(choices))
 }
 
-fn unique_choices(choices: Vec<(i64, String)>) -> Vec<(i64, String)> {
+fn unique_choices(choices: Vec<(i64, String, String)>) -> Vec<(i64, String, String)> {
     let mut seen = HashSet::with_capacity(choices.len());
-    choices.into_iter().filter(|(id, _)| *id > 0 && seen.insert(*id)).collect()
+    choices.into_iter().filter(|(id, _, _)| *id > 0 && seen.insert(*id)).collect()
+}
+
+// Song credits often omit photos. Resolve those separately so the picker opens immediately.
+fn load_cloud_image(
+    ui: &AppWindow,
+    state: &AppState,
+    claim: DialogClaim,
+    origin: Origin,
+    generation: u64,
+    id: i64,
+) {
+    let weak = ui.as_weak();
+    let state = state.clone();
+    state.runtime.clone().spawn(async move {
+        let Ok((artist, _)) = state.cloud.artist(id).await else { return };
+        let Some(url) = artist
+            .image_url()
+            .filter(|url| crate::ui::remote_covers::is_remote_artwork_url(url))
+            .map(str::to_owned)
+        else {
+            return;
+        };
+        let _ = weak.upgrade_in_event_loop(move |ui| {
+            let dialog = ui.global::<Dialog>();
+            if !dialog.get_open()
+                || dialog.get_kind() != DialogKind::SelectArtist
+                || DialogClaim::take(&ui) != claim
+                || !origin.still_current(&ui)
+                || state.cloud.status().generation != generation
+            {
+                return;
+            }
+            let rows = ui.global::<ArtistPicker>().get_rows();
+            let key = id.to_string();
+            for index in 0..rows.row_count() {
+                if let Some(mut row) = rows.row_data(index)
+                    && row.id.as_str() == key
+                {
+                    row.artwork_path = url.into();
+                    rows.set_row_data(index, row);
+                    break;
+                }
+            }
+        });
+    });
 }
 
 fn open(
