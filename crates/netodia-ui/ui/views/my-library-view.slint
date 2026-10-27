@@ -172,23 +172,23 @@ export component MyLibraryView inherits Rectangle {
     // Mirrors rather than `changed AlbumDetail.album-id`, which Slint rejects on a global.
     property <int> watched-album-id: AlbumDetail.album-id;
     changed watched-album-id => {
-        if (root.album-open) { root.body-anim-armed = true; }
         MyLibrary.detail-scope-changed();
+        if (root.album-open) { root.body-anim-armed = true; }
     }
     property <int> watched-artist-id: ArtistDetail.artist-id;
     changed watched-artist-id => {
-        if (root.artist-open) { root.body-anim-armed = true; }
         MyLibrary.detail-scope-changed();
+        if (root.artist-open) { root.body-anim-armed = true; }
     }
     property <int> watched-genre-id: GenreDetail.genre-id;
     changed watched-genre-id => {
-        if (root.genre-open) { root.body-anim-armed = true; }
         MyLibrary.detail-scope-changed();
+        if (root.genre-open) { root.body-anim-armed = true; }
     }
     property <string> watched-playlist-id: PlaylistDetail.playlist.remote_id;
     changed watched-playlist-id => {
-        if (root.playlist-open) { root.body-anim-armed = true; }
         MyLibrary.detail-scope-changed();
+        if (root.playlist-open) { root.body-anim-armed = true; }
     }
 
     // **A tab move is the other way the surface under the box changes.** A cross-tab drill
