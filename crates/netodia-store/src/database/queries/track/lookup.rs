@@ -44,11 +44,15 @@ pub async fn count_tracks(db: &DbPool) -> Result<i64, AppError> {
 /// Fetch `TrackSummary` projections by IDs, preserving the input order. Reads only the columns the
 /// queue / now-playing / playback paths consume, against `get_tracks_by_ids`' full row — a caller
 /// that would immediately collect into `TrackSummary` wants this instead.
+///
+/// The cover resolves through the album row, exactly as a list row's does. This projection is what
+/// the Now Playing view, the bar and the OS media controls decode, so a track carrying no cover of
+/// its own would otherwise play a blank tile for an album every list draws.
 pub async fn get_track_summaries_by_ids(
     db: &DbPool,
     ids: &[i64],
 ) -> Result<Vec<track::TrackSummary>, AppError> {
-    let cols = columns::TRACK_SUMMARY.joined();
+    let cols = columns::TRACK_SUMMARY.with_album_artwork_fallback(None);
     let summaries: Vec<track::TrackSummary> = chunked_in_query(db.read(), ids, |placeholders| {
         format!("SELECT {cols} FROM tracks WHERE id IN ({placeholders})")
     })

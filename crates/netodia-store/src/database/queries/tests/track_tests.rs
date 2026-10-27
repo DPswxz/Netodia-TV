@@ -127,6 +127,42 @@ async fn get_tracks_by_ids_skips_missing() -> Result<(), AppError> {
     Ok(())
 }
 
+/// A release can store its cover once on the album row and leave the tracks that carry none of
+/// their own. The playback projection is what the Now Playing view, the bar and the OS media
+/// controls decode, so without the album fallback those surfaces paint a blank tile for an album
+/// every list beside them draws.
+#[tokio::test]
+async fn a_summary_resolves_a_cover_the_track_does_not_carry() -> Result<(), AppError> {
+    let db = DbPool::test_pool().await?;
+    queries::folder::insert_folder(&db, "/music", true).await?;
+    let own = insert_test_track(&db, "/music/own.mp3", "Own", "Artist", "Album", "Rock").await?;
+    let bare = insert_test_track(&db, "/music/bare.mp3", "Bare", "Artist", "Album", "Rock").await?;
+    let loose = insert_test_track(&db, "/music/loose.mp3", "Loose", "Artist", "", "Rock").await?;
+    set_test_artwork(&db, own, "/art/track.jpg").await?;
+
+    let album_id: i64 = sqlx::query_scalar("SELECT album_id FROM tracks WHERE id = ?")
+        .bind(own)
+        .fetch_one(db.read())
+        .await?;
+    let mut tx = db.write().begin().await?;
+    queries::album::set_album_artwork(&mut tx, &[album_id], Some("/art/album.jpg")).await?;
+    tx.commit().await?;
+
+    let summaries = queries::track::get_track_summaries_by_ids(&db, &[own, bare, loose]).await?;
+    assert_eq!(
+        summaries[0].artwork_path.as_deref(),
+        Some("/art/track.jpg"),
+        "a track's own cover outranks its album's"
+    );
+    assert_eq!(
+        summaries[1].artwork_path.as_deref(),
+        Some("/art/album.jpg"),
+        "the album's cover reaches a track that carries none"
+    );
+    assert_eq!(summaries[2].artwork_path, None, "a track with no album gains no cover");
+    Ok(())
+}
+
 /// `TrackMeta` is the one of `entities::track`'s five hand-maintained `SELECT` lists that no
 /// test selects, and a list that has drifted from its `FromRow` struct fails at fetch time
 /// with nothing at compile time to catch it. The whole struct is compared rather than the

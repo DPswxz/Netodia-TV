@@ -24,10 +24,13 @@ impl Columns {
 
     /// Project these columns while resolving a missing track cover from its album.
     ///
-    /// Track files can carry their own artwork, but many releases store the cover only once on
-    /// the album row. Track lists need a usable path for both shapes, with track artwork taking
-    /// precedence when it exists. `alias` is the track table's alias where the surrounding query
-    /// has one; the album lookup stays a primary-key subquery so callers need no extra join.
+    /// Track files can carry their own artwork, but many releases store the cover once on the
+    /// album row, so a projection reading the track column alone paints a blank tile on a surface
+    /// the list beside it fills. Every projection that reaches a cover takes this — the list rows
+    /// and the narrow `TrackSummary` the Now Playing view, the bar and the OS media controls decode
+    /// alike — with track artwork winning where it exists. `alias` is the track table's alias where
+    /// the surrounding query has one; the album lookup stays a primary-key subquery so callers need
+    /// no extra join.
     pub(crate) fn with_album_artwork_fallback(&self, alias: Option<&str>) -> String {
         let qualify = |column: &str| match alias {
             Some(alias) => format!("{alias}.{column}"),
