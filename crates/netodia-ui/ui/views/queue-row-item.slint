@@ -7,6 +7,7 @@ import { IconButton } from "../components/icon-button.slint";
 import { Checkbox } from "../components/checkbox.slint";
 import { TrackContextMenu } from "../components/track-list/track-context-menu.slint";
 import { CloudTrackContextMenu } from "../components/track-list/cloud-track-context-menu.slint";
+import { ArtistPicker } from "../globals/artist-picker.slint";
 import { CloudTrackActions } from "../globals/cloud-track-actions.slint";
 import { SelectionPill } from "../components/track-list/selection-pill.slint";
 
@@ -436,7 +437,7 @@ export component QueueRowItem inherits Rectangle {
             // Dismiss first: the sheet sits above the content panel, so a navigation with it
             // still up lands behind it.
             go-to-album(aid) => { Queue.dismiss(); Queue.go-to-album(aid); }
-            go-to-artist(aid) => { Queue.dismiss(); Queue.go-to-artist(aid); }
+            go-to-artist(aid) => { Queue.dismiss(); ArtistPicker.request-local(root.row-data.id); }
             go-to-genre(gid) => { Queue.dismiss(); Queue.go-to-genre(gid); }
         }
     }

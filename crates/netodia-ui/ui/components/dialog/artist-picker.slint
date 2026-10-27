@@ -1,0 +1,39 @@
+import { Theme } from "../../theme.slint";
+import { ArtistPicker } from "../../globals/artist-picker.slint";
+import { Dialog } from "../../globals/dialog.slint";
+import { MaterialIcon } from "../material-icon.slint";
+import { PickerListCard } from "selectable-picker.slint";
+
+export component ArtistPickerBody inherits PickerListCard {
+    row-count: ArtistPicker.rows.length;
+    for artist[index] in ArtistPicker.rows: Rectangle {
+        height: 60px;
+        border-radius: Theme.radius-md;
+        background: touch.has-hover ? Theme.surface1 : transparent;
+        HorizontalLayout {
+            padding: Theme.pad-md;
+            spacing: Theme.pad-md;
+            MaterialIcon {
+                name: "person";
+                icon-size: 24px;
+                icon-color: Theme.accent;
+            }
+            Text {
+                text: artist.name;
+                color: Theme.text;
+                font-size: Theme.font-size-md;
+                vertical-alignment: center;
+                overflow: elide;
+                horizontal-stretch: 1;
+            }
+        }
+        touch := TouchArea {
+            enabled: Dialog.open;
+            mouse-cursor: pointer;
+            clicked => {
+                Dialog.open = false;
+                ArtistPicker.choose(index);
+            }
+        }
+    }
+}

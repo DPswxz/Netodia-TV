@@ -18,6 +18,29 @@ pub async fn get_artist_by_id(db: &DbPool, id: i64) -> Result<artist::ArtistStat
         .ok_or_else(|| AppError::not_found("Artist", id))
 }
 
+/// Returns all credited artists in tag order, falling back to the primary link for untagged tracks.
+pub async fn get_track_artists(
+    db: &DbPool,
+    track_id: i64,
+) -> Result<Vec<artist::Artist>, AppError> {
+    let artists = sqlx::query_as::<_, artist::Artist>(
+        "SELECT a.* FROM track_artists ta JOIN artists a ON a.id = ta.artist_id \
+         WHERE ta.track_id = ? ORDER BY ta.position",
+    )
+    .bind(track_id)
+    .fetch_all(db.read())
+    .await?;
+    if !artists.is_empty() {
+        return Ok(artists);
+    }
+    Ok(sqlx::query_as::<_, artist::Artist>(
+        "SELECT a.* FROM tracks t JOIN artists a ON a.id = t.artist_id WHERE t.id = ?",
+    )
+    .bind(track_id)
+    .fetch_all(db.read())
+    .await?)
+}
+
 /// The artist a track or album with no artist tag is filed under, inserted at a fixed id by the
 /// initial schema.
 ///

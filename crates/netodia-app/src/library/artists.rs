@@ -16,6 +16,14 @@ pub async fn get_artists(db: &DbPool) -> Result<Vec<artist::ArtistStats>, AppErr
     queries::artist::get_all_artists(db).await
 }
 
+/// Returns the song's credited artists in tag order, with their local navigation IDs.
+pub async fn get_track_artists(
+    db: &DbPool,
+    track_id: i64,
+) -> Result<Vec<artist::Artist>, AppError> {
+    queries::artist::get_track_artists(db, track_id).await
+}
+
 /// Stats for a single artist, or `AppError::NotFound` if the id is gone.
 pub async fn get_artist_detail(db: &DbPool, id: i64) -> Result<artist::ArtistStats, AppError> {
     queries::artist::get_artist_by_id(db, id).await
