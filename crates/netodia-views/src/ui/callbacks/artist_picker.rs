@@ -149,7 +149,7 @@ fn open(
 ) {
     match source {
         SongSource::Cloud => {
-            ui.global::<CloudTrackActions>().invoke_open_artist(id.to_string().into())
+            ui.global::<CloudTrackActions>().invoke_open_artist(id.to_string().into());
         }
         SongSource::Local => open_artist_cross_tab(
             state,
