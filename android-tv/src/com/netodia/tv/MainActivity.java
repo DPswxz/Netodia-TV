@@ -186,6 +186,10 @@ public class MainActivity extends Activity {
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     startForegroundService(new Intent(this, PlaybackService.class));
     buildShell();
+    getWindow()
+        .getDecorView()
+        .getViewTreeObserver()
+        .addOnGlobalFocusChangeListener((oldFocus, newFocus) -> lyricFocusChanged(newFocus));
     navigate(new Page("library", "我的音乐库", "library"), true);
     focus.focus("nav:library");
     if (accountRestoring)
@@ -209,6 +213,7 @@ public class MainActivity extends Activity {
             }
           });
     handler.post(attachService);
+    handler.post(resumeLyricFollow);
   }
 
   private void buildShell() {
@@ -415,9 +420,14 @@ public class MainActivity extends Activity {
     TvUi.seekStyle(this, progress);
     progress.setPadding(d(6), 0, d(6), 0);
     progress.setBackground(TvUi.focus(this, true));
-    progress.setContentDescription("播放进度，左右键调整 10 秒");
+    seekEditing = false;
+    progress.setContentDescription("播放进度，确定后调整，左右键移动焦点");
     bar.addView(progress, new LinearLayout.LayoutParams(0, d(38), 1));
     focus.add(progress, FocusRouter.PLAYER, 0, 4, "player:seek");
+    progress.setOnFocusChangeListener(
+        (v, has) -> {
+          if (!has) setSeekEditing(false);
+        });
     progress.setOnSeekBarChangeListener(
         new SeekBar.OnSeekBarChangeListener() {
           public void onStartTrackingTouch(SeekBar s) {}
@@ -556,6 +566,8 @@ public class MainActivity extends Activity {
     stageParams.rightMargin = 0;
     stage.setLayoutParams(stageParams);
     playerFavoriteButton = null;
+    handler.removeCallbacks(resumeLyricFollow);
+    lyricFollow.reset();
     lyricScroll = null;
     lyricLines = null;
     paintedLyrics = null;
@@ -1921,7 +1933,7 @@ public class MainActivity extends Activity {
     heading(section);
     right.addView(section, lp(-1, 32));
     View line = new View(this);
-    line.setBackgroundColor(BORDER);
+    line.setBackgroundColor(0x66ffffff);
     right.addView(line, lp(-1, 1));
     if (current.tab == 1) {
       upNextScroll = new ScrollView(this);
@@ -1945,6 +1957,19 @@ public class MainActivity extends Activity {
       lyricScroll.setFocusable(false);
       lyricScroll.setFillViewport(false);
       lyricScroll.setVerticalScrollBarEnabled(true);
+      lyricScroll.setBackgroundColor(Color.TRANSPARENT);
+      lyricScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+      lyricScroll.setOnTouchListener(
+          (v, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN
+                || event.getActionMasked() == MotionEvent.ACTION_MOVE) deferLyricFollow();
+            return false;
+          });
+      lyricScroll.setOnGenericMotionListener(
+          (v, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_SCROLL) deferLyricFollow();
+            return false;
+          });
       lyricLines = column(this);
       lyricLines.setPadding(0, d(6), d(4), d(28));
       lyricScroll.addView(lyricLines);
@@ -2029,8 +2054,8 @@ public class MainActivity extends Activity {
         for (int i = 0; i < lyrics.lines.size(); i++) {
           final int at = i;
           LinearLayout row = column(this);
-          row.setPadding(d(8), d(14), d(8), d(14));
-          row.setBackground(TvUi.focus(this, true));
+          row.setPadding(d(12), d(14), d(8), d(14));
+          row.setBackground(TvUi.lyricFocus(this));
           TextView text = label(lyrics.lines.get(i), 22, MUTED);
           text.setMaxLines(5);
           row.addView(text, lp(-1, -2));
@@ -2068,18 +2093,54 @@ public class MainActivity extends Activity {
       heading(text);
       text.setTextSize(prefs().getInt("lyric_size", 36) * TvUi.SCALE);
       text.setTextColor(TEXT);
-      if (!focus.key(getCurrentFocus()).startsWith("lyric:"))
-        lyricScroll.post(
-            () -> {
-              if (lyricScroll != null && active < lyricRowViews.size())
-                lyricScroll.smoothScrollTo(
-                    0,
-                    Math.max(0, lyricRowViews.get(active).getTop() - lyricScroll.getHeight() / 3));
-            });
+      if (lyricFollow.follows(SystemClock.uptimeMillis())) scrollToCurrentLyric();
     }
   }
 
   private ScrollView lyricScroll;
+  private final LyricFollow lyricFollow = new LyricFollow();
+  private final Runnable resumeLyricFollow =
+      () -> {
+        if (started
+            && !destroyed
+            && lyricScroll != null
+            && lyricFollow.follows(SystemClock.uptimeMillis())
+            && !focus.key(getCurrentFocus()).startsWith("lyric:")) scrollToCurrentLyric();
+      };
+
+  private void lyricFocusChanged(View view) {
+    if (lyricScroll == null) return;
+    boolean browsing = focus.key(view).startsWith("lyric:");
+    if (browsing) handler.removeCallbacks(resumeLyricFollow);
+    if (lyricFollow.focus(browsing, SystemClock.uptimeMillis())) {
+      handler.removeCallbacks(resumeLyricFollow);
+      handler.postDelayed(resumeLyricFollow, 3000);
+    }
+  }
+
+  private void deferLyricFollow() {
+    lyricFollow.touch(SystemClock.uptimeMillis());
+    handler.removeCallbacks(resumeLyricFollow);
+    handler.postDelayed(resumeLyricFollow, 3000);
+  }
+
+  private void scrollToCurrentLyric() {
+    final ScrollView scroll = lyricScroll;
+    if (scroll == null) return;
+    scroll.post(
+        () -> {
+          PlaybackService player = service();
+          if (scroll != lyricScroll
+              || player == null
+              || !lyricFollow.follows(SystemClock.uptimeMillis())) return;
+          int active =
+              player.lyrics.at((long) player.position() + prefs().getInt("lyric_offset", 0));
+          if (active >= 0 && active < lyricRowViews.size())
+            scroll.smoothScrollTo(
+                0, Math.max(0, lyricRowViews.get(active).getTop() - scroll.getHeight() / 3));
+        });
+  }
+
   private LinearLayout lyricLines;
   private MusicData.Lyrics paintedLyrics;
   private final ArrayList<TextView> lyricTextViews = new ArrayList<>();
@@ -2737,28 +2798,160 @@ public class MainActivity extends Activity {
                               render();
                             })));
     } else {
-      section("Netodia TV " + appVersion());
-      TextView about =
-          label(
-              "基于 Netodia 的电视版\nRust 音乐服务 · Android TV 界面\n许可：AGPL-3.0-or-later\n\n设备："
-                  + Build.MODEL
-                  + " · Android "
-                  + Build.VERSION.RELEASE,
-              18,
-              MUTED);
-      about.setLineSpacing(d(8), 1);
-      body.addView(about);
-      setting(
-          "查看许可",
-          "开源许可与项目信息",
-          () ->
-              info(
-                  "开源许可",
-                  "Netodia 按 GNU Affero GPL v3 或更高版本发布。\n"
-                      + "项目：https://github.com/HELPMEEADICE/Netodia\n"
-                      + "多屏互动安装脚本来自 pengchujin/aerial-tv（MIT）。\n"
-                      + "完整许可位于随附源码及 APK 资源中。"));
+      aboutSettings();
     }
+  }
+
+  private void aboutSettings() {
+    body.setPadding(d(72), 0, d(72), d(24));
+    section("关于");
+    LinearLayout card = settingsCard();
+    aboutItem(card, "info", "Netodia TV", "版本 " + appVersion(), "", null);
+    aboutItem(
+        card,
+        "person",
+        "网易云音乐适配作者：HELPMEEADICE",
+        "",
+        "GitHub",
+        () -> openProjectLink("https://github.com/HELPMEEADICE"));
+    aboutItem(
+        card,
+        "person",
+        "UI 框架作者：Kenan Salar",
+        "",
+        "GitHub",
+        () -> openProjectLink("https://github.com/KenanSalar"));
+    aboutItem(card, "balance", "许可证", "AGPL-3.0-or-later", "查看", this::showLicense);
+    aboutItem(card, "waving_hand", "欢迎指南", "查看电视上的导航、播放和歌词操作。", "显示", this::remoteHelp);
+    if (card.getChildCount() == 0) card.setVisibility(View.GONE);
+    section("诊断");
+    LinearLayout diagnostics = settingsCard();
+    aboutItem(
+        diagnostics,
+        "description",
+        "日志",
+        "查看本机运行和错误记录。",
+        "查看",
+        () -> {
+          files.execute(
+              () -> {
+                String log = Diagnostics.read(this);
+                handler.post(
+                    () -> {
+                      if (!destroyed) info("日志", log);
+                    });
+              });
+        });
+    aboutItem(
+        diagnostics,
+        "bug_report",
+        "诊断报告",
+        "保存系统信息、设置和近期日志；不包含账号凭据或媒体链接。",
+        "保存",
+        () -> {
+          files.execute(
+              () -> {
+                try {
+                  String path = Diagnostics.save(this);
+                  handler.post(
+                      () -> {
+                        if (!destroyed) info("报告已保存", path);
+                      });
+                } catch (Exception error) {
+                  handler.post(
+                      () -> {
+                        if (!destroyed) info("保存失败", "无法写入诊断报告，请检查电视存储空间。");
+                      });
+                }
+              });
+        });
+    if (settingsMatch("详细日志", "记录更多运行细节。启用后重现问题，再保存报告。")) {
+      if (diagnostics.getChildCount() > 0) settingsDivider(diagnostics);
+      boolean verbose = prefs().getBoolean("verbose_logging", false);
+      toggleSetting(
+          diagnostics,
+          "tune",
+          "详细日志",
+          "记录更多运行细节。启用后重现问题，再保存报告。",
+          verbose,
+          true,
+          () -> {
+            snapshot();
+            prefs().edit().putBoolean("verbose_logging", !verbose).apply();
+            render();
+          });
+    }
+    if (diagnostics.getChildCount() == 0) diagnostics.setVisibility(View.GONE);
+  }
+
+  private boolean settingsMatch(String title, String description) {
+    return current.query.isEmpty()
+        || (title + description)
+            .toLowerCase(Locale.ROOT)
+            .contains(current.query.toLowerCase(Locale.ROOT));
+  }
+
+  private void aboutItem(
+      LinearLayout card,
+      String icon,
+      String title,
+      String description,
+      String actionLabel,
+      Runnable action) {
+    if (!settingsMatch(title, description)) return;
+    if (card.getChildCount() > 0) settingsDivider(card);
+    LinearLayout row = settingsRow(card, icon, title, description);
+    row.setMinimumHeight(d(74));
+    if (action == null) return;
+    TextView button = label(actionLabel, 15, TEXT);
+    button.setSingleLine();
+    button.setGravity(Gravity.CENTER);
+    button.setPadding(d(16), 0, d(16), 0);
+    android.graphics.drawable.GradientDrawable shape = fill(this, SURFACE1, 24);
+    shape.setStroke(d(1), BORDER);
+    button.setBackground(shape);
+    row.addView(button, lp(-2, 36));
+    focus.add(row, FocusRouter.CONTENT, contentRow++, 0, "about:" + title);
+    row.setContentDescription(title + "，" + actionLabel);
+    row.setOnClickListener(
+        v -> {
+          snapshot();
+          action.run();
+        });
+  }
+
+  private void openProjectLink(String url) {
+    try {
+      startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)));
+    } catch (ActivityNotFoundException error) {
+      info("GitHub 项目地址", url);
+    }
+  }
+
+  private void showLicense() {
+    files.execute(
+        () -> {
+          try (java.io.InputStream input = getAssets().open("LICENSE")) {
+            java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
+            byte[] bytes = new byte[4096];
+            int count;
+            while ((count = input.read(bytes)) != -1) output.write(bytes, 0, count);
+            String license = output.toString("UTF-8");
+            handler.post(
+                () -> {
+                  if (!destroyed) info("AGPL-3.0-or-later", license);
+                });
+          } catch (Exception error) {
+            handler.post(
+                () -> {
+                  if (!destroyed)
+                    info(
+                        "开源许可",
+                        "AGPL-3.0-or-later\n"
+                            + "https://github.com/DPswxz/Netodia-TV/blob/main/LICENSE");
+                });
+          }
+        });
   }
 
   // These names and icons correspond directly to the original Slint sections.
@@ -3764,6 +3957,15 @@ public class MainActivity extends Activity {
     range.requestFocus();
   }
 
+  private boolean seekEditing;
+
+  private void setSeekEditing(boolean editing) {
+    seekEditing = editing;
+    if (progress == null) return;
+    progress.setContentDescription(editing ? "调整播放进度，左右键快退快进，确定或返回退出" : "播放进度，确定后调整，左右键移动焦点");
+    progress.setBackgroundTintList(editing ? ColorStateList.valueOf(ACCENT) : null);
+  }
+
   private void volumeDialog() {
     android.media.AudioManager audio = (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
     rangeDialog(
@@ -3782,7 +3984,7 @@ public class MainActivity extends Activity {
             + "确定：打开或播放\n"
             + "长按确定 / 菜单：歌曲操作与队列管理\n"
             + "返回：关闭弹窗、返回上级并恢复焦点\n"
-            + "进度条：左右快退 / 快进 10 秒，长按加速\n"
+            + "进度条：确定后左右快退 / 快进，确定或返回退出调整\n"
             + "歌词区：上下选择歌词，确定定位到所选句\n"
             + "播放键：播放 / 暂停；切歌键：上一首 / 下一首\n"
             + "上下键可离开进度条和歌词区，避免焦点被困住。");
@@ -3909,22 +4111,30 @@ public class MainActivity extends Activity {
       else remoteHelp();
       return true;
     }
-    if (focused == progress && key == KeyEvent.KEYCODE_DPAD_DOWN) {
-      focus.focus("player:循环模式");
-      return true;
-    }
-    if (focused == progress && key == KeyEvent.KEYCODE_DPAD_UP) {
-      focus.focus("player:播放 / 暂停");
-      return true;
-    }
-    if (focused == progress
-        && (key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT)) {
-      if (s != null)
-        s.seek(
-            s.position()
-                + (key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1)
-                    * (event.getRepeatCount() > 5 ? 30000 : 10000));
-      return true;
+    if (focused == progress) {
+      if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) {
+        if (event.getRepeatCount() == 0) setSeekEditing(!seekEditing);
+        return true;
+      }
+      if (key == KeyEvent.KEYCODE_BACK && seekEditing) {
+        setSeekEditing(false);
+        return true;
+      }
+      if (key == KeyEvent.KEYCODE_DPAD_DOWN || key == KeyEvent.KEYCODE_DPAD_UP) {
+        setSeekEditing(false);
+        if (key == KeyEvent.KEYCODE_DPAD_DOWN) focus.focus("player:循环模式");
+        else focus.focus("player:播放 / 暂停");
+        return true;
+      }
+      if (seekEditing
+          && (key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT)) {
+        if (s != null)
+          s.seek(
+              s.position()
+                  + (key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1)
+                      * (event.getRepeatCount() > 5 ? 30000 : 10000));
+        return true;
+      }
     }
     if (focusKey.equals("lyrics:panel")
         && (key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT)) {

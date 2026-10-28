@@ -4,7 +4,7 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.5)
+## Current TV controls (0.5.6)
 
 - Fixed square navigation tiles with an icon above the label; 最近 / 音乐库 use short names.
 - Settings option values stay on one line, with controls expanding to fit their text.
@@ -37,9 +37,12 @@ preview build, not a store release. Minimum Android 8 (API 26); target API 30 fo
 ## Controls and features
 
 - D-pad navigates buttons and lists; OK selects; Back returns to discovery or leaves the app.
+- On the progress bar, left/right moves focus. OK enters seek mode; OK/Back leaves seek mode.
+- Lyrics use a subtle focus marker and resume following three seconds after focus leaves them.
+- About uses grouped author/license cards and local log viewing/report export.
 - Discover, charts, song search (first 30 results), playlist playback (first page for account playlists).
 - QR login, app-private session persistence, logout; no credentials are logged or backed up.
-- Previous/next, pause/resume, seek bar, media keys; lyrics page left/right seeks 10 seconds.
+- Previous/next, pause/resume, seek bar and media keys; seek mode adjusts by 10 seconds, accelerating on held keys.
 - Timestamped original lyrics; account/track restrictions and trial playback follow the upstream client.
 - Playback remains active when leaving the activity. Settings can stop playback and exit.
 
@@ -51,7 +54,7 @@ and automatic list loading are implemented. QR login requires authorization in t
 
 Gapless playback, crossfade, audio visualization, exclusive output, ReplayGain, downloads,
 voice search and production credential encryption are not implemented. Unavailable desktop
-settings are hidden. Some service/about settings still differ from the desktop application.
+settings are hidden. Some service settings still differ from the desktop application.
 The Rust bridge includes the upstream lyric lookup/romanization helpers; the online fallback
 and its separate settings controls are not yet connected in the TV frontend.
 

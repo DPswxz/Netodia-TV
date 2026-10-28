@@ -116,6 +116,19 @@ final class TvUi {
     return d;
   }
 
+  static StateListDrawable lyricFocus(Context c) {
+    StateListDrawable states = new StateListDrawable();
+    LayerDrawable selected =
+        new LayerDrawable(new Drawable[] {fill(c, 0x0cffffff, 8), fill(c, ACCENT, 2)});
+    selected.setLayerWidth(1, dp(c, 2));
+    selected.setLayerHeight(1, dp(c, 24));
+    selected.setLayerGravity(1, Gravity.LEFT | Gravity.CENTER_VERTICAL);
+    states.addState(new int[] {android.R.attr.state_focused}, selected);
+    states.addState(new int[] {android.R.attr.state_pressed}, fill(c, 0x14ffffff, 8));
+    states.addState(new int[] {}, fill(c, Color.TRANSPARENT, 8));
+    return states;
+  }
+
   static TextView text(Context c, String label, int size, int color) {
     TextView v = new TextView(c);
     v.setText(label);
