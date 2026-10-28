@@ -152,3 +152,14 @@ __pycache__/
 /scratch/
 /tmp/
 *.log
+
+# Android TV local outputs and development signing key
+/android-tv/build/
+/android-tv/.debug.keystore
+
+# Local TV screenshots, device inspections and validation journals
+/android-tv/docs/
+/android-tv/VALIDATION.md
+/android-tv/UI_PARITY.md
+*.jks
+*.keystore

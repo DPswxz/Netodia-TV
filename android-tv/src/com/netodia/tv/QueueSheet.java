@@ -1,0 +1,384 @@
+package com.netodia.tv;
+
+import static com.netodia.tv.TvUi.*;
+
+import android.app.Activity;
+import android.app.Dialog;
+import android.graphics.Color;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.*;
+import android.widget.*;
+import java.util.*;
+import org.json.*;
+
+/** The original floating queue sheet, with explicit remote routes for every row action. */
+final class QueueSheet {
+  interface Menu {
+    void open(JSONObject song, int index);
+  }
+
+  private final Activity host;
+  private final PlaybackService player;
+  private final android.graphics.Rect panelBounds;
+  private final Menu menu;
+  private final java.util.function.Consumer<JSONObject> like;
+  private final Runnable clear;
+  private final Dialog dialog;
+  private final Handler main = new Handler(Looper.getMainLooper());
+  private LinearLayout rows;
+  private TextView count;
+  private Button clearButton;
+  private View origin;
+  private int lastRevision = -1, lastIndex = -2, visible = 80;
+  private ScrollView scroll;
+  private boolean rebuilding;
+  private final ArrayList<View> tracks = new ArrayList<>();
+  private final Runnable listener = this::refresh;
+  private final Set<Integer> selected = new TreeSet<>();
+
+  private int d(float value) {
+    return dp(host, value);
+  }
+
+  private LinearLayout.LayoutParams lp(int width, int height) {
+    return new LinearLayout.LayoutParams(
+        width < 0 ? width : d(width), height < 0 ? height : d(height));
+  }
+
+  QueueSheet(
+      Activity host,
+      PlaybackService player,
+      android.graphics.Rect panelBounds,
+      Menu menu,
+      java.util.function.Consumer<JSONObject> like,
+      Runnable clear) {
+    this.host = host;
+    this.player = player;
+    this.panelBounds = panelBounds;
+    this.menu = menu;
+    this.like = like;
+    this.clear = clear;
+    dialog = new Dialog(host);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LinearLayout panel = column(host);
+    android.graphics.drawable.GradientDrawable frame = fill(host, MANTLE, 16);
+    frame.setStroke(d(1), BORDER);
+    panel.setBackground(frame);
+    panel.setClipToOutline(true);
+    LinearLayout header = row(host);
+    header.setPadding(d(20), d(10), d(16), d(10));
+    panel.addView(header, lp(-1, 60));
+    LinearLayout title = column(host);
+    header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
+    TextView name = text(host, "队列", 20, TEXT);
+    heading(name);
+    title.addView(name);
+    count = text(host, "", 14, MUTED);
+    title.addView(count);
+    clearButton =
+        button(
+            host,
+            "清空队列",
+            () -> {
+              if (selected.isEmpty()) {
+                clear.run();
+                return;
+              }
+              ArrayList<Integer> all = new ArrayList<>(selected);
+              Collections.sort(all, Collections.reverseOrder());
+              selected.clear();
+              for (int at : all) player.remove(at);
+              lastRevision = -1;
+              refresh();
+            });
+    clearButton.setTextSize(13 * SCALE);
+    clearButton.setPadding(d(12), 0, d(12), 0);
+    clearButton.setBackground(focus(host, true));
+    header.addView(clearButton, lp(94, 36));
+    Button close = icon("close", "关闭队列", this::dismiss);
+    header.addView(close, lp(32, 36));
+    View line = new View(host);
+    line.setBackgroundColor(BORDER);
+    panel.addView(line, lp(-1, 1));
+    scroll = new ScrollView(host);
+    scroll.setFocusable(false);
+    scroll.setOnScrollChangeListener(
+        (v, x, y, ox, oy) -> {
+          if (!rebuilding
+              && y > oy
+              && rows != null
+              && rows.getHeight() - y - v.getHeight() < d(120)) more();
+        });
+    scroll.setFillViewport(true);
+    scroll.setPadding(d(8), 0, d(8), 0);
+    panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+    rows = column(host);
+    rows.setPadding(0, d(8), 0, d(8));
+    scroll.addView(rows);
+    dialog.setContentView(panel);
+    dialog.setOnDismissListener(
+        ignored -> {
+          player.unobserve(listener);
+          if (origin != null && origin.isAttachedToWindow()) origin.requestFocus();
+        });
+    clearButton.setNextFocusRightId(close.getId());
+    close.setNextFocusLeftId(clearButton.getId());
+    close.setOnKeyListener(
+        (v, key, event) -> {
+          if (event.getAction() == KeyEvent.ACTION_DOWN
+              && key == KeyEvent.KEYCODE_DPAD_DOWN
+              && !tracks.isEmpty()) {
+            tracks.get(0).requestFocus();
+            return true;
+          }
+          return false;
+        });
+    clearButton.setOnKeyListener(
+        (v, key, event) -> {
+          if (event.getAction() == KeyEvent.ACTION_DOWN
+              && key == KeyEvent.KEYCODE_DPAD_DOWN
+              && !tracks.isEmpty()) {
+            tracks.get(0).requestFocus();
+            return true;
+          }
+          return false;
+        });
+  }
+
+  private Button icon(String glyph, String label, Runnable action) {
+    Button b = button(host, "", action);
+    TvUi.icon(b, glyph);
+    b.setPadding(0, 0, 0, 0);
+    b.setTextSize(21 * SCALE);
+    b.setFocusableInTouchMode(true);
+    b.setBackground(focus(host, true));
+    b.setContentDescription(label);
+    return b;
+  }
+
+  void show() {
+    origin = host.getCurrentFocus();
+    visible = Math.max(80, player.index() + 40);
+    dialog.show();
+    Window w = dialog.getWindow();
+    if (w != null) {
+      int width = Math.min(d(640), Math.max(d(400), panelBounds.width() / 2));
+      int height = (int) (panelBounds.height() * .8);
+      int y = panelBounds.bottom - height;
+      w.setBackgroundDrawableResource(android.R.color.transparent);
+      w.setDimAmount(.22f);
+      w.setLayout(width, height);
+      WindowManager.LayoutParams params = w.getAttributes();
+      params.gravity = Gravity.TOP | Gravity.LEFT;
+      params.x = panelBounds.left + (panelBounds.width() - width) / 2;
+      params.y = y;
+      w.setAttributes(params);
+    }
+    player.observe(listener);
+    refresh();
+    main.post(
+        () -> {
+          if (!tracks.isEmpty()) {
+            View active = rows.findViewWithTag("track:" + player.index());
+            if (active != null) active.requestFocus();
+            else tracks.get(0).requestFocus();
+          } else clearButton.requestFocus();
+        });
+  }
+
+  boolean isShowing() {
+    return dialog.isShowing();
+  }
+
+  void dismiss() {
+    dialog.dismiss();
+  }
+
+  private void refresh() {
+    if (!dialog.isShowing()) return;
+    if (lastRevision == player.queueRevision && lastIndex == player.index()) return;
+    lastRevision = player.queueRevision;
+    lastIndex = player.index();
+    View old = dialog.getCurrentFocus();
+    Object oldTag = old == null ? null : old.getTag();
+    int oldScroll = scroll.getScrollY();
+    rebuilding = true;
+    rows.removeAllViews();
+    tracks.clear();
+    setText(count, player.queue().length() + " 首曲目");
+    setText(clearButton, selected.isEmpty() ? "清空队列" : "移除选中(" + selected.size() + ")");
+    if (player.queue().length() == 0) {
+      TextView empty = text(host, "播放队列为空", 18, MUTED);
+      empty.setGravity(Gravity.CENTER);
+      empty.setPadding(0, d(50), 0, 0);
+      rows.addView(empty);
+      return;
+    }
+    visible = Math.max(visible, player.index() + 40);
+    int end = Math.min(visible, player.queue().length());
+    appendRows(0, end);
+    main.post(
+        () -> {
+          scroll.scrollTo(0, oldScroll);
+          rebuilding = false;
+        });
+    View focusAfterBuild = dialog.getCurrentFocus();
+    if (oldTag != null)
+      main.post(
+          () -> {
+            if (dialog.getCurrentFocus() != focusAfterBuild) return;
+            View restored = rows.findViewWithTag(oldTag);
+            if (restored != null) restored.requestFocus();
+            else if (!tracks.isEmpty()) tracks.get(tracks.size() - 1).requestFocus();
+          });
+  }
+
+  private void appendRows(int from, int end) {
+    for (int i = from; i < end; i++) {
+      final int at = i;
+      JSONObject song = player.queue().optJSONObject(i);
+      if (song == null) continue;
+      boolean active = i == player.index();
+      LinearLayout item = row(host);
+      item.setPadding(d(8), d(5), d(8), d(5));
+      item.setBackground(focus(host, true));
+      item.setAddStatesFromChildren(true);
+      rows.addView(item, lp(-1, 50));
+      Button select =
+          icon(
+              selected.contains(i) ? "check_box" : "check_box_outline_blank",
+              "选择 " + song.optString("name"),
+              () -> {
+                if (!selected.add(at)) selected.remove(at);
+                lastRevision = -1;
+                refresh();
+              });
+      select.setTag("select:" + i);
+      select.setTextColor(selected.contains(i) ? ACCENT : MUTED);
+      item.addView(select, lp(24, 36));
+      ImageView image = cover(host, 36);
+      item.addView(image);
+      Artwork.load(image, MusicData.cover(song));
+      LinearLayout mainSong = row(host);
+      mainSong.setPadding(d(11), 0, d(8), 0);
+      item.addView(mainSong, new LinearLayout.LayoutParams(0, -1, 1));
+      mainSong.setFocusableInTouchMode(true);
+      TvUi.eagerTouchFocus(mainSong);
+      mainSong.setFocusable(true);
+      mainSong.setId(View.generateViewId());
+      mainSong.setTag("track:" + i);
+      mainSong.setContentDescription((i + 1) + "，" + song.optString("name"));
+      mainSong.setBackgroundColor(Color.TRANSPARENT);
+      TextView name = text(host, song.optString("name"), 16, active ? ACCENT : TEXT);
+      name.setSingleLine();
+      name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+      mainSong.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
+      TextView duration = text(host, MusicData.time((int) song.optLong("dt")), 12, TEXT);
+      duration.setGravity(Gravity.RIGHT);
+      mainSong.addView(duration, lp(43, -2));
+      Button favorite =
+          icon(
+              "favorite",
+              "喜欢 " + song.optString("name"),
+              () -> {
+                like.accept(song);
+                lastRevision = -1;
+                refresh();
+              });
+      favorite.setTextColor(MusicData.favorite(host, song) ? ACCENT : TEXT);
+      favorite.setTypeface(MusicData.favorite(host, song) ? TvUi.filled : TvUi.symbols);
+      favorite.setTag("favorite:" + i);
+      item.addView(favorite, lp(29, 36));
+      Button remove = icon("close", "移除 " + song.optString("name"), () -> player.remove(at));
+      remove.setTag("remove:" + i);
+      item.addView(remove, lp(29, 36));
+      mainSong.setOnClickListener(v -> player.playIndex(at));
+      mainSong.setOnLongClickListener(
+          v -> {
+            dismiss();
+            menu.open(song, at);
+            return true;
+          });
+      tracks.add(mainSong);
+      favorite.setVisibility(View.INVISIBLE);
+      remove.setVisibility(View.INVISIBLE);
+      marker(select, at, selected.contains(at));
+      for (View part : new View[] {mainSong, select, favorite, remove})
+        part.setOnFocusChangeListener(
+            (v, has) -> {
+              boolean activeRow = item.hasFocus();
+              marker(select, at, selected.contains(at) || activeRow);
+              favorite.setVisibility(activeRow ? View.VISIBLE : View.INVISIBLE);
+              remove.setVisibility(activeRow ? View.VISIBLE : View.INVISIBLE);
+            });
+      mainSong.setOnKeyListener(
+          (v, key, event) -> {
+            if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (key == KeyEvent.KEYCODE_DPAD_LEFT) {
+              select.requestFocus();
+              return true;
+            }
+            if (key == KeyEvent.KEYCODE_DPAD_RIGHT) {
+              favorite.requestFocus();
+              return true;
+            }
+            if (key == KeyEvent.KEYCODE_MENU) {
+              mainSong.performLongClick();
+              return true;
+            }
+            return vertical(at, key);
+          });
+      select.setNextFocusRightId(mainSong.getId());
+      favorite.setNextFocusLeftId(mainSong.getId());
+      favorite.setNextFocusRightId(remove.getId());
+      remove.setNextFocusLeftId(favorite.getId());
+      for (View action : new View[] {select, favorite, remove})
+        action.setOnKeyListener(
+            (v, key, event) -> event.getAction() == KeyEvent.ACTION_DOWN && vertical(at, key));
+    }
+  }
+
+  private void marker(Button select, int index, boolean checkbox) {
+    select.setTypeface(checkbox ? TvUi.symbols : TvUi.font);
+    select.setTextSize((checkbox ? 15 : 14) * SCALE);
+    select.setText(
+        checkbox ? (selected.contains(index) ? "check" : "") : Integer.toString(index + 1));
+    if (checkbox) {
+      android.graphics.drawable.GradientDrawable box =
+          fill(host, selected.contains(index) ? ACCENT : Color.TRANSPARENT, 4);
+      box.setStroke(d(1), selected.contains(index) ? ACCENT : BORDER);
+      select.setBackground(
+          new android.graphics.drawable.InsetDrawable(box, d(4), d(10), d(4), d(10)));
+      select.setTextColor(MANTLE);
+    } else select.setBackground(focus(host, true));
+  }
+
+  void invalidate() {
+    lastRevision = -1;
+    refresh();
+  }
+
+  private void more() {
+    if (rebuilding || visible >= player.queue().length()) return;
+    rebuilding = true;
+    int from = tracks.size();
+    visible = Math.min(player.queue().length(), visible + 80);
+    appendRows(from, visible);
+    rebuilding = false;
+  }
+
+  private boolean vertical(int at, int key) {
+    if (key != KeyEvent.KEYCODE_DPAD_UP && key != KeyEvent.KEYCODE_DPAD_DOWN) return false;
+    int next = at + (key == KeyEvent.KEYCODE_DPAD_UP ? -1 : 1);
+    if (key == KeyEvent.KEYCODE_DPAD_DOWN
+        && at >= tracks.size() - 3
+        && visible < player.queue().length()) {
+      more();
+    }
+    if (next < 0) clearButton.requestFocus();
+    else if (next < tracks.size()) tracks.get(next).requestFocus();
+
+    return true;
+  }
+}

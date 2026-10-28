@@ -1,4 +1,6 @@
-# Netodia
+# Netodia TV
+
+此仓库包含 Netodia 的 Android TV 移植。构建、电视安装与功能范围请查看 [Android TV 说明](android-tv/README.md)，电脑端镜像控制请查看 [电视镜像遥控器](android-tv/tools/tv-remote/README.md)。原桌面版代码与署名保留如下。
 
 [![License: AGPL-3.0-or-later](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange.svg)](https://www.rust-lang.org/)

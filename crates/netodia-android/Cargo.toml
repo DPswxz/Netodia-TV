@@ -1,0 +1,26 @@
+[package]
+name = "netodia-android"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+netodia-net = { path = "../netodia-net" }
+netodia-core = { path = "../netodia-core" }
+jni = "0.21.1"
+tokio.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+qrcode.workspace = true
+rustls = { version = "0.23", default-features = false, features = ["std", "aws_lc_rs", "tls12"] }
+webpki-roots = "1"
+
+regex = "1"
+uroman.workspace = true
+kakasi.workspace = true
+unicode-script.workspace = true

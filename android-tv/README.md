@@ -1,0 +1,87 @@
+# Netodia TV (Android preview)
+
+Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Rust JNI bridge.
+The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
+AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
+
+## Current TV controls (0.5.4)
+
+- Fixed square navigation tiles with an icon above the label; 最近 / 音乐库 use short names.
+- Settings option values stay on one line, with controls expanding to fit their text.
+- All tabs show text. Focus stays on the user's current control across asynchronous loads.
+- Playlist grids, song lists, folders and queue scroll vertically and load batches automatically.
+  There are no Previous/Next/Show More controls. Returning from a detail restores the prior item.
+- Recommended playlists include daily recommendations and the returned private-radar playlist.
+- The local mirror in `tools/tv-remote/` supports clickable video, wheel scrolling and D-pad buttons.
+
+## Build
+
+Requires Rust 1.97.0, JDK 21, Android SDK platform 35, build tools 36.0.0 and NDK r28.
+
+```sh
+rustup target add armv7-linux-androideabi
+export ANDROID_HOME=/path/to/android-sdk
+export ANDROID_NDK_ROOT="$ANDROID_HOME/ndk/28.2.13676358"
+export JAVA_HOME=/path/to/jdk
+python3 android-tv/build.py
+adb install -r android-tv/build/Netodia-TV-armv7-debug.apk
+adb shell am start -n com.netodia.tv/.MainActivity
+```
+
+The local development key is generated automatically and ignored by Git. This APK is a
+preview build, not a store release. Minimum Android 8 (API 26); target API 30 for this TV.
+
+## Controls and features
+
+- D-pad navigates buttons and lists; OK selects; Back returns to discovery or leaves the app.
+- Discover, charts, song search (first 30 results), playlist playback (first page for account playlists).
+- QR login, app-private session persistence, logout; no credentials are logged or backed up.
+- Previous/next, pause/resume, seek bar, media keys; lyrics page left/right seeks 10 seconds.
+- Timestamped original lyrics; account/track restrictions and trial playback follow the upstream client.
+- Playback remains active when leaving the activity. Settings can stop playback and exit.
+
+## Scope and known gaps
+
+This is a TV preview, and UI parity work is still in progress. Local folder scanning,
+artwork, timestamped lyrics with translation/romanization, EQ, playback speed, sleep timer,
+and automatic list loading are implemented. QR login requires authorization in the mobile app.
+
+Gapless playback, crossfade, audio visualization, exclusive output, ReplayGain, downloads,
+voice search and production credential encryption are not implemented. Unavailable desktop
+settings are hidden. Some service/about settings still differ from the desktop application.
+The Rust bridge includes the upstream lyric lookup/romanization helpers; the online fallback
+and its separate settings controls are not yet connected in the TV frontend.
+
+Network operations run on a background worker pool, while the native client serializes its
+own requests. A slow upstream response can still delay subsequent native requests.
+Playback permissions, membership restrictions and trials follow the upstream client.
+
+License: AGPL-3.0-or-later, inherited from Netodia. Keep modified source available with distributions.
+
+## TCL installation through 多屏互动
+
+If ADB reports `INSTALL_FAILED_VERIFICATION_FAILURE`, use the TV's native multi-screen
+app-push protocol. This does not disable the system installer or its verifier.
+The helper is vendored from [aerial-tv](https://github.com/pengchujin/aerial-tv/blob/cec12af5cf40b0dae21e9c336325fac47d832b0d/tools/tcast-push.py),
+with its MIT license retained in tools/LICENSE-aerial-tv.txt.
+
+Run from the repository root, with ADB connected to the TV:
+
+```sh
+adb reverse tcp:8765 tcp:8765
+python3 -m http.server 8765 --bind 127.0.0.1 --directory android-tv/build
+```
+
+Keep that server running; in another terminal:
+
+```sh
+python3 android-tv/tools/tcast-push.py TV_IP http://127.0.0.1:8765/Netodia-TV-armv7-debug.apk com.netodia.tv 'Netodia TV' 1 180
+```
+
+When 多屏互动 asks, press Right then OK to select 同意. Wait for `Installed.`,
+then stop the HTTP server and run `adb reverse --remove tcp:8765`.
+Launch with `adb shell am start -W -n com.netodia.tv/.MainActivity`.
+
+Replace `TV_IP` with your television's LAN address. Use `adb -s TV_IP:5555` when
+multiple devices are connected. Device addresses, credentials, screenshots and local
+validation journals are not distributed in this repository.

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>电视镜像遥控器</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#17191e;color:#f4f5f7;font:15px -apple-system,BlinkMacSystemFont,sans-serif}header{padding:22px 28px;display:flex;align-items:center;gap:20px}h1{font-size:21px;margin:0}#status{color:#a8b2c1;font-size:13px}main{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:22px;padding:0 28px 28px}.screen{align-self:start;background:#000;border:1px solid #353942;border-radius:12px;overflow:hidden;aspect-ratio:16/9;display:flex;align-items:center}.screen canvas{cursor:pointer;touch-action:none;display:block;width:100%;height:100%;object-fit:contain}.remote{background:#242831;border:1px solid #383e49;border-radius:25px;padding:22px 18px}.brand{text-align:center;letter-spacing:3px;color:#a6b1c2;font-size:12px;margin:0 0 22px}button{border:1px solid #4b5361;background:#343b48;color:#fff;border-radius:12px;font:inherit;min-height:45px;cursor:pointer;touch-action:manipulation}button:hover{background:#485467}button:active,.pressed{background:#60cdff!important;color:#10202a;transform:scale(.96)}button:focus-visible{outline:2px solid #60cdff;outline-offset:3px}.dpad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:20px 0}.dpad button{height:61px;font-size:22px}.dpad .ok{background:#60cdff;color:#14242d;font-size:17px;font-weight:600}.row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.pair{grid-template-columns:repeat(2,1fr)}.launch{width:100%;margin-top:15px;background:#244b60;border-color:#397695}p{font-size:12px;line-height:1.7;color:#a8b2c1;margin:20px 0 0}#notice{color:#60cdff;min-height:20px;font-size:12px;text-align:center;margin-top:12px}@media(max-width:800px){main{grid-template-columns:1fr}.remote{max-width:330px;justify-self:center;width:100%}header{display:block}#status{display:block;margin-top:10px}}
+</style>
+<header><h1>电视镜像遥控器</h1><span id="status">正在连接电视…</span></header>
+<main><div class="screen"><canvas id="screen" width="1280" height="720"></canvas></div><aside class="remote">
+<div class="brand">NETODIA · TV REMOTE</div>
+<div class="row"><button data-key="back">返回</button><button data-key="home">主页</button><button data-key="menu">菜单</button></div>
+<div class="dpad"><span></span><button data-key="up" aria-label="上">▲</button><span></span><button data-key="left" aria-label="左">◀</button><button class="ok" data-key="ok">确定</button><button data-key="right" aria-label="右">▶</button><span></span><button data-key="down" aria-label="下">▼</button><span></span></div>
+<div class="row"><button data-key="previous">上一首</button><button data-key="play">播放/暂停</button><button data-key="next">下一首</button></div>
+<div class="row"><button data-key="volume_down">音量 −</button><button data-key="mute">静音</button><button data-key="volume_up">音量 +</button></div>
+<button class="launch" id="launch">打开 Netodia TV</button><div id="notice"></div>
+<p>点击画面操作电视，滚轮上下滚动，右键返回。也支持方向键、回车确定、Esc 返回、空格播放/暂停。<br>H.264 视频实时预览 · 持续连接遥控 · 不含电视声音。</p>
+</aside></main>
+<script>
+const token='__TOKEN__',screen=document.getElementById('screen'),status=document.getElementById('status'),notice=document.getElementById('notice');
+let queue=Promise.resolve(),last=-1,oldUrl,frames=0;
+function send(key,point){queue=queue.then(async()=>{try{const r=await fetch(key==='scroll'?'/scroll':key==='tap'?'/tap':key==='launch'?'/launch':'/key',{method:'POST',headers:{'Content-Type':'application/json','X-TV-Token':token},body:JSON.stringify(point||{key})});const d=await r.json();if(!r.ok)throw Error(d.error);notice.textContent=key==='launch'?'已发送打开指令':key==='tap'?'已点击电视画面':'已发送';}catch(e){notice.textContent='操作失败：'+e.message;}});}
+document.querySelectorAll('[data-key]').forEach(b=>b.onclick=()=>send(b.dataset.key));document.getElementById('launch').onclick=()=>send('launch');
+const keys={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'ok',Escape:'back',Backspace:'back',' ':'play'};
+document.addEventListener('keydown',e=>{if(keys[e.key]){e.preventDefault();send(keys[e.key]);}});
+function screenPoint(clientX,clientY){
+ const rect=screen.getBoundingClientRect();
+ const scale=Math.min(rect.width/screen.width,rect.height/screen.height);
+ const width=screen.width*scale,height=screen.height*scale;
+ const left=rect.left+(rect.width-width)/2,top=rect.top+(rect.height-height)/2;
+ if(clientX<left||clientX>=left+width||clientY<top||clientY>=top+height)return null;
+ return {x:Math.floor((clientX-left)/scale),y:Math.floor((clientY-top)/scale),width:screen.width,height:screen.height};
+}
+screen.addEventListener('click',e=>{const point=screenPoint(e.clientX,e.clientY);if(point)send('tap',point);});
+let wheelTimer, wheelY=0, wheelX=0, wheelPoint;
+screen.addEventListener('wheel',e=>{const point=screenPoint(e.clientX,e.clientY);if(!point)return;e.preventDefault();wheelPoint=point;wheelY+=e.deltaY;wheelX+=e.deltaX;if(!wheelTimer)wheelTimer=setTimeout(()=>{send('scroll',{...wheelPoint,vertical:-Math.max(-4,Math.min(4,wheelY/100)),horizontal:-Math.max(-4,Math.min(4,wheelX/100))});wheelY=0;wheelX=0;wheelTimer=null;},40);},{passive:false});
+screen.addEventListener('contextmenu',e=>{e.preventDefault();send('back');});
+const ctx=screen.getContext('2d',{alpha:false});
+let decoder,ws;
+function connectVideo(){
+ if(!('VideoDecoder' in window)){status.textContent='当前浏览器不支持视频解码，请使用 Chrome 或 Edge 打开本页';return;}
+ decoder=new VideoDecoder({output:frame=>{if(screen.width!==frame.displayWidth||screen.height!==frame.displayHeight){screen.width=frame.displayWidth;screen.height=frame.displayHeight;}ctx.drawImage(frame,0,0);frame.close();},error:e=>{status.textContent='视频解码错误：'+e.message;}});
+ decoder.configure({codec:'avc1.420028',optimizeForLatency:true});
+ ws=new WebSocket('ws://'+location.host+'/video');ws.binaryType='arraybuffer';
+ ws.onmessage=e=>{const b=new Uint8Array(e.data),v=new DataView(e.data);const key=b[0]===1,ts=Number(v.getBigUint64(1));if(decoder.state==='configured'){try{decoder.decode(new EncodedVideoChunk({type:key?'key':'delta',timestamp:ts,data:b.subarray(9)}));}catch(e){status.textContent=e.message;}}};
+ ws.onclose=()=>{if(decoder.state!=='closed')decoder.close();setTimeout(connectVideo,1000);};
+}
+async function refresh(){try{const s=await(await fetch('/status')).json();if(s.serverId&&s.serverId!==token.slice(0,8)){location.reload();return;}status.textContent=s.error||s.device+' · 实时视频 · 低延迟遥控';}catch(e){status.textContent='连接已断开，请检查工具终端';}setTimeout(refresh,2000);}connectVideo();refresh();
+</script></html>
