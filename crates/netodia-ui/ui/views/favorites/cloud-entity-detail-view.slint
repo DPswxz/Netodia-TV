@@ -2,183 +2,147 @@ import { Theme } from "../../theme.slint";
 import { Favorites } from "../../globals/curated.slint";
 import { CloudEntityDetail } from "../../globals/cloud-entity-detail.slint";
 import { CloudTrackActions } from "../../globals/cloud-track-actions.slint";
-import { Nav } from "../../globals/nav.slint";
 import { ArtworkImage } from "../../components/artwork-image.slint";
 import { ActionPill, PillButton } from "../../components/action-pill.slint";
-import { ViewTransition } from "../../components/view-transition.slint";
 import { CloudPlaylistTracks } from "../my-library/cloud-playlist-tracks.slint";
 
 // Online album/artist drill-ins share this overlay across Favorites, history and playlists.
 // Closing it restores the original list, filter and scroll position underneath.
 export component CloudEntityDetailView inherits Rectangle {
-    // Like DialogOverlay, the controller stays alive while its contents finish fading out.
-    // One eased value drives both alpha and the same 32 px slide as ViewTransition.
-    private property <float> t: CloudEntityDetail.open ? 1.0 : 0.0;
-    animate t { duration: Theme.dur-spatial; easing: cubic-bezier(0.2, 0, 0, 1); }
-    private property <bool> content-mounted: CloudEntityDetail.open;
-    private property <bool> watched-open: CloudEntityDetail.open;
-    changed watched-open => {
-        if (root.watched-open) {
-            root.content-mounted = true;
-        }
-    }
-    // The branch predicate is a latch, not the per-frame animation. No list or layout tracker
-    // is mounted from an animation binding's evaluation.
-    private property <bool> fully-closed: !CloudEntityDetail.open && root.t == 0.0;
-    changed fully-closed => {
-        if (root.fully-closed) {
-            root.content-mounted = false;
-            CloudEntityDetail.closed();
-        }
-    }
-    visible: root.content-mounted && !Nav.now-playing-open;
-    opacity: root.t;
-    x: (1.0 - root.t) * 32px;
+    background: Theme.base;
 
-    if root.content-mounted: ViewTransition {
-        width: 100%;
-        height: 100%;
-        background: Theme.base;
-        // The outer curve owns open/close. Replacing an already-open entity or finishing a slow
-        // fetch replays this inner fade. Likes, cover fetches and column changes leave it alone.
-        enabled: root.t == 1.0;
-        slide: false;
-        replay-key: CloudEntityDetail.kind + ":" + CloudEntityDetail.remote-id
-            + (CloudEntityDetail.loading ? ":loading" : ":ready");
+    // Covers gaps between controls so presses cannot reach the list behind the overlay.
+    TouchArea { }
 
-        // Covers gaps between controls so presses cannot reach the list behind the overlay.
-        TouchArea { }
+    VerticalLayout {
+        padding: Theme.pad-lg;
+        spacing: Theme.pad-md;
 
-        VerticalLayout {
-            padding: Theme.pad-lg;
+        HorizontalLayout {
+            height: 104px;
             spacing: Theme.pad-md;
 
-            HorizontalLayout {
-                height: 104px;
-                spacing: Theme.pad-md;
+            ArtworkImage {
+                tile-size: 88px;
+                fallback-icon: CloudEntityDetail.kind == "artist" ? "person" : "album";
+                artwork-path: CloudEntityDetail.artwork-path;
+                cover: Favorites.request-album-cover(
+                    CloudEntityDetail.artwork-path, Favorites.album-covers-generation,
+                );
+            }
 
-                ArtworkImage {
-                    tile-size: 88px;
-                    fallback-icon: CloudEntityDetail.kind == "artist" ? "person" : "album";
-                    artwork-path: CloudEntityDetail.artwork-path;
-                    cover: Favorites.request-album-cover(
-                        CloudEntityDetail.artwork-path, Favorites.album-covers-generation,
-                    );
+            VerticalLayout {
+                vertical-stretch: 1;
+                alignment: center;
+                Text {
+                    text: CloudEntityDetail.title;
+                    color: Theme.text;
+                    font-size: Theme.font-size-lg;
+                    font-weight: 700;
+                    overflow: elide;
                 }
-
-                VerticalLayout {
-                    vertical-stretch: 1;
-                    alignment: center;
-                    Text {
-                        text: CloudEntityDetail.title;
-                        color: Theme.text;
-                        font-size: Theme.font-size-lg;
-                        font-weight: 700;
-                        overflow: elide;
-                    }
-                    Text {
-                        text: CloudEntityDetail.kind == "artist"
-                            ? @tr("Top songs")
-                            : CloudEntityDetail.subtitle;
-                        color: Theme.subtext0;
-                        font-size: Theme.font-size-row;
-                        overflow: elide;
-                    }
+                Text {
+                    text: CloudEntityDetail.kind == "artist"
+                        ? @tr("Top songs")
+                        : CloudEntityDetail.subtitle;
+                    color: Theme.subtext0;
+                    font-size: Theme.font-size-row;
+                    overflow: elide;
                 }
+            }
 
-                if CloudEntityDetail.kind == "album": ActionPill {
-                    PillButton {
-                        icon: CloudEntityDetail.album-favorite ? "favorite" : "favorite_border";
-                        icon-filled: CloudEntityDetail.album-favorite;
-                        active: CloudEntityDetail.album-favorite;
-                        text: CloudEntityDetail.album-favorite ? @tr("Unfavorite album") : @tr("Favorite album");
-                        enabled: CloudEntityDetail.album-favorite-known && !CloudEntityDetail.album-favorite-pending;
-                        clicked => {
-                            Favorites.set-album-favorite(CloudEntityDetail.remote-id, !CloudEntityDetail.album-favorite);
-                        }
-                    }
-                }
-
-                ActionPill {
-                    PillButton {
-                        icon: "arrow_back";
-                        text: @tr("Back");
-                        clicked => { CloudEntityDetail.close(); }
+            if CloudEntityDetail.kind == "album": ActionPill {
+                PillButton {
+                    icon: CloudEntityDetail.album-favorite ? "favorite" : "favorite_border";
+                    icon-filled: CloudEntityDetail.album-favorite;
+                    active: CloudEntityDetail.album-favorite;
+                    text: CloudEntityDetail.album-favorite ? @tr("Unfavorite album") : @tr("Favorite album");
+                    enabled: CloudEntityDetail.album-favorite-known && !CloudEntityDetail.album-favorite-pending;
+                    clicked => {
+                        Favorites.set-album-favorite(CloudEntityDetail.remote-id, !CloudEntityDetail.album-favorite);
                     }
                 }
             }
 
-            if CloudEntityDetail.kind == "album" && CloudEntityDetail.album-favorite-error != "": HorizontalLayout {
+            ActionPill {
+                PillButton {
+                    icon: "arrow_back";
+                    text: @tr("Back");
+                    clicked => { CloudEntityDetail.close(); }
+                }
+            }
+        }
+
+        if CloudEntityDetail.kind == "album" && CloudEntityDetail.album-favorite-error != "": HorizontalLayout {
+            spacing: Theme.pad-md;
+            Text {
+                text: CloudEntityDetail.album-favorite-error;
+                color: Theme.subtext0;
+                wrap: word-wrap;
+                horizontal-stretch: 1;
+            }
+            ActionPill {
+                PillButton {
+                    icon: "refresh";
+                    text: @tr("Retry");
+                    enabled: !CloudEntityDetail.album-favorite-pending;
+                    clicked => { Favorites.load-album-favorite(CloudEntityDetail.remote-id); }
+                }
+            }
+        }
+
+        Rectangle {
+            vertical-stretch: 1;
+            clip: true;
+
+            if !CloudEntityDetail.loading && CloudEntityDetail.error == "": CloudPlaylistTracks {
+                width: 100%;
+                height: 100%;
+                rows: CloudEntityDetail.tracks;
+                columns <=> Favorites.track-columns;
+                sort-field: "position";
+                sort-dir: "asc";
+                position-field: "position";
+                show-number: true;
+                favorite-clickable: true;
+                sortable: false;
+                cloud-entity-links: true;
+                play-track(id, index) => { CloudEntityDetail.play-cloud-row(id, index); }
+                toggle-favorite(id, liked) => { CloudTrackActions.toggle-favorite(id, liked); }
+            }
+
+            if CloudEntityDetail.loading: Text {
+                x: Theme.pad-lg;
+                y: Theme.pad-lg;
+                text: @tr("Loading…");
+                color: Theme.subtext0;
+            }
+
+            if !CloudEntityDetail.loading && CloudEntityDetail.error != "": VerticalLayout {
+                x: Theme.pad-lg;
+                y: Theme.pad-lg;
+                width: parent.width - 2 * Theme.pad-lg;
                 spacing: Theme.pad-md;
                 Text {
-                    text: CloudEntityDetail.album-favorite-error;
+                    text: CloudEntityDetail.error;
                     color: Theme.subtext0;
                     wrap: word-wrap;
-                    horizontal-stretch: 1;
                 }
                 ActionPill {
                     PillButton {
                         icon: "refresh";
                         text: @tr("Retry");
-                        enabled: !CloudEntityDetail.album-favorite-pending;
-                        clicked => { Favorites.load-album-favorite(CloudEntityDetail.remote-id); }
+                        clicked => { CloudEntityDetail.retry(); }
                     }
                 }
             }
 
-            Rectangle {
-                vertical-stretch: 1;
-                clip: true;
-
-                if !CloudEntityDetail.loading && CloudEntityDetail.error == "": CloudPlaylistTracks {
-                    width: 100%;
-                    height: 100%;
-                    rows: CloudEntityDetail.tracks;
-                    columns <=> Favorites.track-columns;
-                    sort-field: "position";
-                    sort-dir: "asc";
-                    position-field: "position";
-                    show-number: true;
-                    favorite-clickable: true;
-                    sortable: false;
-                    cloud-entity-links: true;
-                    play-track(id, index) => { CloudEntityDetail.play-cloud-row(id, index); }
-                    toggle-favorite(id, liked) => { CloudTrackActions.toggle-favorite(id, liked); }
-                }
-
-                if CloudEntityDetail.loading: Text {
-                    x: Theme.pad-lg;
-                    y: Theme.pad-lg;
-                    text: @tr("Loading…");
-                    color: Theme.subtext0;
-                }
-
-                if !CloudEntityDetail.loading && CloudEntityDetail.error != "": VerticalLayout {
-                    x: Theme.pad-lg;
-                    y: Theme.pad-lg;
-                    width: parent.width - 2 * Theme.pad-lg;
-                    spacing: Theme.pad-md;
-                    Text {
-                        text: CloudEntityDetail.error;
-                        color: Theme.subtext0;
-                        wrap: word-wrap;
-                    }
-                    ActionPill {
-                        PillButton {
-                            icon: "refresh";
-                            text: @tr("Retry");
-                            clicked => { CloudEntityDetail.retry(); }
-                        }
-                    }
-                }
-
-                if !CloudEntityDetail.loading && CloudEntityDetail.error == ""
-                    && CloudEntityDetail.tracks.length == 0: Text {
-                    x: Theme.pad-lg;
-                    y: Theme.pad-lg;
-                    text: @tr("No tracks available");
-                    color: Theme.subtext0;
-                }
+            if !CloudEntityDetail.loading && CloudEntityDetail.error == ""
+                && CloudEntityDetail.tracks.length == 0: Text {
+                x: Theme.pad-lg;
+                y: Theme.pad-lg;
+                text: @tr("No tracks available");
+                color: Theme.subtext0;
             }
         }
     }

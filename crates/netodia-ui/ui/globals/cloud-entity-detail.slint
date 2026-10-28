@@ -4,6 +4,8 @@ import { TrackListRow } from "../models.slint";
 // detail mounted over the current page so closing it returns to the exact list the user came from.
 export global CloudEntityDetail {
     in-out property <bool> open: false;
+    // Replays the still-mounted source page's shared ViewTransition when a detail closes.
+    in-out property <int> return-tick: 0;
     in-out property <string> kind;          // "album" | "artist"
     in-out property <string> remote-id;     // exact 64-bit NetEase ID
     in-out property <string> title;
@@ -18,9 +20,6 @@ export global CloudEntityDetail {
     in-out property <string> album-favorite-error;
 
     callback close();
-    // The overlay calls this only after its exit curve has finished, while the outgoing rows
-    // are still available to paint the whole fade.
-    callback closed();
     callback retry();
     callback play-cloud-row(string /*song ID*/, int /*index*/);
 }

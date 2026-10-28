@@ -128,17 +128,13 @@ fn wire_entity_detail_actions(ui: &AppWindow, state: &AppState) {
         ENTITY_DETAIL_REQUEST.fetch_add(1, Ordering::Relaxed);
         let Some(ui) = weak.upgrade() else { return };
         let detail = ui.global::<CloudEntityDetail>();
-        detail.set_open(false);
-    });
-
-    let weak = ui.as_weak();
-    ui.global::<CloudEntityDetail>().on_closed(move || {
-        let Some(ui) = weak.upgrade() else { return };
-        let detail = ui.global::<CloudEntityDetail>();
-        // A new drill can interrupt the exit. A late completion must not clear its rows.
-        if detail.get_open() {
+        if !detail.get_open() {
             return;
         }
+        // The same reveal as My Library's grid/detail swap, with the source still mounted so
+        // its filter and scroll position survive the visit.
+        detail.set_return_tick(detail.get_return_tick().wrapping_add(1));
+        detail.set_open(false);
         detail.set_loading(false);
         detail.set_error(SharedString::default());
         detail.set_tracks(empty_track_model());

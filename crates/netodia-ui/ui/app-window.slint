@@ -527,12 +527,16 @@ export component AppWindow inherits Window {
                         width: parent.width;
                         height: parent.height;
                         enter-from: Nav.pending-enter-from;
+                        replay-key: "cloud-return:" + CloudEntityDetail.return-tick;
+                        replay-slide: false;
                         SearchView { width: 100%; height: 100%; }
                     }
                     if !Nav.now-playing-open && Nav.selected-index == 1: ViewTransition {
                         width: parent.width;
                         height: parent.height;
                         enter-from: Nav.pending-enter-from;
+                        replay-key: "cloud-return:" + CloudEntityDetail.return-tick;
+                        replay-slide: false;
                         BrowseView { width: 100%; height: 100%; }
                     }
                     // An artist card and the Songs rows' go-to-{album,artist,genre} actions all
@@ -541,6 +545,8 @@ export component AppWindow inherits Window {
                         width: parent.width;
                         height: parent.height;
                         enter-from: Nav.pending-enter-from;
+                        replay-key: "cloud-return:" + CloudEntityDetail.return-tick;
+                        replay-slide: false;
                         FavoritesView { width: 100%; height: 100%; }
                     }
                     // Five tabs over what used to be nav 3–7, each tab's grid ↔ detail swap
@@ -549,18 +555,24 @@ export component AppWindow inherits Window {
                         width: parent.width;
                         height: parent.height;
                         enter-from: Nav.pending-enter-from;
+                        replay-key: "cloud-return:" + CloudEntityDetail.return-tick;
+                        replay-slide: false;
                         MyLibraryView { width: 100%; height: 100%; }
                     }
                     if !Nav.now-playing-open && Nav.selected-index == 8: ViewTransition {
                         width: parent.width;
                         height: parent.height;
                         enter-from: Nav.pending-enter-from;
+                        replay-key: "cloud-return:" + CloudEntityDetail.return-tick;
+                        replay-slide: false;
                         RecentlyPlayedView { width: 100%; height: 100%; }
                     }
                     if !Nav.now-playing-open && Nav.selected-index == 9: ViewTransition {
                         width: parent.width;
                         height: parent.height;
                         enter-from: Nav.pending-enter-from;
+                        replay-key: "cloud-return:" + CloudEntityDetail.return-tick;
+                        replay-slide: false;
                         SettingsView { width: 100%; height: 100%; }
                     }
                     if !Nav.now-playing-open
@@ -574,6 +586,8 @@ export component AppWindow inherits Window {
                         width: parent.width;
                         height: parent.height;
                         enter-from: Nav.pending-enter-from;
+                        replay-key: "cloud-return:" + CloudEntityDetail.return-tick;
+                        replay-slide: false;
                         PlaceholderView {
                             width: 100%;
                             height: 100%;
@@ -592,12 +606,16 @@ export component AppWindow inherits Window {
                     // Cloud album and artist pages sit over whichever view launched them. The
                     // current section stays mounted underneath, so Back returns to its exact scroll
                     // position and filter state.
-                    // The controller survives a close so its exit can finish before rows and
-                    // the detail body are released.
-                    CloudEntityDetailView {
-                        y: 0;
+                    // My Library's playlist body uses this same fade while its band morphs.
+                    // Back replays the retained source page above instead of running a second
+                    // exit animation over it.
+                    if CloudEntityDetail.open && !Nav.now-playing-open: ViewTransition {
                         width: 100%;
                         height: 100%;
+                        slide: false;
+                        replay-key: CloudEntityDetail.kind + ":" + CloudEntityDetail.remote-id
+                            + (CloudEntityDetail.loading ? ":loading" : ":ready");
+                        CloudEntityDetailView { width: 100%; height: 100%; }
                     }
 
                     // Inside the content panel so its backdrop and slide stay off the sidebar

@@ -2,8 +2,8 @@ import { Theme } from "../theme.slint";
 import { Nav, NavEnterFrom } from "../globals/nav.slint";
 
 // Enter-only wrapper: a branch mount or a new replay-key reveals the arriving list. There is no
-// exit half — Slint's `if` destroys the outgoing view instantly. Overlays that must retain their
-// outgoing content own their closing curve (CloudEntityDetailView).
+// exit half — Slint's `if` destroys the outgoing view instantly. A detail close reveals the
+// returning list through this same wrapper, like My Library's grid/detail router.
 //
 // **A single-shot Timer, not `init`.** `init` runs *after* bindings resolve to their final values,
 // so flipping `shown` there makes `true` the initial value and the view appears instantly; the
@@ -24,12 +24,18 @@ export component ViewTransition inherits Rectangle {
     // For lists replaced in place rather than remounted (folder navigation, or another cloud
     // entity opened from a detail). Sorting, filtering and artwork updates leave this key alone.
     in property <string> replay-key;
+    // A retained source list can fade back in just like My Library's grid beneath its collapsing
+    // header, while its initial page entrance still uses the normal slide.
+    in property <bool> replay-slide: true;
+    private property <bool> replaying: false;
+    private property <length> distance: root.replaying && !root.replay-slide ? 0px : 32px;
     private property <bool> shown: false;
     // Disabled — or suppressed, for the launch mount and the return from the miniplayer — this is
     // `true` from the first evaluation, so the three bindings below never transition.
     private property <bool> settled: !root.enabled || root.shown || Nav.suppress-enter-animation;
 
     changed replay-key => {
+        root.replaying = true;
         root.shown = false;
         reveal.running = true;
     }
@@ -51,9 +57,9 @@ export component ViewTransition inherits Rectangle {
     }
 
     opacity: settled ? 1.0 : 0.0;
-    x: settled || !root.slide ? 0px : (enter-from == NavEnterFrom.right ? 32px
-                                     : enter-from == NavEnterFrom.left  ? -32px : 0px);
-    y: settled || !root.slide ? 0px : (enter-from == NavEnterFrom.above ? -32px : 0px);
+    x: settled || !root.slide ? 0px : (enter-from == NavEnterFrom.right ? root.distance
+                                     : enter-from == NavEnterFrom.left  ? -root.distance : 0px);
+    y: settled || !root.slide ? 0px : (enter-from == NavEnterFrom.above ? -root.distance : 0px);
 
     // A replay first seats the new contents at the starting edge, then reveals them on the next
     // frame. Easing the reset would reverse the entrance before it had time to become visible.
