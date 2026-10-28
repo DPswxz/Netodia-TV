@@ -559,6 +559,8 @@ public class MainActivity extends Activity {
     lyricScroll = null;
     lyricLines = null;
     paintedLyrics = null;
+    upNextRows = null;
+    upNextScroll = null;
     int version = ++renderVersion;
     qrVersion++;
     lastLyric = -2;
@@ -1843,10 +1845,20 @@ public class MainActivity extends Activity {
     shape.setStroke(d(1), 0x66888888);
     toggle.setBackground(shape);
     toggle.addView(TvUi.glyph(this, "lyrics", 22, TEXT), lp(28, 30));
-    TextView state = label(current.tab == 0 ? "开" : "关", 14, TEXT);
-    state.setGravity(Gravity.CENTER);
-    state.setBackground(fill(this, current.tab == 0 ? 0x665d5d5d : 0x22383838, 20));
-    toggle.addView(state, lp(34, 26));
+    View state =
+        new View(this) {
+          private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+          @Override
+          protected void onDraw(Canvas canvas) {
+            float w = getWidth(), h = getHeight(), r = h / 2;
+            paint.setColor(current.tab == 0 ? 0x88ffffff : 0x44888888);
+            canvas.drawRoundRect(0, 0, w, h, r, r, paint);
+            paint.setColor(current.tab == 0 ? MANTLE : TEXT);
+            canvas.drawCircle(current.tab == 0 ? w - r : r, r, r - d(3), paint);
+          }
+        };
+    toggle.addView(state, lp(38, 24));
     tabs.addView(toggle, lp(-2, 36));
     focus.add(toggle, FocusRouter.CONTENT, 0, 3, "player:lyric-toggle");
     toggle.setContentDescription(current.tab == 0 ? "显示播放队列" : "显示歌词");
@@ -1905,28 +1917,29 @@ public class MainActivity extends Activity {
     LinearLayout right = column(this);
     right.setPadding(d(8), 0, d(4), 0);
     columns.addView(right, new LinearLayout.LayoutParams(0, -1, .36f));
-    TextView section = label(current.tab == 0 ? "歌词" : "接下来", 18, TEXT);
+    TextView section = label(current.tab == 0 ? "歌词" : "接下来播放", 18, TEXT);
     heading(section);
     right.addView(section, lp(-1, 32));
     View line = new View(this);
     line.setBackgroundColor(BORDER);
     right.addView(line, lp(-1, 1));
     if (current.tab == 1) {
-      ScrollView list = new ScrollView(this);
-      list.setFocusable(false);
-      LinearLayout entries = column(this);
-      list.addView(entries);
-      right.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
-      for (int i = Math.max(0, s.index()); i < Math.min(s.queue().length(), s.index() + 40); i++) {
-        final int at = i;
-        JSONObject song = s.queue().optJSONObject(i);
-        Button b =
-            action(
-                song.optString("name"), () -> s.playIndex(at), i - s.index() + 1, 1, "upnext:" + i);
-        b.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-        entries.addView(b, lp(-1, 54));
-        margin(b, 0, 6);
-      }
+      upNextScroll = new ScrollView(this);
+      upNextScroll.setFocusable(false);
+      upNextScroll.setClipToPadding(false);
+      upNextScroll.setVerticalScrollBarEnabled(true);
+      upNextRows = column(this);
+      upNextRows.setPadding(0, d(10), d(8), d(14));
+      upNextScroll.addView(upNextRows);
+      right.addView(upNextScroll, new LinearLayout.LayoutParams(-1, 0, 1));
+      upNextScroll.setOnScrollChangeListener(
+          (v, x, y, ox, oy) -> {
+            if (upNextRows != null && y > oy && upNextRows.getHeight() - y - v.getHeight() < d(180))
+              appendUpNext(s);
+          });
+      upNextRevision = s.queueRevision;
+      upNextIndex = s.index();
+      appendUpNext(s);
     } else {
       lyricScroll = new ScrollView(this);
       lyricScroll.setFocusable(false);
@@ -1941,6 +1954,56 @@ public class MainActivity extends Activity {
       refreshLyrics(s);
     }
     if (current.restoreFocus.isEmpty()) current.restoreFocus = "player:back";
+  }
+
+  private ScrollView upNextScroll;
+  private LinearLayout upNextRows;
+  private int upNextRevision = -1, upNextIndex = -1;
+
+  private void appendUpNext(PlaybackService player) {
+    if (upNextRows == null) return;
+    int from = upNextIndex + 1 + upNextRows.getChildCount();
+    int end = Math.min(player.queue().length(), from + PAGE_SIZE);
+    for (int i = from; i < end; i++) {
+      final int at = i;
+      JSONObject song = player.queue().optJSONObject(i);
+      if (song == null) continue;
+      LinearLayout entry = row(this);
+      entry.setPadding(d(8), d(7), d(8), d(7));
+      entry.setBackground(TvUi.focus(this, true));
+      TextView icon = TvUi.glyph(this, "music_note", 25, ACCENT);
+      icon.setBackground(fill(this, 0x2460cdff, 8));
+      entry.addView(icon, lp(42, 42));
+      LinearLayout labels = column(this);
+      labels.setPadding(d(10), 0, d(8), 0);
+      entry.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
+      TextView name = label(song.optString("name"), 17, TEXT);
+      name.setSingleLine();
+      name.setEllipsize(TextUtils.TruncateAt.END);
+      labels.addView(name, lp(-1, -2));
+      TextView artist = label(MusicData.artist(song), 14, MUTED);
+      artist.setSingleLine();
+      artist.setEllipsize(TextUtils.TruncateAt.END);
+      artist.setPadding(0, d(4), 0, 0);
+      labels.addView(artist, lp(-1, -2));
+      TextView duration = label(MusicData.time(song.optInt("dt")), 14, MUTED);
+      duration.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+      entry.addView(duration, lp(44, -2));
+      upNextRows.addView(entry, lp(-1, 62));
+      focus.add(entry, FocusRouter.CONTENT, i - upNextIndex, 1, "upnext:" + i);
+      entry.setContentDescription(song.optString("name") + "，" + MusicData.artist(song));
+      entry.setOnClickListener(v -> player.playIndex(at));
+      entry.setOnLongClickListener(
+          v -> {
+            songMenu(song, at);
+            return true;
+          });
+    }
+    if (upNextRows.getChildCount() == 0) {
+      TextView empty = label("没有接下来播放的歌曲", 17, MUTED);
+      empty.setPadding(d(8), d(24), 0, 0);
+      upNextRows.addView(empty);
+    }
   }
 
   private void refreshLyrics(PlaybackService s) {
@@ -2643,30 +2706,6 @@ public class MainActivity extends Activity {
       appearance();
     } else if (current.tab == 0) {
       librarySettings();
-      section("本机数据");
-      setting(
-          "清空本机最近播放",
-          "不影响云端记录",
-          () ->
-              confirm(
-                  "清空最近播放？",
-                  "只清除本机播放记录。",
-                  () -> {
-                    prefs().edit().remove("history").apply();
-                    message("已清除本机最近播放");
-                  }));
-      setting(
-          "清空本机收藏",
-          "不影响网易云收藏",
-          () ->
-              confirm(
-                  "清空本机收藏？",
-                  "只清除本机收藏列表。",
-                  () -> {
-                    prefs().edit().remove("favorites").apply();
-                    updatePlayback();
-                    message("已清除本机收藏");
-                  }));
     } else if (current.tab == 3) {
       section("网易云账号");
       setting(
@@ -3205,10 +3244,6 @@ public class MainActivity extends Activity {
         return "library_music";
       case "浏览音乐文件":
         return "folder_open";
-      case "清空本机最近播放":
-        return "history";
-      case "清空本机收藏":
-        return "favorite";
       case "当前账号":
         return "person";
       case "扫码登录":
@@ -3250,13 +3285,16 @@ public class MainActivity extends Activity {
     }
     LinearLayout valueBox = row(this);
     valueBox.setPadding(d(14), 0, d(10), 0);
-    valueBox.setBackground(fill(this, SURFACE1, 9));
+    android.graphics.drawable.GradientDrawable option = fill(this, SURFACE1, 8);
+    option.setStroke(d(1), (BORDER & 0x00ffffff) | 0x66000000);
+    valueBox.setBackground(option);
     TextView selected = label(value, 16, TEXT);
     selected.setSingleLine();
-    valueBox.setMinimumWidth(d(160));
-    valueBox.addView(selected, new LinearLayout.LayoutParams(-2, -2));
+    int optionWidth =
+        Math.max(d(128), (int) Math.ceil(selected.getPaint().measureText(value)) + d(60));
+    valueBox.addView(selected, new LinearLayout.LayoutParams(0, -2, 1));
     valueBox.addView(TvUi.glyph(this, "arrow_drop_down", 23, TEXT), lp(24, 24));
-    row.addView(valueBox, lp(-2, 36));
+    row.addView(valueBox, new LinearLayout.LayoutParams(optionWidth, d(40)));
     body.addView(row, lp(-1, description.isEmpty() ? 68 : 74));
     margin(row, 0, 4);
     focus.add(row, FocusRouter.CONTENT, contentRow++, 0, "setting:" + title);
@@ -3486,59 +3524,97 @@ public class MainActivity extends Activity {
           if (!destroyed && current == source && origin != null && origin.isAttachedToWindow())
             origin.requestFocus();
         });
-    dialog.setOnShowListener(
-        d -> {
-          for (int id :
-              new int[] {
-                AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL
-              }) {
-            Button b = dialog.getButton(id);
-            if (b != null) {
-              b.setTextSize(19);
-              b.setTextColor(TEXT);
-              b.setBackground(TvUi.focus(this, true));
-              b.setMinHeight(d(52));
-              b.setFocusableInTouchMode(true);
-              b.setPadding(d(20), d(10), d(20), d(10));
-            }
-          }
-          if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(fill(this, MANTLE, 18));
-            dialog.getWindow().setLayout(d(640), -2);
-          }
-          ListView list = dialog.getListView();
-          if (list != null) {
-            list.setSelector(TvUi.focus(this, true));
-            list.setDividerHeight(d(2));
-            list.setPadding(d(12), d(6), d(12), d(6));
-            list.requestFocus();
-          } else {
-            Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            if (positive != null) positive.requestFocus();
-          }
-        });
+    // Create and style every view before attaching the window: the system dialog
+    // must never draw a frame with its stock theme or animation first.
+    dialog.create();
+    Window window = dialog.getWindow();
+    if (window != null) {
+      window.setBackgroundDrawable(fill(this, MANTLE, 14));
+      window.setWindowAnimations(0);
+      WindowManager.LayoutParams attributes = window.getAttributes();
+      attributes.width = Math.min(d(640), getResources().getDisplayMetrics().widthPixels - d(64));
+      attributes.height = WindowManager.LayoutParams.WRAP_CONTENT;
+      attributes.dimAmount = .22f;
+      window.setAttributes(attributes);
+    }
+    int titleId = getResources().getIdentifier("alertTitle", "id", "android");
+    TextView title = dialog.findViewById(titleId);
+    if (title != null) {
+      title.setTypeface(TvUi.fontBold);
+      title.setTextColor(TEXT);
+      title.setTextSize(22 * TvUi.SCALE);
+    }
+    TextView message = dialog.findViewById(android.R.id.message);
+    if (message != null) {
+      message.setTypeface(TvUi.font);
+      message.setTextColor(MUTED);
+      message.setTextSize(18 * TvUi.SCALE);
+    }
+    for (int id :
+        new int[] {
+          AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL
+        }) {
+      Button button = dialog.getButton(id);
+      if (button != null) {
+        button.setTypeface(TvUi.font);
+        button.setTextSize(18 * TvUi.SCALE);
+        button.setTextColor(TEXT);
+        button.setAllCaps(false);
+        button.setBackground(TvUi.focus(this, true));
+        button.setMinHeight(d(48));
+        button.setFocusableInTouchMode(true);
+        TvUi.eagerTouchFocus(button);
+        button.setPadding(d(20), d(8), d(20), d(8));
+      }
+    }
+    ListView list = dialog.getListView();
+    if (list != null) {
+      list.setSelector(TvUi.focus(this, true));
+      list.setDrawSelectorOnTop(false);
+      list.setDivider(null);
+      list.setPadding(d(12), d(6), d(12), d(6));
+    }
     dialog.show();
+    if (window != null)
+      window.setLayout(
+          Math.min(d(640), getResources().getDisplayMetrics().widthPixels - d(64)), -2);
+    if (list != null) list.requestFocus();
+    else {
+      Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+      if (positive != null) positive.requestFocus();
+    }
   }
 
   private void choice(String title, String[] options, int selected, Selection callback) {
-    AlertDialog.Builder b =
-        new AlertDialog.Builder(this).setTitle(title).setNegativeButton("返回", null);
-    if (selected >= 0)
-      b.setSingleChoiceItems(
-          options,
-          selected,
-          (dialog, at) -> {
-            dialog.dismiss();
-            handler.post(() -> callback.choose(at));
-          });
-    else
-      b.setItems(
-          options,
-          (dialog, at) -> {
-            dialog.dismiss();
-            handler.post(() -> callback.choose(at));
-          });
-    showModal(b.create());
+    ArrayAdapter<String> adapter =
+        new ArrayAdapter<String>(this, 0, options) {
+          @Override
+          public View getView(int position, View convertView, ViewGroup parent) {
+            LinearLayout item = row(MainActivity.this);
+            item.setPadding(d(18), d(12), d(14), d(12));
+            item.setMinimumHeight(d(54));
+            item.setBackground(fill(MainActivity.this, Color.TRANSPARENT, 8));
+            TextView name = label(options[position], 19, position == selected ? ACCENT : TEXT);
+            item.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
+            TextView mark = TvUi.glyph(MainActivity.this, "check", 22, ACCENT);
+            mark.setVisibility(position == selected ? View.VISIBLE : View.INVISIBLE);
+            item.addView(mark, lp(26, 26));
+            return item;
+          }
+        };
+    AlertDialog dialog =
+        new AlertDialog.Builder(this)
+            .setTitle(title)
+            .setNegativeButton("返回", null)
+            .setAdapter(
+                adapter,
+                (d, at) -> {
+                  d.dismiss();
+                  handler.post(() -> callback.choose(at));
+                })
+            .create();
+    showModal(dialog);
+    if (selected >= 0 && dialog.getListView() != null) dialog.getListView().setSelection(selected);
   }
 
   private void confirm(String title, String message, Runnable action) {
@@ -3785,6 +3861,14 @@ public class MainActivity extends Activity {
         return;
       }
     }
+    if (current != null
+        && current.type.equals("player")
+        && upNextRows != null
+        && (upNextRevision != s.queueRevision || upNextIndex != s.index())) {
+      snapshot();
+      render();
+      return;
+    }
     if (current != null && current.type.equals("player") && lyricLines != null) refreshLyrics(s);
   }
 
@@ -3855,6 +3939,13 @@ public class MainActivity extends Activity {
         s.seek((int) Math.max(0, s.lyrics.times.get(target) - prefs().getInt("lyric_offset", 0)));
       }
       return true;
+    }
+    if (key == KeyEvent.KEYCODE_DPAD_DOWN
+        && focusKey.startsWith("upnext:")
+        && upNextRows != null
+        && s != null) {
+      int at = Integer.parseInt(focusKey.substring("upnext:".length()));
+      if (at >= upNextIndex + upNextRows.getChildCount() - 2) appendUpNext(s);
     }
     Integer itemIndex = itemPositions.get(focusKey);
     if (key == KeyEvent.KEYCODE_DPAD_DOWN
