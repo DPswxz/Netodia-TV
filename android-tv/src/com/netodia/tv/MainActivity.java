@@ -469,22 +469,9 @@ public class MainActivity extends Activity {
             () -> toggleFavorite(service() == null ? new JSONObject() : service().song()),
             7,
             false);
-    transport(
-        bar,
-        "push_pin",
-        "屏幕常亮",
-        () -> {
-          boolean keep = !prefs().getBoolean("keep_screen", true);
-          prefs().edit().putBoolean("keep_screen", keep).apply();
-          if (keep) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-          else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-          message(keep ? "屏幕常亮已开启" : "屏幕常亮已关闭");
-        },
-        8,
-        false);
-    transport(bar, "queue_music", "队列", this::showQueue, 9, false);
-    transport(bar, "volume_up", "音量", this::volumeDialog, 10, false);
-    transport(bar, "more_vert", "更多", this::showPlayerMenu, 11, false);
+    transport(bar, "queue_music", "队列", this::showQueue, 8, false);
+    transport(bar, "volume_up", "音量", this::volumeDialog, 9, false);
+    transport(bar, "more_vert", "更多", this::showPlayerMenu, 10, false);
   }
 
   private PlayerMenu playerMenu;
