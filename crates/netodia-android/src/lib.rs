@@ -81,6 +81,16 @@ fn dispatch(op: &str, input: &str) -> Result<Value, Box<dyn std::error::Error>> 
             }
             "recommendations" => serde_json::to_value(c.recommendations().await?)?,
             "fm" => serde_json::to_value(c.fm().await?)?,
+            "heart" => {
+                let account = c.account().await?;
+                let playlist = c.liked_playlist_id(account.id).await?;
+                let liked = c.liked_ids(account.id).await?;
+                let seed = if liked.contains(&id) { Some(id) } else { liked.first().copied() };
+                match seed {
+                    Some(seed) => serde_json::to_value(c.intelligence(seed, playlist, if id > 0 { id } else { seed }).await?)?,
+                    None => json!([]),
+                }
+            },
             "similar" => serde_json::to_value(c.similar_songs(id).await?)?,
             "liked" => serde_json::to_value(c.liked_songs(id).await?.into_iter().map(|entry| entry.song).collect::<Vec<_>>())?,
             "recent" => serde_json::to_value(c.recent_songs().await?.into_iter().map(|entry| entry.song).collect::<Vec<_>>())?,

@@ -4,7 +4,7 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.13)
+## Current TV controls (0.5.14)
 
 - Artwork-colored detail headers show the title once, with metadata and a left-aligned playback toolbar.
 - An anchored checkbox menu controls song columns; single-page lists hide pager buttons.
@@ -17,6 +17,10 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 - Empty results are centered in the complete content panel.
 - Fixed square navigation tiles with an icon above the label; 最近 / 音乐库 use short names.
 - Settings option values stay on one line, with controls expanding to fit their text.
+  Applying a choice keeps focus on the originating setting.
+- The player volume popup uses a vertical slider with Up/Down and mouse dragging.
+- Infinite roaming offers Personal FM, Heart mode and Similar songs, fetching a new batch
+  when the current batch ends. Heart mode uses the account liked playlist and intelligence API.
 - Choice menus open beside their controls with shared dropdown styling and checkmarks.
   Theme, appearance variant and playback animation retain their inline choice buttons.
 - Now Playing has a two-line Up Next list with duration, remote navigation and automatic batches.

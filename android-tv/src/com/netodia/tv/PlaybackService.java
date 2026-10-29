@@ -171,7 +171,36 @@ public class PlaybackService extends Service {
     changed();
   }
 
+  private String roamingMode = "";
+  private int roamingGeneration;
+
+  public void startRoaming(String mode) {
+    if (!mode.equals("fm") && !mode.equals("heart") && !mode.equals("similar")) return;
+    final int token = ++roamingGeneration;
+    long seed = hasSong() ? song().optLong("id") : 0;
+    loading = true;
+    error = "";
+    changed();
+    backend.request(
+        mode,
+        Backend.json("id", seed),
+        (data, failure) -> {
+          if (token != roamingGeneration || instance != this) return;
+          loading = false;
+          if (failure != null || !(data instanceof JSONArray) || ((JSONArray) data).length() == 0) {
+            error = failure != null ? failure : "暂无可播放的漫游歌曲，请先收藏音乐或稍后重试";
+            changed();
+            return;
+          }
+          setMode(0);
+          setQueue((JSONArray) data, 0);
+          roamingMode = mode;
+        });
+  }
+
   public void setQueue(JSONArray songs, int start) {
+    roamingMode = "";
+    roamingGeneration++;
     queueRevision++;
     if (songs.length() == 0) return;
     queue = MusicData.array(songs.toString());
@@ -378,6 +407,10 @@ public class PlaybackService extends Service {
 
   public void next(boolean automatic) {
     if (queue.length() == 0) return;
+    if (!roamingMode.isEmpty() && index == queue.length() - 1) {
+      startRoaming(roamingMode);
+      return;
+    }
     int next =
         mode() == 2 && queue.length() > 1
             ? (index + 1 + random.nextInt(queue.length() - 1)) % queue.length()

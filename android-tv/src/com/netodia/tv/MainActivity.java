@@ -1088,13 +1088,58 @@ public class MainActivity extends Activity {
     }
     if (!signedIn()) return;
     if (current.tab == 3) {
-      if (ready("fm", Backend.json())) songList();
+      roaming();
       return;
     }
     if (ready(
         "library",
         Backend.json("id", accountId, "created", current.tab == 1, "offset", current.offset)))
       grid("playlist");
+  }
+
+  private void roaming() {
+    scroll();
+    TextView title = label("无限漫游", 24, TEXT);
+    heading(title);
+    title.setPadding(d(12), d(12), 0, d(22));
+    body.addView(title);
+    String[] icons = {"shuffle", "favorite_border", "music_note"};
+    String[] names = {"私人漫游", "心动模式", "相似歌曲"};
+    String[] descriptions = {"私人 FM", "我喜欢的音乐", "正在播放"};
+    String[] modes = {"fm", "heart", "similar"};
+    for (int i = 0; i < names.length; i++) {
+      final String mode = modes[i];
+      LinearLayout card = row(this);
+      card.setPadding(d(20), d(18), d(20), d(18));
+      card.setBackground(TvUi.focus(this, false));
+      card.addView(TvUi.glyph(this, icons[i], 32, ACCENT), lp(42, 44));
+      LinearLayout words = column(this);
+      words.setPadding(d(14), 0, 0, 0);
+      TextView name = label(names[i], 21, TEXT);
+      heading(name);
+      words.addView(name);
+      words.addView(label(descriptions[i], 15, MUTED));
+      card.addView(words, new LinearLayout.LayoutParams(0, -2, 1));
+      card.addView(TvUi.glyph(this, "play_arrow", 24, ACCENT), lp(30, 36));
+      body.addView(card, lp(-1, 102));
+      margin(card, 0, 12);
+      focus.add(card, FocusRouter.CONTENT, contentRow++, 0, "roam:" + mode);
+      card.setContentDescription(names[i] + "，" + descriptions[i]);
+      card.setOnClickListener(
+          v -> {
+            PlaybackService player = service();
+            if (player == null) {
+              message("播放器正在启动，请稍候");
+              return;
+            }
+            if (mode.equals("similar") && (!player.hasSong() || player.song().optLong("id") <= 0)) {
+              message("请先播放一首云端歌曲，再开启相似歌曲");
+              return;
+            }
+            player.startRoaming(mode);
+            message("正在加载" + names[java.util.Arrays.asList(modes).indexOf(mode)]);
+          });
+    }
   }
 
   private void favorites() {
@@ -3852,7 +3897,15 @@ public class MainActivity extends Activity {
     for (int i = 0; i < options.length; i++) {
       final int at = i;
       Button chip =
-          action(options[i], () -> action.choose(at), contentRow, i, "chip:" + title + ":" + i);
+          action(
+              options[i],
+              () -> {
+                current.restoreFocus = "chip:" + title + ":" + at;
+                action.choose(at);
+              },
+              contentRow,
+              i,
+              "chip:" + title + ":" + i);
       chip.setTextSize(14 * TvUi.SCALE);
       chip.setPadding(d(13), 0, d(13), 0);
       chip.setTextColor(i == selected ? MANTLE : TEXT);
@@ -3961,6 +4014,7 @@ public class MainActivity extends Activity {
     row.setOnClickListener(
         v -> {
           row.requestFocus();
+          snapshot();
           action.run();
         });
     row.setContentDescription(title + "，" + value);
@@ -4255,6 +4309,7 @@ public class MainActivity extends Activity {
   private void choice(String title, String[] options, int selected, Selection callback) {
     View origin = getCurrentFocus();
     if (origin != null && origin.isAttachedToWindow()) choiceAnchor = origin;
+    String originKey = focus.key(origin);
     View anchor =
         choiceAnchor != null && choiceAnchor.isAttachedToWindow() ? choiceAnchor : content;
     int[] location = new int[2];
@@ -4273,7 +4328,7 @@ public class MainActivity extends Activity {
     scroll.addView(entries);
     panel.addView(scroll, lp(-1, -1));
     ArrayList<View> controls = new ArrayList<>();
-    int width = d(180);
+    int width = d(132);
     for (int i = 0; i < options.length; i++) {
       final int at = i;
       LinearLayout option = row(this);
@@ -4299,7 +4354,11 @@ public class MainActivity extends Activity {
       option.setOnClickListener(
           v -> {
             dialog.dismiss();
-            handler.post(() -> callback.choose(at));
+            handler.post(
+                () -> {
+                  if (!originKey.isEmpty()) current.restoreFocus = originKey;
+                  callback.choose(at);
+                });
           });
       option.setOnFocusChangeListener(
           (v, focused) -> {
@@ -4331,6 +4390,8 @@ public class MainActivity extends Activity {
     params.x =
         Math.max(
             d(8), Math.min(location[0] + anchor.getWidth() - width, screenWidth - width - d(8)));
+    if (originKey.equals("detail:order"))
+      params.x = Math.min(location[0], screenWidth - width - d(8));
     int below = location[1] + anchor.getHeight() + d(4);
     params.y =
         below + height <= screenHeight - d(82)
@@ -4506,13 +4567,122 @@ public class MainActivity extends Activity {
 
   private void volumeDialog() {
     android.media.AudioManager audio = (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
-    rangeDialog(
-        "电视媒体音量",
-        0,
-        audio.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC),
-        audio.getStreamVolume(android.media.AudioManager.STREAM_MUSIC),
-        1,
-        value -> audio.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, value, 0));
+    View origin = getCurrentFocus();
+    String originKey = focus.key(origin);
+    View anchor = origin == null ? content : origin;
+    int[] location = new int[2];
+    anchor.getLocationOnScreen(location);
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LinearLayout panel = column(this);
+    panel.setGravity(Gravity.CENTER_HORIZONTAL);
+    panel.setPadding(d(10), d(12), d(10), d(12));
+    android.graphics.drawable.GradientDrawable shape = fill(this, MANTLE, 10);
+    shape.setStroke(d(1), BORDER);
+    panel.setBackground(shape);
+    TextView amount = label("", 17, TEXT);
+    amount.setGravity(Gravity.CENTER);
+    int max = audio.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
+    View slider =
+        new View(this) {
+          final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+          private int value() {
+            return audio.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
+          }
+
+          private void update(int value) {
+            audio.setStreamVolume(
+                android.media.AudioManager.STREAM_MUSIC, Math.max(0, Math.min(max, value)), 0);
+            TvUi.setText(amount, Math.round(100f * value() / Math.max(1, max)) + "%");
+            setContentDescription("音量 " + value() + " / " + max + "，上下键调整");
+            invalidate();
+          }
+
+          @Override
+          protected void onDraw(Canvas canvas) {
+            float x = getWidth() / 2f, top = d(14), bottom = getHeight() - d(14);
+            float y = bottom - (bottom - top) * value() / Math.max(1f, max);
+            paint.setColor(SURFACE1);
+            canvas.drawRoundRect(x - d(3), top, x + d(3), bottom, d(3), d(3), paint);
+            paint.setColor(ACCENT);
+            canvas.drawRoundRect(x - d(3), y, x + d(3), bottom, d(3), d(3), paint);
+            canvas.drawCircle(x, y, d(8), paint);
+          }
+
+          @Override
+          public boolean onKeyDown(int key, KeyEvent event) {
+            if (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN) {
+              update(value() + (key == KeyEvent.KEYCODE_DPAD_UP ? 1 : -1));
+              return true;
+            }
+            if (key == KeyEvent.KEYCODE_DPAD_CENTER
+                || key == KeyEvent.KEYCODE_ENTER
+                || key == KeyEvent.KEYCODE_DPAD_LEFT
+                || key == KeyEvent.KEYCODE_DPAD_RIGHT) {
+              dialog.dismiss();
+              return true;
+            }
+            return super.onKeyDown(key, event);
+          }
+
+          @Override
+          public boolean onTouchEvent(android.view.MotionEvent event) {
+            if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN
+                || event.getActionMasked() == android.view.MotionEvent.ACTION_MOVE) {
+              update(
+                  Math.round(
+                      max * (1 - (event.getY() - d(14)) / Math.max(1f, getHeight() - d(28)))));
+              return true;
+            }
+            return true;
+          }
+        };
+    slider.setContentDescription("音量，上下键调整");
+    slider.setFocusableInTouchMode(true);
+    slider.setBackground(TvUi.focus(this, true));
+    TvUi.setText(
+        amount,
+        Math.round(
+                100f
+                    * audio.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
+                    / Math.max(1, max))
+            + "%");
+    panel.addView(amount, lp(-1, 30));
+    panel.addView(slider, lp(52, 160));
+    panel.addView(TvUi.glyph(this, "volume_up", 23, TEXT), lp(28, 28));
+    dialog.setContentView(panel);
+    Window window = dialog.getWindow();
+    window.setBackgroundDrawableResource(android.R.color.transparent);
+    window.setWindowAnimations(0);
+    window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+    WindowManager.LayoutParams params = window.getAttributes();
+    params.gravity = Gravity.TOP | Gravity.LEFT;
+    params.width = d(84);
+    params.height = d(242);
+    params.x =
+        Math.max(
+            d(8),
+            Math.min(
+                location[0] + (anchor.getWidth() - params.width) / 2,
+                getResources().getDisplayMetrics().widthPixels - params.width - d(8)));
+    params.y = Math.max(d(8), location[1] - params.height - d(4));
+    window.setAttributes(params);
+    modal = dialog;
+    Page source = current;
+    dialog.setOnDismissListener(
+        value -> {
+          if (modal == dialog) modal = null;
+          if (current == source) {
+            current.restoreFocus = originKey;
+            if (current.type.equals("settings")) render();
+            else if (origin != null && origin.isAttachedToWindow()) origin.requestFocus();
+          }
+        });
+    dialog.show();
+    window.getDecorView().setPadding(0, 0, 0, 0);
+    window.setAttributes(params);
+    slider.requestFocus();
   }
 
   private void remoteHelp() {
