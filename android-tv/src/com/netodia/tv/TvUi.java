@@ -148,6 +148,16 @@ final class TvUi {
     return d;
   }
 
+  static StateListDrawable artworkFocus(Context c) {
+    StateListDrawable states = new StateListDrawable();
+    GradientDrawable focused = fill(c, 0x18ffffff, 8);
+    focused.setStroke(dp(c, 1.2f), 0xb3ffffff);
+    states.addState(new int[] {android.R.attr.state_focused}, focused);
+    states.addState(new int[] {android.R.attr.state_pressed}, fill(c, 0x24ffffff, 8));
+    states.addState(new int[] {}, fill(c, Color.TRANSPARENT, 8));
+    return states;
+  }
+
   static StateListDrawable lyricFocus(Context c) {
     StateListDrawable states = new StateListDrawable();
     LayerDrawable selected =

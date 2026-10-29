@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
   private Backend backend;
   private LinearLayout root, sidebar, content, header, tabs, body;
   private FrameLayout stage;
-  private LinearLayout curatedHero;
+  private LinearLayout curatedHero, collectionHeader;
   private ScrollView scroller;
   private TextView heading,
       subtitle,
@@ -302,12 +302,14 @@ public class MainActivity extends Activity {
     queue.setBackground(TvUi.focus(this, true));
     queue.setContentDescription("播放队列");
     header.addView(queue, lp(40, 40));
+    collectionHeader = column(this);
+    content.addView(collectionHeader, lp(-1, -2));
     tabs = row(this);
     tabs.setPadding(0, 0, 0, d(8));
-    content.addView(tabs, lp(-1, 48));
+    collectionHeader.addView(tabs, lp(-1, 48));
     curatedHero = row(this);
     curatedHero.setVisibility(View.GONE);
-    content.addView(curatedHero, lp(-1, 140));
+    collectionHeader.addView(curatedHero, lp(-1, 140));
     stage = new FrameLayout(this);
     content.addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
     status = label("", 13, MUTED);
@@ -372,7 +374,7 @@ public class MainActivity extends Activity {
     root.addView(bar, lp(-1, 78));
     LinearLayout info = row(this);
     info.setPadding(d(6), d(3), d(8), d(3));
-    info.setBackground(TvUi.focus(this, true));
+    info.setBackground(TvUi.artworkFocus(this));
     bar.addView(info, lp(260, -1));
     info.setOnClickListener(v -> push(new Page("player", "正在播放", current.section)));
     focus.add(info, FocusRouter.PLAYER, 0, 0, "player:info");
@@ -581,6 +583,12 @@ public class MainActivity extends Activity {
     playerCover = null;
     curatedHero.removeAllViews();
     curatedHero.setVisibility(View.GONE);
+    collectionHeader.setBackground(null);
+    collectionHeader.setClipToOutline(false);
+    LinearLayout.LayoutParams headerParams = (LinearLayout.LayoutParams) collectionHeader.getLayoutParams();
+    headerParams.leftMargin = 0;
+    headerParams.rightMargin = 0;
+    collectionHeader.setLayoutParams(headerParams);
     android.graphics.drawable.GradientDrawable neutral = fill(this, BASE, 8);
     content.setBackground(neutral);
     ((ContentPanel) content).setArtworkPage(current.type.equals("player"));
@@ -728,6 +736,7 @@ public class MainActivity extends Activity {
       name.setGravity(Gravity.CENTER);
       item.addView(name, new LinearLayout.LayoutParams(-1, 0, 1));
       boolean onHero = current.type.equals("favorites") || current.type.equals("recent");
+      if (onHero) item.setBackground(TvUi.artworkFocus(this));
       int ink = onHero ? TEXT : i == current.tab ? ACCENT : TEXT;
       if (i < icons.length) {
         TextView icon = TvUi.glyph(this, icons[i], 21, ink);
@@ -1201,8 +1210,13 @@ public class MainActivity extends Activity {
     mosaic.setClipToOutline(true);
     curatedHero.addView(mosaic, lp(112, 112));
     Page source = current;
-    ArtworkBackdrop backdrop = new ArtworkBackdrop(BASE, d(196), d(8));
-    content.setBackground(backdrop);
+    ArtworkBackdrop backdrop = new ArtworkBackdrop(SURFACE1, 0, d(10));
+    collectionHeader.setBackground(backdrop);
+    collectionHeader.setClipToOutline(true);
+    LinearLayout.LayoutParams headerParams = (LinearLayout.LayoutParams) collectionHeader.getLayoutParams();
+    headerParams.leftMargin = d(34);
+    headerParams.rightMargin = d(38);
+    collectionHeader.setLayoutParams(headerParams);
     curatedHero.setBackgroundColor(Color.TRANSPARENT);
     curatedHero.setClipToOutline(false);
     ArrayList<String> covers = new ArrayList<>();
@@ -1408,7 +1422,7 @@ public class MainActivity extends Activity {
       LinearLayout parent, String icon, String title, Runnable click, int col, String key) {
     LinearLayout button = row(this);
     button.setPadding(d(12), 0, d(12), 0);
-    button.setBackground(TvUi.focus(this, true));
+    button.setBackground(TvUi.artworkFocus(this));
     button.addView(TvUi.glyph(this, icon, 18, TEXT), lp(24, 24));
     button.addView(label(title, 15, TEXT));
     parent.addView(button, lp(-2, -1));
@@ -3688,6 +3702,7 @@ public class MainActivity extends Activity {
   private LinearLayout settingsCard() {
     LinearLayout card = column(this);
     card.setBackground(fill(this, SURFACE, 12));
+    card.setPadding(d(4), d(4), d(4), d(4));
     card.setClipToOutline(true);
     body.addView(card, lp(-1, -2));
     settingGroup = card;
@@ -4940,17 +4955,76 @@ public class MainActivity extends Activity {
       focus.focus("nav:library");
       return;
     }
-    choice(
-        "离开 Netodia？",
-        new String[] {"继续聆听", "返回电视桌面，保持后台播放", "停止播放并退出"},
-        -1,
-        at -> {
-          if (at == 1) finish();
-          else if (at == 2) {
-            stopService(new Intent(this, PlaybackService.class));
-            finish();
-          }
-        });
+    exitMenu();
+  }
+
+  private void exitMenu() {
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LinearLayout panel = column(this);
+    panel.setPadding(d(20), d(18), d(20), d(18));
+    TextView title = label("离开 Netodia？", 23, TEXT);
+    heading(title);
+    title.setPadding(d(8), 0, 0, d(16));
+    panel.addView(title);
+    String[] icons = {"play_arrow", "home", "stop"};
+    String[] names = {"继续聆听", "返回电视桌面", "停止播放并退出"};
+    String[] notes = {"关闭此菜单", "音乐继续在后台播放", "停止音乐并关闭应用"};
+    ArrayList<View> actions = new ArrayList<>();
+    for (int i = 0; i < names.length; i++) {
+      final int at = i;
+      LinearLayout action = row(this);
+      action.setPadding(d(12), d(10), d(12), d(10));
+      action.setBackground(TvUi.focus(this, true));
+      action.setFocusableInTouchMode(true);
+      action.setId(View.generateViewId());
+      action.addView(TvUi.glyph(this, icons[i], 25, TEXT), lp(34, 34));
+      LinearLayout words = column(this);
+      words.setPadding(d(10), 0, 0, 0);
+      words.addView(label(names[i], 19, TEXT));
+      words.addView(label(notes[i], 14, MUTED));
+      action.addView(words, new LinearLayout.LayoutParams(0, -2, 1));
+      panel.addView(action, lp(-1, 70));
+      actions.add(action);
+      action.setContentDescription(names[i]);
+      action.setOnClickListener(v -> {
+        dialog.dismiss();
+        if (at == 1) finish();
+        else if (at == 2) {
+          stopService(new Intent(this, PlaybackService.class));
+          finish();
+        }
+      });
+    }
+    for (int i = 0; i < actions.size(); i++) {
+      actions.get(i).setNextFocusUpId(actions.get(Math.max(0, i - 1)).getId());
+      actions.get(i).setNextFocusDownId(actions.get(Math.min(actions.size() - 1, i + 1)).getId());
+      actions.get(i).setNextFocusLeftId(actions.get(i).getId());
+      actions.get(i).setNextFocusRightId(actions.get(i).getId());
+    }
+    View origin = getCurrentFocus();
+    modal = dialog;
+    dialog.setContentView(panel);
+    Window window = dialog.getWindow();
+    android.graphics.drawable.GradientDrawable background = fill(this, MANTLE, 14);
+    background.setStroke(d(1), BORDER);
+    window.setBackgroundDrawable(background);
+    window.setWindowAnimations(0);
+    WindowManager.LayoutParams params = window.getAttributes();
+    params.gravity = Gravity.CENTER;
+    params.width = Math.min(d(420), getResources().getDisplayMetrics().widthPixels - d(48));
+    params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+    params.dimAmount = .3f;
+    window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+    window.setAttributes(params);
+    dialog.setOnDismissListener(value -> {
+      if (modal == dialog) modal = null;
+      if (origin != null && origin.isAttachedToWindow()) origin.requestFocus();
+    });
+    dialog.show();
+    window.getDecorView().setPadding(0, 0, 0, 0);
+    window.setAttributes(params);
+    actions.get(0).requestFocus();
   }
 
   public void onBackPressed() {
