@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 /** Explicit logical rows prevent focus escaping to unrelated artwork or jumping across lists. */
 final class FocusRouter {
-  static final int SIDE = 0, CONTENT = 1, PLAYER = 2;
+  static final int SIDE = 0, CONTENT = 1, PLAYER = 2, PAGER = 3;
 
   static final class Node {
     final View view;
@@ -48,7 +48,7 @@ final class FocusRouter {
 
   void clearContent() {
     lastContent = "";
-    nodes.removeIf(n -> n.zone == CONTENT);
+    nodes.removeIf(n -> n.zone == CONTENT || n.zone == PAGER);
   }
 
   void selectTab(int tab) {
@@ -95,6 +95,15 @@ final class FocusRouter {
     return first(CONTENT);
   }
 
+  boolean focusFirstContentItem() {
+    for (Node node : nodes)
+      if (node.zone == CONTENT && node.row > 0 && usable(node)) {
+        node.view.requestFocus();
+        return true;
+      }
+    return focus(selectedTab);
+  }
+
   boolean move(View focused, int direction) {
     Node from = find(focused), to = null;
     if (from == null) {
@@ -102,8 +111,10 @@ final class FocusRouter {
       if (to == null) to = first(SIDE);
     } else if (from.zone == SIDE) {
       if (direction == View.FOCUS_RIGHT) to = rememberedContent();
-      else if (direction == View.FOCUS_UP || direction == View.FOCUS_DOWN)
+      else if (direction == View.FOCUS_UP || direction == View.FOCUS_DOWN) {
         to = vertical(from, direction, SIDE);
+        if (to == null && direction == View.FOCUS_DOWN) to = first(PLAYER);
+      }
     } else if (from.zone == CONTENT) {
       if (direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT) {
         int delta = direction == View.FOCUS_LEFT ? -1 : 1;
@@ -112,6 +123,8 @@ final class FocusRouter {
             to = n;
             break;
           }
+        if (to == null && from.row > 0 && focus(delta < 0 ? "pager:previous" : "pager:next"))
+          return true;
         if (to == null && delta < 0) {
           focus(selectedSide);
           return true;
@@ -119,6 +132,17 @@ final class FocusRouter {
       } else {
         to = vertical(from, direction, CONTENT);
         if (to == null && direction == View.FOCUS_DOWN) to = first(PLAYER);
+      }
+    } else if (from.zone == PAGER) {
+      if (direction == View.FOCUS_DOWN) to = first(PLAYER);
+      else if (direction == View.FOCUS_UP) {
+        focus(selectedTab);
+        return true;
+      } else if ((from.col == 0 && direction == View.FOCUS_LEFT)) {
+        focus(selectedSide);
+        return true;
+      } else if (direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT) {
+        to = rememberedContent();
       }
     } else {
       if (direction == View.FOCUS_UP && from.row == 0) to = rememberedContent();

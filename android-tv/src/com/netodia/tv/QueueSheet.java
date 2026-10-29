@@ -195,6 +195,18 @@ final class QueueSheet {
     dialog.dismiss();
   }
 
+  void refreshFavorites() {
+    if (!dialog.isShowing() || rows == null) return;
+    for (int i = 0; i < Math.min(visible, player.queue().length()); i++) {
+      View view = rows.findViewWithTag("favorite:" + i);
+      if (view instanceof Button) {
+        boolean liked = MusicData.favorite(host, player.queue().optJSONObject(i));
+        ((Button) view).setTextColor(liked ? ACCENT : TEXT);
+        ((Button) view).setTypeface(liked ? TvUi.filled : TvUi.symbols);
+      }
+    }
+  }
+
   private void refresh() {
     if (!dialog.isShowing()) return;
     if (lastRevision == player.queueRevision && lastIndex == player.index()) return;

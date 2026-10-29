@@ -49,6 +49,19 @@ public final class MusicLogicTest {
     check(!follow.follows(14999) && follow.follows(15000), "pointer browsing postpones return");
     follow.reset();
     check(follow.follows(0), "new pages must not retain old browsing state");
+    check(PageWindow.clamp(5, 0, 4) == 0, "empty data has no negative page");
+    check(PageWindow.clamp(10, 122, 5) == 10, "middle pages stay stable");
+    check(PageWindow.clamp(99, 122, 5) == 24, "final partial page stays accessible");
+    check(PageWindow.needsFetch(2, 12, 30, true), "fetch before showing an incomplete cached page");
+    check(!PageWindow.needsFetch(1, 12, 30, true), "complete cached pages need no request");
+    check(!PageWindow.needsFetch(2, 12, 30, false), "last partial page never fetches again");
+    for (int count = 1; count < 100; count++)
+      for (int size = 1; size < 15; size++) {
+        int last = PageWindow.clamp(1000, count, size);
+        int covered = 0;
+        for (int page = 0; page <= last; page++) covered += Math.min(size, count - page * size);
+        check(covered == count, "paging must not skip or duplicate any item");
+      }
     System.out.println(
         "PASS: lyric timestamps, translation alignment, seek boundaries and audio filtering");
   }

@@ -51,6 +51,32 @@ final class TvUi {
     return new JSONObject();
   }
 
+  static String matchVariant(JSONObject oldTheme, JSONObject newTheme, String chosen) {
+    if (chosen.equals("system")) return chosen;
+    JSONArray oldVariants = oldTheme.optJSONArray("variants"),
+        variants = newTheme.optJSONArray("variants");
+    boolean light = false;
+    if (oldVariants != null)
+      for (int i = 0; i < oldVariants.length(); i++) {
+        JSONObject variant = oldVariants.optJSONObject(i);
+        if (variant.optString("id").equals(chosen)) light = lightPalette(variant);
+      }
+    if (variants != null) {
+      for (int i = 0; i < variants.length(); i++)
+        if (variants.optJSONObject(i).optString("id").equals(chosen)) return chosen;
+      for (int i = 0; i < variants.length(); i++)
+        if (lightPalette(variants.optJSONObject(i)) == light)
+          return variants.optJSONObject(i).optString("id");
+    }
+    return newTheme.optString("defaultVariant", "dark");
+  }
+
+  private static boolean lightPalette(JSONObject variant) {
+    int color = variant.optInt("base");
+    return ((color >> 16) & 255) * .2126 + ((color >> 8) & 255) * .7152 + (color & 255) * .0722
+        > 127;
+  }
+
   static void apply(Context c) {
     android.content.SharedPreferences p = c.getSharedPreferences("music", 0);
     SCALE = p.getInt("ui_scale", 100) / 100f;
@@ -58,8 +84,14 @@ final class TvUi {
     JSONArray variants = theme.optJSONArray("variants");
     if (variants == null) return;
     String variant = p.getString("variant", theme.optString("defaultVariant", "dark"));
-    if (variant.equals("system"))
-      variant = (c.getResources().getConfiguration().uiMode & 0x30) == 0x20 ? "dark" : "light";
+    if (variant.equals("system")) {
+      boolean light = (c.getResources().getConfiguration().uiMode & 0x30) != 0x20;
+      for (int i = 0; i < variants.length(); i++)
+        if (lightPalette(variants.optJSONObject(i)) == light) {
+          variant = variants.optJSONObject(i).optString("id");
+          break;
+        }
+    }
     JSONObject selected = variants.optJSONObject(0);
     for (int i = 0; i < variants.length(); i++)
       if (variants.optJSONObject(i).optString("id").equals(variant))

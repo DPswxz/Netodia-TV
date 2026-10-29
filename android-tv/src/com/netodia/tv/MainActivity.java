@@ -101,6 +101,8 @@ public class MainActivity extends Activity {
     JSONObject entity = new JSONObject();
     JSONArray items = new JSONArray();
     int tab, offset, visible = PAGE_SIZE, scrollY, generation;
+    int page, pageSize, pendingPage = -1;
+    boolean reverse;
     String pageOp = "";
     JSONObject pageArgs = new JSONObject();
     boolean loaded, loading, more;
@@ -201,6 +203,7 @@ public class MainActivity extends Activity {
             if (error == null) {
               JSONObject a = (JSONObject) data;
               accountId = a.optLong("userId");
+              syncFavorites();
               nickname = a.optString("nickname");
               TvUi.setText(accountLabel, nickname);
             }
@@ -553,6 +556,10 @@ public class MainActivity extends Activity {
     stageParams.rightMargin = 0;
     stage.setLayoutParams(stageParams);
     playerFavoriteButton = null;
+    paginated = false;
+    favoriteMarks.clear();
+    paintedFavoritesRevision = -1;
+    stage.setPadding(0, 0, 0, 0);
     handler.removeCallbacks(resumeLyricFollow);
     lyricFollow.reset();
     lyricScroll = null;
@@ -746,6 +753,7 @@ public class MainActivity extends Activity {
             current.loading = false;
             current.failure = "";
             current.visible = PAGE_SIZE;
+            current.page = 0;
             current.offset = 0;
             current.scrollY = 0;
             current.restoreFocus = "tab:" + tab;
@@ -793,6 +801,8 @@ public class MainActivity extends Activity {
                   query -> {
                     snapshot();
                     current.query = query;
+                    current.page = 0;
+                    current.scrollY = 0;
                     render();
                   }));
       tabs.addView(search, lp(222, 34));
@@ -804,18 +814,19 @@ public class MainActivity extends Activity {
       loadingView();
       return;
     }
+    stage.removeAllViews();
     LinearLayout box = column(this);
     box.setGravity(Gravity.CENTER);
     box.setPadding(d(24), d(24), d(24), d(24));
     TextView mark = TvUi.glyph(this, "music_note", 52, ACCENT);
-    box.addView(mark);
+    box.addView(mark, lp(64, 64));
     TextView name = label(title, 24, TEXT);
     name.setGravity(Gravity.CENTER);
     name.setPadding(0, d(18), 0, d(12));
-    box.addView(name);
+    box.addView(name, lp(-1, -2));
     TextView help = label(description, 17, MUTED);
     help.setGravity(Gravity.CENTER);
-    box.addView(help);
+    box.addView(help, lp(-1, -2));
     if (button != null) {
       Button b = action(button, action, 2, 0, "empty:action");
       box.addView(b, lp(-2, 50));
@@ -908,12 +919,32 @@ public class MainActivity extends Activity {
               if (result.length() > 0 && added == 0) target.more = false;
             } else target.items = result;
             target.loaded = true;
+            if (op.equals("liked")) {
+              MusicData.syncCloudFavorites(this, input.optLong("id"), target.items);
+              refreshFavoriteMarks();
+            }
+            if (target.pendingPage >= 0 && current == target) {
+              int needed = (target.pendingPage + 1) * target.pageSize;
+              if (filtered(target.items, target.query).length() < needed && target.more) {
+                loadNextPage();
+                return;
+              }
+              target.page = target.pendingPage;
+              target.pendingPage = -1;
+              target.scrollY = 0;
+              String latestFocus = focus.key(getCurrentFocus());
+              target.restoreFocus =
+                  latestFocus.isEmpty() || latestFocus.startsWith("pager:")
+                      ? "pager:next"
+                      : latestFocus;
+            }
             JSONObject baseArgs = new JSONObject(input.toString());
             if (baseArgs.has("offset")) baseArgs.put("offset", 0);
             pageCache.put(cacheKey(op, baseArgs), new CachedPage(target));
             if (current == target) {
-              snapshot();
+              if (!target.restoreFocus.startsWith("pager:")) snapshot();
               render();
+              if (paginated && !focus.focus(target.restoreFocus)) focus.focusFirstContentItem();
             }
           } catch (Exception e) {
             target.failure = "数据格式异常，请重试";
@@ -1089,8 +1120,8 @@ public class MainActivity extends Activity {
     curatedHero.setVisibility(View.VISIBLE);
     curatedHero.setPadding(0, d(4), 0, d(16));
     LinearLayout.LayoutParams stageParams = (LinearLayout.LayoutParams) stage.getLayoutParams();
-    stageParams.leftMargin = -d(15);
-    stageParams.rightMargin = -d(15);
+    stageParams.leftMargin = 0;
+    stageParams.rightMargin = 0;
     stage.setLayoutParams(stageParams);
     FrameLayout mosaic = new FrameLayout(this);
     mosaic.setBackground(fill(this, SURFACE, 10));
@@ -1229,7 +1260,7 @@ public class MainActivity extends Activity {
     buttons.addView(save, lp(86, 44));
     contentRow++;
     body.addView(hero);
-    addSongRows(current.items, false);
+    addSongRows(orderedSongs(current.items), false);
   }
 
   private int gridColumns = 1;
@@ -1264,6 +1295,7 @@ public class MainActivity extends Activity {
                     - stageParams.rightMargin)
                 / density
             : getResources().getDisplayMetrics().widthPixels / density - navTileSize - 48;
+    available -= 88;
     gridColumns = Math.max(1, (int) ((available + 16) / 196));
     int cardWidth =
         Math.min(
@@ -1285,11 +1317,15 @@ public class MainActivity extends Activity {
       recommendationShortcuts(items);
       section("推荐歌单");
     }
+    int availableRowsHeight = stageHeightDp() - 44 - (recommended ? 176 : 0) - 16;
+    int rowsPerPage = availableRowsHeight >= 300 ? 2 : 1;
+    cardWidth = Math.min(cardWidth, Math.max(88, availableRowsHeight / rowsPerPage - 54));
     int firstRow = contentRow;
-    int total = Math.min(current.visible, items.length());
+    int start = pageStart(items.length(), gridColumns * rowsPerPage);
+    int total = Math.min(start + current.pageSize, items.length());
     LinearLayout row = null;
-    for (int i = 0; i < total; i++) {
-      int col = i % gridColumns;
+    for (int i = start; i < total; i++) {
+      int col = (i - start) % gridColumns;
       if (col == 0) {
         row = row(this);
         row.setGravity(Gravity.TOP);
@@ -1323,7 +1359,7 @@ public class MainActivity extends Activity {
       card.addView(label(metadata, 13, MUTED), lp(-1, 20));
       String key = "entity:" + item.optLong("id");
       itemPositions.put(key, i);
-      focus.add(card, FocusRouter.CONTENT, firstRow + i / gridColumns, col, key);
+      focus.add(card, FocusRouter.CONTENT, firstRow + (i - start) / gridColumns, col, key);
       card.setContentDescription(item.optString("name") + "，" + metadata);
       View.OnFocusChangeListener prior = card.getOnFocusChangeListener();
       card.setOnFocusChangeListener(
@@ -1340,7 +1376,8 @@ public class MainActivity extends Activity {
           });
     }
     displayedItems = total;
-    contentRow = firstRow + (total + gridColumns - 1) / gridColumns;
+    addSidePager(items.length());
+    contentRow = firstRow + (total - start + gridColumns - 1) / gridColumns;
   }
 
   private void recommendationShortcuts(JSONArray items) {
@@ -1397,7 +1434,91 @@ public class MainActivity extends Activity {
     card.setOnClickListener(v -> click.run());
   }
 
+  private boolean paginated;
+  private Button previousPageButton, nextPageButton;
+
+  private int stageHeightDp() {
+    int height =
+        (int)
+            (getResources().getDisplayMetrics().heightPixels
+                / (getResources().getDisplayMetrics().density * TvUi.SCALE));
+    return Math.max(
+        80,
+        height
+            - 8
+            - 78
+            - 4
+            - 16
+            - 64
+            - (header.getVisibility() == View.VISIBLE ? 52 : 0)
+            - (curatedHero.getVisibility() == View.VISIBLE ? 160 : 0)
+            - 26);
+  }
+
+  private int pageStart(int count, int capacity) {
+    current.pageSize = Math.max(1, capacity);
+    current.page = PageWindow.clamp(current.page, count, current.pageSize);
+    return current.page * current.pageSize;
+  }
+
+  private void addSidePager(int count) {
+    paginated = true;
+    stage.setPadding(d(44), 0, d(44), 0);
+    stage.setClipToPadding(false);
+    previousPageButton = pageButton(false, current.page > 0);
+    nextPageButton =
+        pageButton(true, (current.page + 1) * current.pageSize < count || current.more);
+  }
+
+  private Button pageButton(boolean next, boolean enabled) {
+    Button button = button(this, "", () -> changePage(next ? 1 : -1));
+    TvUi.icon(button, next ? "chevron_right" : "chevron_left");
+    button.setPadding(0, 0, 0, 0);
+    button.setBackground(TvUi.focus(this, false));
+    button.setEnabled(enabled);
+    button.setAlpha(enabled ? 1f : .25f);
+    button.setContentDescription((next ? "下一页" : "上一页") + "，当前第 " + (current.page + 1) + " 页");
+    FrameLayout.LayoutParams params =
+        new FrameLayout.LayoutParams(
+            d(36), d(62), Gravity.CENTER_VERTICAL | (next ? Gravity.RIGHT : Gravity.LEFT));
+    if (next) params.rightMargin = -d(40);
+    else params.leftMargin = -d(40);
+    stage.addView(button, params);
+    focus.add(button, FocusRouter.PAGER, 0, next ? 1 : 0, next ? "pager:next" : "pager:previous");
+    return button;
+  }
+
+  private void changePage(int direction) {
+    if (current.loading) return;
+    int next = Math.max(0, current.page + direction);
+    int count = filtered(current.items, current.query).length();
+    if (direction > 0 && PageWindow.needsFetch(next, current.pageSize, count, current.more)) {
+      current.pendingPage = next;
+      loadNextPage();
+      return;
+    }
+    if (next * current.pageSize >= count) return;
+    current.page = next;
+    current.scrollY = 0;
+    current.restoreFocus = direction > 0 ? "pager:next" : "pager:previous";
+    render();
+    // At the final/first page the arrow may be disabled; focus the first item instead.
+    if (!focus.focus(current.restoreFocus)) focus.focusFirstContentItem();
+  }
+
+  private void loadNextPage() {
+    try {
+      JSONObject args = new JSONObject(current.pageArgs.toString());
+      args.put("offset", current.offset + 30);
+      load(current.pageOp, args, true);
+    } catch (JSONException error) {
+      message("无法加载下一页");
+      current.pendingPage = -1;
+    }
+  }
+
   private boolean appendMore() {
+    if (paginated) return false;
     if (current == null
         || !current.loaded
         || current.type.equals("search")
@@ -1431,10 +1552,18 @@ public class MainActivity extends Activity {
     push(p);
   }
 
+  private JSONArray orderedSongs(JSONArray songs) {
+    if (!current.reverse) return songs;
+    JSONArray reversed = new JSONArray();
+    for (int i = songs.length() - 1; i >= 0; i--) reversed.put(songs.optJSONObject(i));
+    return reversed;
+  }
+
   private void songList() {
     JSONArray visible = filtered(current.items, current.query);
-    if (current.items.length() == 0) {
-      empty("暂无歌曲", "收藏或播放音乐后，可以在这里找到它们", null, null);
+    visible = orderedSongs(visible);
+    if (visible.length() == 0) {
+      empty(current.query.isEmpty() ? "暂无歌曲" : "没有匹配的内容", "收藏或播放音乐后，可以在这里找到它们", null, null);
       return;
     }
     scroll();
@@ -1492,8 +1621,25 @@ public class MainActivity extends Activity {
     LinearLayout head = row(this);
     head.setPadding(d(12), 0, d(12), 0);
     container.addView(head, lp(-1, 36));
-    TextView number = label("#  ▴", 14, ACCENT);
-    head.addView(number, lp(64, -2));
+    LinearLayout number = row(this);
+    TextView hash = label("#", 17, ACCENT);
+    hash.setPadding(d(6), 0, 0, 0);
+    number.addView(hash, lp(24, -2));
+    number.addView(
+        TvUi.glyph(this, current.reverse ? "arrow_drop_down" : "arrow_drop_up", 27, ACCENT),
+        lp(28, 30));
+    head.addView(number, lp(64, -1));
+    focus.add(number, FocusRouter.CONTENT, contentRow++, 0, "sort:sequence");
+    number.setBackground(TvUi.focus(this, true));
+    number.setContentDescription(current.reverse ? "序号倒序，确定切换排序" : "序号正序，确定切换排序");
+    number.setOnClickListener(
+        v -> {
+          current.reverse = !current.reverse;
+          current.page = 0;
+          current.restoreFocus = "sort:sequence";
+          current.scrollY = 0;
+          render();
+        });
     String[] names =
         prefs().getBoolean("show_album_column", true)
             ? new String[] {"标题", "艺人", "专辑"}
@@ -1521,11 +1667,19 @@ public class MainActivity extends Activity {
   }
 
   private void addSongRows(JSONArray songs, boolean queuePage) {
+    if (queuePage) current.items = songs;
     boolean showAlbum = prefs().getBoolean("show_album_column", true);
     if (!current.type.equals("favorites") && !current.type.equals("recent"))
       body.addView(songTableHeader(), lp(-1, 37));
-    int total = Math.min(current.visible, songs.length());
-    for (int i = 0; i < total; i++) {
+    int overhead =
+        37
+            + 18
+            + (current.type.equals("detail")
+                ? 194
+                : current.type.equals("favorites") || current.type.equals("recent") ? 0 : 56);
+    int start = pageStart(songs.length(), Math.max(1, (stageHeightDp() - overhead) / 56));
+    int total = Math.min(start + current.pageSize, songs.length());
+    for (int i = start; i < total; i++) {
       final int at = i;
       JSONObject song = songs.optJSONObject(i);
       if (song == null) continue;
@@ -1536,18 +1690,28 @@ public class MainActivity extends Activity {
       row.setPadding(d(12), d(8), d(12), d(8));
       row.setBackground(TvUi.focus(this, true));
       body.addView(row, lp(-1, 56));
-      TextView index = label(playing ? "♫" : Integer.toString(i + 1), 15, playing ? ACCENT : TEXT);
+      int sequence = current.reverse ? songs.length() - i : i + 1;
+      TextView index =
+          label(playing ? "♫" : Integer.toString(sequence), 15, playing ? ACCENT : TEXT);
+      index.setSingleLine();
+      index.setPadding(d(6), 0, 0, 0);
       row.addView(index, lp(64, -2));
       TextView name = label(song.optString("name"), 18, playing ? ACCENT : TEXT);
       name.setSingleLine();
       name.setEllipsize(TextUtils.TruncateAt.END);
-      boolean saved = MusicData.favorite(this, song) || current.type.equals("favorites");
+      boolean saved = MusicData.favorite(this, song);
+      TextView heart = favoriteMark(song, 19);
+      heart.setVisibility(saved ? View.VISIBLE : View.GONE);
       LinearLayout title =
           new LinearLayout(this) {
             @Override
             protected void onMeasure(int widthSpec, int heightSpec) {
               if (View.MeasureSpec.getMode(widthSpec) != View.MeasureSpec.UNSPECIFIED) {
-                int width = Math.max(0, View.MeasureSpec.getSize(widthSpec) - d(saved ? 70 : 44));
+                int width =
+                    Math.max(
+                        0,
+                        View.MeasureSpec.getSize(widthSpec)
+                            - d(heart.getVisibility() == View.VISIBLE ? 70 : 44));
                 if (name.getMaxWidth() != width) name.setMaxWidth(width);
               }
               super.onMeasure(widthSpec, heightSpec);
@@ -1560,11 +1724,7 @@ public class MainActivity extends Activity {
       Artwork.load(image, MusicData.cover(song));
       ((LinearLayout.LayoutParams) image.getLayoutParams()).rightMargin = d(8);
       title.addView(name, new LinearLayout.LayoutParams(-2, -2));
-      if (saved) {
-        TextView heart = TvUi.glyph(this, "favorite", 19, RED);
-        heart.setTypeface(TvUi.filled);
-        title.addView(heart, lp(26, 26));
-      }
+      title.addView(heart, lp(26, 26));
       TextView artist = label(MusicData.artist(song), 17, TEXT);
       artist.setSingleLine();
       artist.setEllipsize(TextUtils.TruncateAt.END);
@@ -1584,7 +1744,7 @@ public class MainActivity extends Activity {
           row, FocusRouter.CONTENT, contentRow++, 0, "song:" + MusicData.identity(song) + ":" + i);
       itemPositions.put("song:" + MusicData.identity(song) + ":" + i, i);
       row.setContentDescription(
-          (i + 1) + "，" + song.optString("name") + "，" + MusicData.artist(song));
+          sequence + "，" + song.optString("name") + "，" + MusicData.artist(song));
       row.setOnClickListener(
           v -> {
             if (queuePage && service() != null) service().playIndex(at);
@@ -1597,6 +1757,7 @@ public class MainActivity extends Activity {
           });
     }
     displayedItems = total;
+    addSidePager(songs.length());
     TvUi.setText(subtitle, songs.length() + " 首歌曲");
   }
 
@@ -1730,6 +1891,7 @@ public class MainActivity extends Activity {
       TextView artist = label(MusicData.artist(song), 12, MUTED);
       artist.setSingleLine();
       text.addView(artist);
+      row.addView(favoriteMark(song, 18), lp(24, 26));
       row.addView(label(MusicData.time((int) song.optLong("dt")), 12, MUTED), lp(44, -2));
       focus.add(row, FocusRouter.CONTENT, i + 1, 1, "search:song:" + i);
       row.setOnClickListener(v -> play(current.items, index));
@@ -1808,6 +1970,7 @@ public class MainActivity extends Activity {
     current.offset = 0;
     current.scrollY = 0;
     current.visible = PAGE_SIZE;
+    current.page = 0;
     current.generation++;
     current.restoreFocus = "search:input";
     render();
@@ -1998,6 +2161,7 @@ public class MainActivity extends Activity {
       artist.setEllipsize(TextUtils.TruncateAt.END);
       artist.setPadding(0, d(4), 0, 0);
       labels.addView(artist, lp(-1, -2));
+      entry.addView(favoriteMark(song, 18), lp(24, 24));
       TextView duration = label(MusicData.time(song.optInt("dt")), 14, MUTED);
       duration.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
       entry.addView(duration, lp(44, -2));
@@ -2297,6 +2461,47 @@ public class MainActivity extends Activity {
     choice(title, labels.toArray(new String[0]), -1, at -> actions.get(at).run());
   }
 
+  private final ArrayList<TextView> favoriteMarks = new ArrayList<>();
+  private boolean syncingFavorites;
+  private int paintedFavoritesRevision = -1;
+
+  private TextView favoriteMark(JSONObject song, int size) {
+    TextView mark = TvUi.glyph(this, "favorite", size, RED);
+    mark.setTypeface(TvUi.filled);
+    mark.setTag(song);
+    mark.setVisibility(MusicData.favorite(this, song) ? View.VISIBLE : View.GONE);
+    favoriteMarks.add(mark);
+    paintedFavoritesRevision = -1;
+    return mark;
+  }
+
+  private void refreshFavoriteMarks() {
+    if (paintedFavoritesRevision == MusicData.favoriteRevision) return;
+    paintedFavoritesRevision = MusicData.favoriteRevision;
+    for (TextView mark : favoriteMarks) {
+      JSONObject song = (JSONObject) mark.getTag();
+      mark.setVisibility(MusicData.favorite(this, song) ? View.VISIBLE : View.GONE);
+    }
+    if (queueSheet != null && queueSheet.isShowing()) queueSheet.refreshFavorites();
+  }
+
+  private void syncFavorites() {
+    prefs().edit().putLong("active_account", accountId).apply();
+    if (accountId == 0 || syncingFavorites) return;
+    long uid = accountId;
+    syncingFavorites = true;
+    request(
+        "liked",
+        Backend.json("id", uid),
+        (data, error) -> {
+          syncingFavorites = false;
+          if (accountId != uid || error != null || !(data instanceof JSONArray)) return;
+          MusicData.syncCloudFavorites(this, uid, (JSONArray) data);
+          refreshFavoriteMarks();
+          updatePlayback();
+        });
+  }
+
   private void toggleFavorite(JSONObject song) {
     pageCache.clear();
     if (song.length() == 0) return;
@@ -2326,6 +2531,13 @@ public class MainActivity extends Activity {
                     return;
                   }
                   MusicData.favorite(this, song, value);
+                  for (Page page : history) if (page.type.equals("favorites")) page.loaded = false;
+                  if (current.type.equals("favorites")) {
+                    current.loaded = false;
+                    current.generation++;
+                    snapshot();
+                    render();
+                  }
                   message(value ? "已加入喜欢的歌曲" : "已取消喜欢");
                   updatePlayback();
                 }));
@@ -2620,7 +2832,12 @@ public class MainActivity extends Activity {
     for (int i = 0; i < current.items.length(); i++)
       if (!current.items.optJSONObject(i).optBoolean("directory"))
         songs.put(current.items.optJSONObject(i));
-    for (int i = 0; i < Math.min(current.visible, current.items.length()); i++) {
+    boolean fileCards = prefs().getBoolean("browse_cards", false);
+    int pageCapacity =
+        Math.max(1, (stageHeightDp() - 58 - 16) / (fileCards ? 116 : 52)) * (fileCards ? 4 : 1);
+    int first = pageStart(current.items.length(), pageCapacity);
+    int end = Math.min(first + current.pageSize, current.items.length());
+    for (int i = first; i < end; i++) {
       JSONObject entry = current.items.optJSONObject(i);
       boolean folder = entry.optBoolean("directory");
       String path = entry.optString("path");
@@ -2648,7 +2865,7 @@ public class MainActivity extends Activity {
           entryName, new LinearLayout.LayoutParams(cards ? -1 : 0, -2, cards ? 0 : 1));
       if (cards) {
         LinearLayout cardRow;
-        if (i % 4 == 0) {
+        if ((i - first) % 4 == 0) {
           cardRow = row(this);
           body.addView(cardRow, lp(-1, 116));
         } else cardRow = (LinearLayout) body.getChildAt(body.getChildCount() - 1);
@@ -2661,8 +2878,8 @@ public class MainActivity extends Activity {
       focus.add(
           entryView,
           FocusRouter.CONTENT,
-          cards ? contentRow + i / 4 : contentRow + i,
-          cards ? i % 4 : 0,
+          cards ? contentRow + (i - first) / 4 : contentRow + i - first,
+          cards ? (i - first) % 4 : 0,
           "file:" + path);
       entryView.setContentDescription(entry.optString("name"));
       entryView.setOnClickListener(
@@ -2680,8 +2897,9 @@ public class MainActivity extends Activity {
             });
     }
     if (current.items.length() == 0) body.addView(label("文件夹中没有音乐或子文件夹。", 19, MUTED));
-    contentRow += current.items.length();
-    displayedItems = Math.min(current.visible, current.items.length());
+    contentRow += end - first;
+    displayedItems = end;
+    if (current.items.length() > 0) addSidePager(current.items.length());
   }
 
   private void openFolder(String path, boolean addHistory) {
@@ -2779,6 +2997,7 @@ public class MainActivity extends Activity {
                                 return;
                               }
                               accountId = 0;
+                              prefs().edit().putLong("active_account", 0).apply();
                               nickname = "未登录";
                               backend.clearSession();
                               TvUi.setText(accountLabel, nickname);
@@ -3262,12 +3481,18 @@ public class MainActivity extends Activity {
         selectedTheme,
         n -> {
           JSONObject t = TvUi.themes.optJSONObject(n);
-          prefs()
-              .edit()
-              .putString("theme", t.optString("id"))
-              .putString("variant", t.optString("defaultVariant"))
-              .putString("accent", t.optString("defaultAccent"))
-              .apply();
+          String variant =
+              TvUi.matchVariant(
+                  theme, t, prefs().getString("variant", theme.optString("defaultVariant")));
+          android.content.SharedPreferences.Editor edit =
+              prefs().edit().putString("theme", t.optString("id")).putString("variant", variant);
+          String accent = prefs().getString("accent", theme.optString("defaultAccent"));
+          JSONArray accents = t.optJSONArray("accents");
+          boolean supported = false;
+          if (accents != null)
+            for (int i = 0; i < accents.length(); i++)
+              if (accents.optJSONObject(i).optString("id").equals(accent)) supported = true;
+          edit.putString("accent", supported ? accent : t.optString("defaultAccent")).apply();
           reloadShell();
         });
     View line = new View(this);
@@ -3334,7 +3559,6 @@ public class MainActivity extends Activity {
                   prefs().edit().putInt("lyric_offset", n).apply();
                   render();
                 }));
-    setting("遥控器帮助", "查看按键操作", this::remoteHelp);
   }
 
   private void chipSetting(
@@ -3668,6 +3892,7 @@ public class MainActivity extends Activity {
                         }
                         JSONObject a = (JSONObject) account;
                         accountId = a.optLong("userId");
+                        syncFavorites();
                         nickname = a.optString("nickname");
                         TvUi.setText(accountLabel, nickname);
                         backend.saveSession();
@@ -4015,6 +4240,7 @@ public class MainActivity extends Activity {
     if (destroyed || nowTitle == null) return;
     PlaybackService s = service();
     if (s == null) return;
+    refreshFavoriteMarks();
     TvUi.setText(nowTitle, s.title());
     TvUi.setText(nowArtist, s.hasSong() ? MusicData.artist(s.song()) : "Netodia TV");
     TvUi.setText(playButton, s.playing() ? "pause" : "play_arrow");

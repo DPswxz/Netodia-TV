@@ -10,6 +10,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 final class MusicData {
+  static int favoriteRevision;
+
   static String artist(JSONObject song) {
     JSONArray artists = song.optJSONArray("ar");
     if (artists == null) artists = song.optJSONArray("artists");
@@ -71,7 +73,23 @@ final class MusicData {
     return array(c.getSharedPreferences("music", 0).getString(key, "[]"));
   }
 
+  static void syncCloudFavorites(Context c, long account, JSONArray songs) {
+    if (account == 0) return;
+    favoriteRevision++;
+    java.util.HashSet<String> ids = new java.util.HashSet<>();
+    for (int i = 0; i < songs.length(); i++) {
+      JSONObject song = songs.optJSONObject(i);
+      if (song != null) ids.add(identity(song));
+    }
+    c.getSharedPreferences("music", 0).edit().putStringSet("cloud_likes_" + account, ids).apply();
+  }
+
   static boolean favorite(Context c, JSONObject song) {
+    SharedPreferences p = c.getSharedPreferences("music", 0);
+    long account = p.getLong("active_account", 0);
+    if (account != 0 && !song.has("uri"))
+      return p.getStringSet("cloud_likes_" + account, java.util.Collections.emptySet())
+          .contains(identity(song));
     JSONArray all = saved(c, "favorites");
     for (int i = 0; i < all.length(); i++)
       if (identity(all.optJSONObject(i)).equals(identity(song))) return true;
@@ -79,6 +97,17 @@ final class MusicData {
   }
 
   static void favorite(Context c, JSONObject song, boolean value) {
+    favoriteRevision++;
+    SharedPreferences p = c.getSharedPreferences("music", 0);
+    long account = p.getLong("active_account", 0);
+    if (account != 0 && !song.has("uri")) {
+      java.util.HashSet<String> ids =
+          new java.util.HashSet<>(
+              p.getStringSet("cloud_likes_" + account, java.util.Collections.emptySet()));
+      if (value) ids.add(identity(song));
+      else ids.remove(identity(song));
+      p.edit().putStringSet("cloud_likes_" + account, ids).apply();
+    }
     if (value) {
       remember(c, "favorites", song, 10000);
       return;

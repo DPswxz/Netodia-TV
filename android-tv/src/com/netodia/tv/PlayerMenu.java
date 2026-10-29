@@ -111,6 +111,16 @@ final class PlayerMenu {
     if (w == null) return;
     w.setBackgroundDrawableResource(android.R.color.transparent);
     w.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+    w.getDecorView().setPadding(0, 0, 0, 0);
+    w.getDecorView().setSystemUiVisibility(host.getWindow().getDecorView().getSystemUiVisibility());
+    ViewGroup content = dialog.findViewById(android.R.id.content);
+    if (content != null && content.getChildCount() > 0) {
+      View panel = content.getChildAt(0);
+      panel.measure(
+          View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+          View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+      height = Math.max(height, panel.getMeasuredHeight()) + d(4);
+    }
     w.setLayout(width, height);
     WindowManager.LayoutParams params = w.getAttributes();
     params.gravity = Gravity.TOP | Gravity.LEFT;
@@ -252,7 +262,14 @@ final class PlayerMenu {
               dismiss();
             });
     start.setTextColor(MANTLE);
-    start.setBackground(fill(host, ACCENT, 24));
+    android.graphics.drawable.StateListDrawable states =
+        new android.graphics.drawable.StateListDrawable();
+    android.graphics.drawable.GradientDrawable focused = fill(host, ACCENT, 24);
+    focused.setStroke(d(2), TEXT);
+    states.addState(new int[] {android.R.attr.state_focused}, focused);
+    states.addState(new int[] {android.R.attr.state_pressed}, fill(host, TEXT, 24));
+    states.addState(new int[] {}, fill(host, ACCENT, 24));
+    start.setBackground(states);
     start.setFocusableInTouchMode(true);
     panel.addView(start, lp(-1, 34));
     child.setContentView(panel);

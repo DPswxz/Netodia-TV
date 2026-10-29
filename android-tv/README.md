@@ -4,16 +4,21 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.7)
+## Current TV controls (0.5.8)
 
 - Fixed square navigation tiles with an icon above the label; 最近 / 音乐库 use short names.
 - Settings option values stay on one line, with controls expanding to fit their text.
 - Choice dialogs use the app font, palette and checkmarks, styled before their window appears.
 - Now Playing has a two-line Up Next list with duration, remote navigation and automatic batches.
 - Local history/favorite clearing controls are omitted from Settings.
+- Theme changes preserve the selected light/dark appearance, including cross-theme variant names.
+- Cloud song likes are synchronized for the active account and shared by lists, queue and player.
 - All tabs show text. Focus stays on the user's current control across asynchronous loads.
-- Playlist grids, song lists, folders and queue scroll vertically and load batches automatically.
-  There are no Previous/Next/Show More controls. Returning from a detail restores the prior item.
+- Playlist grids, song tables and folders use Previous/Next controls at the left and right sides.
+  API batches are fetched as needed for the next page; no pager is placed below the final row.
+  Down from the final list row or sidebar Settings moves to the left edge of the playback bar.
+  The floating queue and Now Playing lyrics/Up Next retain their scroll behavior.
+  Returning from a detail restores the prior item.
 - Recommended playlists include daily recommendations and the returned private-radar playlist.
 - The local mirror in `tools/tv-remote/` supports clickable video, wheel scrolling and D-pad buttons.
 
@@ -50,7 +55,7 @@ preview build, not a store release. Minimum Android 8 (API 26); target API 30 fo
 
 This is a TV preview, and UI parity work is still in progress. Local folder scanning,
 artwork, timestamped lyrics with translation/romanization, EQ, playback speed, sleep timer,
-and automatic list loading are implemented. QR login requires authorization in the mobile app.
+and side pagination are implemented. QR login requires authorization in the mobile app.
 
 Gapless playback, crossfade, audio visualization, exclusive output, ReplayGain, downloads,
 voice search and production credential encryption are not implemented. Unavailable desktop
