@@ -4,7 +4,7 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.20)
+## Current TV controls (0.5.21)
 
 - Playlist, Favorite and Recent headers share artwork-colored cards and a right-aligned toolbar.
   Favorite and Recent retain their tabs. Playlist descriptions open in a complete detail view.
@@ -14,7 +14,7 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 - An anchored checkbox menu controls song columns; single-page lists hide pager buttons.
 - Compact tabs share a continuous artwork background with Favorite and Recent headers.
   Tabs have a focus-safe inset; the filter matches the toolbar width and statistics align
-  with the toolbar bottom edge.
+  with the toolbar bottom edge in Favorite, Recent and playlist detail pages.
   The combined header aligns to playlist card edges and uses translucent focus highlights.
 - Settings cards inset focus borders to keep corners visible. Home Back opens a dedicated
   exit action panel, defaulting to Continue Listening.
@@ -29,8 +29,9 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 - Settings option values stay on one line, with controls expanding to fit their text.
   Applying a choice keeps focus on the originating setting. Volume and translation settings
   update their existing controls without rebuilding the page; translation uses a radio dropdown.
-- Lyrics settings share the playback menu icon/value/submenu layout. Queue row actions
-  are updated after focus settles so old rows do not retain favorite buttons.
+- Lyrics settings keep the main panel visible while a child panel opens beside it.
+- Queue actions become visible before horizontal focus moves; explicit focus ownership
+  prevents stale buttons. Sequence/selection markers are drawn without switching icon fonts.
 - The player volume popup uses a compact vertical slider with Up/Down and mouse dragging,
   a small thumb and no oversized focus frame.
 - Infinite roaming offers Personal FM, Heart mode and Similar songs, fetching a new batch

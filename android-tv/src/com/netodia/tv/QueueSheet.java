@@ -33,6 +33,7 @@ final class QueueSheet {
   private int lastRevision = -1, lastIndex = -2, visible = 80;
   private ScrollView scroll;
   private boolean rebuilding;
+  private View focusedPart;
   private final ArrayList<View> tracks = new ArrayList<>();
   private final Runnable listener = this::refresh;
   private final Set<Integer> selected = new TreeSet<>();
@@ -218,6 +219,7 @@ final class QueueSheet {
     rebuilding = true;
     rows.removeAllViews();
     tracks.clear();
+    focusedPart = null;
     setText(count, player.queue().length() + " 首曲目");
     setText(clearButton, selected.isEmpty() ? "清空队列" : "移除选中(" + selected.size() + ")");
     if (player.queue().length() == 0) {
@@ -258,17 +260,16 @@ final class QueueSheet {
       item.setAddStatesFromChildren(true);
       item.setTag(i);
       rows.addView(item, lp(-1, 50));
-      Button select =
-          icon(
-              selected.contains(i) ? "check_box" : "check_box_outline_blank",
-              "选择 " + song.optString("name"),
-              () -> {
-                if (!selected.add(at)) selected.remove(at);
-                lastRevision = -1;
-                refresh();
-              });
+      SelectionMarker select = new SelectionMarker(at);
+      select.setFocusableInTouchMode(true);
+      select.setId(View.generateViewId());
+      select.setContentDescription("选择 " + song.optString("name"));
+      select.setOnClickListener(v -> {
+        if (!selected.add(at)) selected.remove(at);
+        lastRevision = -1;
+        refresh();
+      });
       select.setTag("select:" + i);
-      select.setTextColor(selected.contains(i) ? ACCENT : MUTED);
       item.addView(select, lp(24, 36));
       ImageView image = cover(host, 36);
       item.addView(image);
@@ -318,7 +319,10 @@ final class QueueSheet {
       remove.setVisibility(View.INVISIBLE);
       marker(select, at, selected.contains(at));
       for (View part : new View[] {mainSong, select, favorite, remove})
-        part.setOnFocusChangeListener((v, has) -> main.post(this::refreshFocusActions));
+        part.setOnFocusChangeListener((v, has) -> {
+          if (has) { focusedPart = v; refreshFocusActions(); }
+          else main.post(this::refreshFocusActions);
+        });
       mainSong.setOnKeyListener(
           (v, key, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
@@ -327,7 +331,10 @@ final class QueueSheet {
               return true;
             }
             if (key == KeyEvent.KEYCODE_DPAD_RIGHT) {
+              favorite.setVisibility(View.VISIBLE);
+              remove.setVisibility(View.VISIBLE);
               favorite.requestFocus();
+              refreshFocusActions();
               return true;
             }
             if (key == KeyEvent.KEYCODE_MENU) {
@@ -342,7 +349,20 @@ final class QueueSheet {
       remove.setNextFocusLeftId(favorite.getId());
       for (View action : new View[] {select, favorite, remove})
         action.setOnKeyListener(
-            (v, key, event) -> event.getAction() == KeyEvent.ACTION_DOWN && vertical(at, key));
+            (v, key, event) -> {
+              if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+              if (vertical(at, key)) return true;
+              if (key == KeyEvent.KEYCODE_DPAD_LEFT) {
+                (v == remove ? favorite : v == favorite ? mainSong : select).requestFocus();
+                refreshFocusActions(); return true;
+              }
+              if (key == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                if (v == select) mainSong.requestFocus();
+                else { favorite.setVisibility(View.VISIBLE); remove.setVisibility(View.VISIBLE); remove.requestFocus(); }
+                refreshFocusActions(); return true;
+              }
+              return false;
+            });
     }
   }
 
@@ -353,26 +373,51 @@ final class QueueSheet {
       if (!(view instanceof LinearLayout) || !(view.getTag() instanceof Integer)) continue;
       LinearLayout item = (LinearLayout) view;
       int at = (Integer) item.getTag();
-      boolean active = item.hasFocus();
-      marker((Button) item.getChildAt(0), at, selected.contains(at) || active);
+      boolean active = focusedPart != null && focusedPart.isFocused()
+          && (focusedPart == item.getChildAt(0) || focusedPart == item.getChildAt(2)
+              || focusedPart == item.getChildAt(3) || focusedPart == item.getChildAt(4));
+      marker((SelectionMarker) item.getChildAt(0), at, selected.contains(at) || active);
       item.getChildAt(3).setVisibility(active ? View.VISIBLE : View.INVISIBLE);
       item.getChildAt(4).setVisibility(active ? View.VISIBLE : View.INVISIBLE);
     }
   }
 
-  private void marker(Button select, int index, boolean checkbox) {
-    select.setTypeface(checkbox ? TvUi.symbols : TvUi.font);
-    select.setTextSize((checkbox ? 15 : 14) * SCALE);
-    select.setText(
-        checkbox ? (selected.contains(index) ? "check" : "") : Integer.toString(index + 1));
-    if (checkbox) {
-      android.graphics.drawable.GradientDrawable box =
-          fill(host, selected.contains(index) ? ACCENT : Color.TRANSPARENT, 4);
-      box.setStroke(d(1), selected.contains(index) ? ACCENT : BORDER);
-      select.setBackground(
-          new android.graphics.drawable.InsetDrawable(box, d(4), d(10), d(4), d(10)));
-      select.setTextColor(MANTLE);
-    } else select.setBackground(focus(host, true));
+  private void marker(SelectionMarker select, int index, boolean checkbox) {
+    select.checkbox = checkbox;
+    select.invalidate();
+  }
+
+  private final class SelectionMarker extends View {
+    final int index;
+    boolean checkbox;
+    final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+    SelectionMarker(int index) { super(host); this.index = index; }
+    @Override protected void onDraw(android.graphics.Canvas canvas) {
+      float x = getWidth() / 2f, y = getHeight() / 2f;
+      paint.setStyle(android.graphics.Paint.Style.FILL);
+      if (!checkbox) {
+        paint.setColor(MUTED);
+        paint.setTypeface(TvUi.font);
+        paint.setTextSize(d(14));
+        paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+        android.graphics.Paint.FontMetrics metrics = paint.getFontMetrics();
+        canvas.drawText(Integer.toString(index + 1), x, y - (metrics.ascent + metrics.descent) / 2, paint);
+        return;
+      }
+      boolean checked = selected.contains(index);
+      paint.setColor(checked ? ACCENT : isFocused() ? ACCENT : BORDER);
+      paint.setStrokeWidth(d(1));
+      paint.setStyle(checked ? android.graphics.Paint.Style.FILL : android.graphics.Paint.Style.STROKE);
+      canvas.drawRoundRect(x - d(7), y - d(7), x + d(7), y + d(7), d(3), d(3), paint);
+      if (checked) {
+        paint.setStyle(android.graphics.Paint.Style.STROKE);
+        paint.setColor(MANTLE);
+        paint.setStrokeWidth(d(1.5f));
+        android.graphics.Path path = new android.graphics.Path();
+        path.moveTo(x - d(4), y); path.lineTo(x - d(1), y + d(3)); path.lineTo(x + d(4), y - d(3));
+        canvas.drawPath(path, paint);
+      }
+    }
   }
 
   void invalidate() {
@@ -399,6 +444,7 @@ final class QueueSheet {
     }
     if (next < 0) clearButton.requestFocus();
     else if (next < tracks.size()) tracks.get(next).requestFocus();
+    refreshFocusActions();
 
     return true;
   }

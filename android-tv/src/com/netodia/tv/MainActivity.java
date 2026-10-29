@@ -1346,7 +1346,7 @@ public class MainActivity extends Activity {
     info.setGravity(Gravity.TOP);
     info.setPadding(0, d(3), 0, d(3));
     TextView desc = label(description.isEmpty() ? "暂无歌单简介" : description, 14, MUTED);
-    desc.setMaxLines(2);
+    desc.setMaxLines(3);
     desc.setEllipsize(TextUtils.TruncateAt.END);
     info.addView(desc, new LinearLayout.LayoutParams(0, -2, 1));
     LinearLayout details = row(this);
@@ -1378,7 +1378,7 @@ public class MainActivity extends Activity {
       if (!album.isEmpty()) albums.add(album);
     }
     LinearLayout badges = row(this);
-    badges.setPadding(0, d(5), 0, 0);
+    badges.setGravity(Gravity.BOTTOM);
     for (String value :
         new String[] {
           current.items.length() + " 首曲目",
@@ -1399,8 +1399,12 @@ public class MainActivity extends Activity {
       badges.addView(badge, lp(-2, -2));
       margin(badge, 8, 0);
     }
-    facts.addView(badges);
-    playlistToolbar(facts);
+    LinearLayout footer = row(this);
+    footer.setGravity(Gravity.BOTTOM);
+    footer.addView(badges, lp(-2, 36));
+    footer.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+    facts.addView(footer, lp(-1, 36));
+    playlistToolbar(footer);
     body.addView(hero, lp(-1, 172));
     addSongRows(orderedSongs(current.items), false);
   }
@@ -4096,84 +4100,12 @@ public class MainActivity extends Activity {
   }
 
   private void lyricSettings() {
-    View origin = getCurrentFocus();
-    if (origin == null) return;
-    Dialog dialog = new Dialog(this);
-    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-    LinearLayout panel = column(this);
-    panel.setPadding(d(4), d(6), d(4), d(6));
-    android.graphics.drawable.GradientDrawable frame = fill(this, MANTLE, 10);
-    frame.setStroke(d(1), BORDER);
-    panel.setBackground(frame);
-    String[] icons = {"tune", "translate", "history"};
-    String[] names = {"歌词字号", "显示翻译", "时间偏移"};
-    String[] values = {prefs().getInt("lyric_size", 36) + " sp", prefs().getBoolean("lyric_translation", true) ? "开启" : "关闭", prefs().getInt("lyric_offset", 0) + " ms"};
-    ArrayList<View> controls = new ArrayList<>();
-    for (int i = 0; i < names.length; i++) {
-      final int at = i;
-      LinearLayout item = row(this);
-      item.setPadding(d(8), 0, d(7), 0);
-      item.setBackground(TvUi.focus(this, true));
-      item.setFocusableInTouchMode(true);
-      item.setId(View.generateViewId());
-      item.addView(TvUi.glyph(this, icons[i], 23, TEXT), lp(28, 30));
-      TextView name = label(names[i], 17, TEXT);
-      name.setPadding(d(8), 0, d(6), 0);
-      item.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
-      item.addView(label(values[i], 14, MUTED));
-      item.addView(TvUi.glyph(this, "chevron_left", 22, MUTED), lp(24, 28));
-      panel.addView(item, lp(-1, 44));
-      controls.add(item);
-      item.setContentDescription(names[i] + "，" + values[i]);
-      item.setOnClickListener(v -> {
-        dialog.dismiss();
-        handler.post(() -> lyricOption(at));
-      });
-    }
-    for (int i = 0; i < controls.size(); i++) {
-      controls.get(i).setNextFocusUpId(controls.get(Math.max(0, i - 1)).getId());
-      controls.get(i).setNextFocusDownId(controls.get(Math.min(controls.size() - 1, i + 1)).getId());
-    }
-    dialog.setContentView(panel);
-    int[] anchor = new int[2];
-    origin.getLocationOnScreen(anchor);
-    Window window = dialog.getWindow();
-    window.setBackgroundDrawableResource(android.R.color.transparent);
-    window.setWindowAnimations(0);
-    window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-    WindowManager.LayoutParams params = window.getAttributes();
-    params.gravity = Gravity.TOP | Gravity.LEFT;
-    params.width = d(242); params.height = d(144);
-    params.x = Math.max(d(8), anchor[0] + origin.getWidth() - params.width);
-    params.y = anchor[1] + origin.getHeight() + d(4);
-    window.setAttributes(params);
-    modal = dialog;
-    dialog.setOnDismissListener(value -> {
-      if (modal == dialog) modal = null;
-      if (origin.isAttachedToWindow()) origin.requestFocus();
-    });
-    dialog.show();
-    window.getDecorView().setPadding(0, 0, 0, 0);
-    window.setAttributes(params);
-    controls.get(0).requestFocus();
-  }
-
-  private void lyricOption(int at) {
-    if (at == 0) choice("歌词字号", new String[] {"26", "30", "36", "42"}, java.util.Arrays.asList(26,30,36,42).indexOf(prefs().getInt("lyric_size",36)), n -> {
-      prefs().edit().putInt("lyric_size", new int[] {26,30,36,42}[n]).apply();
-      current.restoreFocus = "player:lyrics-settings";
-      render();
-    });
-    else if (at == 1) choice("显示翻译", new String[] {"开启", "关闭"}, prefs().getBoolean("lyric_translation", true) ? 0 : 1, n -> {
-      prefs().edit().putBoolean("lyric_translation", n == 0).apply();
-      lastLyric = -2;
-      updatePlayback();
-    });
-    else rangeDialog("歌词时间偏移（毫秒）", -5000, 5000, prefs().getInt("lyric_offset", 0), 100, n -> {
-      prefs().edit().putInt("lyric_offset", n).apply();
-      lastLyric = -2;
-      updatePlayback();
-    });
+    LyricsMenu menu = new LyricsMenu(this,
+        () -> { current.restoreFocus = "player:lyrics-settings"; render(); },
+        () -> { lastLyric = -2; updatePlayback(); },
+        () -> { modal = null; if (!destroyed) focus.focus("player:lyrics-settings"); });
+    modal = menu.dialog();
+    menu.show();
   }
 
   private void equalizerDialog() {
