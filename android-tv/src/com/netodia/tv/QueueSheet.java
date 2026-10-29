@@ -256,6 +256,7 @@ final class QueueSheet {
       item.setPadding(d(8), d(5), d(8), d(5));
       item.setBackground(focus(host, true));
       item.setAddStatesFromChildren(true);
+      item.setTag(i);
       rows.addView(item, lp(-1, 50));
       Button select =
           icon(
@@ -317,13 +318,7 @@ final class QueueSheet {
       remove.setVisibility(View.INVISIBLE);
       marker(select, at, selected.contains(at));
       for (View part : new View[] {mainSong, select, favorite, remove})
-        part.setOnFocusChangeListener(
-            (v, has) -> {
-              boolean activeRow = item.hasFocus();
-              marker(select, at, selected.contains(at) || activeRow);
-              favorite.setVisibility(activeRow ? View.VISIBLE : View.INVISIBLE);
-              remove.setVisibility(activeRow ? View.VISIBLE : View.INVISIBLE);
-            });
+        part.setOnFocusChangeListener((v, has) -> main.post(this::refreshFocusActions));
       mainSong.setOnKeyListener(
           (v, key, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
@@ -348,6 +343,20 @@ final class QueueSheet {
       for (View action : new View[] {select, favorite, remove})
         action.setOnKeyListener(
             (v, key, event) -> event.getAction() == KeyEvent.ACTION_DOWN && vertical(at, key));
+    }
+  }
+
+  private void refreshFocusActions() {
+    if (!dialog.isShowing()) return;
+    for (int i = 0; i < rows.getChildCount(); i++) {
+      View view = rows.getChildAt(i);
+      if (!(view instanceof LinearLayout) || !(view.getTag() instanceof Integer)) continue;
+      LinearLayout item = (LinearLayout) view;
+      int at = (Integer) item.getTag();
+      boolean active = item.hasFocus();
+      marker((Button) item.getChildAt(0), at, selected.contains(at) || active);
+      item.getChildAt(3).setVisibility(active ? View.VISIBLE : View.INVISIBLE);
+      item.getChildAt(4).setVisibility(active ? View.VISIBLE : View.INVISIBLE);
     }
   }
 
