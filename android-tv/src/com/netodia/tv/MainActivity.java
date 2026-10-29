@@ -265,7 +265,7 @@ public class MainActivity extends Activity {
     accountLabel = label(nickname, 13, MUTED);
     accountLabel.setVisibility(View.GONE);
     content = new ContentPanel(this);
-    content.setPadding(d(16), d(8), d(16), d(8));
+    content.setPadding(d(8), d(8), d(8), d(8));
     android.graphics.drawable.GradientDrawable border = fill(this, BASE, 8);
     content.setBackground(border);
     content.setClipToOutline(true);
@@ -307,7 +307,7 @@ public class MainActivity extends Activity {
     content.addView(tabs, lp(-1, 64));
     curatedHero = row(this);
     curatedHero.setVisibility(View.GONE);
-    content.addView(curatedHero, lp(-1, 128));
+    content.addView(curatedHero, lp(-1, 172));
     stage = new FrameLayout(this);
     content.addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
     status = label("", 13, MUTED);
@@ -1187,19 +1187,21 @@ public class MainActivity extends Activity {
   private void curated(String title, String empty, JSONArray items) {
     curatedHero.removeAllViews();
     curatedHero.setVisibility(View.VISIBLE);
-    curatedHero.setPadding(0, d(4), 0, d(12));
+    focus.removePrefix("detail:");
+    curatedHero.setPadding(d(16), d(16), d(16), d(16));
     LinearLayout.LayoutParams stageParams = (LinearLayout.LayoutParams) stage.getLayoutParams();
     stageParams.leftMargin = 0;
     stageParams.rightMargin = 0;
-    stageParams.topMargin = d(32);
+    stageParams.topMargin = 0;
     stage.setLayoutParams(stageParams);
     FrameLayout mosaic = new FrameLayout(this);
     mosaic.setBackground(fill(this, SURFACE, 10));
     mosaic.setClipToOutline(true);
-    curatedHero.addView(mosaic, lp(112, 112));
+    curatedHero.addView(mosaic, lp(140, 140));
     Page source = current;
-    ArtworkBackdrop backdrop = new ArtworkBackdrop(BASE, d(232), d(8));
-    content.setBackground(backdrop);
+    ArtworkBackdrop backdrop = new ArtworkBackdrop(SURFACE1, 0, d(10));
+    curatedHero.setBackground(backdrop);
+    curatedHero.setClipToOutline(true);
     ArrayList<String> covers = new ArrayList<>();
     for (int i = 0; i < items.length() && covers.size() < 4; i++) {
       String url = MusicData.cover(items.optJSONObject(i));
@@ -1215,9 +1217,9 @@ public class MainActivity extends Activity {
         ImageView image = new ImageView(this);
         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
         int count = covers.size();
-        int w = count == 1 ? 112 : 56, h = count <= 2 ? 112 : count == 3 && i == 0 ? 112 : 56;
-        int x = count == 1 ? 0 : count == 3 ? (i == 0 ? 0 : 56) : i % 2 * 56;
-        int y = count <= 2 ? 0 : count == 3 ? (i == 2 ? 56 : 0) : i / 2 * 56;
+        int w = count == 1 ? 140 : 70, h = count <= 2 ? 140 : count == 3 && i == 0 ? 140 : 70;
+        int x = count == 1 ? 0 : count == 3 ? (i == 0 ? 0 : 70) : i % 2 * 70;
+        int y = count <= 2 ? 0 : count == 3 ? (i == 2 ? 70 : 0) : i / 2 * 70;
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(d(w), d(h));
         params.leftMargin = d(x);
         params.topMargin = d(y);
@@ -1268,10 +1270,12 @@ public class MainActivity extends Activity {
     for (String value : values) {
       TextView chip = label(value, 13, MUTED);
       chip.setPadding(d(12), d(5), d(12), d(5));
-      chip.setBackground(fill(this, SURFACE1, 22));
+      chip.setBackground(fill(this, 0x22ffffff, 22));
       chips.addView(chip, lp(-2, -2));
       margin(chip, 8, 0);
     }
+    facts.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
+    if (!(current.type.equals("favorites") && current.tab == 1)) playlistToolbar(facts);
   }
 
   private int mixColor(int a, int b, float fraction) {
@@ -1312,12 +1316,25 @@ public class MainActivity extends Activity {
     facts.addView(name);
     String description = current.entity.optString("description", "");
     if (description.equals("null")) description = "";
-    if (!description.isEmpty()) {
-      TextView desc = label(description, 15, MUTED);
-      desc.setMaxLines(1);
-      desc.setEllipsize(TextUtils.TruncateAt.END);
-      facts.addView(desc);
-    }
+    final String fullDescription = description;
+    LinearLayout info = column(this);
+    info.setBackground(TvUi.focus(this, true));
+    TextView desc = label(description.isEmpty() ? "查看歌单详情" : description, 14, MUTED);
+    desc.setMaxLines(2);
+    desc.setEllipsize(TextUtils.TruncateAt.END);
+    info.addView(desc);
+    facts.addView(info, new LinearLayout.LayoutParams(-1, 0, 1));
+    focus.add(info, FocusRouter.CONTENT, contentRow++, 0, "detail:info");
+    info.setContentDescription("查看歌单详情");
+    info.setOnClickListener(
+        v -> {
+          info.requestFocus();
+          String text =
+              current.entity.optString("name", current.title)
+                  + "\n\n"
+                  + (fullDescription.isEmpty() ? "暂无歌单简介" : fullDescription);
+          info("歌单详情", text);
+        });
     long duration = 0;
     java.util.HashSet<String> artists = new java.util.HashSet<>(),
         albums = new java.util.HashSet<>();
@@ -1352,10 +1369,17 @@ public class MainActivity extends Activity {
       margin(badge, 8, 0);
     }
     facts.addView(badges);
-    facts.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
+    playlistToolbar(facts);
+    body.addView(hero, lp(-1, 172));
+    addSongRows(orderedSongs(current.items), false);
+  }
+
+  private void playlistToolbar(LinearLayout facts) {
     LinearLayout buttons = row(this);
     buttons.setBackground(fill(this, SURFACE, 30));
-    facts.addView(buttons, lp(-2, 36));
+    LinearLayout.LayoutParams toolbarParams = lp(-2, 36);
+    toolbarParams.gravity = Gravity.RIGHT;
+    facts.addView(buttons, toolbarParams);
     detailButton(buttons, "play_arrow", "播放", () -> play(current.items, 0), 0, "detail:play");
     detailButton(
         buttons,
@@ -1373,8 +1397,6 @@ public class MainActivity extends Activity {
         "detail:order");
     detailButton(buttons, "tune", "列", this::detailColumns, 2, "detail:columns");
     contentRow++;
-    body.addView(hero, lp(-1, 172));
-    addSongRows(orderedSongs(current.items), false);
   }
 
   private View detailColumnsAnchor;
@@ -1520,7 +1542,7 @@ public class MainActivity extends Activity {
                     - stageParams.rightMargin)
                 / density
             : getResources().getDisplayMetrics().widthPixels / density - navTileSize - 48;
-    available -= 88;
+    available -= 56;
     gridColumns = Math.max(1, (int) ((available + 16) / 196));
     int cardWidth =
         Math.min(
@@ -1676,7 +1698,7 @@ public class MainActivity extends Activity {
             - 16
             - (tabs.getVisibility() == View.VISIBLE ? 64 : 0)
             - (header.getVisibility() == View.VISIBLE ? 44 : 0)
-            - (curatedHero.getVisibility() == View.VISIBLE ? 160 : 0)
+            - (curatedHero.getVisibility() == View.VISIBLE ? 172 : 0)
             - (status.getVisibility() == View.VISIBLE ? 26 : 0));
   }
 
@@ -1689,7 +1711,7 @@ public class MainActivity extends Activity {
   private void addSidePager(int count) {
     if (count <= current.pageSize && !current.more && current.page == 0) return;
     paginated = true;
-    stage.setPadding(d(44), 0, d(44), 0);
+    stage.setPadding(d(28), 0, d(28), 0);
     stage.setClipToPadding(false);
     previousPageButton = pageButton(false, current.page > 0);
     nextPageButton =
@@ -1753,9 +1775,9 @@ public class MainActivity extends Activity {
     button.setContentDescription((next ? "下一页" : "上一页") + "，当前第 " + (current.page + 1) + " 页");
     FrameLayout.LayoutParams params =
         new FrameLayout.LayoutParams(
-            d(36), d(62), Gravity.CENTER_VERTICAL | (next ? Gravity.RIGHT : Gravity.LEFT));
-    if (next) params.rightMargin = -d(40);
-    else params.leftMargin = -d(40);
+            d(26), d(62), Gravity.CENTER_VERTICAL | (next ? Gravity.RIGHT : Gravity.LEFT));
+    if (next) params.rightMargin = -d(28);
+    else params.leftMargin = -d(28);
     stage.addView(button, params);
     focus.add(button, FocusRouter.PAGER, 0, next ? 1 : 0, next ? "pager:next" : "pager:previous");
     return button;
