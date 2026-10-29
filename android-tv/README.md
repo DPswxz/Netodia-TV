@@ -4,11 +4,12 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.17)
+## Current TV controls (0.5.18)
 
 - Playlist, Favorite and Recent headers share artwork-colored cards and a right-aligned toolbar.
   Favorite and Recent retain their tabs. Playlist descriptions open in a complete detail view.
 - Narrow pager gutters and reduced panel margins leave more width for the song table.
+  Cover left edges and table dividers share the same alignment in all collection/detail pages.
 - An anchored checkbox menu controls song columns; single-page lists hide pager buttons.
 - Compact tabs share a continuous artwork background with Favorite and Recent headers.
   The combined header aligns to playlist card edges and uses translucent focus highlights.
@@ -24,10 +25,12 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 - Fixed square navigation tiles with an icon above the label; 最近 / 音乐库 use short names.
 - Settings option values stay on one line, with controls expanding to fit their text.
   Applying a choice keeps focus on the originating setting.
-- The player volume popup uses a vertical slider with Up/Down and mouse dragging.
+- The player volume popup uses a compact vertical slider with Up/Down and mouse dragging,
+  a small thumb and no oversized focus frame.
 - Infinite roaming offers Personal FM, Heart mode and Similar songs, fetching a new batch
   when the current batch ends. Heart mode uses the account liked playlist and intelligence API.
-- Choice menus open beside their controls with shared dropdown styling and checkmarks.
+- Choice menus open beside their controls with shared dropdown styling and radio indicators.
+  Column visibility retains independent checkboxes for multiple selections.
   Theme, appearance variant and playback animation retain their inline choice buttons.
 - Now Playing has a two-line Up Next list with duration, remote navigation and automatic batches.
 - Local history/favorite clearing controls are omitted from Settings.

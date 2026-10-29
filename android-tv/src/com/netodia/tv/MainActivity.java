@@ -1199,7 +1199,7 @@ public class MainActivity extends Activity {
     curatedHero.removeAllViews();
     curatedHero.setVisibility(View.VISIBLE);
     focus.removePrefix("detail:");
-    curatedHero.setPadding(d(16), d(14), d(16), d(14));
+    curatedHero.setPadding(0, d(14), d(16), d(14));
     LinearLayout.LayoutParams stageParams = (LinearLayout.LayoutParams) stage.getLayoutParams();
     stageParams.leftMargin = 0;
     stageParams.rightMargin = 0;
@@ -1310,7 +1310,7 @@ public class MainActivity extends Activity {
     if (!ready(current.kind, entityArgs())) return;
     scroll();
     LinearLayout hero = row(this);
-    hero.setPadding(d(16), d(16), d(16), d(16));
+    hero.setPadding(0, d(16), d(16), d(16));
     ArtworkBackdrop backdrop = new ArtworkBackdrop(SURFACE1, 0, d(10));
     hero.setBackground(backdrop);
     hero.setClipToOutline(true);
@@ -1880,12 +1880,6 @@ public class MainActivity extends Activity {
     }
     scroll();
     if (current.type.equals("favorites") || current.type.equals("recent")) {
-      stage.removeView(scroller);
-      LinearLayout table = column(this);
-      table.setBackgroundColor(BASE);
-      table.addView(songTableHeader(), lp(-1, 37));
-      table.addView(scroller, new LinearLayout.LayoutParams(-1, 0, 1));
-      stage.addView(table, new FrameLayout.LayoutParams(-1, -1));
       addSongRows(visible, false);
       return;
     }
@@ -1986,8 +1980,7 @@ public class MainActivity extends Activity {
   private void addSongRows(JSONArray songs, boolean queuePage) {
     if (queuePage) current.items = songs;
     boolean showAlbum = prefs().getBoolean("show_album_column", true);
-    if (!current.type.equals("favorites") && !current.type.equals("recent"))
-      body.addView(songTableHeader(), lp(-1, 37));
+    body.addView(songTableHeader(), lp(-1, 37));
     int overhead =
         37
             + 18
@@ -4381,7 +4374,7 @@ public class MainActivity extends Activity {
       TextView check =
           TvUi.glyph(
               this,
-              i == selected ? "check_box" : "check_box_outline_blank",
+              i == selected ? "radio_button_checked" : "radio_button_unchecked",
               23,
               i == selected ? ACCENT : MUTED);
       option.addView(check, lp(30, 30));
@@ -4617,11 +4610,11 @@ public class MainActivity extends Activity {
     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
     LinearLayout panel = column(this);
     panel.setGravity(Gravity.CENTER_HORIZONTAL);
-    panel.setPadding(d(10), d(12), d(10), d(12));
+    panel.setPadding(d(8), d(10), d(8), d(10));
     android.graphics.drawable.GradientDrawable shape = fill(this, MANTLE, 10);
     shape.setStroke(d(1), BORDER);
     panel.setBackground(shape);
-    TextView amount = label("", 17, TEXT);
+    TextView amount = label("", 15, TEXT);
     amount.setGravity(Gravity.CENTER);
     int max = audio.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
     View slider =
@@ -4648,7 +4641,14 @@ public class MainActivity extends Activity {
             canvas.drawRoundRect(x - d(3), top, x + d(3), bottom, d(3), d(3), paint);
             paint.setColor(ACCENT);
             canvas.drawRoundRect(x - d(3), y, x + d(3), bottom, d(3), d(3), paint);
-            canvas.drawCircle(x, y, d(8), paint);
+            if (isFocused()) {
+              paint.setColor(0x24ffffff);
+              canvas.drawCircle(x, y, d(8), paint);
+            }
+            paint.setColor(TEXT);
+            canvas.drawCircle(x, y, d(5), paint);
+            paint.setColor(ACCENT);
+            canvas.drawCircle(x, y, d(3), paint);
           }
 
           @Override
@@ -4681,7 +4681,7 @@ public class MainActivity extends Activity {
         };
     slider.setContentDescription("音量，上下键调整");
     slider.setFocusableInTouchMode(true);
-    slider.setBackground(TvUi.focus(this, true));
+    slider.setBackgroundColor(Color.TRANSPARENT);
     TvUi.setText(
         amount,
         Math.round(
@@ -4689,9 +4689,9 @@ public class MainActivity extends Activity {
                     * audio.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
                     / Math.max(1, max))
             + "%");
-    panel.addView(amount, lp(-1, 30));
-    panel.addView(slider, lp(52, 160));
-    panel.addView(TvUi.glyph(this, "volume_up", 23, TEXT), lp(28, 28));
+    panel.addView(amount, lp(-1, 26));
+    panel.addView(slider, lp(42, 132));
+    panel.addView(TvUi.glyph(this, "volume_up", 20, MUTED), lp(24, 24));
     dialog.setContentView(panel);
     Window window = dialog.getWindow();
     window.setBackgroundDrawableResource(android.R.color.transparent);
@@ -4699,8 +4699,8 @@ public class MainActivity extends Activity {
     window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
     WindowManager.LayoutParams params = window.getAttributes();
     params.gravity = Gravity.TOP | Gravity.LEFT;
-    params.width = d(84);
-    params.height = d(242);
+    params.width = d(64);
+    params.height = d(202);
     params.x =
         Math.max(
             d(8),

@@ -202,6 +202,24 @@ final class TvUi {
         }
       };
     }
+    if (name.equals("radio_button_checked") || name.equals("radio_button_unchecked")) {
+      final boolean checked = name.equals("radio_button_checked");
+      return new TextView(c) {
+        final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        @Override protected void onDraw(android.graphics.Canvas canvas) {
+          float side = Math.min(dp(c, size), Math.min(getWidth(), getHeight()));
+          float x = getWidth() / 2f, y = getHeight() / 2f;
+          paint.setColor(color);
+          paint.setStyle(android.graphics.Paint.Style.STROKE);
+          paint.setStrokeWidth(dp(c, 1.5f));
+          canvas.drawCircle(x, y, side * .34f, paint);
+          if (checked) {
+            paint.setStyle(android.graphics.Paint.Style.FILL);
+            canvas.drawCircle(x, y, side * .18f, paint);
+          }
+        }
+      };
+    }
     if (name.equals("check_box") || name.equals("check_box_outline_blank")) {
       final boolean checked = name.equals("check_box");
       return new TextView(c) {
