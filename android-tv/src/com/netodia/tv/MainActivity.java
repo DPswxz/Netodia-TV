@@ -1345,7 +1345,11 @@ public class MainActivity extends Activity {
     focus.add(button, FocusRouter.CONTENT, contentRow, col, key);
     button.setContentDescription(title);
     if (key.equals("detail:columns")) detailColumnsAnchor = button;
-    button.setOnClickListener(v -> click.run());
+    button.setOnClickListener(
+        v -> {
+          button.requestFocus();
+          click.run();
+        });
     if (col < 2) {
       View divider = new View(this);
       divider.setBackgroundColor(BORDER);
@@ -1647,30 +1651,38 @@ public class MainActivity extends Activity {
         pageButton(true, (current.page + 1) * current.pageSize < count || current.more);
     Page page = current;
     int version = renderVersion;
-    stage.post(
-        () -> {
-          if (current != page || renderVersion != version) return;
-          ArrayList<View> items = new ArrayList<>();
-          collectPageItems(body, items);
-          if (items.isEmpty()) return;
-          int[] base = new int[2];
-          stage.getLocationOnScreen(base);
-          int top = Integer.MAX_VALUE;
-          for (View item : items) {
-            int[] point = new int[2];
-            item.getLocationOnScreen(point);
-            top = Math.min(top, point[1] - base[1]);
-          }
-          // Use the reserved list viewport, including empty slots on the final page.
-          int bottom = Math.max(top, stage.getHeight() - d(20));
-          for (Button button : new Button[] {previousPageButton, nextPageButton}) {
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) button.getLayoutParams();
-            params.gravity =
-                Gravity.TOP | (button == nextPageButton ? Gravity.RIGHT : Gravity.LEFT);
-            params.topMargin = Math.max(0, (top + bottom - button.getHeight()) / 2);
-            button.setLayoutParams(params);
-          }
-        });
+    stage
+        .getViewTreeObserver()
+        .addOnPreDrawListener(
+            new android.view.ViewTreeObserver.OnPreDrawListener() {
+              @Override
+              public boolean onPreDraw() {
+                stage.getViewTreeObserver().removeOnPreDrawListener(this);
+                if (current != page || renderVersion != version) return true;
+                ArrayList<View> items = new ArrayList<>();
+                collectPageItems(body, items);
+                if (items.isEmpty()) return true;
+                int[] base = new int[2];
+                stage.getLocationOnScreen(base);
+                int top = Integer.MAX_VALUE;
+                for (View item : items) {
+                  int[] point = new int[2];
+                  item.getLocationOnScreen(point);
+                  top = Math.min(top, point[1] - base[1]);
+                }
+                // Use the reserved list viewport, including empty slots on the final page.
+                int bottom = Math.max(top, stage.getHeight() - d(20));
+                for (Button button : new Button[] {previousPageButton, nextPageButton}) {
+                  FrameLayout.LayoutParams params =
+                      (FrameLayout.LayoutParams) button.getLayoutParams();
+                  params.gravity =
+                      Gravity.TOP | (button == nextPageButton ? Gravity.RIGHT : Gravity.LEFT);
+                  params.topMargin = Math.max(0, (top + bottom - button.getHeight()) / 2);
+                  button.setLayoutParams(params);
+                }
+                return false;
+              }
+            });
   }
 
   private void collectPageItems(View view, ArrayList<View> items) {
@@ -3169,10 +3181,16 @@ public class MainActivity extends Activity {
       setting(
           "播放模式",
           service() == null ? "列表循环" : service().modeLabel(),
-          () -> {
-            if (service() != null) service().cycleMode();
-            render();
-          });
+          () ->
+              choice(
+                  "播放模式",
+                  new String[] {"列表循环", "单曲循环", "随机播放"},
+                  prefs().getInt("mode", 0),
+                  at -> {
+                    if (service() != null) service().setMode(at);
+                    else prefs().edit().putInt("mode", at).apply();
+                    render();
+                  }));
       android.media.AudioManager audio =
           (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
       setting(
@@ -3940,7 +3958,11 @@ public class MainActivity extends Activity {
     if (settingGroup.getChildCount() > 0) settingsDivider(settingGroup);
     settingGroup.addView(row, lp(-1, description.isEmpty() ? 74 : 80));
     focus.add(row, FocusRouter.CONTENT, contentRow++, 0, "setting:" + title);
-    row.setOnClickListener(v -> action.run());
+    row.setOnClickListener(
+        v -> {
+          row.requestFocus();
+          action.run();
+        });
     row.setContentDescription(title + "，" + value);
   }
 
@@ -4228,36 +4250,106 @@ public class MainActivity extends Activity {
     }
   }
 
+  private View choiceAnchor;
+
   private void choice(String title, String[] options, int selected, Selection callback) {
-    ArrayAdapter<String> adapter =
-        new ArrayAdapter<String>(this, 0, options) {
-          @Override
-          public View getView(int position, View convertView, ViewGroup parent) {
-            LinearLayout item = row(MainActivity.this);
-            item.setPadding(d(18), d(12), d(14), d(12));
-            item.setMinimumHeight(d(54));
-            item.setBackground(fill(MainActivity.this, Color.TRANSPARENT, 8));
-            TextView name = label(options[position], 19, position == selected ? ACCENT : TEXT);
-            item.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
-            TextView mark = TvUi.glyph(MainActivity.this, "check", 22, ACCENT);
-            mark.setVisibility(position == selected ? View.VISIBLE : View.INVISIBLE);
-            item.addView(mark, lp(26, 26));
-            return item;
-          }
-        };
-    AlertDialog dialog =
-        new AlertDialog.Builder(this)
-            .setTitle(title)
-            .setNegativeButton("返回", null)
-            .setAdapter(
-                adapter,
-                (d, at) -> {
-                  d.dismiss();
-                  handler.post(() -> callback.choose(at));
-                })
-            .create();
-    showModal(dialog);
-    if (selected >= 0 && dialog.getListView() != null) dialog.getListView().setSelection(selected);
+    View origin = getCurrentFocus();
+    if (origin != null && origin.isAttachedToWindow()) choiceAnchor = origin;
+    View anchor =
+        choiceAnchor != null && choiceAnchor.isAttachedToWindow() ? choiceAnchor : content;
+    int[] location = new int[2];
+    anchor.getLocationOnScreen(location);
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LinearLayout panel = column(this);
+    panel.setPadding(d(6), d(6), d(6), d(6));
+    android.graphics.drawable.GradientDrawable shape = fill(this, MANTLE, 10);
+    shape.setStroke(d(1), BORDER);
+    panel.setBackground(shape);
+    ScrollView scroll = new ScrollView(this);
+    scroll.setFocusable(false);
+    scroll.setClipToPadding(false);
+    LinearLayout entries = column(this);
+    scroll.addView(entries);
+    panel.addView(scroll, lp(-1, -1));
+    ArrayList<View> controls = new ArrayList<>();
+    int width = d(180);
+    for (int i = 0; i < options.length; i++) {
+      final int at = i;
+      LinearLayout option = row(this);
+      option.setPadding(d(10), 0, d(10), 0);
+      option.setMinimumHeight(d(44));
+      option.setBackground(TvUi.focus(this, true));
+      option.setFocusableInTouchMode(true);
+      option.setId(View.generateViewId());
+      TextView check =
+          TvUi.glyph(
+              this,
+              i == selected ? "check_box" : "check_box_outline_blank",
+              23,
+              i == selected ? ACCENT : MUTED);
+      option.addView(check, lp(30, 30));
+      TextView text = label(options[i], 17, i == selected ? ACCENT : TEXT);
+      text.setSingleLine();
+      option.addView(text);
+      width = Math.max(width, (int) Math.ceil(text.getPaint().measureText(options[i])) + d(64));
+      entries.addView(option, lp(-1, 44));
+      controls.add(option);
+      option.setContentDescription(options[i] + (i == selected ? "，已选中" : ""));
+      option.setOnClickListener(
+          v -> {
+            dialog.dismiss();
+            handler.post(() -> callback.choose(at));
+          });
+      option.setOnFocusChangeListener(
+          (v, focused) -> {
+            if (focused)
+              v.requestRectangleOnScreen(new Rect(0, 0, v.getWidth(), v.getHeight()), false);
+          });
+    }
+    if (controls.isEmpty()) return;
+    for (int i = 0; i < controls.size(); i++) {
+      controls.get(i).setNextFocusUpId(controls.get(Math.max(0, i - 1)).getId());
+      controls
+          .get(i)
+          .setNextFocusDownId(controls.get(Math.min(controls.size() - 1, i + 1)).getId());
+      controls.get(i).setNextFocusLeftId(controls.get(i).getId());
+      controls.get(i).setNextFocusRightId(controls.get(i).getId());
+    }
+    int screenWidth = getResources().getDisplayMetrics().widthPixels;
+    int screenHeight = getResources().getDisplayMetrics().heightPixels;
+    width = Math.min(width, screenWidth - d(32));
+    int height = Math.min(d(options.length * 44 + 12), screenHeight - d(120));
+    Window window = dialog.getWindow();
+    window.setBackgroundDrawableResource(android.R.color.transparent);
+    window.setWindowAnimations(0);
+    window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+    WindowManager.LayoutParams params = window.getAttributes();
+    params.gravity = Gravity.TOP | Gravity.LEFT;
+    params.width = width;
+    params.height = height;
+    params.x =
+        Math.max(
+            d(8), Math.min(location[0] + anchor.getWidth() - width, screenWidth - width - d(8)));
+    int below = location[1] + anchor.getHeight() + d(4);
+    params.y =
+        below + height <= screenHeight - d(82)
+            ? below
+            : Math.max(d(8), location[1] - height - d(4));
+    window.setAttributes(params);
+    Page source = current;
+    modal = dialog;
+    dialog.setContentView(panel);
+    dialog.setOnDismissListener(
+        value -> {
+          if (modal == dialog) modal = null;
+          if (current == source && anchor.isAttachedToWindow()) anchor.requestFocus();
+        });
+    dialog.setCanceledOnTouchOutside(true);
+    dialog.show();
+    window.getDecorView().setPadding(0, 0, 0, 0);
+    window.setAttributes(params);
+    controls.get(Math.max(0, Math.min(selected, controls.size() - 1))).requestFocus();
   }
 
   private void confirm(String title, String message, Runnable action) {

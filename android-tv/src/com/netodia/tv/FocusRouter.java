@@ -189,6 +189,10 @@ final class FocusRouter {
         if (to == null && direction == View.FOCUS_DOWN) to = first(PLAYER);
       }
     } else if (from.zone == PAGER) {
+      if (from.col == 0 && direction == View.FOCUS_LEFT) {
+        focus(selectedSide);
+        return true;
+      }
       if (direction == View.FOCUS_DOWN) to = first(PLAYER);
       else if (direction == View.FOCUS_UP) {
         focus(selectedTab);
