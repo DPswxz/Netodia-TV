@@ -1655,13 +1655,14 @@ public class MainActivity extends Activity {
           if (items.isEmpty()) return;
           int[] base = new int[2];
           stage.getLocationOnScreen(base);
-          int top = Integer.MAX_VALUE, bottom = 0;
+          int top = Integer.MAX_VALUE;
           for (View item : items) {
             int[] point = new int[2];
             item.getLocationOnScreen(point);
             top = Math.min(top, point[1] - base[1]);
-            bottom = Math.max(bottom, point[1] - base[1] + item.getHeight());
           }
+          // Use the reserved list viewport, including empty slots on the final page.
+          int bottom = Math.max(top, stage.getHeight() - d(20));
           for (Button button : new Button[] {previousPageButton, nextPageButton}) {
             FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) button.getLayoutParams();
             params.gravity =
@@ -3139,7 +3140,10 @@ public class MainActivity extends Activity {
     }
   }
 
+  private LinearLayout settingGroup;
+
   private void settings() {
+    settingGroup = null;
     tabRow(new String[] {"音乐库", "播放", "界面", "服务", "关于"});
     scroll();
     if (current.tab == 1) {
@@ -3595,7 +3599,9 @@ public class MainActivity extends Activity {
   private LinearLayout settingsCard() {
     LinearLayout card = column(this);
     card.setBackground(fill(this, SURFACE, 12));
+    card.setClipToOutline(true);
     body.addView(card, lp(-1, -2));
+    settingGroup = card;
     return card;
   }
 
@@ -3666,6 +3672,7 @@ public class MainActivity extends Activity {
   }
 
   private void section(String title) {
+    settingGroup = null;
     TextView heading = label(title, 17, MUTED);
     heading(heading);
     heading.setPadding(d(16), d(24), 0, d(10));
@@ -3695,10 +3702,7 @@ public class MainActivity extends Activity {
                   reloadShell();
                 }));
     section("外观");
-    LinearLayout card = column(this);
-    card.setPadding(0, 0, 0, 0);
-    card.setBackground(fill(this, SURFACE, 16));
-    body.addView(card, lp(-1, -2));
+    LinearLayout card = settingsCard();
     ArrayList<String> themeNames = new ArrayList<>();
     int selectedTheme = 0;
     JSONObject theme = TvUi.theme(this);
@@ -3729,9 +3733,7 @@ public class MainActivity extends Activity {
           edit.putString("accent", supported ? accent : t.optString("defaultAccent")).apply();
           reloadShell();
         });
-    View line = new View(this);
-    line.setBackgroundColor(BORDER);
-    card.addView(line, lp(-1, 1));
+    settingsDivider(card);
     JSONArray variants = theme.optJSONArray("variants");
     ArrayList<String> ids = new ArrayList<>(), names = new ArrayList<>();
     int chosen = 0;
@@ -3911,7 +3913,7 @@ public class MainActivity extends Activity {
             .contains(current.query.toLowerCase(Locale.ROOT))) return;
     LinearLayout row = row(this);
     row.setPadding(d(16), d(12), d(16), d(12));
-    row.setBackground(TvUi.focus(this, false));
+    row.setBackground(TvUi.focus(this, true));
     row.addView(TvUi.glyph(this, settingIcon(title), 23, TEXT), lp(30, 30));
     LinearLayout descriptionBox = column(this);
     descriptionBox.setPadding(d(12), 0, d(14), 0);
@@ -3934,8 +3936,9 @@ public class MainActivity extends Activity {
     valueBox.addView(selected, new LinearLayout.LayoutParams(0, -2, 1));
     valueBox.addView(TvUi.glyph(this, "arrow_drop_down", 23, TEXT), lp(24, 24));
     row.addView(valueBox, new LinearLayout.LayoutParams(optionWidth, d(40)));
-    body.addView(row, lp(-1, description.isEmpty() ? 68 : 74));
-    margin(row, 0, 4);
+    if (settingGroup == null) settingsCard();
+    if (settingGroup.getChildCount() > 0) settingsDivider(settingGroup);
+    settingGroup.addView(row, lp(-1, description.isEmpty() ? 74 : 80));
     focus.add(row, FocusRouter.CONTENT, contentRow++, 0, "setting:" + title);
     row.setOnClickListener(v -> action.run());
     row.setContentDescription(title + "，" + value);
