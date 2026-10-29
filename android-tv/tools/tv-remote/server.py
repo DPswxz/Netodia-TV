@@ -140,10 +140,6 @@ def main():
                 last_key_request = now
 
     def execute(path, data):
-        if path == '/launch':
-            subprocess.run(adb + ['shell', 'am', 'start', '-n', 'com.netodia.tv/.MainActivity'],
-                           check=True, timeout=10, capture_output=True)
-            return
         if path == '/resync':
             request_keyframe()
             return

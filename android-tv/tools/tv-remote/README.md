@@ -1,4 +1,4 @@
-# 电视镜像遥控器
+# 通用电视镜像遥控器
 
 需要 Python 3、已授权的 ADB 连接、支持 WebCodecs 的 Chromium 浏览器，以及官方 [scrcpy 5.0.1 服务端](https://github.com/Genymobile/scrcpy/releases/tag/v5.0.1)。
 
@@ -24,3 +24,5 @@ python3 android-tv/tools/tv-remote/server.py \
 协议回归检查（不连接电视）：`python3 -m unittest discover -s android-tv/tests -p 'test_tv_remote.py' -v`。
 
 预览优先采用低延迟软件解码，避免部分浏览器硬件解码器暂存静止画面；在本机验证过静止画面首次显示和连续按键后的更新。延迟仍受电视编码器及局域网影响。
+
+遥控器不绑定任何应用，主页、返回、方向键、媒体键及画面点击均作用于电视当前界面。
