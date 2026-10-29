@@ -525,9 +525,9 @@ public class MainActivity extends Activity {
 
   private void push(Page next) {
     if (next.restoreFocus.isEmpty()) {
-      if (next.type.equals("detail")
-          || next.type.equals("recommendation")
-          || next.type.equals("songs")) next.restoreFocus = "header:back";
+      if (next.type.equals("detail")) next.restoreFocus = "detail:play";
+      else if (next.type.equals("recommendation") || next.type.equals("songs"))
+        next.restoreFocus = "header:back";
       else if (next.type.equals("settings")) next.restoreFocus = "tab:" + next.tab;
       else if (next.type.equals("browse")) next.restoreFocus = "browse:home";
       else if (next.type.equals("player")) next.restoreFocus = "player:back";
@@ -600,10 +600,12 @@ public class MainActivity extends Activity {
             : View.VISIBLE);
     tabs.setGravity(Gravity.CENTER_VERTICAL);
     stage.removeAllViews();
+    ((LinearLayout.LayoutParams) stage.getLayoutParams()).topMargin = 0;
     scroller = null;
     body = null;
     header.setVisibility(
         current.type.equals("settings")
+                || current.type.equals("detail")
                 || current.type.equals("browse")
                 || current.type.equals("player")
                 || current.type.equals("library")
@@ -1144,6 +1146,7 @@ public class MainActivity extends Activity {
     LinearLayout.LayoutParams stageParams = (LinearLayout.LayoutParams) stage.getLayoutParams();
     stageParams.leftMargin = 0;
     stageParams.rightMargin = 0;
+    stageParams.topMargin = d(32);
     stage.setLayoutParams(stageParams);
     FrameLayout mosaic = new FrameLayout(this);
     mosaic.setBackground(fill(this, SURFACE, 10));
@@ -1241,50 +1244,199 @@ public class MainActivity extends Activity {
     if (!ready(current.kind, entityArgs())) return;
     scroll();
     LinearLayout hero = row(this);
-    hero.setPadding(d(10), d(4), d(10), d(8));
-    ImageView artwork = cover(this, 88);
+    hero.setPadding(d(16), d(16), d(16), d(16));
+    ArtworkBackdrop backdrop = new ArtworkBackdrop(SURFACE1, 0, d(10));
+    hero.setBackground(backdrop);
+    hero.setClipToOutline(true);
+    ImageView artwork = cover(this, 140);
     hero.addView(artwork);
-    Artwork.load(artwork, MusicData.cover(current.entity));
+    Page source = current;
+    Artwork.load(
+        artwork,
+        MusicData.cover(current.entity),
+        bitmap -> {
+          if (current == source) backdrop.artwork(0, bitmap);
+        });
     LinearLayout facts = column(this);
-    facts.setPadding(d(22), 0, 0, 0);
-    hero.addView(facts, new LinearLayout.LayoutParams(0, -2, 1));
-    TextView name = label(current.entity.optString("name", current.title), 21, TEXT);
+    facts.setPadding(d(18), 0, 0, 0);
+    hero.addView(facts, new LinearLayout.LayoutParams(0, -1, 1));
+    TextView name = label(current.entity.optString("name", current.title), 23, TEXT);
     heading(name);
     name.setSingleLine();
     name.setEllipsize(TextUtils.TruncateAt.END);
     facts.addView(name);
     String description = current.entity.optString("description", "");
     if (description.equals("null")) description = "";
-    TextView desc =
-        label(description.isEmpty() ? current.items.length() + " 首歌曲" : description, 15, MUTED);
-    desc.setMaxLines(1);
-    desc.setEllipsize(TextUtils.TruncateAt.END);
-    desc.setPadding(0, d(3), 0, d(5));
-    facts.addView(desc);
+    if (!description.isEmpty()) {
+      TextView desc = label(description, 15, MUTED);
+      desc.setMaxLines(1);
+      desc.setEllipsize(TextUtils.TruncateAt.END);
+      facts.addView(desc);
+    }
+    long duration = 0;
+    java.util.HashSet<String> artists = new java.util.HashSet<>(),
+        albums = new java.util.HashSet<>();
+    for (int i = 0; i < current.items.length(); i++) {
+      JSONObject song = current.items.optJSONObject(i);
+      if (song == null) continue;
+      duration += song.optLong("dt");
+      String artist = MusicData.artist(song), album = MusicData.album(song).optString("name");
+      if (!artist.isEmpty()) artists.add(artist);
+      if (!album.isEmpty()) albums.add(album);
+    }
+    LinearLayout badges = row(this);
+    badges.setPadding(0, d(5), 0, 0);
+    for (String value :
+        new String[] {
+          current.items.length() + " 首曲目",
+          duration >= 3600000
+              ? String.format(
+                  Locale.ROOT,
+                  "%d:%02d:%02d",
+                  duration / 3600000,
+                  duration / 60000 % 60,
+                  duration / 1000 % 60)
+              : MusicData.time((int) duration),
+          artists.size() + " 位艺人",
+          albums.size() + " 张专辑"
+        }) {
+      TextView badge = label(value, 13, TEXT);
+      badge.setPadding(d(10), d(4), d(10), d(4));
+      badge.setBackground(fill(this, 0x22ffffff, 24));
+      badges.addView(badge, lp(-2, -2));
+      margin(badge, 8, 0);
+    }
+    facts.addView(badges);
+    facts.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
     LinearLayout buttons = row(this);
-    facts.addView(buttons);
-    Button play = action("▶ 播放全部", () -> play(current.items, 0), contentRow, 0, "detail:play");
-    buttons.addView(play, lp(-2, 36));
-    margin(play, 8, 0);
-    Button shuffle =
-        action(
-            "随机播放",
-            () -> {
-              prefs().edit().putInt("mode", 2).apply();
-              play(current.items, 0);
-            },
-            contentRow,
-            1,
-            "detail:shuffle");
-    buttons.addView(shuffle, lp(-2, 36));
-    margin(shuffle, 8, 0);
-    Button save =
-        action(
-            "收藏", () -> subscribe(current.kind, current.entity), contentRow, 2, "detail:subscribe");
-    buttons.addView(save, lp(86, 36));
+    buttons.setBackground(fill(this, SURFACE, 30));
+    facts.addView(buttons, lp(-2, 36));
+    detailButton(buttons, "play_arrow", "播放", () -> play(current.items, 0), 0, "detail:play");
+    detailButton(
+        buttons,
+        "queue_music",
+        "顺序",
+        () ->
+            choice(
+                "播放顺序",
+                new String[] {"列表循环", "单曲循环", "随机播放"},
+                prefs().getInt("mode", 0),
+                at -> {
+                  prefs().edit().putInt("mode", at).apply();
+                }),
+        1,
+        "detail:order");
+    detailButton(buttons, "tune", "列", this::detailColumns, 2, "detail:columns");
     contentRow++;
-    body.addView(hero, lp(-1, 112));
+    body.addView(hero, lp(-1, 172));
     addSongRows(orderedSongs(current.items), false);
+  }
+
+  private View detailColumnsAnchor;
+
+  private void detailButton(
+      LinearLayout parent, String icon, String title, Runnable click, int col, String key) {
+    LinearLayout button = row(this);
+    button.setPadding(d(12), 0, d(12), 0);
+    button.setBackground(TvUi.focus(this, true));
+    button.addView(TvUi.glyph(this, icon, 18, TEXT), lp(24, 24));
+    button.addView(label(title, 15, TEXT));
+    parent.addView(button, lp(-2, -1));
+    focus.add(button, FocusRouter.CONTENT, contentRow, col, key);
+    button.setContentDescription(title);
+    if (key.equals("detail:columns")) detailColumnsAnchor = button;
+    button.setOnClickListener(v -> click.run());
+    if (col < 2) {
+      View divider = new View(this);
+      divider.setBackgroundColor(BORDER);
+      parent.addView(divider, lp(1, 20));
+    }
+  }
+
+  private void detailColumns() {
+    String[] keys = {
+      "show_sequence_column", "show_cover_column", "", "show_artist_column", "show_album_column", ""
+    };
+    String[] labels = {"#", "封面", "标题", "艺人", "专辑", "长度"};
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LinearLayout panel = column(this);
+    panel.setPadding(d(6), d(6), d(6), d(6));
+    android.graphics.drawable.GradientDrawable shape = fill(this, MANTLE, 10);
+    shape.setStroke(d(1), BORDER);
+    panel.setBackground(shape);
+    ArrayList<View> controls = new ArrayList<>();
+    for (int i = 0; i < labels.length; i++) {
+      String key = keys[i];
+      boolean fixed = key.isEmpty();
+      LinearLayout option = row(this);
+      option.setPadding(d(8), 0, d(8), 0);
+      option.setBackground(TvUi.focus(this, true));
+      TextView check =
+          TvUi.glyph(
+              this,
+              fixed || prefs().getBoolean(key, true) ? "check_box" : "check_box_outline_blank",
+              23,
+              fixed ? MUTED : ACCENT);
+      option.addView(check, lp(30, 30));
+      option.addView(label(labels[i], 18, fixed ? MUTED : TEXT));
+      panel.addView(option, lp(-1, 42));
+      if (!fixed) {
+        option.setFocusableInTouchMode(true);
+        option.setId(View.generateViewId());
+        controls.add(option);
+        option.setContentDescription(labels[i] + (prefs().getBoolean(key, true) ? "，已显示" : "，已隐藏"));
+        option.setOnClickListener(
+            v -> {
+              boolean checked = !prefs().getBoolean(key, true);
+              prefs().edit().putBoolean(key, checked).apply();
+              option.removeViewAt(0);
+              option.addView(
+                  TvUi.glyph(this, checked ? "check_box" : "check_box_outline_blank", 23, ACCENT),
+                  0,
+                  lp(30, 30));
+              option.setContentDescription(
+                  labels[java.util.Arrays.asList(keys).indexOf(key)] + (checked ? "，已显示" : "，已隐藏"));
+            });
+      }
+    }
+    for (int i = 0; i < controls.size(); i++) {
+      controls.get(i).setNextFocusUpId(controls.get(Math.max(0, i - 1)).getId());
+      controls
+          .get(i)
+          .setNextFocusDownId(controls.get(Math.min(controls.size() - 1, i + 1)).getId());
+    }
+    int[] anchor = new int[2];
+    detailColumnsAnchor.getLocationOnScreen(anchor);
+    Page source = current;
+    modal = dialog;
+    dialog.setContentView(panel);
+    Window window = dialog.getWindow();
+    window.setBackgroundDrawableResource(android.R.color.transparent);
+    window.setWindowAnimations(0);
+    window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+    WindowManager.LayoutParams params = window.getAttributes();
+    params.gravity = Gravity.TOP | Gravity.LEFT;
+    params.width = d(132);
+    params.height = d(264);
+    params.x = Math.max(d(8), anchor[0] + detailColumnsAnchor.getWidth() - params.width);
+    params.y =
+        Math.min(
+            anchor[1] + detailColumnsAnchor.getHeight() + d(4),
+            getResources().getDisplayMetrics().heightPixels - d(90) - params.height);
+    window.setAttributes(params);
+    dialog.setOnDismissListener(
+        value -> {
+          if (modal == dialog) modal = null;
+          if (current == source) {
+            current.restoreFocus = "detail:columns";
+            render();
+          }
+        });
+    dialog.show();
+    window.getDecorView().setPadding(0, 0, 0, 0);
+    window.setAttributes(params);
+    controls.get(0).requestFocus();
   }
 
   private int gridColumns = 1;
@@ -1475,7 +1627,7 @@ public class MainActivity extends Activity {
             - 16
             - (tabs.getVisibility() == View.VISIBLE ? 64 : 0)
             - (header.getVisibility() == View.VISIBLE ? 44 : 0)
-            - (curatedHero.getVisibility() == View.VISIBLE ? 128 : 0)
+            - (curatedHero.getVisibility() == View.VISIBLE ? 160 : 0)
             - (status.getVisibility() == View.VISIBLE ? 26 : 0));
   }
 
@@ -1486,6 +1638,7 @@ public class MainActivity extends Activity {
   }
 
   private void addSidePager(int count) {
+    if (count <= current.pageSize && !current.more && current.page == 0) return;
     paginated = true;
     stage.setPadding(d(44), 0, d(44), 0);
     stage.setClipToPadding(false);
@@ -1632,6 +1785,7 @@ public class MainActivity extends Activity {
     if (current.type.equals("favorites") || current.type.equals("recent")) {
       stage.removeView(scroller);
       LinearLayout table = column(this);
+      table.setBackgroundColor(BASE);
       table.addView(songTableHeader(), lp(-1, 37));
       table.addView(scroller, new LinearLayout.LayoutParams(-1, 0, 1));
       stage.addView(table, new FrameLayout.LayoutParams(-1, -1));
@@ -1691,6 +1845,8 @@ public class MainActivity extends Activity {
         TvUi.glyph(this, current.reverse ? "arrow_drop_down" : "arrow_drop_up", 27, ACCENT),
         lp(28, 30));
     head.addView(number, lp(64, -1));
+    number.setVisibility(
+        prefs().getBoolean("show_sequence_column", true) ? View.VISIBLE : View.GONE);
     focus.add(number, FocusRouter.CONTENT, contentRow++, 0, "sort:sequence");
     number.setBackground(TvUi.focus(this, true));
     number.setContentDescription(current.reverse ? "序号倒序，确定切换排序" : "序号正序，确定切换排序");
@@ -1717,6 +1873,8 @@ public class MainActivity extends Activity {
       name.setPadding(d(12), 0, 0, 0);
       cell.addView(name);
       head.addView(cell, new LinearLayout.LayoutParams(0, -1, weights[i]));
+      if (names[i].equals("艺人") && !prefs().getBoolean("show_artist_column", true))
+        cell.setVisibility(View.GONE);
     }
     TextView duration = label("长度", 15, TEXT);
     heading(duration);
@@ -1737,7 +1895,7 @@ public class MainActivity extends Activity {
         37
             + 18
             + (current.type.equals("detail")
-                ? 112
+                ? 172
                 : current.type.equals("favorites") || current.type.equals("recent") ? 0 : 56);
     int rowSpace = stageHeightDp() - overhead;
     int songRowHeight = Math.max(44, Math.min(56, rowSpace / 5));
@@ -1760,6 +1918,8 @@ public class MainActivity extends Activity {
       index.setSingleLine();
       index.setPadding(d(6), 0, 0, 0);
       row.addView(index, lp(64, -2));
+      index.setVisibility(
+          prefs().getBoolean("show_sequence_column", true) ? View.VISIBLE : View.GONE);
       TextView name = label(song.optString("name"), 18, playing ? ACCENT : TEXT);
       name.setSingleLine();
       name.setEllipsize(TextUtils.TruncateAt.END);
@@ -1785,6 +1945,7 @@ public class MainActivity extends Activity {
       row.addView(title, new LinearLayout.LayoutParams(0, -2, 1.6f));
       ImageView image = cover(this, 36);
       title.addView(image);
+      image.setVisibility(prefs().getBoolean("show_cover_column", true) ? View.VISIBLE : View.GONE);
       Artwork.load(image, MusicData.cover(song));
       ((LinearLayout.LayoutParams) image.getLayoutParams()).rightMargin = d(8);
       title.addView(name, new LinearLayout.LayoutParams(-2, -2));
@@ -1794,6 +1955,8 @@ public class MainActivity extends Activity {
       artist.setEllipsize(TextUtils.TruncateAt.END);
       artist.setPadding(d(10), 0, d(8), 0);
       row.addView(artist, new LinearLayout.LayoutParams(0, -2, 1));
+      artist.setVisibility(
+          prefs().getBoolean("show_artist_column", true) ? View.VISIBLE : View.GONE);
       if (showAlbum) {
         TextView album = label(MusicData.album(song).optString("name"), 16, TEXT);
         album.setSingleLine();
