@@ -66,6 +66,7 @@ final class QueueSheet {
     android.graphics.drawable.GradientDrawable frame = fill(host, MANTLE, 16);
     frame.setStroke(d(1), BORDER);
     panel.setBackground(frame);
+    panel.setPadding(d(1), d(1), d(1), d(8));
     panel.setClipToOutline(true);
     LinearLayout header = row(host);
     header.setPadding(d(20), d(10), d(16), d(10));
@@ -112,10 +113,20 @@ final class QueueSheet {
               && rows.getHeight() - y - v.getHeight() < d(120)) more();
         });
     scroll.setFillViewport(true);
-    scroll.setPadding(d(8), 0, d(8), 0);
-    panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+    scroll.setClipChildren(true);
+    scroll.setClipToPadding(true);
+    scroll.setVerticalFadingEdgeEnabled(false);
+    scroll.setFadingEdgeLength(0);
+    scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+    scroll.setPadding(0, 0, 0, 0);
+    FrameLayout viewport = new FrameLayout(host);
+    viewport.setPadding(d(8), d(8), d(8), d(8));
+    viewport.setClipChildren(true);
+    viewport.setClipToPadding(true);
+    viewport.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
+    panel.addView(viewport, new LinearLayout.LayoutParams(-1, 0, 1));
     rows = column(host);
-    rows.setPadding(0, d(8), 0, d(8));
+    rows.setPadding(0, 0, 0, 0);
     scroll.addView(rows);
     dialog.setContentView(panel);
     dialog.setOnDismissListener(
@@ -161,21 +172,26 @@ final class QueueSheet {
   void show() {
     origin = host.getCurrentFocus();
     visible = Math.max(80, player.index() + 40);
-    dialog.show();
     Window w = dialog.getWindow();
     if (w != null) {
       int width = Math.min(d(640), Math.max(d(400), panelBounds.width() / 2));
-      int height = (int) (panelBounds.height() * .8);
-      int y = panelBounds.bottom - height;
+      int chrome = d(1) + d(60) + d(1) + d(8) + 2 * d(8);
+      int capacity = Math.max(1, ((int) (panelBounds.height() * .8) - chrome) / d(50));
+      int height = chrome + capacity * d(50);
+      int y = panelBounds.bottom - height - d(4);
       w.setBackgroundDrawableResource(android.R.color.transparent);
       w.setDimAmount(.22f);
-      w.setLayout(width, height);
+      w.setWindowAnimations(0);
+      w.getDecorView().setPadding(0, 0, 0, 0);
       WindowManager.LayoutParams params = w.getAttributes();
       params.gravity = Gravity.TOP | Gravity.LEFT;
       params.x = panelBounds.left + (panelBounds.width() - width) / 2;
       params.y = y;
+      params.width = width;
+      params.height = height;
       w.setAttributes(params);
     }
+    dialog.show();
     player.observe(listener);
     refresh();
     main.post(
@@ -322,7 +338,11 @@ final class QueueSheet {
       marker(select, at, selected.contains(at));
       for (View part : new View[] {mainSong, select, favorite, remove})
         part.setOnFocusChangeListener((v, has) -> {
-          if (has) { focusedPart = v; refreshFocusActions(); }
+          if (has) {
+            focusedPart = v;
+            refreshFocusActions();
+            revealRow(item);
+          }
           else main.post(this::refreshFocusActions);
         });
       mainSong.setOnKeyListener(
@@ -440,6 +460,14 @@ final class QueueSheet {
     visible = Math.min(player.queue().length(), visible + 80);
     appendRows(from, visible);
     rebuilding = false;
+  }
+
+  private void revealRow(View row) {
+    row.requestRectangleOnScreen(new android.graphics.Rect(0, 0, row.getWidth(), row.getHeight()), false);
+    main.post(() -> {
+      if (dialog.isShowing() && row.hasFocus())
+        row.requestRectangleOnScreen(new android.graphics.Rect(0, 0, row.getWidth(), row.getHeight()), false);
+    });
   }
 
   private boolean focusSelection(int index) {
