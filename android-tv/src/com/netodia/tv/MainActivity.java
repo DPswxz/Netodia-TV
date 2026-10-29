@@ -273,12 +273,20 @@ public class MainActivity extends Activity {
     contentParams.bottomMargin = d(4);
     top.addView(content, contentParams);
     header = row(this);
-    content.addView(header, lp(-1, 52));
+    content.addView(header, lp(-1, 44));
     Button back = button(this, "", this::back);
     TvUi.icon(back, "arrow_back");
     back.setBackground(TvUi.focus(this, true));
     back.setContentDescription("返回");
-    header.addView(back, lp(38, 38));
+    back.setPadding(0, 0, 0, 0);
+    android.graphics.drawable.StateListDrawable backStates =
+        new android.graphics.drawable.StateListDrawable();
+    android.graphics.drawable.GradientDrawable backFocused = fill(this, SURFACE1, 40);
+    backFocused.setStroke(d(1), ACCENT);
+    backStates.addState(new int[] {android.R.attr.state_focused}, backFocused);
+    backStates.addState(new int[] {}, fill(this, SURFACE, 40));
+    back.setBackground(backStates);
+    header.addView(back, lp(40, 40));
     LinearLayout titles = column(this);
     titles.setPadding(d(10), 0, 0, 0);
     titles.setGravity(Gravity.CENTER_VERTICAL);
@@ -299,7 +307,7 @@ public class MainActivity extends Activity {
     content.addView(tabs, lp(-1, 64));
     curatedHero = row(this);
     curatedHero.setVisibility(View.GONE);
-    content.addView(curatedHero, lp(-1, 160));
+    content.addView(curatedHero, lp(-1, 128));
     stage = new FrameLayout(this);
     content.addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
     status = label("", 13, MUTED);
@@ -583,6 +591,13 @@ public class MainActivity extends Activity {
     displayedItems = 0;
     contentRow = 1;
     tabs.removeAllViews();
+    tabs.setVisibility(
+        current.type.equals("detail")
+                || current.type.equals("songs")
+                || current.type.equals("queue")
+                || current.type.equals("recommendation")
+            ? View.GONE
+            : View.VISIBLE);
     tabs.setGravity(Gravity.CENTER_VERTICAL);
     stage.removeAllViews();
     scroller = null;
@@ -816,7 +831,13 @@ public class MainActivity extends Activity {
       return;
     }
     stage.removeAllViews();
+    curatedHero.setVisibility(View.GONE);
     LinearLayout box = column(this);
+    box.setTranslationY(
+        -d(
+                (tabs.getVisibility() == View.VISIBLE ? 64 : 0)
+                    + (header.getVisibility() == View.VISIBLE ? 44 : 0))
+            / 2f);
     box.setGravity(Gravity.CENTER);
     box.setPadding(d(24), d(24), d(24), d(24));
     TextView mark = TvUi.glyph(this, "music_note", 52, ACCENT);
@@ -1119,7 +1140,7 @@ public class MainActivity extends Activity {
   private void curated(String title, String empty, JSONArray items) {
     curatedHero.removeAllViews();
     curatedHero.setVisibility(View.VISIBLE);
-    curatedHero.setPadding(0, d(4), 0, d(16));
+    curatedHero.setPadding(0, d(4), 0, d(12));
     LinearLayout.LayoutParams stageParams = (LinearLayout.LayoutParams) stage.getLayoutParams();
     stageParams.leftMargin = 0;
     stageParams.rightMargin = 0;
@@ -1127,7 +1148,7 @@ public class MainActivity extends Activity {
     FrameLayout mosaic = new FrameLayout(this);
     mosaic.setBackground(fill(this, SURFACE, 10));
     mosaic.setClipToOutline(true);
-    curatedHero.addView(mosaic, lp(140, 140));
+    curatedHero.addView(mosaic, lp(112, 112));
     Page source = current;
     ArtworkBackdrop backdrop = new ArtworkBackdrop(BASE, d(232), d(8));
     content.setBackground(backdrop);
@@ -1146,9 +1167,9 @@ public class MainActivity extends Activity {
         ImageView image = new ImageView(this);
         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
         int count = covers.size();
-        int w = count == 1 ? 140 : 70, h = count <= 2 ? 140 : count == 3 && i == 0 ? 140 : 70;
-        int x = count == 1 ? 0 : count == 3 ? (i == 0 ? 0 : 70) : i % 2 * 70;
-        int y = count <= 2 ? 0 : count == 3 ? (i == 2 ? 70 : 0) : i / 2 * 70;
+        int w = count == 1 ? 112 : 56, h = count <= 2 ? 112 : count == 3 && i == 0 ? 112 : 56;
+        int x = count == 1 ? 0 : count == 3 ? (i == 0 ? 0 : 56) : i % 2 * 56;
+        int y = count <= 2 ? 0 : count == 3 ? (i == 2 ? 56 : 0) : i / 2 * 56;
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(d(w), d(h));
         params.leftMargin = d(x);
         params.topMargin = d(y);
@@ -1220,28 +1241,30 @@ public class MainActivity extends Activity {
     if (!ready(current.kind, entityArgs())) return;
     scroll();
     LinearLayout hero = row(this);
-    hero.setPadding(d(10), d(8), d(10), d(18));
-    ImageView artwork = cover(this, 120);
+    hero.setPadding(d(10), d(4), d(10), d(8));
+    ImageView artwork = cover(this, 88);
     hero.addView(artwork);
     Artwork.load(artwork, MusicData.cover(current.entity));
     LinearLayout facts = column(this);
     facts.setPadding(d(22), 0, 0, 0);
     hero.addView(facts, new LinearLayout.LayoutParams(0, -2, 1));
-    TextView name = label(current.entity.optString("name", current.title), 25, TEXT);
+    TextView name = label(current.entity.optString("name", current.title), 21, TEXT);
     heading(name);
-    name.setMaxLines(2);
+    name.setSingleLine();
+    name.setEllipsize(TextUtils.TruncateAt.END);
     facts.addView(name);
     String description = current.entity.optString("description", "");
+    if (description.equals("null")) description = "";
     TextView desc =
         label(description.isEmpty() ? current.items.length() + " 首歌曲" : description, 15, MUTED);
-    desc.setMaxLines(2);
+    desc.setMaxLines(1);
     desc.setEllipsize(TextUtils.TruncateAt.END);
-    desc.setPadding(0, d(8), 0, d(12));
+    desc.setPadding(0, d(3), 0, d(5));
     facts.addView(desc);
     LinearLayout buttons = row(this);
     facts.addView(buttons);
     Button play = action("▶ 播放全部", () -> play(current.items, 0), contentRow, 0, "detail:play");
-    buttons.addView(play, lp(-2, 44));
+    buttons.addView(play, lp(-2, 36));
     margin(play, 8, 0);
     Button shuffle =
         action(
@@ -1253,14 +1276,14 @@ public class MainActivity extends Activity {
             contentRow,
             1,
             "detail:shuffle");
-    buttons.addView(shuffle, lp(-2, 44));
+    buttons.addView(shuffle, lp(-2, 36));
     margin(shuffle, 8, 0);
     Button save =
         action(
             "收藏", () -> subscribe(current.kind, current.entity), contentRow, 2, "detail:subscribe");
-    buttons.addView(save, lp(86, 44));
+    buttons.addView(save, lp(86, 36));
     contentRow++;
-    body.addView(hero);
+    body.addView(hero, lp(-1, 112));
     addSongRows(orderedSongs(current.items), false);
   }
 
@@ -1450,10 +1473,10 @@ public class MainActivity extends Activity {
             - 78
             - 4
             - 16
-            - 64
-            - (header.getVisibility() == View.VISIBLE ? 52 : 0)
-            - (curatedHero.getVisibility() == View.VISIBLE ? 160 : 0)
-            - 26);
+            - (tabs.getVisibility() == View.VISIBLE ? 64 : 0)
+            - (header.getVisibility() == View.VISIBLE ? 44 : 0)
+            - (curatedHero.getVisibility() == View.VISIBLE ? 128 : 0)
+            - (status.getVisibility() == View.VISIBLE ? 26 : 0));
   }
 
   private int pageStart(int count, int capacity) {
@@ -1469,6 +1492,44 @@ public class MainActivity extends Activity {
     previousPageButton = pageButton(false, current.page > 0);
     nextPageButton =
         pageButton(true, (current.page + 1) * current.pageSize < count || current.more);
+    Page page = current;
+    int version = renderVersion;
+    stage.post(
+        () -> {
+          if (current != page || renderVersion != version) return;
+          ArrayList<View> items = new ArrayList<>();
+          collectPageItems(body, items);
+          if (items.isEmpty()) return;
+          int[] base = new int[2];
+          stage.getLocationOnScreen(base);
+          int top = Integer.MAX_VALUE, bottom = 0;
+          for (View item : items) {
+            int[] point = new int[2];
+            item.getLocationOnScreen(point);
+            top = Math.min(top, point[1] - base[1]);
+            bottom = Math.max(bottom, point[1] - base[1] + item.getHeight());
+          }
+          for (Button button : new Button[] {previousPageButton, nextPageButton}) {
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) button.getLayoutParams();
+            params.gravity =
+                Gravity.TOP | (button == nextPageButton ? Gravity.RIGHT : Gravity.LEFT);
+            params.topMargin = Math.max(0, (top + bottom - button.getHeight()) / 2);
+            button.setLayoutParams(params);
+          }
+        });
+  }
+
+  private void collectPageItems(View view, ArrayList<View> items) {
+    if (view == null) return;
+    String key = focus.key(view);
+    if (key.startsWith("song:") || key.startsWith("entity:") || key.startsWith("file:")) {
+      items.add(view);
+      return;
+    }
+    if (view instanceof android.view.ViewGroup) {
+      android.view.ViewGroup group = (android.view.ViewGroup) view;
+      for (int i = 0; i < group.getChildCount(); i++) collectPageItems(group.getChildAt(i), items);
+    }
   }
 
   private Button pageButton(boolean next, boolean enabled) {
@@ -1676,9 +1737,11 @@ public class MainActivity extends Activity {
         37
             + 18
             + (current.type.equals("detail")
-                ? 194
+                ? 112
                 : current.type.equals("favorites") || current.type.equals("recent") ? 0 : 56);
-    int start = pageStart(songs.length(), Math.max(1, (stageHeightDp() - overhead) / 56));
+    int rowSpace = stageHeightDp() - overhead;
+    int songRowHeight = Math.max(44, Math.min(56, rowSpace / 5));
+    int start = pageStart(songs.length(), Math.max(1, rowSpace / songRowHeight));
     int total = Math.min(start + current.pageSize, songs.length());
     for (int i = start; i < total; i++) {
       final int at = i;
@@ -1690,7 +1753,7 @@ public class MainActivity extends Activity {
       LinearLayout row = row(this);
       row.setPadding(d(12), d(8), d(12), d(8));
       row.setBackground(TvUi.focus(this, true));
-      body.addView(row, lp(-1, 56));
+      body.addView(row, lp(-1, songRowHeight));
       int sequence = current.reverse ? songs.length() - i : i + 1;
       TextView index =
           label(playing ? "♫" : Integer.toString(sequence), 15, playing ? ACCENT : TEXT);
@@ -3470,7 +3533,7 @@ public class MainActivity extends Activity {
                 }));
     section("外观");
     LinearLayout card = column(this);
-    card.setPadding(d(16), 0, d(16), 0);
+    card.setPadding(0, 0, 0, 0);
     card.setBackground(fill(this, SURFACE, 16));
     body.addView(card, lp(-1, -2));
     ArrayList<String> themeNames = new ArrayList<>();
@@ -3589,11 +3652,11 @@ public class MainActivity extends Activity {
       String description) {
     LinearLayout block = row(this);
     block.setGravity(Gravity.TOP);
-    block.setPadding(0, d(18), 0, d(18));
+    block.setPadding(d(16), d(14), d(16), d(14));
     card.addView(block, lp(-1, -2));
     block.addView(TvUi.glyph(this, symbol, 23, TEXT), lp(30, 28));
     LinearLayout text = column(this);
-    text.setPadding(d(10), 0, 0, 0);
+    text.setPadding(d(12), 0, 0, 0);
     block.addView(text, new LinearLayout.LayoutParams(0, -2, 1));
     text.addView(label(title, 18, TEXT), lp(-1, 28));
     if (!description.isEmpty()) {
@@ -3618,6 +3681,7 @@ public class MainActivity extends Activity {
       states.addState(new int[] {android.R.attr.state_focused}, focused);
       states.addState(new int[] {}, fill(this, i == selected ? ACCENT : SURFACE1, 30));
       chip.setBackground(states);
+      focus.revealWith(chip, block);
       choices.addView(chip, lp(-2, 36));
       margin(chip, 8, 0);
     }
@@ -4388,6 +4452,12 @@ public class MainActivity extends Activity {
         return focus.move(getCurrentFocus(), View.FOCUS_DOWN);
       }
       if (current.loading && itemIndex >= lastLoadedRow) return true;
+    }
+    if (current.type.equals("settings") && scroller != null) {
+      if (key == KeyEvent.KEYCODE_DPAD_UP && focus.bodyEdge(focused, true))
+        scroller.smoothScrollTo(0, 0);
+      else if (key == KeyEvent.KEYCODE_DPAD_DOWN && focus.bodyEdge(focused, false))
+        scroller.smoothScrollTo(0, Math.max(0, body.getHeight() - scroller.getHeight()));
     }
     int direction =
         key == KeyEvent.KEYCODE_DPAD_UP

@@ -10,11 +10,13 @@ final class FocusRouter {
 
   static final class Node {
     final View view;
+    View reveal;
     final int zone, row, col;
     final String key;
 
     Node(View v, int z, int r, int c, String k) {
       view = v;
+      reveal = v;
       zone = z;
       row = r;
       col = c;
@@ -23,7 +25,10 @@ final class FocusRouter {
   }
 
   private final ArrayList<Node> nodes = new ArrayList<>();
-  private String lastContent = "", selectedSide = "nav:library", selectedTab = "tab:0";
+  private String lastList = "",
+      lastContent = "",
+      selectedSide = "nav:library",
+      selectedTab = "tab:0";
 
   void add(View view, int zone, int row, int col, String key) {
     view.setId(View.generateViewId());
@@ -33,8 +38,56 @@ final class FocusRouter {
     nodes.add(new Node(view, zone, row, col, key));
     view.setOnFocusChangeListener(
         (v, has) -> {
-          if (has && zone == CONTENT) lastContent = key;
+          if (has && zone == CONTENT) {
+            lastContent = key;
+            if (isListKey(key)) lastList = key;
+          }
         });
+  }
+
+  private boolean isListKey(String key) {
+    return key.startsWith("song:") || key.startsWith("entity:") || key.startsWith("file:");
+  }
+
+  void revealWith(View view, View block) {
+    Node node = find(view);
+    if (node != null) node.reveal = block;
+  }
+
+  private void reveal(Node node) {
+    View view = node.reveal;
+    view.requestRectangleOnScreen(new Rect(0, 0, view.getWidth(), view.getHeight()), false);
+  }
+
+  boolean bodyEdge(View view, boolean first) {
+    Node from = find(view);
+    if (from == null || from.zone != CONTENT || from.row <= 0) return false;
+    for (Node node : nodes)
+      if (node.zone == CONTENT
+          && node.row > 0
+          && usable(node)
+          && (first ? node.row < from.row : node.row > from.row)) return false;
+    return true;
+  }
+
+  private Node listItem(Node arrow) {
+    for (Node node : nodes) if (node.key.equals(lastList) && usable(node)) return node;
+    Node best = null;
+    int distance = Integer.MAX_VALUE;
+    int[] anchor = new int[2];
+    arrow.view.getLocationOnScreen(anchor);
+    int center = anchor[1] + arrow.view.getHeight() / 2;
+    for (Node node : nodes)
+      if (node.zone == CONTENT && isListKey(node.key) && usable(node)) {
+        int[] location = new int[2];
+        node.view.getLocationOnScreen(location);
+        int delta = Math.abs(location[1] + node.view.getHeight() / 2 - center);
+        if (delta < distance) {
+          best = node;
+          distance = delta;
+        }
+      }
+    return best;
   }
 
   void removePrefix(String prefix) {
@@ -44,6 +97,7 @@ final class FocusRouter {
   void clearAll() {
     nodes.clear();
     lastContent = "";
+    lastList = "";
   }
 
   void clearContent() {
@@ -77,6 +131,7 @@ final class FocusRouter {
     for (Node n : nodes)
       if (n.key.equals(key) && usable(n)) {
         n.view.requestFocus();
+        reveal(n);
         return true;
       }
     return false;
@@ -138,11 +193,9 @@ final class FocusRouter {
       else if (direction == View.FOCUS_UP) {
         focus(selectedTab);
         return true;
-      } else if ((from.col == 0 && direction == View.FOCUS_LEFT)) {
-        focus(selectedSide);
-        return true;
-      } else if (direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT) {
-        to = rememberedContent();
+      } else if ((from.col == 0 && direction == View.FOCUS_RIGHT)
+          || (from.col == 1 && direction == View.FOCUS_LEFT)) {
+        to = listItem(from);
       }
     } else {
       if (direction == View.FOCUS_UP && from.row == 0) to = rememberedContent();
@@ -159,8 +212,7 @@ final class FocusRouter {
     }
     if (to != null) {
       to.view.requestFocus();
-      to.view.requestRectangleOnScreen(
-          new Rect(0, 0, to.view.getWidth(), to.view.getHeight()), false);
+      reveal(to);
     }
     return true; // Clamp at the edge; never lose focus to a noninteractive view.
   }
