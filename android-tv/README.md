@@ -4,7 +4,7 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.22)
+## Current TV controls (0.5.23)
 
 - Playlist, Favorite and Recent headers share artwork-colored cards and a right-aligned toolbar.
   Favorite and Recent retain their tabs. Playlist descriptions open in a complete detail view.
@@ -31,6 +31,7 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
   update their existing controls without rebuilding the page; translation uses a radio dropdown.
 - Lyrics settings keep the main panel visible while a child panel opens beside it.
 - Opening the queue and navigating vertically focuses the selection checkbox by default.
+  Toggling it updates selection in place, retaining the same focus view and scroll position.
 - Login toolbar buttons fit the tab row with room for their focus outlines.
 - Loading uses a neutral placeholder; grids and restored scroll positions are resolved
   before painting to avoid an incorrect first frame.

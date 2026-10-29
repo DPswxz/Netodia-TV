@@ -263,9 +263,13 @@ final class QueueSheet {
       select.setId(View.generateViewId());
       select.setContentDescription("选择 " + song.optString("name"));
       select.setOnClickListener(v -> {
+        // Selection changes no queue data: keep this view and scroll position intact.
+        select.requestFocus();
+        focusedPart = select;
         if (!selected.add(at)) selected.remove(at);
-        lastRevision = -1;
-        refresh();
+        setText(clearButton, selected.isEmpty() ? "清空队列" : "移除选中(" + selected.size() + ")");
+        refreshFocusActions();
+        select.sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
       });
       select.setTag("select:" + i);
       item.addView(select, lp(24, 36));
@@ -390,6 +394,12 @@ final class QueueSheet {
     boolean checkbox;
     final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
     SelectionMarker(int index) { super(host); this.index = index; }
+    @Override public void onInitializeAccessibilityNodeInfo(android.view.accessibility.AccessibilityNodeInfo info) {
+      super.onInitializeAccessibilityNodeInfo(info);
+      info.setClassName(CheckBox.class.getName());
+      info.setCheckable(true);
+      info.setChecked(selected.contains(index));
+    }
     @Override protected void onDraw(android.graphics.Canvas canvas) {
       float x = getWidth() / 2f, y = getHeight() / 2f;
       paint.setStyle(android.graphics.Paint.Style.FILL);
