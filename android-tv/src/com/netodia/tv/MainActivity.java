@@ -1199,7 +1199,7 @@ public class MainActivity extends Activity {
     curatedHero.removeAllViews();
     curatedHero.setVisibility(View.VISIBLE);
     focus.removePrefix("detail:");
-    curatedHero.setPadding(0, d(14), d(16), d(14));
+    curatedHero.setPadding(d(16), d(14), d(16), d(14));
     LinearLayout.LayoutParams stageParams = (LinearLayout.LayoutParams) stage.getLayoutParams();
     stageParams.leftMargin = 0;
     stageParams.rightMargin = 0;
@@ -1310,7 +1310,7 @@ public class MainActivity extends Activity {
     if (!ready(current.kind, entityArgs())) return;
     scroll();
     LinearLayout hero = row(this);
-    hero.setPadding(0, d(16), d(16), d(16));
+    hero.setPadding(d(16), d(16), d(16), d(16));
     ArtworkBackdrop backdrop = new ArtworkBackdrop(SURFACE1, 0, d(10));
     hero.setBackground(backdrop);
     hero.setClipToOutline(true);
@@ -1334,24 +1334,30 @@ public class MainActivity extends Activity {
     String description = current.entity.optString("description", "");
     if (description.equals("null")) description = "";
     final String fullDescription = description;
-    LinearLayout info = column(this);
-    info.setBackground(TvUi.focus(this, true));
-    TextView desc = label(description.isEmpty() ? "查看歌单详情" : description, 14, MUTED);
+    LinearLayout info = row(this);
+    info.setGravity(Gravity.TOP);
+    info.setPadding(0, d(3), 0, d(3));
+    TextView desc = label(description.isEmpty() ? "暂无歌单简介" : description, 14, MUTED);
     desc.setMaxLines(2);
     desc.setEllipsize(TextUtils.TruncateAt.END);
-    info.addView(desc);
+    info.addView(desc, new LinearLayout.LayoutParams(0, -2, 1));
+    LinearLayout details = row(this);
+    details.setGravity(Gravity.CENTER);
+    details.setPadding(d(10), d(4), d(8), d(4));
+    details.setBackground(TvUi.artworkFocus(this));
+    details.addView(label("查看详情", 14, TEXT));
+    details.addView(TvUi.glyph(this, "chevron_right", 19, TEXT), lp(20, 22));
+    LinearLayout.LayoutParams detailsParams = lp(-2, 30);
+    detailsParams.leftMargin = d(12);
+    info.addView(details, detailsParams);
     facts.addView(info, new LinearLayout.LayoutParams(-1, 0, 1));
-    focus.add(info, FocusRouter.CONTENT, contentRow++, 0, "detail:info");
-    info.setContentDescription("查看歌单详情");
-    info.setOnClickListener(
-        v -> {
-          info.requestFocus();
-          String text =
-              current.entity.optString("name", current.title)
-                  + "\n\n"
-                  + (fullDescription.isEmpty() ? "暂无歌单简介" : fullDescription);
-          info("歌单详情", text);
-        });
+    focus.add(details, FocusRouter.CONTENT, contentRow++, 0, "detail:info");
+    details.setContentDescription("查看歌单详情");
+    details.setOnClickListener(v -> {
+      details.requestFocus();
+      String text = current.entity.optString("name", current.title) + "\n\n" + (fullDescription.isEmpty() ? "暂无歌单简介" : fullDescription);
+      info("歌单详情", text);
+    });
     long duration = 0;
     java.util.HashSet<String> artists = new java.util.HashSet<>(),
         albums = new java.util.HashSet<>();
@@ -1973,7 +1979,10 @@ public class MainActivity extends Activity {
     head.addView(duration, lp(84, -2));
     View line = new View(this);
     line.setBackgroundColor(BORDER);
-    container.addView(line, lp(-1, 1));
+    LinearLayout.LayoutParams lineParams = lp(-1, 1);
+    lineParams.leftMargin = d(16);
+    lineParams.rightMargin = d(16);
+    container.addView(line, lineParams);
     return container;
   }
 
@@ -3231,8 +3240,12 @@ public class MainActivity extends Activity {
   }
 
   private LinearLayout settingGroup;
+  private final HashMap<String, TextView> settingValues = new HashMap<>();
+  private final HashMap<String, View> settingRows = new HashMap<>();
 
   private void settings() {
+    settingValues.clear();
+    settingRows.clear();
     settingGroup = null;
     tabRow(new String[] {"音乐库", "播放", "界面", "服务", "关于"});
     scroll();
@@ -3871,13 +3884,12 @@ public class MainActivity extends Activity {
     setting(
         "显示翻译",
         prefs().getBoolean("lyric_translation", true) ? "开启" : "关闭",
-        () -> {
-          prefs()
-              .edit()
-              .putBoolean("lyric_translation", !prefs().getBoolean("lyric_translation", true))
-              .apply();
-          render();
-        });
+        () -> choice("显示翻译", new String[] {"开启", "关闭"}, prefs().getBoolean("lyric_translation", true) ? 0 : 1, at -> {
+          prefs().edit().putBoolean("lyric_translation", at == 0).apply();
+          updateSettingValue("显示翻译", at == 0 ? "开启" : "关闭");
+          lastLyric = -2;
+          updatePlayback();
+        }));
     setting(
         "歌词时间偏移",
         prefs().getInt("lyric_offset", 0) + " ms",
@@ -4051,6 +4063,20 @@ public class MainActivity extends Activity {
           snapshot();
           action.run();
         });
+    row.setContentDescription(title + "，" + value);
+    settingValues.put(title, selected);
+    settingRows.put(title, row);
+  }
+
+  private void updateSettingValue(String title, String value) {
+    TextView label = settingValues.get(title);
+    View row = settingRows.get(title);
+    if (label == null || row == null || !row.isAttachedToWindow()) return;
+    TvUi.setText(label, value);
+    View box = (View) label.getParent();
+    android.view.ViewGroup.LayoutParams params = box.getLayoutParams();
+    params.width = Math.max(d(128), (int) Math.ceil(label.getPaint().measureText(value)) + d(60));
+    box.setLayoutParams(params);
     row.setContentDescription(title + "，" + value);
   }
 
@@ -4716,8 +4742,9 @@ public class MainActivity extends Activity {
           if (modal == dialog) modal = null;
           if (current == source) {
             current.restoreFocus = originKey;
-            if (current.type.equals("settings")) render();
-            else if (origin != null && origin.isAttachedToWindow()) origin.requestFocus();
+            if (current.type.equals("settings"))
+              updateSettingValue("系统音量", audio.getStreamVolume(android.media.AudioManager.STREAM_MUSIC) + " / " + max);
+            if (origin != null && origin.isAttachedToWindow()) origin.requestFocus();
           }
         });
     dialog.show();
