@@ -12,36 +12,96 @@
 <div class="row"><button data-key="previous">上一首</button><button data-key="play">播放/暂停</button><button data-key="next">下一首</button></div>
 <div class="row"><button data-key="volume_down">音量 −</button><button data-key="mute">静音</button><button data-key="volume_up">音量 +</button></div>
 <button class="launch" id="launch">打开 Netodia TV</button><div id="notice"></div>
-<p>点击画面操作电视，滚轮上下滚动，右键返回。也支持方向键、回车确定、Esc 返回、空格播放/暂停。<br>H.264 视频实时预览 · 持续连接遥控 · 不含电视声音。</p>
+
 </aside></main>
 <script>
-const token='__TOKEN__',screen=document.getElementById('screen'),status=document.getElementById('status'),notice=document.getElementById('notice');
-let queue=Promise.resolve(),last=-1,oldUrl,frames=0;
-function send(key,point){queue=queue.then(async()=>{try{const r=await fetch(key==='scroll'?'/scroll':key==='tap'?'/tap':key==='launch'?'/launch':'/key',{method:'POST',headers:{'Content-Type':'application/json','X-TV-Token':token},body:JSON.stringify(point||{key})});const d=await r.json();if(!r.ok)throw Error(d.error);notice.textContent=key==='launch'?'已发送打开指令':key==='tap'?'已点击电视画面':'已发送';}catch(e){notice.textContent='操作失败：'+e.message;}});}
-document.querySelectorAll('[data-key]').forEach(b=>b.onclick=()=>send(b.dataset.key));document.getElementById('launch').onclick=()=>send('launch');
+const token='__TOKEN__',canvas=document.getElementById('screen'),status=document.getElementById('status'),notice=document.getElementById('notice');
+let control,controlTimer,serial=0,videoTimer,lastRepeat=0;
+const pending=new Map();
+function send(key,point){
+ if(!control||control.readyState!==WebSocket.OPEN){notice.textContent='遥控正在连接';return false;}
+ if(control.bufferedAmount>4096){notice.textContent='网络繁忙';return false;}
+ const id=++serial;
+ pending.set(id,performance.now());
+ if(pending.size>32)pending.delete(pending.keys().next().value);
+ control.send(JSON.stringify({action:['tap','scroll','launch','resync'].includes(key)?key:'key',key,id,...point}));
+ return true;
+}
+function connectControl(){
+ control=new WebSocket('ws://'+location.host+'/control?token='+encodeURIComponent(token));
+ control.onopen=()=>{notice.textContent='已连接';};
+ control.onmessage=e=>{const result=JSON.parse(e.data);pending.delete(result.id);notice.textContent=result.ok?'':'操作失败：'+result.error;};
+ control.onclose=()=>{pending.clear();notice.textContent='遥控正在重连';controlTimer=setTimeout(connectControl,400);};
+}
+document.querySelectorAll('[data-key]').forEach(b=>b.addEventListener('pointerdown',e=>{if(e.button===0){e.preventDefault();b.focus();send(b.dataset.key);}}));
+document.getElementById('launch').onclick=()=>send('launch');
 const keys={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'ok',Escape:'back',Backspace:'back',' ':'play'};
-document.addEventListener('keydown',e=>{if(keys[e.key]){e.preventDefault();send(keys[e.key]);}});
+document.addEventListener('keydown',e=>{if(keys[e.key]){e.preventDefault();if(e.repeat){if(!e.key.startsWith('Arrow')||performance.now()-lastRepeat<90)return;}lastRepeat=performance.now();send(keys[e.key]);}});
 function screenPoint(clientX,clientY){
- const rect=screen.getBoundingClientRect();
- const scale=Math.min(rect.width/screen.width,rect.height/screen.height);
- const width=screen.width*scale,height=screen.height*scale;
- const left=rect.left+(rect.width-width)/2,top=rect.top+(rect.height-height)/2;
+ const rect=canvas.getBoundingClientRect(),scale=Math.min(rect.width/canvas.width,rect.height/canvas.height);
+ const width=canvas.width*scale,height=canvas.height*scale,left=rect.left+(rect.width-width)/2,top=rect.top+(rect.height-height)/2;
  if(clientX<left||clientX>=left+width||clientY<top||clientY>=top+height)return null;
- return {x:Math.floor((clientX-left)/scale),y:Math.floor((clientY-top)/scale),width:screen.width,height:screen.height};
+ return {x:Math.floor((clientX-left)/scale),y:Math.floor((clientY-top)/scale),width:canvas.width,height:canvas.height};
 }
-screen.addEventListener('click',e=>{const point=screenPoint(e.clientX,e.clientY);if(point)send('tap',point);});
-let wheelTimer, wheelY=0, wheelX=0, wheelPoint;
-screen.addEventListener('wheel',e=>{const point=screenPoint(e.clientX,e.clientY);if(!point)return;e.preventDefault();wheelPoint=point;wheelY+=e.deltaY;wheelX+=e.deltaX;if(!wheelTimer)wheelTimer=setTimeout(()=>{send('scroll',{...wheelPoint,vertical:-Math.max(-4,Math.min(4,wheelY/100)),horizontal:-Math.max(-4,Math.min(4,wheelX/100))});wheelY=0;wheelX=0;wheelTimer=null;},40);},{passive:false});
-screen.addEventListener('contextmenu',e=>{e.preventDefault();send('back');});
-const ctx=screen.getContext('2d',{alpha:false});
-let decoder,ws;
+canvas.addEventListener('pointerdown',e=>{if(e.button===0){const point=screenPoint(e.clientX,e.clientY);if(point){e.preventDefault();send('tap',point);}}});
+let wheelTimer,wheelY=0,wheelX=0,wheelPoint;
+canvas.addEventListener('wheel',e=>{const point=screenPoint(e.clientX,e.clientY);if(!point)return;e.preventDefault();wheelPoint=point;wheelY+=e.deltaY;wheelX+=e.deltaX;if(!wheelTimer)wheelTimer=setTimeout(()=>{send('scroll',{...wheelPoint,vertical:-Math.max(-4,Math.min(4,wheelY/100)),horizontal:-Math.max(-4,Math.min(4,wheelX/100))});wheelY=wheelX=0;wheelTimer=null;},24);},{passive:false});
+canvas.addEventListener('contextmenu',e=>{e.preventDefault();send('back');});
+const ctx=canvas.getContext('2d',{alpha:false,desynchronized:true});
+let video,decoder,pendingFrame,paintScheduled=false,waitingKey=true,codec='',lastResync=0,drawnFrames=0,totalPainted=0,statsTime=performance.now(),fps=0,droppedFrames=0;
+function resync(){if(performance.now()-lastResync>1200){send('resync');lastResync=performance.now();}}
+function avcCodec(bytes){
+ for(let i=0;i+7<bytes.length;i++){
+  let start=-1;
+  if(bytes[i]===0&&bytes[i+1]===0&&bytes[i+2]===1)start=i+3;
+  else if(bytes[i]===0&&bytes[i+1]===0&&bytes[i+2]===0&&bytes[i+3]===1)start=i+4;
+  if(start>=0&&(bytes[start]&31)===7)return 'avc1.'+Array.from(bytes.subarray(start+1,start+4),v=>v.toString(16).padStart(2,'0')).join('');
+ }
+ return codec||'avc1.420028';
+}
+function configure(nextCodec){
+ codec=nextCodec;
+ try{decoder.configure({codec,optimizeForLatency:true,hardwareAcceleration:'prefer-software'});}
+ catch(e){decoder.configure({codec,optimizeForLatency:true});}
+}
+function paint(){
+ paintScheduled=false;
+ if(!pendingFrame)return;
+ const frame=pendingFrame;pendingFrame=null;
+ try{if(canvas.width!==frame.displayWidth||canvas.height!==frame.displayHeight){canvas.width=frame.displayWidth;canvas.height=frame.displayHeight;}ctx.drawImage(frame,0,0);drawnFrames++;totalPainted++;}
+ finally{frame.close();}
+}
+function closeVideo(){
+ if(video){video.onclose=null;video.close();video=null;}
+ if(decoder&&decoder.state!=='closed')decoder.close();
+ if(pendingFrame){pendingFrame.close();pendingFrame=null;}
+}
 function connectVideo(){
- if(!('VideoDecoder' in window)){status.textContent='当前浏览器不支持视频解码，请使用 Chrome 或 Edge 打开本页';return;}
- decoder=new VideoDecoder({output:frame=>{if(screen.width!==frame.displayWidth||screen.height!==frame.displayHeight){screen.width=frame.displayWidth;screen.height=frame.displayHeight;}ctx.drawImage(frame,0,0);frame.close();},error:e=>{status.textContent='视频解码错误：'+e.message;}});
- decoder.configure({codec:'avc1.420028',optimizeForLatency:true});
- ws=new WebSocket('ws://'+location.host+'/video');ws.binaryType='arraybuffer';
- ws.onmessage=e=>{const b=new Uint8Array(e.data),v=new DataView(e.data);const key=b[0]===1,ts=Number(v.getBigUint64(1));if(decoder.state==='configured'){try{decoder.decode(new EncodedVideoChunk({type:key?'key':'delta',timestamp:ts,data:b.subarray(9)}));}catch(e){status.textContent=e.message;}}};
- ws.onclose=()=>{if(decoder.state!=='closed')decoder.close();setTimeout(connectVideo,1000);};
+ if(document.hidden)return;
+ if(!('VideoDecoder' in window)){status.textContent='请用 Chrome 或 Edge 打开镜像';return;}
+ closeVideo();waitingKey=true;
+ decoder=new VideoDecoder({output:frame=>{if(pendingFrame){pendingFrame.close();droppedFrames++;}pendingFrame=frame;if(!paintScheduled){paintScheduled=true;requestAnimationFrame(paint);}},error:()=>{status.textContent='视频正在恢复';if(video)video.close();}});
+ video=new WebSocket('ws://'+location.host+'/video?token='+encodeURIComponent(token));video.binaryType='arraybuffer';
+ video.onmessage=e=>{
+  if(e.data.byteLength<10)return;
+  const bytes=new Uint8Array(e.data),key=bytes[0]===1,pts=Number(new DataView(e.data).getBigUint64(1)),data=bytes.subarray(9);
+  if(decoder.state==='closed')return;
+  if(decoder.decodeQueueSize>3){decoder.reset();waitingKey=true;droppedFrames++;resync();}
+  if(waitingKey&&!key)return;
+  try{if(key){const nextCodec=avcCodec(data);if(decoder.state!=='configured'||nextCodec!==codec)configure(nextCodec);waitingKey=false;}
+   decoder.decode(new EncodedVideoChunk({type:key?'key':'delta',timestamp:pts,data}));
+  }catch(e){waitingKey=true;resync();}
+ };
+ video.onclose=()=>{closeVideo();clearTimeout(videoTimer);videoTimer=setTimeout(connectVideo,300);};
 }
-async function refresh(){try{const s=await(await fetch('/status')).json();if(s.serverId&&s.serverId!==token.slice(0,8)){location.reload();return;}status.textContent=s.error||s.device+' · 实时视频 · 低延迟遥控';}catch(e){status.textContent='连接已断开，请检查工具终端';}setTimeout(refresh,2000);}connectVideo();refresh();
+document.addEventListener('visibilitychange',()=>{clearTimeout(videoTimer);if(document.hidden)closeVideo();else connectVideo();});
+async function refresh(){
+ try{const s=await(await fetch('/status')).json();if(s.serverId&&s.serverId!==token.slice(0,8)){location.reload();return;}
+  const now=performance.now();fps=Math.round(drawnFrames*1000/(now-statsTime));drawnFrames=0;statsTime=now;
+  status.textContent=s.error||(totalPainted?'已连接 · '+canvas.width+' × '+canvas.height+' · '+(fps?fps+' fps':'画面静止'):'正在接收画面');
+ }catch(e){status.textContent='服务未连接';}
+ setTimeout(refresh,1500);
+}
+window.addEventListener('pagehide',()=>{clearTimeout(controlTimer);clearTimeout(videoTimer);if(control){control.onclose=null;control.close();}closeVideo();});
+connectControl();connectVideo();refresh();
 </script></html>

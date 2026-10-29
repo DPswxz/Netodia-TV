@@ -600,7 +600,8 @@ public class MainActivity extends Activity {
             ? View.GONE
             : View.VISIBLE);
     TvUi.setText(heading, current.title);
-    TvUi.setText(subtitle, "网易云音乐 · 为电视遥控器而设计");
+    TvUi.setText(subtitle, "");
+    subtitle.setVisibility(View.GONE);
     focus.add(header.getChildAt(0), FocusRouter.CONTENT, -3, 0, "header:back");
     focus.add(header.getChildAt(2), FocusRouter.CONTENT, -3, 1, "header:queue");
     message("方向键移动 · 确定选择 · 返回上一级 · 菜单键打开歌曲操作");
@@ -2942,7 +2943,14 @@ public class MainActivity extends Activity {
             if (service() != null) service().cycleMode();
             render();
           });
-      setting("系统音量", "左右键调整音量", this::volumeDialog);
+      android.media.AudioManager audio =
+          (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
+      setting(
+          "系统音量",
+          audio.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
+              + " / "
+              + audio.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC),
+          this::volumeDialog);
       setting(
           "均衡器", prefs().getBoolean("eq_enabled", false) ? "已开启" : "已关闭", this::equalizerDialog);
       setting(
@@ -4061,9 +4069,7 @@ public class MainActivity extends Activity {
     input.setBackground(TvUi.focus(this, false));
     input.setPadding(d(16), d(12), d(16), d(12));
     box.addView(input, lp(-1, 60));
-    TextView help = label("确定打开键盘 · 返回收起键盘后确定搜索 · 菜单键也可提交", 14, MUTED);
-    help.setPadding(0, d(14), 0, 0);
-    box.addView(help);
+
     AlertDialog dialog =
         new AlertDialog.Builder(this)
             .setTitle(title)
@@ -4137,9 +4143,7 @@ public class MainActivity extends Activity {
     range.setProgressTintList(ColorStateList.valueOf(ACCENT));
     range.setContentDescription(title + "，左右键调整");
     box.addView(range, lp(-1, 64));
-    TextView hint = label("左右键调整 · 下键选择确定 · 返回取消", 16, MUTED);
-    hint.setGravity(Gravity.CENTER);
-    box.addView(hint);
+
     range.setOnSeekBarChangeListener(
         new SeekBar.OnSeekBarChangeListener() {
           public void onStartTrackingTouch(SeekBar s) {}
