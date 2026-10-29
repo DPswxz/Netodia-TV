@@ -304,10 +304,10 @@ public class MainActivity extends Activity {
     header.addView(queue, lp(40, 40));
     tabs = row(this);
     tabs.setPadding(0, 0, 0, d(8));
-    content.addView(tabs, lp(-1, 64));
+    content.addView(tabs, lp(-1, 48));
     curatedHero = row(this);
     curatedHero.setVisibility(View.GONE);
-    content.addView(curatedHero, lp(-1, 172));
+    content.addView(curatedHero, lp(-1, 140));
     stage = new FrameLayout(this);
     content.addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
     status = label("", 13, MUTED);
@@ -730,11 +730,11 @@ public class MainActivity extends Activity {
       boolean onHero = current.type.equals("favorites") || current.type.equals("recent");
       int ink = onHero ? TEXT : i == current.tab ? ACCENT : TEXT;
       if (i < icons.length) {
-        TextView icon = TvUi.glyph(this, icons[i], 23, ink);
+        TextView icon = TvUi.glyph(this, icons[i], 21, ink);
         icon.setTypeface(i == current.tab ? TvUi.filled : TvUi.symbols);
-        name.addView(icon, lp(28, 30));
+        name.addView(icon, lp(25, 28));
       }
-      TextView title = label(labels[i], 17, ink);
+      TextView title = label(labels[i], 16, ink);
       heading(title);
       title.setPadding(d(8), 0, d(4), 0);
       name.addView(title);
@@ -746,7 +746,7 @@ public class MainActivity extends Activity {
                   Math.ceil(
                       title.getPaint().measureText(labels[i])
                           / (getResources().getDisplayMetrics().density * TvUi.SCALE))
-              + (i < icons.length ? 28 : 0)
+              + (i < icons.length ? 25 : 0)
               + 36;
       tabs.addView(item, lp(tabWidth, -1));
       margin(item, 5, 0);
@@ -790,7 +790,9 @@ public class MainActivity extends Activity {
                   ? "搜索设置…"
                   : current.type.equals("favorites")
                       ? "筛选收藏…"
-                      : current.type.equals("recent") ? "筛选最近播放…" : "筛选播放列表…";
+                      : current.type.equals("recent")
+                          ? current.tab == 1 ? "筛选播放最多…" : "筛选最近播放…"
+                          : "筛选播放列表…";
       LinearLayout search = row(this);
       search.setPadding(d(10), 0, d(12), 0);
       search.addView(TvUi.glyph(this, "search", 19, MUTED), lp(23, 24));
@@ -837,7 +839,7 @@ public class MainActivity extends Activity {
     LinearLayout box = column(this);
     box.setTranslationY(
         -d(
-                (tabs.getVisibility() == View.VISIBLE ? 64 : 0)
+                (tabs.getVisibility() == View.VISIBLE ? 48 : 0)
                     + (header.getVisibility() == View.VISIBLE ? 44 : 0))
             / 2f);
     box.setGravity(Gravity.CENTER);
@@ -1168,19 +1170,19 @@ public class MainActivity extends Activity {
   private void recent() {
     tabRow(new String[] {"歌曲", "播放最多"});
     if (accountRestoring) {
-      curated("最近播放", "history", current.items);
+      curated(current.tab == 1 ? "播放最多" : "最近播放", "history", current.items);
       loadingView();
       return;
     }
     if (current.tab == 0 && accountId != 0) {
-      curated("最近播放", "history", current.items);
+      curated(current.tab == 1 ? "播放最多" : "最近播放", "history", current.items);
       if (!ready("recent", Backend.json())) return;
     } else {
       current.items =
           current.tab == 0 ? MusicData.saved(this, "history") : MusicData.mostPlayed(this);
       current.loaded = true;
     }
-    curated("最近播放", "history", current.items);
+    curated(current.tab == 1 ? "播放最多" : "最近播放", "history", current.items);
     songList();
   }
 
@@ -1188,7 +1190,7 @@ public class MainActivity extends Activity {
     curatedHero.removeAllViews();
     curatedHero.setVisibility(View.VISIBLE);
     focus.removePrefix("detail:");
-    curatedHero.setPadding(d(16), d(16), d(16), d(16));
+    curatedHero.setPadding(d(16), d(14), d(16), d(14));
     LinearLayout.LayoutParams stageParams = (LinearLayout.LayoutParams) stage.getLayoutParams();
     stageParams.leftMargin = 0;
     stageParams.rightMargin = 0;
@@ -1197,11 +1199,12 @@ public class MainActivity extends Activity {
     FrameLayout mosaic = new FrameLayout(this);
     mosaic.setBackground(fill(this, SURFACE, 10));
     mosaic.setClipToOutline(true);
-    curatedHero.addView(mosaic, lp(140, 140));
+    curatedHero.addView(mosaic, lp(112, 112));
     Page source = current;
-    ArtworkBackdrop backdrop = new ArtworkBackdrop(SURFACE1, 0, d(10));
-    curatedHero.setBackground(backdrop);
-    curatedHero.setClipToOutline(true);
+    ArtworkBackdrop backdrop = new ArtworkBackdrop(BASE, d(196), d(8));
+    content.setBackground(backdrop);
+    curatedHero.setBackgroundColor(Color.TRANSPARENT);
+    curatedHero.setClipToOutline(false);
     ArrayList<String> covers = new ArrayList<>();
     for (int i = 0; i < items.length() && covers.size() < 4; i++) {
       String url = MusicData.cover(items.optJSONObject(i));
@@ -1217,9 +1220,9 @@ public class MainActivity extends Activity {
         ImageView image = new ImageView(this);
         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
         int count = covers.size();
-        int w = count == 1 ? 140 : 70, h = count <= 2 ? 140 : count == 3 && i == 0 ? 140 : 70;
-        int x = count == 1 ? 0 : count == 3 ? (i == 0 ? 0 : 70) : i % 2 * 70;
-        int y = count <= 2 ? 0 : count == 3 ? (i == 2 ? 70 : 0) : i / 2 * 70;
+        int w = count == 1 ? 112 : 56, h = count <= 2 ? 112 : count == 3 && i == 0 ? 112 : 56;
+        int x = count == 1 ? 0 : count == 3 ? (i == 0 ? 0 : 56) : i % 2 * 56;
+        int y = count <= 2 ? 0 : count == 3 ? (i == 2 ? 56 : 0) : i / 2 * 56;
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(d(w), d(h));
         params.leftMargin = d(x);
         params.topMargin = d(y);
@@ -1696,9 +1699,9 @@ public class MainActivity extends Activity {
             - 78
             - 4
             - 16
-            - (tabs.getVisibility() == View.VISIBLE ? 64 : 0)
+            - (tabs.getVisibility() == View.VISIBLE ? 48 : 0)
             - (header.getVisibility() == View.VISIBLE ? 44 : 0)
-            - (curatedHero.getVisibility() == View.VISIBLE ? 172 : 0)
+            - (curatedHero.getVisibility() == View.VISIBLE ? 140 : 0)
             - (status.getVisibility() == View.VISIBLE ? 26 : 0));
   }
 
@@ -1978,8 +1981,9 @@ public class MainActivity extends Activity {
                 ? 172
                 : current.type.equals("favorites") || current.type.equals("recent") ? 0 : 56);
     int rowSpace = stageHeightDp() - overhead;
-    int songRowHeight = Math.max(44, Math.min(56, rowSpace / 5));
-    int start = pageStart(songs.length(), Math.max(1, rowSpace / songRowHeight));
+    int capacity = Math.max(1, Math.min(6, rowSpace / 44));
+    int songRowHeight = Math.max(40, Math.min(52, rowSpace / capacity));
+    int start = pageStart(songs.length(), capacity);
     int total = Math.min(start + current.pageSize, songs.length());
     for (int i = start; i < total; i++) {
       final int at = i;
@@ -1989,7 +1993,7 @@ public class MainActivity extends Activity {
           service() != null
               && MusicData.identity(song).equals(MusicData.identity(service().song()));
       LinearLayout row = row(this);
-      row.setPadding(d(12), d(8), d(12), d(8));
+      row.setPadding(d(12), d(4), d(12), d(4));
       row.setBackground(TvUi.focus(this, true));
       body.addView(row, lp(-1, songRowHeight));
       int sequence = current.reverse ? songs.length() - i : i + 1;
