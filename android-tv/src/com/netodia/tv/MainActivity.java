@@ -680,12 +680,16 @@ public class MainActivity extends Activity {
     }
     restoringScroll = true;
     Page rendered = current;
-    handler.post(
-        () -> {
-          if (destroyed || version != renderVersion || current != rendered) return;
-          if (scroller != null) scroller.scrollTo(0, rendered.scrollY);
-          restoringScroll = false;
-        });
+    stage.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+      @Override public boolean onPreDraw() {
+        stage.getViewTreeObserver().removeOnPreDrawListener(this);
+        if (destroyed || version != renderVersion || current != rendered) return true;
+        boolean changed = scroller != null && scroller.getScrollY() != rendered.scrollY;
+        if (scroller != null) scroller.scrollTo(0, rendered.scrollY);
+        restoringScroll = false;
+        return !changed;
+      }
+    });
     updatePlayback();
   }
 
@@ -994,35 +998,8 @@ public class MainActivity extends Activity {
   }
 
   private void loadingView() {
-    boolean list = current.type.equals("favorites") || current.type.equals("recent");
-    if (list) {
-      LinearLayout skeleton = column(this);
-      skeleton.setPadding(d(12), d(12), d(12), d(12));
-      LinearLayout layout = column(this);
-      layout.addView(songTableHeader(), lp(-1, 37));
-      layout.addView(skeleton, new LinearLayout.LayoutParams(-1, 0, 1));
-      stage.addView(layout, new FrameLayout.LayoutParams(-1, -1));
-      for (int i = 0; i < 5; i++) {
-        LinearLayout row = row(this);
-        row.setAlpha(.5f);
-        skeleton.addView(row, lp(-1, 56));
-        View art = new View(this);
-        art.setBackground(fill(this, SURFACE1, 6));
-        row.addView(new View(this), lp(64, 1));
-        row.addView(art, lp(36, 36));
-        margin(art, 8, 0);
-        LinearLayout words = column(this);
-        words.setGravity(Gravity.CENTER_VERTICAL);
-        row.addView(words, new LinearLayout.LayoutParams(0, -1, 1));
-        View title = new View(this);
-        title.setBackground(fill(this, SURFACE1, 4));
-        words.addView(title, lp(180 - i % 3 * 24, 12));
-        margin(title, 0, 8);
-        View caption = new View(this);
-        caption.setBackground(fill(this, SURFACE, 4));
-        words.addView(caption, lp(100, 8));
-      }
-    }
+    // Loading uses a stable neutral placeholder rather than the old five-row
+    // skeleton whose columns, gutters and row heights differed from real pages.
     LinearLayout message = row(this);
     message.setGravity(Gravity.CENTER);
     message.setPadding(d(12), d(8), d(12), d(8));
@@ -1032,11 +1009,7 @@ public class MainActivity extends Activity {
     TextView caption = label("加载中…", 14, MUTED);
     caption.setPadding(d(10), 0, 0, 0);
     message.addView(caption);
-    FrameLayout.LayoutParams params =
-        new FrameLayout.LayoutParams(
-            -2, d(38), list ? Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL : Gravity.CENTER);
-    params.bottomMargin = list ? d(12) : 0;
-    stage.addView(message, params);
+    stage.addView(message, new FrameLayout.LayoutParams(-2, d(38), Gravity.CENTER));
   }
 
   private boolean ready(String op, JSONObject input) {
@@ -1555,6 +1528,19 @@ public class MainActivity extends Activity {
   private int gridColumns = 1;
 
   private void grid(String kind) {
+    if (content.getWidth() == 0) {
+      Page page = current;
+      int version = renderVersion;
+      content.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+        @Override public boolean onPreDraw() {
+          content.getViewTreeObserver().removeOnPreDrawListener(this);
+          if (current != page || renderVersion != version) return true;
+          render();
+          return false;
+        }
+      });
+      return;
+    }
     JSONArray items = filtered(current.items, current.query);
     if (items.length() == 0) {
       if (current.more) {
@@ -4163,10 +4149,13 @@ public class MainActivity extends Activity {
   }
 
   private void login() {
+    tabs.setPadding(d(6), d(4), d(6), d(4));
+    tabs.setClipChildren(false);
+    tabs.setClipToPadding(false);
     final int token = qrVersion;
     Page target = current;
     Button refresh = action("刷新二维码", () -> render(), 0, 0, "login:refresh");
-    tabs.addView(refresh, lp(136, 42));
+    tabs.addView(refresh, lp(136, 36));
     margin(refresh, 8, 0);
     Button help =
         action(
@@ -4175,7 +4164,7 @@ public class MainActivity extends Activity {
             0,
             1,
             "login:help");
-    tabs.addView(help, lp(114, 42));
+    tabs.addView(help, lp(114, 36));
     LinearLayout panel = row(this);
     panel.setGravity(Gravity.CENTER);
     panel.setPadding(d(26), d(20), d(26), d(20));

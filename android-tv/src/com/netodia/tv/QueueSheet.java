@@ -130,7 +130,7 @@ final class QueueSheet {
           if (event.getAction() == KeyEvent.ACTION_DOWN
               && key == KeyEvent.KEYCODE_DPAD_DOWN
               && !tracks.isEmpty()) {
-            tracks.get(0).requestFocus();
+            focusSelection(0);
             return true;
           }
           return false;
@@ -140,7 +140,7 @@ final class QueueSheet {
           if (event.getAction() == KeyEvent.ACTION_DOWN
               && key == KeyEvent.KEYCODE_DPAD_DOWN
               && !tracks.isEmpty()) {
-            tracks.get(0).requestFocus();
+            focusSelection(0);
             return true;
           }
           return false;
@@ -181,9 +181,7 @@ final class QueueSheet {
     main.post(
         () -> {
           if (!tracks.isEmpty()) {
-            View active = rows.findViewWithTag("track:" + player.index());
-            if (active != null) active.requestFocus();
-            else tracks.get(0).requestFocus();
+            if (!focusSelection(player.index())) focusSelection(0);
           } else clearButton.requestFocus();
         });
   }
@@ -244,7 +242,7 @@ final class QueueSheet {
             if (dialog.getCurrentFocus() != focusAfterBuild) return;
             View restored = rows.findViewWithTag(oldTag);
             if (restored != null) restored.requestFocus();
-            else if (!tracks.isEmpty()) tracks.get(tracks.size() - 1).requestFocus();
+            else if (!tracks.isEmpty()) focusSelection(tracks.size() - 1);
           });
   }
 
@@ -434,6 +432,14 @@ final class QueueSheet {
     rebuilding = false;
   }
 
+  private boolean focusSelection(int index) {
+    View marker = rows.findViewWithTag("select:" + index);
+    if (marker == null) return false;
+    boolean focused = marker.requestFocus();
+    refreshFocusActions();
+    return focused;
+  }
+
   private boolean vertical(int at, int key) {
     if (key != KeyEvent.KEYCODE_DPAD_UP && key != KeyEvent.KEYCODE_DPAD_DOWN) return false;
     int next = at + (key == KeyEvent.KEYCODE_DPAD_UP ? -1 : 1);
@@ -443,7 +449,7 @@ final class QueueSheet {
       more();
     }
     if (next < 0) clearButton.requestFocus();
-    else if (next < tracks.size()) tracks.get(next).requestFocus();
+    else if (next < tracks.size()) focusSelection(next);
     refreshFocusActions();
 
     return true;
