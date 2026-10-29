@@ -25,6 +25,9 @@ final class FocusRouter {
   }
 
   private final ArrayList<Node> nodes = new ArrayList<>();
+  private int currentLyric;
+
+  void currentLyric(int index) { currentLyric = Math.max(0, index); }
   private String lastList = "",
       lastContent = "",
       selectedSide = "nav:library",
@@ -213,6 +216,11 @@ final class FocusRouter {
             break;
           }
       }
+    }
+    if (to != null && to.key.startsWith("lyric:")
+        && (from == null || !from.key.startsWith("lyric:"))) {
+      for (Node node : nodes)
+        if (node.key.equals("lyric:" + currentLyric) && usable(node)) { to = node; break; }
     }
     if (to != null) {
       to.view.requestFocus();

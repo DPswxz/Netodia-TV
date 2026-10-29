@@ -4,7 +4,7 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.23)
+## Current TV controls (0.5.24)
 
 - Playlist, Favorite and Recent headers share artwork-colored cards and a right-aligned toolbar.
   Favorite and Recent retain their tabs. Playlist descriptions open in a complete detail view.
@@ -29,6 +29,9 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 - Settings option values stay on one line, with controls expanding to fit their text.
   Applying a choice keeps focus on the originating setting. Volume and translation settings
   update their existing controls without rebuilding the page; translation uses a radio dropdown.
+- Entering lyrics focuses the current cue and follows playback. Manual browsing suspends
+  following for five seconds after the last input, even while lyrics retain focus.
+  Automatic following never takes focus from another control or dialog.
 - Lyrics settings keep the main panel visible while a child panel opens beside it.
 - Opening the queue and navigating vertically focuses the selection checkbox by default.
   Toggling it updates selection in place, retaining the same focus view and scroll position.
@@ -78,7 +81,8 @@ preview build, not a store release. Minimum Android 8 (API 26); target API 30 fo
 
 - D-pad navigates buttons and lists; OK selects; Back returns to discovery or leaves the app.
 - On the progress bar, left/right moves focus. OK enters seek mode; OK/Back leaves seek mode.
-- Lyrics use a subtle focus marker and resume following three seconds after focus leaves them.
+- Lyrics use a subtle focus marker, enter at the active cue, and resume following five seconds
+  after the last manual navigation or scroll input.
 - About uses grouped author/license cards and local log viewing/report export.
 - Discover, charts, song search (first 30 results), playlist playback (first page for account playlists).
 - QR login, app-private session persistence, logout; no credentials are logged or backed up.

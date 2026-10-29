@@ -2563,6 +2563,7 @@ public class MainActivity extends Activity {
         }
     }
     int active = lyrics.at((long) s.position() + prefs().getInt("lyric_offset", 0));
+    focus.currentLyric(active);
     if (active == lastLyric) return;
     if (lastLyric >= 0 && lastLyric < lyricTextViews.size()) {
       TextView old = lyricTextViews.get(lastLyric);
@@ -2582,46 +2583,43 @@ public class MainActivity extends Activity {
 
   private ScrollView lyricScroll;
   private final LyricFollow lyricFollow = new LyricFollow();
-  private final Runnable resumeLyricFollow =
-      () -> {
-        if (started
-            && !destroyed
-            && lyricScroll != null
-            && lyricFollow.follows(SystemClock.uptimeMillis())
-            && !focus.key(getCurrentFocus()).startsWith("lyric:")) scrollToCurrentLyric();
-      };
+  private final Runnable resumeLyricFollow = () -> {
+    if (started && !destroyed && lyricScroll != null
+        && lyricFollow.follows(SystemClock.uptimeMillis())) scrollToCurrentLyric();
+  };
 
   private void lyricFocusChanged(View view) {
     if (lyricScroll == null) return;
-    boolean browsing = focus.key(view).startsWith("lyric:");
-    if (browsing) handler.removeCallbacks(resumeLyricFollow);
-    if (lyricFollow.focus(browsing, SystemClock.uptimeMillis())) {
+    boolean inLyrics = focus.key(view).startsWith("lyric:");
+    if (lyricFollow.focus(inLyrics, SystemClock.uptimeMillis())) {
       handler.removeCallbacks(resumeLyricFollow);
-      handler.postDelayed(resumeLyricFollow, 3000);
+      scrollToCurrentLyric();
     }
   }
 
   private void deferLyricFollow() {
     lyricFollow.touch(SystemClock.uptimeMillis());
     handler.removeCallbacks(resumeLyricFollow);
-    handler.postDelayed(resumeLyricFollow, 3000);
+    handler.postDelayed(resumeLyricFollow, LyricFollow.IDLE_MS);
   }
 
   private void scrollToCurrentLyric() {
     final ScrollView scroll = lyricScroll;
     if (scroll == null) return;
-    scroll.post(
-        () -> {
-          PlaybackService player = service();
-          if (scroll != lyricScroll
-              || player == null
-              || !lyricFollow.follows(SystemClock.uptimeMillis())) return;
-          int active =
-              player.lyrics.at((long) player.position() + prefs().getInt("lyric_offset", 0));
-          if (active >= 0 && active < lyricRowViews.size())
-            scroll.smoothScrollTo(
-                0, Math.max(0, lyricRowViews.get(active).getTop() - scroll.getHeight() / 3));
-        });
+    scroll.post(() -> {
+      PlaybackService player = service();
+      if (scroll != lyricScroll || player == null
+          || !lyricFollow.follows(SystemClock.uptimeMillis())) return;
+      int active = Math.max(0, player.lyrics.at((long) player.position() + prefs().getInt("lyric_offset", 0)));
+      if (active < lyricRowViews.size()) {
+        // Cue changes move keyboard focus only while the user is inside lyrics.
+        // Following in the background must never pull focus out of another control or dialog.
+        if (getWindow().getDecorView().hasWindowFocus()
+            && focus.key(getCurrentFocus()).startsWith("lyric:")
+            && !focus.key(getCurrentFocus()).equals("lyric:" + active)) focus.focus("lyric:" + active);
+        scroll.smoothScrollTo(0, Math.max(0, lyricRowViews.get(active).getTop() - scroll.getHeight() / 3));
+      }
+    });
   }
 
   private LinearLayout lyricLines;
@@ -4894,6 +4892,8 @@ public class MainActivity extends Activity {
         return true;
       }
     }
+    if (focusKey.startsWith("lyric:")
+        && (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN)) deferLyricFollow();
     if (focusKey.equals("lyrics:panel")
         && (key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT)) {
       if (s != null && !s.lyrics.times.isEmpty()) {
