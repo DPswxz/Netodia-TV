@@ -1924,26 +1924,35 @@ public class MainActivity extends Activity {
       return;
     }
     LinearLayout actions = row(this);
-    body.addView(actions, lp(-1, 56));
-    Button all = action("▶ 播放全部", () -> play(current.items, 0), contentRow, 0, "songs:play");
-    actions.addView(all, lp(-2, 46));
-    margin(all, 8, 0);
-    Button random =
-        action(
-            "随机播放",
-            () -> {
-              prefs().edit().putInt("mode", 2).apply();
-              play(current.items, 0);
-            },
-            contentRow,
-            1,
-            "songs:shuffle");
-    actions.addView(random, lp(-2, 46));
-    margin(random, 8, 0);
-    Button filter = action("筛选歌曲", this::filterSongs, contentRow, 2, "songs:filter");
-    actions.addView(filter, lp(-2, 46));
+    actions.setPadding(d(12), 0, d(12), d(6));
+    body.addView(actions, lp(-1, 48));
+    actions.addView(iconAction("play_arrow", "播放全部", () -> play(current.items, 0), contentRow, 0, "songs:play"), lp(-2, 38));
+    View random = iconAction("shuffle", "随机播放", () -> {
+      prefs().edit().putInt("mode", 2).apply(); play(current.items, 0);
+    }, contentRow, 1, "songs:shuffle");
+    LinearLayout.LayoutParams randomParams = lp(-2, 38); randomParams.leftMargin = d(10);
+    actions.addView(random, randomParams);
+    View filter = iconAction("filter_list", "筛选歌曲", this::filterSongs, contentRow, 2, "songs:filter");
+    LinearLayout.LayoutParams filterParams = lp(-2, 38); filterParams.leftMargin = d(10);
+    actions.addView(filter, filterParams);
     contentRow++;
     addSongRows(visible, false);
+  }
+
+  private LinearLayout iconAction(String icon, String title, Runnable click, int row, int col, String key) {
+    LinearLayout control = row(this);
+    control.setPadding(d(12), 0, d(14), 0);
+    control.setBackground(TvUi.focus(this, false));
+    control.addView(TvUi.glyph(this, icon, 22, ACCENT), lp(28, 28));
+    TextView text = label(title, 17, TEXT);
+    text.setSingleLine();
+    text.setEllipsize(TextUtils.TruncateAt.END);
+    text.setPadding(d(6), 0, 0, 0);
+    control.addView(text, new LinearLayout.LayoutParams(-2, -2));
+    focus.add(control, FocusRouter.CONTENT, row, col, key);
+    control.setContentDescription(title);
+    control.setOnClickListener(v -> click.run());
+    return control;
   }
 
   private JSONArray filtered(JSONArray items, String query) {
@@ -2053,9 +2062,9 @@ public class MainActivity extends Activity {
             + 18
             + (current.type.equals("detail") || current.type.equals("recommendation")
                 ? 172
-                : current.type.equals("favorites") || current.type.equals("recent") ? 0 : 56);
+                : current.type.equals("favorites") || current.type.equals("recent") ? 0 : 48);
     int rowSpace = stageHeightDp() - overhead;
-    int capacity = Math.max(1, Math.min(6, rowSpace / 44));
+    int capacity = Math.max(1, Math.min(current.type.equals("songs") ? 8 : 6, rowSpace / 44));
     int songRowHeight = Math.max(40, Math.min(52, rowSpace / capacity));
     int start = pageStart(songs.length(), capacity);
     int total = Math.min(start + current.pageSize, songs.length());
@@ -2180,33 +2189,27 @@ public class MainActivity extends Activity {
   private void searchPage() {
     current.kind = "songs";
     tabs.setGravity(Gravity.CENTER);
-    Button query =
-        action(
-            current.query.isEmpty() ? "搜索" : "搜索：" + current.query,
-            () -> inputDialog("搜索", "歌曲、歌手或专辑", current.query, this::searchFor),
-            0,
-            0,
-            "search:input");
-    query.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-    query.setPadding(d(16), 0, d(16), 0);
-    query.setTextColor(current.query.isEmpty() ? MUTED : TEXT);
-    android.graphics.drawable.GradientDrawable pill = fill(this, BASE, 30);
-    pill.setStroke(d(1), BORDER);
-    query.setBackground(pill);
-    tabs.addView(query, lp(420, 36));
+    tabs.setPadding(d(8), d(4), d(8), d(8));
+    LinearLayout query = iconAction("search", current.query.isEmpty() ? "搜索歌曲、歌手或专辑" : current.query,
+        () -> inputDialog("搜索", "歌曲、歌手或专辑", current.query, this::searchFor), 0, 0, "search:input");
+    query.setContentDescription(current.query.isEmpty() ? "搜索" : "搜索：" + current.query);
+    tabs.addView(query, lp(440, 38));
     if (current.query.isEmpty()) {
       scroll();
       JSONArray queries = MusicData.array(prefs().getString("searches", "[]"));
       if (queries.length() > 0) {
         section("最近搜索");
+        LinearLayout historyRow = null;
         for (int i = 0; i < queries.length(); i++) {
+          if (i % 3 == 0) { historyRow = row(this); body.addView(historyRow, lp(-1, 56)); }
           String word = queries.optString(i);
-          Button recent =
-              action(word, () -> searchFor(word), contentRow++, 0, "search:history:" + i);
-          recent.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-          body.addView(recent, lp(-1, 48));
-          margin(recent, 0, 8);
+          View recent = iconAction("history", word, () -> searchFor(word), contentRow + i / 3, i % 3, "search:history:" + i);
+          LinearLayout.LayoutParams cell = new LinearLayout.LayoutParams(0, d(44), 1);
+          cell.setMargins(d(6), d(4), d(6), d(4));
+          historyRow.addView(recent, cell);
         }
+        if (historyRow != null) for (int i = queries.length() % 3; i > 0 && i < 3; i++)
+          historyRow.addView(new View(this), new LinearLayout.LayoutParams(0, d(44), 1));
       }
       return;
     }
@@ -2229,15 +2232,15 @@ public class MainActivity extends Activity {
     if (top != null) {
       String kind = albums != null && albums.length() > 0 ? "album" : "artist";
       LinearLayout column = column(this);
-      first.addView(column, lp(244, -2));
+      first.addView(column, lp(216, -2));
       TextView title = label("最佳结果", 16, TEXT);
       heading(title);
       column.addView(title, lp(-1, 34));
       LinearLayout card = column(this);
       card.setPadding(d(12), d(12), d(12), d(12));
       card.setBackground(TvUi.focus(this, false));
-      column.addView(card, lp(240, 320));
-      ImageView cover = cover(this, 216);
+      column.addView(card, lp(210, 280));
+      ImageView cover = cover(this, 186);
       card.addView(cover);
       Artwork.load(cover, MusicData.cover(top));
       TextView category = label(kind.equals("album") ? "专辑" : "歌手", 13, ACCENT);
@@ -2257,7 +2260,7 @@ public class MainActivity extends Activity {
     TextView songHeading = label("歌曲", 16, TEXT);
     heading(songHeading);
     songs.addView(songHeading, lp(-1, 34));
-    for (int i = 0; i < Math.min(6, current.items.length()); i++) {
+    for (int i = 0; i < Math.min(7, current.items.length()); i++) {
       final int index = i;
       JSONObject song = current.items.optJSONObject(i);
       LinearLayout row = row(this);
@@ -2287,9 +2290,9 @@ public class MainActivity extends Activity {
             return true;
           });
     }
-    Button all =
-        action(
-            "显示全部歌曲",
+    LinearLayout all =
+        iconAction(
+            "queue_music", "显示全部歌曲",
             () -> {
               Page page = new Page("songs", "搜索：" + current.query, "search");
               page.items = current.items;
@@ -2301,11 +2304,11 @@ public class MainActivity extends Activity {
               page.loaded = true;
               push(page);
             },
-            7,
+            Math.min(7, current.items.length()) + 1,
             1,
             "search:all");
     songs.addView(all, lp(-1, 38));
-    contentRow = 8;
+    contentRow = Math.min(7, current.items.length()) + 2;
     entityStrip("专辑", albums, "album");
     entityStrip("歌手", artists, "artist");
   }
