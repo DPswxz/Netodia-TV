@@ -1932,7 +1932,7 @@ public class MainActivity extends Activity {
     }, contentRow, 1, "songs:shuffle");
     LinearLayout.LayoutParams randomParams = lp(-2, 38); randomParams.leftMargin = d(10);
     actions.addView(random, randomParams);
-    View filter = iconAction("filter_list", "筛选歌曲", this::filterSongs, contentRow, 2, "songs:filter");
+    View filter = iconAction("tune", "筛选歌曲", this::filterSongs, contentRow, 2, "songs:filter");
     LinearLayout.LayoutParams filterParams = lp(-2, 38); filterParams.leftMargin = d(10);
     actions.addView(filter, filterParams);
     contentRow++;
