@@ -335,13 +335,36 @@ final class TvUi {
     layers.setId(0, android.R.id.background);
     layers.setId(1, android.R.id.progress);
     for (int i = 0; i < 2; i++) {
-      layers.setLayerHeight(i, dp(c, 4));
+      layers.setLayerHeight(i, dp(c, 3));
       layers.setLayerGravity(i, Gravity.CENTER_VERTICAL);
     }
     seek.setProgressDrawable(layers);
-    GradientDrawable thumb = fill(c, ACCENT, 2);
-    thumb.setSize(dp(c, 4), dp(c, 24));
+    Drawable thumb = new Drawable() {
+      final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+      @Override public int getIntrinsicWidth() { return dp(c, 18); }
+      @Override public int getIntrinsicHeight() { return dp(c, 18); }
+      @Override public boolean isStateful() { return true; }
+      @Override protected boolean onStateChange(int[] state) { invalidateSelf(); return true; }
+      @Override public void draw(android.graphics.Canvas canvas) {
+        boolean focused = false, editing = false;
+        for (int value : getState()) {
+          if (value == android.R.attr.state_focused) focused = true;
+          if (value == android.R.attr.state_pressed || value == android.R.attr.state_activated) editing = true;
+        }
+        float x = getBounds().exactCenterX(), y = getBounds().exactCenterY();
+        if (focused || editing) {
+          paint.setColor((ACCENT & 0xffffff) | 0x30000000);
+          canvas.drawCircle(x, y, dp(c, 9), paint);
+        }
+        paint.setColor(ACCENT);
+        canvas.drawCircle(x, y, dp(c, editing ? 7 : focused ? 6 : 4), paint);
+        if (editing) { paint.setColor(MANTLE); canvas.drawCircle(x, y, dp(c, 2), paint); }
+      }
+      @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); }
+      @Override public void setColorFilter(android.graphics.ColorFilter filter) { paint.setColorFilter(filter); }
+      @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+    };
     seek.setThumb(thumb);
-    seek.setThumbOffset(dp(c, 2));
+    seek.setThumbOffset(dp(c, 9));
   }
 }

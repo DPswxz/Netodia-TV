@@ -4,7 +4,12 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.25)
+## Current TV controls (0.5.26)
+
+- Progress focus and seek editing use a compact circular thumb instead of a filled focus box.
+- Playback failures show once per song/error change; song-row playback markers update in place.
+- Adding a library folder requests storage permission and continues into the picker after approval.
+  TV storage and USB volumes appear as direct roots. No all-files access permission is requested.
 
 - Playlist, Favorite and Recent headers share artwork-colored cards and a right-aligned toolbar.
   Favorite and Recent retain their tabs. Playlist descriptions open in a complete detail view.
@@ -76,7 +81,7 @@ adb shell am start -n com.netodia.tv/.MainActivity
 ```
 
 The local development key is generated automatically and ignored by Git. This APK is a
-preview build, not a store release. Minimum Android 8 (API 26); target API 30 for this TV.
+preview build, not a store release. Minimum Android 8 (API 26); target API 29 with legacy read-only storage access for TVs without an all-files permission settings page.
 
 ## Controls and features
 

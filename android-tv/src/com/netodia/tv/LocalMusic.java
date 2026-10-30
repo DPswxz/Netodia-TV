@@ -92,6 +92,31 @@ final class LocalMusic {
         .matches(".*\\.(mp3|flac|m4a|aac|ogg|opus|wav|aiff|aif|wma|alac)$");
   }
 
+  static JSONArray folder(Context context, String path) throws Exception {
+    if (!path.equals("/storage")) return folder(path);
+    JSONArray roots = new JSONArray();
+    java.util.HashSet<String> seen = new java.util.HashSet<>();
+    File primary = android.os.Environment.getExternalStorageDirectory();
+    addRoot(roots, seen, primary, "电视存储");
+    if (android.os.Build.VERSION.SDK_INT >= 30) {
+      android.os.storage.StorageManager storage = (android.os.storage.StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+      if (storage != null) for (android.os.storage.StorageVolume volume : storage.getStorageVolumes())
+        addRoot(roots, seen, volume.getDirectory(), volume.getDescription(context));
+    } else {
+      File[] volumes = new File("/storage").listFiles(File::isDirectory);
+      if (volumes != null) for (File volume : volumes)
+        if (!volume.getName().equals("emulated") && !volume.getName().equals("self")) addRoot(roots, seen, volume, volume.getName());
+    }
+    return roots;
+  }
+
+  private static void addRoot(JSONArray roots, java.util.Set<String> seen, File root, String name) throws Exception {
+    if (root == null) return;
+    String path = root.getCanonicalPath();
+    if (!path.startsWith("/storage/") || !seen.add(path)) return;
+    roots.put(Backend.json("name", name, "path", path, "directory", true, "id", -Math.abs((long) path.hashCode()), "uri", Uri.fromFile(root).toString()));
+  }
+
   static JSONArray folder(String path) throws Exception {
     File folder = new File(path).getCanonicalFile();
     if (!folder.getPath().equals("/storage") && !folder.getPath().startsWith("/storage/"))

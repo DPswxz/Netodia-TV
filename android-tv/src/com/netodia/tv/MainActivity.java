@@ -148,8 +148,11 @@ public class MainActivity extends Activity {
     return b;
   }
 
+  private long messageGeneration;
+
   private void message(String value) {
     if (status == null) return;
+    final long generation = ++messageGeneration;
     String text = value == null ? "操作失败，请重试" : value;
     TvUi.setText(status, text);
     if (text.startsWith("方向键") || text.startsWith("正在加载")) {
@@ -159,7 +162,7 @@ public class MainActivity extends Activity {
     status.setVisibility(View.VISIBLE);
     handler.postDelayed(
         () -> {
-          if (!destroyed && text.contentEquals(status.getText())) status.setVisibility(View.GONE);
+          if (!destroyed && generation == messageGeneration && text.contentEquals(status.getText())) status.setVisibility(View.GONE);
         },
         4000);
   }
@@ -431,8 +434,8 @@ public class MainActivity extends Activity {
     progress = new SeekBar(this);
     progress.setMax(1000);
     TvUi.seekStyle(this, progress);
-    progress.setPadding(d(6), 0, d(6), 0);
-    progress.setBackground(TvUi.focus(this, true));
+    progress.setPadding(d(10), 0, d(10), 0);
+    progress.setBackgroundColor(Color.TRANSPARENT);
     seekEditing = false;
     progress.setContentDescription("播放进度，确定后调整，左右键移动焦点");
     bar.addView(progress, new LinearLayout.LayoutParams(0, d(38), 1));
@@ -596,6 +599,7 @@ public class MainActivity extends Activity {
     lyricCurrent = null;
     focus.clearContent();
     itemPositions.clear();
+    songRowStates.clear();
     displayedItems = 0;
     contentRow = 1;
     tabs.removeAllViews();
@@ -1991,6 +1995,30 @@ public class MainActivity extends Activity {
     return container;
   }
 
+  private static final class SongRowState {
+    final String identity;
+    final int sequence;
+    final TextView index, title;
+    boolean active;
+    SongRowState(String identity, int sequence, TextView index, TextView title, boolean active) {
+      this.identity = identity; this.sequence = sequence; this.index = index; this.title = title; this.active = active;
+    }
+  }
+  private final ArrayList<SongRowState> songRowStates = new ArrayList<>();
+  private String shownPlaybackError = "";
+
+  private void updateSongRowStates(PlaybackService player) {
+    String identity = player.hasSong() ? MusicData.identity(player.song()) : "";
+    for (SongRowState row : songRowStates) {
+      boolean active = row.identity.equals(identity);
+      if (active == row.active) continue;
+      row.active = active;
+      TvUi.setText(row.index, active ? "♫" : Integer.toString(row.sequence));
+      row.index.setTextColor(active ? ACCENT : TEXT);
+      row.title.setTextColor(active ? ACCENT : TEXT);
+    }
+  }
+
   private void addSongRows(JSONArray songs, boolean queuePage) {
     if (queuePage) current.items = songs;
     boolean showAlbum = prefs().getBoolean("show_album_column", true);
@@ -2026,6 +2054,7 @@ public class MainActivity extends Activity {
       index.setVisibility(
           prefs().getBoolean("show_sequence_column", true) ? View.VISIBLE : View.GONE);
       TextView name = label(song.optString("name"), 18, playing ? ACCENT : TEXT);
+      songRowStates.add(new SongRowState(MusicData.identity(song), sequence, index, name, playing));
       name.setSingleLine();
       name.setEllipsize(TextUtils.TruncateAt.END);
       boolean saved = MusicData.favorite(this, song);
@@ -2905,9 +2934,40 @@ public class MainActivity extends Activity {
     return false;
   }
 
+  private boolean pendingLibraryFolder;
+
+  private void addLibraryFolder() {
+    pendingLibraryFolder = true;
+    if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+      if (prefs().getBoolean("storage_permission_requested", false) && !shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        try { startActivityForResult(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + getPackageName())), 43); }
+        catch (ActivityNotFoundException missing) { pendingLibraryFolder = false; info("存储权限", "请在电视系统设置中允许 Netodia TV 读取音乐文件。"); }
+        return;
+      }
+      prefs().edit().putBoolean("storage_permission_requested", true).apply();
+      requestPermissions(new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, 41);
+      return;
+    }
+    pendingLibraryFolder = false;
+    chooseLibraryFolder("/storage");
+  }
+
+  @Override protected void onActivityResult(int request, int result, Intent data) {
+    super.onActivityResult(request, result, data);
+    if (request == 43 && pendingLibraryFolder) {
+      if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) addLibraryFolder();
+      else { pendingLibraryFolder = false; info("未获得存储权限", "请允许读取音乐文件，再添加文件夹。"); }
+    }
+  }
+
   public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
     super.onRequestPermissionsResult(request, permissions, results);
     if (request == 41) {
+      if (pendingLibraryFolder) {
+        if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) addLibraryFolder();
+        else { pendingLibraryFolder = false; info("未获得存储权限", "请允许读取音乐文件，再添加文件夹。"); }
+        return;
+      }
       current.loaded = false;
       current.failure = "";
       render();
@@ -3117,7 +3177,7 @@ public class MainActivity extends Activity {
         files.execute(
             () -> {
               try {
-                JSONArray entries = LocalMusic.folder(target.path);
+                JSONArray entries = LocalMusic.folder(getApplicationContext(), target.path);
                 handler.post(
                     () -> {
                       if (destroyed) return;
@@ -3536,13 +3596,7 @@ public class MainActivity extends Activity {
     header.addView(add, lp(-2, 38));
     focus.add(add, FocusRouter.CONTENT, contentRow++, 0, "settings:add-folder");
     add.setContentDescription("添加文件夹");
-    add.setOnClickListener(
-        v -> {
-          if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-              != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, 41);
-          } else chooseLibraryFolder("/storage");
-        });
+    add.setOnClickListener(v -> addLibraryFolder());
     card.addView(header, lp(-1, 70));
     settingsDivider(card);
     JSONArray folders = MusicData.array(prefs().getString("library_folders", "[]"));
@@ -3612,7 +3666,7 @@ public class MainActivity extends Activity {
     files.execute(
         () -> {
           try {
-            JSONArray entries = LocalMusic.folder(path);
+            JSONArray entries = LocalMusic.folder(getApplicationContext(), path);
             ArrayList<String> labels = new ArrayList<>(), paths = new ArrayList<>();
             labels.add("添加当前文件夹");
             paths.add(path);
@@ -4601,7 +4655,7 @@ public class MainActivity extends Activity {
     seekEditing = editing;
     if (progress == null) return;
     progress.setContentDescription(editing ? "调整播放进度，左右键快退快进，确定或返回退出" : "播放进度，确定后调整，左右键移动焦点");
-    progress.setBackgroundTintList(editing ? ColorStateList.valueOf(ACCENT) : null);
+    progress.setActivated(editing);
   }
 
   private void volumeDialog() {
@@ -4808,7 +4862,12 @@ public class MainActivity extends Activity {
     TvUi.setText(nowAlbum, MusicData.album(s.song()).optString("name"));
     if (!progress.isPressed())
       progress.setProgress(s.duration() > 0 ? (int) (s.position() * 1000L / s.duration()) : 0);
-    if (!s.error.isEmpty()) message(s.error);
+    updateSongRowStates(s);
+    String errorKey = s.error.isEmpty() ? "" : MusicData.identity(s.song()) + "|" + s.error;
+    if (!errorKey.equals(shownPlaybackError)) {
+      shownPlaybackError = errorKey;
+      if (!s.error.isEmpty()) message(s.error);
+    }
     String song = MusicData.identity(s.song());
     if (!song.equals(paintedSong)) {
       paintedSong = song;
