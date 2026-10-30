@@ -1,62 +1,21 @@
 # Netodia TV
 
-此仓库包含 Netodia 的 Android TV 移植。构建、电视安装与功能范围请查看 [Android TV 说明](android-tv/README.md)，电脑端镜像控制请查看 [电视镜像遥控器](android-tv/tools/tv-remote/README.md)。原桌面版代码与署名保留如下。
+基于 [Netodia](https://github.com/HELPMEEADICE/Netodia) 的 Android TV 移植版，保留原项目源码与署名，电视端使用原生 Android 界面，复用 Rust 网络和核心模块。
 
-[![License: AGPL-3.0-or-later](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Built%20with-Rust-orange.svg)](https://www.rust-lang.org/)
+## 相比原版修改了什么
 
-**Netodia 是一款基于 [Melodia](https://github.com/KenanSalar/Melodia) 修改的第三方网易云音乐桌面客户端。**它使用 Rust 和 Slint 构建，在 Melodia 的桌面音乐播放器基础上整合了网易云音乐账号、曲库浏览和在线播放功能，同时保留本地音乐管理与播放能力。
+- **电视界面**：适配远距离阅读，调整侧边栏、歌单、收藏、最近播放及设置布局，歌曲列表每页显示六首。
+- **遥控器操作**：补齐方向键、确定、返回的焦点导航，支持队列多选、翻页、弹出菜单和播放控制。
+- **歌词体验**：进入歌词区定位当前句并跟随播放；手动浏览后，空闲五秒恢复跟随。
+- **Android 播放与平台适配**：使用 Android 播放器、后台服务和媒体会话；替换桌面相关集成，隐藏电视端不可用的选项。
+- **电脑预览工具**：提供通用电视镜像遥控器，支持实时画面、鼠标点击和按键操作。
 
-> **第三方项目声明**：Netodia 由社区独立开发，与网易云音乐及其关联公司无隶属、授权或官方支持关系。网易云音乐的账号、接口、曲库和播放权限由相关服务提供方管理；服务规则或接口变化可能影响部分功能。请遵守相关服务条款并合理使用。
+构建与安装见 [Android TV 说明](android-tv/README.md)，镜像工具见 [电视镜像遥控器说明](android-tv/tools/tv-remote/README.md)。本仓库已停用原桌面版的 GitHub Actions 自动构建。
 
-## 功能
+## 来源与署名
 
-- **网易云账号**：支持二维码、手机号和邮箱登录。
-- **在线音乐**：搜索歌曲，浏览歌单、专辑和歌手，并播放网易云音乐曲目；可在设置中选择云端播放音质。
-- **个人音乐**：浏览收藏和创建的歌单、喜欢的歌曲、最近播放与每日推荐；提供私人漫游、心动模式和相似歌曲等播放入口。
-- **歌词**：显示在线曲目歌词，也支持本地歌词文件和音乐文件内嵌歌词。
-- **本地音乐**：扫描和管理本地曲库，支持搜索、歌单、标签编辑及多种常见音频格式。
-- **桌面播放体验**：包含播放队列、均衡器、ReplayGain、无缝播放、迷你播放器、系统媒体按键和多种主题。
-- **跨平台**：支持 Linux 与 Windows，面向 `x86_64` 和 `aarch64` 架构提供构建。
+- **Netodia 原项目 / 网易云音乐适配**：[HELPMEEADICE / Netodia](https://github.com/HELPMEEADICE/Netodia)
+- **原始播放器与 UI 框架**：[Kenan Salar / Melodia](https://github.com/KenanSalar/Melodia)
+- **Android TV 移植与维护**：[DPswxz / Netodia-TV](https://github.com/DPswxz/Netodia-TV)
 
-网易云音乐功能需要网络连接。部分歌曲、音质或账号功能可能受账号状态、会员权限、地区及服务端策略限制。
-
-## 下载
-
-前往 [GitHub Releases](https://github.com/HELPMEEADICE/Netodia/releases) 下载适用于你系统的版本。Linux 提供 `.deb`、`.rpm`、AppImage 或压缩包等构建；Windows 提供 `.msi` 安装包和 `.zip` 便携版（以对应版本的发布附件为准）。
-
-## 从源码构建
-
-项目使用 Rust 2024 edition，工具链版本见 [`rust-toolchain.toml`](rust-toolchain.toml)。Linux 构建还需要 Slint/FemtoVG 所需的系统开发依赖；Windows 无需额外的项目专用依赖。
-
-```bash
-git clone https://github.com/HELPMEEADICE/Netodia.git
-cd Netodia
-cargo run -p netodia
-```
-
-构建发布版本：
-
-```bash
-cargo build --release -p netodia
-```
-
-Linux 常见构建依赖：
-
-```bash
-# Debian / Ubuntu
-sudo apt install libfontconfig1-dev libfreetype6-dev libasound2-dev \
-                 libxkbcommon-dev mesa-vulkan-drivers libwayland-dev
-
-# Fedora
-sudo dnf install fontconfig-devel freetype-devel alsa-lib-devel \
-                 libxkbcommon-devel vulkan-loader wayland-devel
-```
-
-## 项目来源与许可
-
-Netodia 基于 [Kenan Salar 的 Melodia](https://github.com/KenanSalar/Melodia) 修改。感谢 Melodia 项目及其贡献者提供的基础播放器实现。
-
-Netodia 按 [GNU Affero 通用公共许可证 v3 或更高版本（AGPL-3.0-or-later）](LICENSE) 发布。分发或修改本项目时，请遵守许可证要求；随项目提供的第三方组件许可文本见 [`licenses/`](licenses/)。
-
-网易云音乐及相关商标、服务和内容归其各自权利人所有，本项目不主张相关权利。
+许可证：[AGPL-3.0-or-later](LICENSE)。第三方组件许可见 [licenses/](licenses/)。
