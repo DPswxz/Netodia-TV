@@ -4430,17 +4430,10 @@ public class MainActivity extends Activity {
       option.setBackground(TvUi.focus(this, true));
       option.setFocusableInTouchMode(true);
       option.setId(View.generateViewId());
-      TextView check =
-          TvUi.glyph(
-              this,
-              i == selected ? "radio_button_checked" : "radio_button_unchecked",
-              23,
-              i == selected ? ACCENT : MUTED);
-      option.addView(check, lp(30, 30));
       TextView text = label(options[i], 17, i == selected ? ACCENT : TEXT);
       text.setSingleLine();
       option.addView(text);
-      width = Math.max(width, (int) Math.ceil(text.getPaint().measureText(options[i])) + d(64));
+      width = Math.max(width, (int) Math.ceil(text.getPaint().measureText(options[i])) + d(32));
       entries.addView(option, lp(-1, 44));
       controls.add(option);
       option.setContentDescription(options[i] + (i == selected ? "，已选中" : ""));

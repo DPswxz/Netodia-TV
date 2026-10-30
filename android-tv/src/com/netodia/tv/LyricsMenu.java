@@ -139,7 +139,6 @@ final class LyricsMenu {
         LinearLayout option = row(host);
         option.setPadding(d(10), 0, d(10), 0);
         focusable(option);
-        option.addView(glyph(host, i == selected ? "radio_button_checked" : "radio_button_unchecked", 23, i == selected ? ACCENT : MUTED), lp(30, 30));
         option.addView(text(host, options[i], 18, i == selected ? ACCENT : TEXT));
         option.setContentDescription(options[i] + (i == selected ? "，已选中" : ""));
         panel.addView(option, lp(-1,44)); controls.add(option);

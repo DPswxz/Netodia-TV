@@ -4,7 +4,9 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.26)
+## Current TV controls (0.5.27)
+
+- Single-choice menus use text-only lists with selected text highlighting; multi-choice columns retain checkboxes.
 
 - Progress focus and seek editing use a compact circular thumb instead of a filled focus box.
 - Playback failures show once per song/error change; song-row playback markers update in place.
@@ -33,7 +35,7 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 - Fixed square navigation tiles with an icon above the label; 最近 / 音乐库 use short names.
 - Settings option values stay on one line, with controls expanding to fit their text.
   Applying a choice keeps focus on the originating setting. Volume and translation settings
-  update their existing controls without rebuilding the page; translation uses a radio dropdown.
+  update their existing controls without rebuilding the page; translation uses a text-only dropdown.
 - Entering lyrics focuses the current cue and follows playback. Manual browsing suspends
   following for five seconds after the last input, even while lyrics retain focus.
   Automatic following never takes focus from another control or dialog.
@@ -50,7 +52,7 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
   a small thumb and no oversized focus frame.
 - Infinite roaming offers Personal FM, Heart mode and Similar songs, fetching a new batch
   when the current batch ends. Heart mode uses the account liked playlist and intelligence API.
-- Choice menus open beside their controls with shared dropdown styling and radio indicators.
+- Choice menus open beside their controls with shared dropdown styling and selected text highlighting.
   Column visibility retains independent checkboxes for multiple selections.
   Theme, appearance variant and playback animation retain their inline choice buttons.
 - Now Playing has a two-line Up Next list with duration, remote navigation and automatic batches.
