@@ -2189,7 +2189,7 @@ public class MainActivity extends Activity {
   private void searchPage() {
     current.kind = "songs";
     tabs.setGravity(Gravity.CENTER);
-    tabs.setPadding(d(8), d(4), d(8), d(8));
+    tabs.setPadding(d(8), d(4), d(8), d(4));
     LinearLayout query = iconAction("search", current.query.isEmpty() ? "搜索歌曲、歌手或专辑" : current.query,
         () -> inputDialog("搜索", "歌曲、歌手或专辑", current.query, this::searchFor), 0, 0, "search:input");
     android.graphics.drawable.StateListDrawable searchStates = new android.graphics.drawable.StateListDrawable();
