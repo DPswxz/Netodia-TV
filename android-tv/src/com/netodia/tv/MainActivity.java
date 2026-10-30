@@ -2192,6 +2192,16 @@ public class MainActivity extends Activity {
     tabs.setPadding(d(8), d(4), d(8), d(8));
     LinearLayout query = iconAction("search", current.query.isEmpty() ? "搜索歌曲、歌手或专辑" : current.query,
         () -> inputDialog("搜索", "歌曲、歌手或专辑", current.query, this::searchFor), 0, 0, "search:input");
+    android.graphics.drawable.StateListDrawable searchStates = new android.graphics.drawable.StateListDrawable();
+    android.graphics.drawable.GradientDrawable searchIdle = fill(this, SURFACE, 24);
+    searchIdle.setStroke(d(1), BORDER);
+    android.graphics.drawable.GradientDrawable searchFocused = fill(this, SURFACE, 24);
+    searchFocused.setStroke(d(1), (ACCENT & 0x00ffffff) | 0xb0000000);
+    searchStates.addState(new int[] {android.R.attr.state_focused}, searchFocused);
+    searchStates.addState(new int[] {android.R.attr.state_pressed}, searchFocused);
+    searchStates.addState(new int[] {}, searchIdle);
+    query.setBackground(searchStates);
+    query.setPadding(d(16), 0, d(16), 0);
     query.setContentDescription(current.query.isEmpty() ? "搜索" : "搜索：" + current.query);
     tabs.addView(query, lp(440, 38));
     if (current.query.isEmpty()) {
