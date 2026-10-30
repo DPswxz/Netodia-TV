@@ -1343,7 +1343,24 @@ public class MainActivity extends Activity {
     detailsParams.leftMargin = d(12);
     info.addView(details, detailsParams);
     facts.addView(info, new LinearLayout.LayoutParams(-1, 0, 1));
-    focus.add(details, FocusRouter.CONTENT, contentRow++, 0, "detail:info");
+    final int detailsRow = contentRow++;
+    details.setVisibility(View.GONE);
+    info.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+      @Override public boolean onPreDraw() {
+        info.getViewTreeObserver().removeOnPreDrawListener(this);
+        if (current != source || !info.isAttachedToWindow()) return true;
+        android.text.Layout descriptionLayout = desc.getLayout(), titleLayout = name.getLayout();
+        boolean clipped = descriptionLayout != null && (descriptionLayout.getHeight() > desc.getHeight()
+            || descriptionLayout.getEllipsisCount(descriptionLayout.getLineCount() - 1) > 0);
+        clipped |= titleLayout != null && titleLayout.getEllipsisCount(0) > 0;
+        if (clipped) {
+          details.setVisibility(View.VISIBLE);
+          focus.add(details, FocusRouter.CONTENT, detailsRow, 0, "detail:info");
+          return false;
+        }
+        return true;
+      }
+    });
     details.setContentDescription("查看歌单详情");
     details.setOnClickListener(v -> {
       details.requestFocus();
@@ -4592,25 +4609,117 @@ public class MainActivity extends Activity {
   }
 
   private void confirm(String title, String message, Runnable action) {
-    AlertDialog dialog =
-        new AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setNegativeButton("取消", null)
-            .setPositiveButton("确定", (d, w) -> handler.post(action))
-            .create();
-    showModal(dialog);
-    // Destructive confirmations default to Cancel so an extra OK cannot confirm accidentally.
-    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).requestFocus();
+    explanation(title, message, action);
   }
 
   private void info(String title, String message) {
-    showModal(
-        new AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("知道了", null)
-            .create());
+    explanation(title, message, null);
+  }
+
+  private void explanation(String title, String message, Runnable confirmAction) {
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LinearLayout panel = column(this);
+    panel.setPadding(d(24), d(20), d(24), d(18));
+    android.graphics.drawable.GradientDrawable surface = fill(this, MANTLE, 14);
+    surface.setStroke(d(1), BORDER);
+    panel.setBackground(surface);
+    LinearLayout headingRow = row(this);
+    headingRow.addView(TvUi.glyph(this, "info", 25, ACCENT), lp(32, 32));
+    TextView heading = label(title, 23, TEXT);
+    heading(heading);
+    heading.setPadding(d(10), 0, 0, 0);
+    headingRow.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
+    panel.addView(headingRow, lp(-1, 42));
+    View divider = new View(this);
+    divider.setBackgroundColor(BORDER);
+    LinearLayout.LayoutParams dividerParams = lp(-1, 1);
+    dividerParams.topMargin = d(10); dividerParams.bottomMargin = d(14);
+    panel.addView(divider, dividerParams);
+    final int maxBody = Math.min(d(330), getResources().getDisplayMetrics().heightPixels - d(220));
+    ScrollView scroll = new ScrollView(this) {
+      @Override protected void onMeasure(int width, int height) {
+        super.onMeasure(width, View.MeasureSpec.makeMeasureSpec(maxBody, View.MeasureSpec.AT_MOST));
+      }
+    };
+    scroll.setFocusable(false);
+    scroll.setPadding(d(2), 0, d(6), 0);
+    scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+    LinearLayout words = column(this);
+    scroll.addView(words);
+    if (title.equals("遥控器操作")) {
+      for (String line : message.split("\n")) {
+        int colon = line.indexOf('：');
+        if (colon < 0) {
+          TextView note = label(line, 14, MUTED);
+          note.setPadding(0, d(10), 0, d(4));
+          words.addView(note);
+          continue;
+        }
+        LinearLayout instruction = row(this);
+        instruction.setGravity(Gravity.TOP);
+        instruction.setPadding(0, d(8), 0, d(8));
+        TextView key = label(line.substring(0, colon), 16, TEXT);
+        instruction.addView(key, lp(140, -2));
+        TextView description = label(line.substring(colon + 1), 16, MUTED);
+        description.setLineSpacing(d(3), 1);
+        instruction.addView(description, new LinearLayout.LayoutParams(0, -2, 1));
+        words.addView(instruction, lp(-1, -2));
+      }
+    } else {
+      TextView bodyText = label(message, 18, MUTED);
+      bodyText.setTextIsSelectable(false);
+      bodyText.setLineSpacing(d(6), 1);
+      bodyText.setPadding(0, d(2), 0, d(8));
+      words.addView(bodyText, lp(-1, -2));
+    }
+    panel.addView(scroll, lp(-1, -2));
+    LinearLayout actions = row(this);
+    actions.setGravity(Gravity.RIGHT);
+    actions.setPadding(d(4), d(18), d(4), d(4));
+    panel.addView(actions, lp(-1, 64));
+    Button close = button(this, confirmAction == null ? "知道了" : "取消", dialog::dismiss);
+    close.setId(View.generateViewId());
+    close.setBackground(TvUi.focus(this, false));
+    actions.addView(close, lp(112, 42));
+    Button accept = null;
+    if (confirmAction != null) {
+      accept = button(this, "确定", () -> { dialog.dismiss(); handler.post(confirmAction); });
+      accept.setId(View.generateViewId());
+      accept.setBackground(TvUi.focus(this, false));
+      LinearLayout.LayoutParams acceptParams = lp(112, 42); acceptParams.leftMargin = d(12);
+      actions.addView(accept, acceptParams);
+      close.setNextFocusRightId(accept.getId()); accept.setNextFocusLeftId(close.getId());
+    }
+    for (int i = 0; i < actions.getChildCount(); i++) {
+      actions.getChildAt(i).setOnKeyListener((v, key, event) -> {
+        if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+        if (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN) {
+          scroll.smoothScrollBy(0, d(key == KeyEvent.KEYCODE_DPAD_UP ? -90 : 90));
+          return true;
+        }
+        return false;
+      });
+    }
+    View origin = getCurrentFocus();
+    Page source = current;
+    modal = dialog;
+    dialog.setOnDismissListener(d -> {
+      if (modal == dialog) modal = null;
+      if (!destroyed && current == source && origin != null && origin.isAttachedToWindow()) origin.requestFocus();
+    });
+    dialog.setContentView(panel);
+    Window window = dialog.getWindow();
+    window.setBackgroundDrawableResource(android.R.color.transparent);
+    window.setWindowAnimations(0);
+    WindowManager.LayoutParams params = window.getAttributes();
+    params.width = Math.min(d(680), getResources().getDisplayMetrics().widthPixels - d(64));
+    params.height = -2; params.dimAmount = .35f;
+    window.setAttributes(params);
+    dialog.show();
+    window.getDecorView().setPadding(0, 0, 0, 0);
+    window.setAttributes(params);
+    close.requestFocus();
   }
 
   private void inputDialog(String title, String hint, String value, Input callback) {
