@@ -133,9 +133,9 @@ final class FocusRouter {
   boolean focus(String key) {
     for (Node n : nodes)
       if (n.key.equals(key) && usable(n)) {
-        n.view.requestFocus();
-        reveal(n);
-        return true;
+        boolean focused = n.view.requestFocus();
+        if (focused) reveal(n);
+        return focused;
       }
     return false;
   }

@@ -532,7 +532,7 @@ public class MainActivity extends Activity {
     if (next.restoreFocus.isEmpty()) {
       if (next.type.equals("detail")) next.restoreFocus = "detail:play";
       else if (next.type.equals("recommendation") || next.type.equals("songs"))
-        next.restoreFocus = "header:back";
+        next.restoreFocus = next.type.equals("recommendation") ? "detail:play" : "songs:play";
       else if (next.type.equals("settings")) next.restoreFocus = "tab:" + next.tab;
       else if (next.type.equals("browse")) next.restoreFocus = "browse:home";
       else if (next.type.equals("player")) next.restoreFocus = "player:back";
@@ -618,6 +618,7 @@ public class MainActivity extends Activity {
     body = null;
     header.setVisibility(
         current.type.equals("settings")
+                || current.type.equals("recommendation")
                 || current.type.equals("detail")
                 || current.type.equals("browse")
                 || current.type.equals("player")
@@ -670,7 +671,7 @@ public class MainActivity extends Activity {
         login();
         break;
       case "recommendation":
-        if (ready(current.kind, Backend.json())) songList();
+        detail();
         break;
       case "songs":
         songsPage();
@@ -678,7 +679,8 @@ public class MainActivity extends Activity {
     }
     focus.selectTab(current.tab);
     View attached = getCurrentFocus();
-    if (!current.restoreFocus.isEmpty() && focus.focus(current.restoreFocus)) {
+    final boolean restoreAfterLayout = !current.restoreFocus.isEmpty() && !focus.focus(current.restoreFocus);
+    if (!restoreAfterLayout && !current.restoreFocus.isEmpty()) {
     } else if (attached == null || !attached.isAttachedToWindow()) {
       if (!focus.focus("tab:" + current.tab)) focus.focus("nav:" + current.section);
     }
@@ -691,6 +693,10 @@ public class MainActivity extends Activity {
         boolean changed = scroller != null && scroller.getScrollY() != rendered.scrollY;
         if (scroller != null) scroller.scrollTo(0, rendered.scrollY);
         restoringScroll = false;
+        View focused = getCurrentFocus();
+        if (restoreAfterLayout || focused == null || !focused.isAttachedToWindow() || focus.key(focused).isEmpty()) {
+          if (!focus.focus(rendered.restoreFocus)) focus.focusFirstContentItem();
+        }
         return !changed;
       }
     });
@@ -896,6 +902,7 @@ public class MainActivity extends Activity {
 
   private void load(String op, JSONObject input, boolean append) {
     Page target = current;
+    boolean firstLoad = !target.loaded;
     int generation = target.generation;
     target.pageOp = op;
     target.pageArgs = input;
@@ -987,7 +994,7 @@ public class MainActivity extends Activity {
             if (baseArgs.has("offset")) baseArgs.put("offset", 0);
             pageCache.put(cacheKey(op, baseArgs), new CachedPage(target));
             if (current == target) {
-              if (!target.restoreFocus.startsWith("pager:")) snapshot();
+              if (!firstLoad && !target.restoreFocus.startsWith("pager:")) snapshot();
               render();
               if (paginated && !focus.focus(target.restoreFocus)) focus.focusFirstContentItem();
             }
@@ -1292,7 +1299,7 @@ public class MainActivity extends Activity {
   }
 
   private void detail() {
-    if (!ready(current.kind, entityArgs())) return;
+    if (!ready(current.kind, current.type.equals("recommendation") ? Backend.json() : entityArgs())) return;
     scroll();
     LinearLayout hero = row(this);
     hero.setPadding(d(16), d(16), d(16), d(16));
@@ -1304,7 +1311,7 @@ public class MainActivity extends Activity {
     Page source = current;
     Artwork.load(
         artwork,
-        MusicData.cover(current.entity),
+        current.type.equals("recommendation") && current.items.length() > 0 ? MusicData.cover(current.items.optJSONObject(0)) : MusicData.cover(current.entity),
         bitmap -> {
           if (current == source) backdrop.artwork(0, bitmap);
         });
@@ -1316,7 +1323,7 @@ public class MainActivity extends Activity {
     name.setSingleLine();
     name.setEllipsize(TextUtils.TruncateAt.END);
     facts.addView(name);
-    String description = current.entity.optString("description", "");
+    String description = current.entity.optString("description", current.type.equals("recommendation") ? "根据你的音乐喜好，每日更新" : "");
     if (description.equals("null")) description = "";
     final String fullDescription = description;
     LinearLayout info = row(this);
@@ -1776,7 +1783,7 @@ public class MainActivity extends Activity {
                       (FrameLayout.LayoutParams) button.getLayoutParams();
                   params.gravity =
                       Gravity.TOP | (button == nextPageButton ? Gravity.RIGHT : Gravity.LEFT);
-                  params.topMargin = Math.max(0, (top + bottom - button.getHeight()) / 2);
+                  params.topMargin = Math.max(0, (top + bottom - d(62)) / 2);
                   button.setLayoutParams(params);
                 }
                 return false;
@@ -1802,7 +1809,7 @@ public class MainActivity extends Activity {
     TvUi.icon(button, next ? "chevron_right" : "chevron_left");
     button.setPadding(0, 0, 0, 0);
     button.setBackground(TvUi.focus(this, false));
-    button.setEnabled(enabled);
+    // Boundary arrows remain focusable so a page change never removes its focused control.
     button.setAlpha(enabled ? 1f : .25f);
     button.setContentDescription((next ? "下一页" : "上一页") + "，当前第 " + (current.page + 1) + " 页");
     FrameLayout.LayoutParams params =
@@ -1817,7 +1824,8 @@ public class MainActivity extends Activity {
 
   private void changePage(int direction) {
     if (current.loading) return;
-    int next = Math.max(0, current.page + direction);
+    int next = current.page + direction;
+    if (next < 0) return;
     int count = filtered(current.items, current.query).length();
     if (direction > 0 && PageWindow.needsFetch(next, current.pageSize, count, current.more)) {
       current.pendingPage = next;
@@ -2026,7 +2034,7 @@ public class MainActivity extends Activity {
     int overhead =
         37
             + 18
-            + (current.type.equals("detail")
+            + (current.type.equals("detail") || current.type.equals("recommendation")
                 ? 172
                 : current.type.equals("favorites") || current.type.equals("recent") ? 0 : 56);
     int rowSpace = stageHeightDp() - overhead;
@@ -3667,51 +3675,135 @@ public class MainActivity extends Activity {
         () -> {
           try {
             JSONArray entries = LocalMusic.folder(getApplicationContext(), path);
-            ArrayList<String> labels = new ArrayList<>(), paths = new ArrayList<>();
-            labels.add("添加当前文件夹");
-            paths.add(path);
-            if (!path.equals("/storage")) {
-              labels.add("上一级");
-              paths.add(new File(path).getParent());
-            }
-            for (int i = 0; i < entries.length(); i++) {
-              JSONObject entry = entries.optJSONObject(i);
-              if (entry.optBoolean("directory")) {
-                labels.add(entry.optString("name"));
-                paths.add(entry.optString("path"));
-              }
-            }
-            handler.post(
-                () -> {
-                  if (destroyed) return;
-                  choice(
-                      "选择文件夹：" + path,
-                      labels.toArray(new String[0]),
-                      -1,
-                      at -> {
-                        if (at == 0) {
-                          if (path.equals("/storage")) {
-                            message("请选择具体的电视或 USB 文件夹");
-                            chooseLibraryFolder(path);
-                            return;
-                          }
-                          JSONArray folders =
-                              MusicData.array(prefs().getString("library_folders", "[]"));
-                          for (int i = 0; i < folders.length(); i++)
-                            if (path.equals(folders.optString(i))) {
-                              message("文件夹已添加");
-                              return;
-                            }
-                          folders.put(path);
-                          prefs().edit().putString("library_folders", folders.toString()).apply();
-                          render();
-                        } else chooseLibraryFolder(paths.get(at));
-                      });
-                });
+            handler.post(() -> {
+              if (!destroyed) showLibraryFolders(path, entries);
+            });
           } catch (Exception e) {
             handler.post(() -> info("无法读取文件夹", e.getMessage()));
           }
         });
+  }
+
+  private void showLibraryFolders(String path, JSONArray entries) {
+    String parent = path.equals(android.os.Environment.getExternalStorageDirectory().getAbsolutePath())
+        ? "/storage" : new File(path).getParent();
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LinearLayout panel = column(this);
+    panel.setPadding(d(18), d(16), d(18), d(16));
+    panel.setBackground(fill(this, MANTLE, 12));
+    TextView title = label("选择音乐文件夹", 22, TEXT);
+    heading(title);
+    panel.addView(title);
+    TextView location = label(path.equals("/storage") ? "电视与 USB 存储" : path, 14, MUTED);
+    location.setSingleLine();
+    location.setEllipsize(TextUtils.TruncateAt.START);
+    location.setPadding(0, d(6), 0, d(12));
+    panel.addView(location, lp(-1, 42));
+    ScrollView scroll = new ScrollView(this);
+    scroll.setFocusable(false);
+    scroll.setClipToPadding(false);
+    scroll.setPadding(d(4), d(4), d(4), d(4));
+    LinearLayout grid = column(this);
+    scroll.addView(grid);
+    panel.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+    ArrayList<View> folders = new ArrayList<>();
+    LinearLayout line = null;
+    for (int i = 0; i < entries.length(); i++) {
+      JSONObject entry = entries.optJSONObject(i);
+      if (entry == null || !entry.optBoolean("directory")) continue;
+      int index = folders.size();
+      if (index % 3 == 0) { line = row(this); grid.addView(line, lp(-1, 94)); }
+      LinearLayout tile = column(this);
+      tile.setGravity(Gravity.CENTER);
+      tile.setPadding(d(8), d(6), d(8), d(6));
+      tile.setBackground(TvUi.focus(this, false));
+      tile.setFocusableInTouchMode(true);
+      tile.setId(View.generateViewId());
+      TvUi.eagerTouchFocus(tile);
+      tile.addView(TvUi.glyph(this, "folder", 30, ACCENT), lp(36, 32));
+      TextView name = label(entry.optString("name"), 14, TEXT);
+      name.setGravity(Gravity.CENTER);
+      name.setMaxLines(2);
+      tile.addView(name, lp(-1, 36));
+      LinearLayout.LayoutParams cell = new LinearLayout.LayoutParams(0, d(86), 1);
+      cell.setMargins(d(4), d(4), d(4), d(4));
+      line.addView(tile, cell);
+      folders.add(tile);
+      tile.setContentDescription(entry.optString("name"));
+      tile.setOnClickListener(v -> { dialog.dismiss(); chooseLibraryFolder(entry.optString("path")); });
+      tile.setOnFocusChangeListener((v, has) -> {
+        if (has) v.requestRectangleOnScreen(new Rect(0, 0, v.getWidth(), v.getHeight()), false);
+      });
+    }
+    if (line != null) for (int i = folders.size() % 3; i > 0 && i < 3; i++)
+      line.addView(new View(this), new LinearLayout.LayoutParams(0, d(86), 1));
+    if (folders.isEmpty()) {
+      TextView empty = label("此目录没有子文件夹", 18, MUTED);
+      empty.setGravity(Gravity.CENTER);
+      grid.addView(empty, lp(-1, 100));
+    }
+    LinearLayout actions = row(this);
+    actions.setGravity(Gravity.RIGHT);
+    actions.setPadding(d(4), d(12), d(4), d(4));
+    panel.addView(actions, lp(-1, 60));
+    Button up = button(this, path.equals("/storage") ? "取消" : "上一级", () -> {
+      dialog.dismiss();
+      if (!path.equals("/storage")) chooseLibraryFolder(parent);
+    });
+    up.setId(View.generateViewId());
+    actions.addView(up, lp(112, 42));
+    Button add = button(this, "添加此文件夹", () -> {
+      JSONArray roots = MusicData.array(prefs().getString("library_folders", "[]"));
+      for (int i = 0; i < roots.length(); i++) if (path.equals(roots.optString(i))) {
+        message("文件夹已添加"); return;
+      }
+      roots.put(path);
+      prefs().edit().putString("library_folders", roots.toString()).apply();
+      dialog.dismiss();
+      render();
+    });
+    add.setId(View.generateViewId());
+    if (!path.equals("/storage")) { LinearLayout.LayoutParams addParams = lp(150, 42); addParams.leftMargin = d(8); actions.addView(add, addParams); }
+    up.setNextFocusRightId(path.equals("/storage") ? up.getId() : add.getId());
+    add.setNextFocusLeftId(up.getId());
+    for (int i = 0; i < folders.size(); i++) {
+      View tile = folders.get(i);
+      tile.setNextFocusLeftId(folders.get(i % 3 == 0 ? i : i - 1).getId());
+      tile.setNextFocusRightId(folders.get(i % 3 == 2 ? i : Math.min(i + 1, folders.size() - 1)).getId());
+      tile.setNextFocusUpId(folders.get(Math.max(0, i - 3)).getId());
+      tile.setNextFocusDownId(i + 3 < folders.size() ? folders.get(i + 3).getId() : up.getId());
+    }
+    if (!folders.isEmpty()) {
+      int last = folders.size() - 1;
+      up.setNextFocusUpId(folders.get(Math.max(0, last - last % 3)).getId());
+      add.setNextFocusUpId(folders.get(last).getId());
+    }
+    dialog.setOnKeyListener((d, key, event) -> {
+      if (key == KeyEvent.KEYCODE_BACK && !path.equals("/storage")) {
+        if (event.getAction() == KeyEvent.ACTION_UP) { dialog.dismiss(); chooseLibraryFolder(parent); }
+        return true;
+      }
+      return false;
+    });
+    View origin = getCurrentFocus();
+    Page source = current;
+    modal = dialog;
+    dialog.setOnDismissListener(d -> {
+      if (modal == dialog) modal = null;
+      if (!destroyed && current == source && origin != null && origin.isAttachedToWindow()) origin.requestFocus();
+    });
+    dialog.setContentView(panel);
+    Window window = dialog.getWindow();
+    window.setBackgroundDrawableResource(android.R.color.transparent);
+    window.setWindowAnimations(0);
+    window.setLayout(Math.min(d(760), getResources().getDisplayMetrics().widthPixels - d(48)),
+        Math.min(d(480), getResources().getDisplayMetrics().heightPixels - d(80)));
+    dialog.show();
+    window.getDecorView().setPadding(0, 0, 0, 0);
+    window.setLayout(Math.min(d(760), getResources().getDisplayMetrics().widthPixels - d(48)),
+        Math.min(d(480), getResources().getDisplayMetrics().heightPixels - d(80)));
+    (folders.isEmpty() ? up : folders.get(0)).requestFocus();
   }
 
   private android.database.ContentObserver fileWatcher;
