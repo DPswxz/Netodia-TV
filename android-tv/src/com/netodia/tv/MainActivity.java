@@ -1624,8 +1624,10 @@ public class MainActivity extends Activity {
       section("推荐歌单");
     }
     int availableRowsHeight = stageHeightDp() - 44 - (recommended ? 176 : 0) - 16;
-    int rowsPerPage = availableRowsHeight >= 300 ? 2 : 1;
-    cardWidth = Math.min(cardWidth, Math.max(88, availableRowsHeight / rowsPerPage - 54));
+    boolean compact = compactViewport();
+    int cardExtra = compact ? 84 : 54;
+    int rowsPerPage = compact ? 1 : availableRowsHeight >= 300 ? 2 : 1;
+    cardWidth = Math.min(cardWidth, Math.max(88, availableRowsHeight / rowsPerPage - cardExtra));
     int firstRow = contentRow;
     int start = pageStart(items.length(), gridColumns * rowsPerPage);
     int total = Math.min(start + current.pageSize, items.length());
@@ -1635,14 +1637,14 @@ public class MainActivity extends Activity {
       if (col == 0) {
         row = row(this);
         row.setGravity(Gravity.TOP);
-        body.addView(row, lp(-1, cardWidth + 54));
+        body.addView(row, lp(-1, cardWidth + cardExtra));
       }
       JSONObject item = items.optJSONObject(i);
       if (item == null) continue;
       LinearLayout card = column(this);
       card.setPadding(d(8), d(8), d(8), d(6));
       card.setBackground(TvUi.focus(this, true));
-      LinearLayout.LayoutParams params = lp(cardWidth, cardWidth + 46);
+      LinearLayout.LayoutParams params = lp(cardWidth, cardWidth + (compact ? 76 : 46));
       params.rightMargin = d(16);
       row.addView(card, params);
       ImageView cover = cover(this, cardWidth - 16);
@@ -1651,18 +1653,24 @@ public class MainActivity extends Activity {
       Artwork.load(cover, MusicData.cover(item));
       TextView title = label(item.optString("name"), 17, TEXT);
       heading(title);
-      title.setSingleLine();
+      title.setSingleLine(!compact);
+      if (compact) title.setMaxLines(2);
       title.setEllipsize(TextUtils.TruncateAt.END);
       title.setMarqueeRepeatLimit(-1);
       title.setPadding(0, d(4), 0, 0);
-      card.addView(title, lp(-1, 28));
+      card.addView(title, lp(-1, compact ? 54 : 28));
       String metadata =
           kind.equals("playlist")
               ? (item.optLong("trackCount") > 0 ? item.optLong("trackCount") + " 首曲目" : "歌单")
                   + " · "
                   + MusicData.time((int) item.optLong("duration"))
               : kind.equals("album") ? "专辑" : "歌手";
-      card.addView(label(metadata, 13, MUTED), lp(-1, 20));
+      TextView details = label(metadata, 13, MUTED);
+      if (compact) {
+        details.setSingleLine(true);
+        details.setEllipsize(TextUtils.TruncateAt.END);
+      }
+      card.addView(details, lp(-1, 20));
       String key = "entity:" + item.optLong("id");
       itemPositions.put(key, i);
       focus.add(card, FocusRouter.CONTENT, firstRow + (i - start) / gridColumns, col, key);
@@ -1671,7 +1679,7 @@ public class MainActivity extends Activity {
       card.setOnFocusChangeListener(
           (v, has) -> {
             if (prior != null) prior.onFocusChange(v, has);
-            title.setEllipsize(has ? TextUtils.TruncateAt.MARQUEE : TextUtils.TruncateAt.END);
+            title.setEllipsize(has && !compact ? TextUtils.TruncateAt.MARQUEE : TextUtils.TruncateAt.END);
             title.setSelected(has);
           });
       card.setOnClickListener(v -> openEntity(kind, item));
@@ -1742,6 +1750,13 @@ public class MainActivity extends Activity {
 
   private boolean paginated;
   private Button previousPageButton, nextPageButton;
+
+  // Adapt to the usable logical viewport, rather than the panel's diagonal size.
+  // Keep the existing layout on TVs with a taller application canvas.
+  private boolean compactViewport() {
+    return getResources().getDisplayMetrics().heightPixels
+        / (getResources().getDisplayMetrics().density * TvUi.SCALE) <= 800;
+  }
 
   private int stageHeightDp() {
     int height =
@@ -2067,7 +2082,8 @@ public class MainActivity extends Activity {
                 ? 172
                 : current.type.equals("favorites") || current.type.equals("recent") ? 0 : 48);
     int rowSpace = stageHeightDp() - overhead;
-    int capacity = Math.max(1, Math.min(current.type.equals("songs") ? 8 : 6, rowSpace / 44));
+    int capacity = Math.max(1, Math.min(current.type.equals("songs") ? 8 : compactViewport() ? 7 : 6,
+        rowSpace / (compactViewport() ? 40 : 44)));
     int songRowHeight = Math.max(40, Math.min(52, rowSpace / capacity));
     int start = pageStart(songs.length(), capacity);
     int total = Math.min(start + current.pageSize, songs.length());
@@ -4839,6 +4855,12 @@ public class MainActivity extends Activity {
             .setPositiveButton("搜索", null)
             .create();
     showModal(dialog);
+    Window inputWindow = dialog.getWindow();
+    if (inputWindow != null) {
+      inputWindow.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+          | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+      inputWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+    }
     Button search = dialog.getButton(AlertDialog.BUTTON_POSITIVE),
         cancel = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
     input.setNextFocusDownId(search.getId());
@@ -4885,6 +4907,7 @@ public class MainActivity extends Activity {
           return false;
         });
     input.requestFocus();
+    input.post(input::openKeyboard);
   }
 
   private void rangeDialog(

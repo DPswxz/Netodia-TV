@@ -4,7 +4,17 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.37)
+## Current TV controls (0.5.38)
+
+- Compact application viewports (up to 800 logical pixels high after UI scaling) use
+  a single row of larger playlist covers, two-line titles and single-line metadata.
+  Taller viewports retain the existing grid layout.
+- Compact song lists show up to seven songs per page when space permits; taller
+  viewports retain six, and Show All Songs retains its eight-song limit.
+- Search and filter dialogs explicitly request the TV keyboard after window focus.
+  This fixes Skyworth IMEs that reject implicit requests. Back returns to Search,
+  and OK on the input opens the keyboard again.
+- The standalone build script supports Windows SDK and NDK tool paths.
 
 - Appearance settings mirror all five lyrics-menu options, including romanization and online fallback.
 - Signing certificate, preview signing keystore and verification instructions are in `signing/`. The preview private key is public at the repository owner’s request; do not reuse it for production.

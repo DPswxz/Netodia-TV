@@ -2,6 +2,7 @@
 """Build a reproducible ARMv7 TV APK using Rust, Android SDK/NDK and JDK (no Gradle)."""
 import argparse
 import os
+import platform
 from pathlib import Path
 import shutil
 import subprocess
@@ -12,7 +13,12 @@ TV = ROOT / 'android-tv'
 OUT = TV / 'build'
 
 def run(*command, env=None):
-    subprocess.run([str(x) for x in command], cwd=ROOT, env=env, check=True)
+    command = [str(x) for x in command]
+    if os.name == 'nt':
+        resolved = shutil.which(command[0], path=(env or os.environ).get('PATH'))
+        if resolved:
+            command[0] = resolved
+    subprocess.run(command, cwd=ROOT, env=env, check=True)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -23,7 +29,7 @@ def main():
     java = Path(os.environ['JAVA_HOME']) / 'bin'
     build_tools = sdk / 'build-tools' / os.environ.get('ANDROID_BUILD_TOOLS', '36.0.0')
     android = sdk / 'platforms' / 'android-35' / 'android.jar'
-    host = 'darwin-x86_64' if os.uname().sysname == 'Darwin' else 'linux-x86_64'
+    host = {'Windows': 'windows-x86_64', 'Darwin': 'darwin-x86_64'}.get(platform.system(), 'linux-x86_64')
     llvm = ndk / 'toolchains' / 'llvm' / 'prebuilt' / host / 'bin'
     env = os.environ.copy()
     env['CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_STRIP'] = 'none'
@@ -31,7 +37,8 @@ def main():
     remap = f'--remap-path-prefix={Path.home()}=/build --remap-path-prefix={ROOT}=/build/netodia'
     env['RUSTFLAGS'] = (env.get('RUSTFLAGS', '') + ' ' + remap).strip()
     env['PATH'] = str(java) + os.pathsep + str(Path.home()/'.cargo/bin') + os.pathsep + env['PATH']
-    env['CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER'] = str(llvm/'armv7a-linux-androideabi26-clang')
+    compiler = 'armv7a-linux-androideabi26-clang' + ('.cmd' if os.name == 'nt' else '')
+    env['CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER'] = str(llvm/compiler)
     env['CC_armv7_linux_androideabi'] = env['CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER']
     env['AR_armv7_linux_androideabi'] = str(llvm/'llvm-ar')
     if not args.skip_rust:

@@ -18,8 +18,32 @@ final class TvInput extends EditText {
 
   void openKeyboard() {
     keyboardRequested = true;
-    ((InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
-        .showSoftInput(this, InputMethodManager.SHOW_IMPLICIT);
+    setShowSoftInputOnFocus(true);
+    requestFocus();
+    if (hasWindowFocus()) {
+      post(() -> {
+        if (!keyboardRequested || !isAttachedToWindow() || !hasFocus()) return;
+        InputMethodManager manager =
+            (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        manager.restartInput(this);
+        // A remote OK/search action is an explicit request. Some TV IMEs reject
+        // SHOW_IMPLICIT even while Android reports that the keyboard is shown.
+        manager.showSoftInput(this, 0);
+      });
+    }
+  }
+
+  @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    if (hasFocus && keyboardRequested) openKeyboard();
+  }
+
+  @Override
+  public boolean performClick() {
+    boolean handled = super.performClick();
+    openKeyboard();
+    return handled;
   }
 
   @Override
@@ -32,6 +56,7 @@ final class TvInput extends EditText {
       if (event.getAction() == KeyEvent.ACTION_DOWN) {
         closingBack = true;
         keyboardRequested = false;
+        setShowSoftInputOnFocus(false);
         ((InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
             .hideSoftInputFromWindow(getWindowToken(), 0);
         if (closed != null) closed.run();
