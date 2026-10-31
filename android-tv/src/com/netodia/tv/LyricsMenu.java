@@ -27,8 +27,8 @@ final class LyricsMenu {
     prefs = host.getSharedPreferences("music", 0);
     main = dialogNew();
     LinearLayout panel = panel();
-    String[] icons = {"format_size", "subtitles", "history", "translate", "language"};
-    String[] names = {"歌词字号", "显示翻译", "时间偏移", "显示罗马字转写", "在线搜索歌词"};
+    String[] icons = {"lyric_icon_translation", "translate", "lyric_icon_search", "lyric_icon_size", "history"};
+    String[] names = {"显示翻译", "显示罗马字转写", "在线搜索歌词", "歌词字号", "时间偏移"};
     for (int i = 0; i < names.length; i++) {
       final int at = i;
       LinearLayout row = row(host);
@@ -116,8 +116,8 @@ final class LyricsMenu {
     rows.get(0).requestFocus();
   }
   private void refreshValues() {
-    String[] labels = {prefs.getInt("lyric_size", 36) + " sp", prefs.getBoolean("lyric_translation", true) ? "开启" : "关闭", prefs.getInt("lyric_offset", 0) + " ms", prefs.getBoolean("lyric_romanization", true) ? "开启" : "关闭", prefs.getBoolean("lyric_online", true) ? "开启" : "关闭"};
-    String[] names = {"歌词字号", "显示翻译", "时间偏移", "显示罗马字转写", "在线搜索歌词"};
+    String[] labels = {prefs.getBoolean("lyric_translation", true) ? "开启" : "关闭", prefs.getBoolean("lyric_romanization", true) ? "开启" : "关闭", prefs.getBoolean("lyric_online", true) ? "开启" : "关闭", prefs.getInt("lyric_size", 36) + " sp", prefs.getInt("lyric_offset", 0) + " ms"};
+    String[] names = {"显示翻译", "显示罗马字转写", "在线搜索歌词", "歌词字号", "时间偏移"};
     for (int i = 0; i < labels.length; i++) {
       setText(values.get(i), labels[i]);
       rows.get(i).setContentDescription(names[i] + "，" + labels[i]);
@@ -132,9 +132,9 @@ final class LyricsMenu {
     ArrayList<View> controls = new ArrayList<>();
     int height;
     int selected = 0;
-    if (index != 2) {
-      String[] options = index == 0 ? new String[] {"26", "30", "36", "42"} : new String[] {"开启", "关闭"};
-      selected = index == 0 ? Math.max(0, Arrays.asList(26, 30, 36, 42).indexOf(prefs.getInt("lyric_size",36))) : prefs.getBoolean(index == 1 ? "lyric_translation" : index == 3 ? "lyric_romanization" : "lyric_online", true) ? 0 : 1;
+    if (index != 4) {
+      String[] options = index == 3 ? new String[] {"26", "30", "36", "42"} : new String[] {"开启", "关闭"};
+      selected = index == 3 ? Math.max(0, Arrays.asList(26, 30, 36, 42).indexOf(prefs.getInt("lyric_size",36))) : prefs.getBoolean(index == 0 ? "lyric_translation" : index == 1 ? "lyric_romanization" : "lyric_online", true) ? 0 : 1;
       for (int i = 0; i < options.length; i++) {
         final int at = i;
         LinearLayout option = row(host);
@@ -144,10 +144,10 @@ final class LyricsMenu {
         option.setContentDescription(options[i] + (i == selected ? "，已选中" : ""));
         panel.addView(option, lp(-1,44)); controls.add(option);
         option.setOnClickListener(v -> {
-          if (index == 0) { prefs.edit().putInt("lyric_size", new int[] {26,30,36,42}[at]).apply(); fontChanged.run(); }
+          if (index == 3) { prefs.edit().putInt("lyric_size", new int[] {26,30,36,42}[at]).apply(); fontChanged.run(); }
           else {
-            prefs.edit().putBoolean(index == 1 ? "lyric_translation" : index == 3 ? "lyric_romanization" : "lyric_online", at == 0).apply();
-            if (index == 4 && PlaybackService.instance != null) PlaybackService.instance.reloadLyrics();
+            prefs.edit().putBoolean(index == 0 ? "lyric_translation" : index == 1 ? "lyric_romanization" : "lyric_online", at == 0).apply();
+            if (index == 2 && PlaybackService.instance != null) PlaybackService.instance.reloadLyrics();
             lyricsChanged.run();
           }
           current.dismiss();

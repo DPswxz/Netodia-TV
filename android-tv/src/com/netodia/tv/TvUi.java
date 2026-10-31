@@ -182,12 +182,12 @@ final class TvUi {
   }
 
   static TextView glyph(Context c, String name, int size, int color) {
-    if (name.equals("qr_code") || name.equals("logout")) {
+    if (name.equals("qr_code") || name.equals("logout") || name.startsWith("lyric_icon_")) {
       final android.graphics.drawable.Drawable icon =
           c.getDrawable(
                   c.getResources()
                       .getIdentifier(
-                          name.equals("qr_code") ? "ic_qr_code" : "ic_log_out",
+                          name.startsWith("lyric_icon_") ? "ic_lyric_" + name.substring(11) : name.equals("qr_code") ? "ic_qr_code" : "ic_log_out",
                           "drawable",
                           c.getPackageName()))
               .mutate();

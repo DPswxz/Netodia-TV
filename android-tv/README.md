@@ -4,7 +4,7 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.35)
+## Current TV controls (0.5.36)
 
 - Player controls separate the lyrics settings icon from the lyrics/queue switch, with independent remote focus.
 - The lyrics menu retains font size, translation and timing offset and adds romanization and online fallback switches.

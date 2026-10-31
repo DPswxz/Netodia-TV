@@ -4232,9 +4232,9 @@ public class MainActivity extends Activity {
       case "查看许可":
         return "balance";
       case "歌词字号":
-        return "lyrics";
+        return "lyric_icon_size";
       case "显示翻译":
-        return "subtitles";
+        return "lyric_icon_translation";
       case "歌词时间偏移":
         return "history";
       case "遥控器帮助":
