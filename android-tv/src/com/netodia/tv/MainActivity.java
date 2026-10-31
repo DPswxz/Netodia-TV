@@ -71,6 +71,8 @@ public class MainActivity extends Activity {
       lyricNext,
       lyricTranslation;
   private ImageView nowCover, playerCover;
+  private AudioVisualization audioVisualization;
+  private int pendingVisualization = -1;
   private Button playButton, modeButton, favoriteButton, playerFavoriteButton;
   private SeekBar progress;
   private Page current;
@@ -584,6 +586,7 @@ public class MainActivity extends Activity {
     qrVersion++;
     lastLyric = -2;
     playerCover = null;
+    audioVisualization = null;
     curatedHero.removeAllViews();
     curatedHero.setVisibility(View.GONE);
     collectionHeader.setBackground(null);
@@ -2394,11 +2397,11 @@ public class MainActivity extends Activity {
       favorite.setContentDescription("收藏当前歌曲");
       tabs.addView(favorite, lp(40, 40));
     }
-    Button settings = action("", this::lyricSettings, 0, 2, "player:lyrics-settings");
-    TvUi.icon(settings, "tune");
+    Button settings = action("", this::visualizationMenu, 0, 2, "player:visualization");
+    TvUi.icon(settings, "bar_chart");
     settings.setPadding(0, 0, 0, 0);
     settings.setBackground(TvUi.focus(this, true));
-    settings.setContentDescription("歌词设置");
+    settings.setContentDescription("可视化设置");
     tabs.addView(settings, lp(40, 40));
     LinearLayout toggle = row(this);
     toggle.setPadding(d(8), 0, d(8), 0);
@@ -2475,6 +2478,11 @@ public class MainActivity extends Activity {
     album.setEllipsize(TextUtils.TruncateAt.END);
     album.setPadding(0, d(4), 0, 0);
     artwork.addView(album, lp(-1, -2));
+    artwork.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
+    audioVisualization = new AudioVisualization(this, () -> message("此电视的音频输出暂不支持可视化"));
+    LinearLayout.LayoutParams visualParams = lp(-1, 68);
+    visualParams.setMargins(d(36), d(12), d(36), d(10));
+    artwork.addView(audioVisualization, visualParams);
     LinearLayout right = column(this);
     right.setPadding(d(8), 0, d(4), 0);
     columns.addView(right, new LinearLayout.LayoutParams(0, -1, .36f));
@@ -3000,6 +3008,12 @@ public class MainActivity extends Activity {
 
   public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
     super.onRequestPermissionsResult(request, permissions, results);
+    if (request == 44) {
+      int selected = pendingVisualization; pendingVisualization = -1;
+      if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED && selected > 0) selectVisualization(selected);
+      else info("未开启可视化", "系统需要音频权限才能读取播放器的频谱与波形。可以稍后重新开启。");
+      return;
+    }
     if (request == 41) {
       if (pendingLibraryFolder) {
         if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) addLibraryFolder();
@@ -3882,6 +3896,16 @@ public class MainActivity extends Activity {
           updatePlayback();
         },
         "播放音乐时播放按钮的视觉效果");
+    settingsDivider(card);
+    toggleSetting(card, "bar_chart", "可视化效果", "在“正在播放”界面显示音频可视化效果",
+        prefs().getBoolean("visualizer_enabled", false), true,
+        () -> selectVisualization(prefs().getBoolean("visualizer_enabled", false) ? 0 : prefs().getInt("visualizer_style", 0) + 1));
+    settingsDivider(card);
+    chipSetting(card, "show_chart", "可视化样式", new String[] {"频谱条", "镜像", "波形"},
+        prefs().getInt("visualizer_style", 0), n -> {
+          prefs().edit().putInt("visualizer_style", n).apply();
+          snapshot(); render();
+        }, "选择音频可视化的绘制方式");
   }
 
   private LinearLayout settingsCard() {
@@ -4257,6 +4281,24 @@ public class MainActivity extends Activity {
     params.width = Math.max(d(128), (int) Math.ceil(label.getPaint().measureText(value)) + d(60));
     box.setLayoutParams(params);
     row.setContentDescription(title + "，" + value);
+  }
+
+  private void visualizationMenu() {
+    choice("可视化样式", new String[] {"关", "频谱条", "镜像", "波形"},
+        prefs().getBoolean("visualizer_enabled", false) ? prefs().getInt("visualizer_style", 0) + 1 : 0,
+        this::selectVisualization);
+  }
+
+  private void selectVisualization(int selected) {
+    if (selected > 0 && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+      pendingVisualization = selected;
+      requestPermissions(new String[] {Manifest.permission.RECORD_AUDIO}, 44);
+      return;
+    }
+    prefs().edit().putBoolean("visualizer_enabled", selected > 0)
+        .putInt("visualizer_style", selected > 0 ? selected - 1 : prefs().getInt("visualizer_style", 0)).apply();
+    if (audioVisualization != null) audioVisualization.configure();
+    if (current.type.equals("settings")) { snapshot(); render(); }
   }
 
   private void lyricSettings() {

@@ -4,7 +4,14 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.33)
+## Current TV controls (0.5.34)
+
+- Playback settings include visualization enable/disable and Spectrum, Mirror and Waveform styles.
+  The player's top-right chart icon opens the same choices, including Off.
+- Visualization uses Android Visualizer on the active player's nonzero audio session.
+  Android requires RECORD_AUDIO permission; no microphone source or audio recording is used.
+  Capture stops on pause, leaving the screen or hiding the app, and reconnects after a song changes.
+  Availability depends on the TV audio output implementation.
 
 - Search has an icon search control, three-column history and a compact best-result card.
 - Show All Songs uses icon actions and up to eight songs per page when space permits; playlist pages retain six.

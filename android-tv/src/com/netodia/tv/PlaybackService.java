@@ -37,6 +37,11 @@ public class PlaybackService extends Service {
   private final java.util.concurrent.ExecutorService localIo =
       java.util.concurrent.Executors.newSingleThreadExecutor();
 
+  int audioSessionId() {
+    try { return player != null && readyPlayer ? player.getAudioSessionId() : 0; }
+    catch (IllegalStateException unavailable) { return 0; }
+  }
+
   public void onCreate() {
     super.onCreate();
     instance = this;
