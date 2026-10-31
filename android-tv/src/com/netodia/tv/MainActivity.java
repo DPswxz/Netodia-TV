@@ -4111,6 +4111,8 @@ public class MainActivity extends Activity {
           lastLyric = -2;
           updatePlayback();
         }));
+    lyricToggleSetting("显示罗马字转写", "lyric_romanization", false);
+    lyricToggleSetting("在线搜索歌词", "lyric_online", true);
     setting(
         "歌词时间偏移",
         prefs().getInt("lyric_offset", 0) + " ms",
@@ -4125,6 +4127,18 @@ public class MainActivity extends Activity {
                   prefs().edit().putInt("lyric_offset", n).apply();
                   render();
                 }));
+  }
+
+  private void lyricToggleSetting(String title, String preference, boolean reload) {
+    setting(title, prefs().getBoolean(preference, true) ? "开启" : "关闭", () ->
+        choice(title, new String[] {"开启", "关闭"}, prefs().getBoolean(preference, true) ? 0 : 1, at -> {
+          prefs().edit().putBoolean(preference, at == 0).apply();
+          updateSettingValue(title, at == 0 ? "开启" : "关闭");
+          if (reload && service() != null) service().reloadLyrics();
+          paintedLyrics = null;
+          lastLyric = -2;
+          updatePlayback();
+        }));
   }
 
   private void chipSetting(
@@ -4235,6 +4249,10 @@ public class MainActivity extends Activity {
         return "lyric_icon_size";
       case "显示翻译":
         return "lyric_icon_translation";
+      case "显示罗马字转写":
+        return "translate";
+      case "在线搜索歌词":
+        return "lyric_icon_search";
       case "歌词时间偏移":
         return "history";
       case "遥控器帮助":
