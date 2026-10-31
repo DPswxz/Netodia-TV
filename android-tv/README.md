@@ -7,7 +7,7 @@ AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 ## Current TV controls (0.5.37)
 
 - Appearance settings mirror all five lyrics-menu options, including romanization and online fallback.
-- Public signing certificate and verification instructions are in `signing/`; private signing keys are excluded.
+- Signing certificate, preview signing keystore and verification instructions are in `signing/`. The preview private key is public at the repository owner’s request; do not reuse it for production.
 
 - Player controls separate the lyrics settings icon from the lyrics/queue switch, with independent remote focus.
 - The lyrics menu retains font size, translation and timing offset and adds romanization and online fallback switches.
