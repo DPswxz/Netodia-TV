@@ -301,17 +301,6 @@ public class PlaybackService extends Service {
     String uri = selected.optString("uri", "");
     if (!uri.isEmpty()) {
       prepare(uri, token);
-      localIo.execute(
-          () -> {
-            String text = LocalMusic.sidecar(selected);
-            main.post(
-                () -> {
-                  if (token == generation) {
-                    lyrics = new MusicData.Lyrics(text, "");
-                    changed();
-                  }
-                });
-          });
     } else {
       backend.request(
           "stream",
@@ -327,21 +316,53 @@ public class PlaybackService extends Service {
             trial = ticket.optBoolean("trial");
             prepare(ticket.optString("url"), token);
           });
-      backend.request(
-          "lyrics",
-          Backend.json("id", selected.optLong("id")),
-          (data, failure) -> {
-            if (token == generation && failure == null) {
-              JSONObject l = (JSONObject) data;
-              lyrics =
-                  new MusicData.Lyrics(
-                      l.optString("original"),
-                      l.optString("translation"),
-                      l.optString("romanization"));
-              changed();
-            }
-          });
+
     }
+    fetchLyrics(selected, token);
+  }
+
+  private int lyricGeneration;
+
+  public void reloadLyrics() {
+    if (hasSong()) fetchLyrics(song(), generation);
+  }
+
+  private void fetchLyrics(JSONObject selected, int token) {
+    int request = ++lyricGeneration;
+    if (!selected.optString("uri", "").isEmpty()) {
+      localIo.execute(() -> {
+        String original = LocalMusic.sidecar(selected);
+        main.post(() -> {
+          if (token != generation || request != lyricGeneration) return;
+          if (original.trim().isEmpty()) lookupLyrics(selected, token, request);
+          else backend.request("romanize_sheet", Backend.json("original", original), (data, failure) -> {
+            if (token != generation || request != lyricGeneration) return;
+            String roman = data instanceof JSONObject ? ((JSONObject) data).optString("romanization") : "";
+            lyrics = new MusicData.Lyrics(original, "", roman); changed();
+          });
+        });
+      });
+    } else backend.request("lyrics", Backend.json("id", selected.optLong("id")), (data, failure) -> {
+      if (token != generation || request != lyricGeneration) return;
+      JSONObject result = data instanceof JSONObject ? (JSONObject) data : new JSONObject();
+      if (failure != null || result.optString("original").trim().isEmpty()) lookupLyrics(selected, token, request);
+      else {
+        lyrics = new MusicData.Lyrics(result.optString("original"), result.optString("translation"), result.optString("romanization"));
+        changed();
+      }
+    });
+  }
+
+  private void lookupLyrics(JSONObject selected, int token, int request) {
+    if (!prefs.getBoolean("lyric_online", true)) { lyrics = new MusicData.Lyrics("", ""); changed(); return; }
+    backend.request("lyrics_lookup", Backend.json("title", selected.optString("name"),
+        "artist", MusicData.artist(selected), "album", MusicData.album(selected).optString("name"),
+        "duration", selected.optLong("dt")), (data, failure) -> {
+      if (token != generation || request != lyricGeneration) return;
+      JSONObject result = data instanceof JSONObject ? (JSONObject) data : new JSONObject();
+      lyrics = new MusicData.Lyrics(result.optString("original"), "", result.optString("romanization"));
+      changed();
+    });
   }
 
   private void prepare(String uri, int token) {

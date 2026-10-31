@@ -27,8 +27,8 @@ final class LyricsMenu {
     prefs = host.getSharedPreferences("music", 0);
     main = dialogNew();
     LinearLayout panel = panel();
-    String[] icons = {"tune", "translate", "history"};
-    String[] names = {"歌词字号", "显示翻译", "时间偏移"};
+    String[] icons = {"format_size", "subtitles", "history", "translate", "language"};
+    String[] names = {"歌词字号", "显示翻译", "时间偏移", "显示罗马字转写", "在线搜索歌词"};
     for (int i = 0; i < names.length; i++) {
       final int at = i;
       LinearLayout row = row(host);
@@ -74,6 +74,7 @@ final class LyricsMenu {
   private void focusable(View view) {
     view.setId(View.generateViewId());
     view.setFocusableInTouchMode(true);
+    eagerTouchFocus(view);
     view.setBackground(focus(host, true));
   }
   private LinearLayout panel() {
@@ -98,7 +99,7 @@ final class LyricsMenu {
     WindowManager.LayoutParams params = window.getAttributes();
     params.gravity = Gravity.TOP | Gravity.LEFT;
     params.width = width; params.height = height;
-    params.x = Math.max(d(8), x);
+    params.x = Math.max(d(8), Math.min(x, host.getResources().getDisplayMetrics().widthPixels - width - d(8)));
     params.y = Math.max(d(8), Math.min(y, host.getResources().getDisplayMetrics().heightPixels - height - d(84)));
     window.setAttributes(params);
   }
@@ -106,17 +107,17 @@ final class LyricsMenu {
     View anchor = host.getCurrentFocus();
     int[] point = new int[2];
     if (anchor != null) anchor.getLocationOnScreen(point);
-    mainX = Math.max(d(8), point[0] + (anchor == null ? 0 : anchor.getWidth()) - d(242));
+    mainX = Math.max(d(8), point[0] + (anchor == null ? 0 : anchor.getWidth()) - d(286));
     mainY = point[1] + (anchor == null ? d(40) : anchor.getHeight()) + d(4);
-    place(main, d(242), d(144), mainX, mainY);
+    place(main, d(286), d(232), mainX, mainY);
     main.show();
     main.getWindow().getDecorView().setPadding(0, 0, 0, 0);
-    place(main, d(242), d(144), mainX, mainY);
+    place(main, d(286), d(232), mainX, mainY);
     rows.get(0).requestFocus();
   }
   private void refreshValues() {
-    String[] labels = {prefs.getInt("lyric_size", 36) + " sp", prefs.getBoolean("lyric_translation", true) ? "开启" : "关闭", prefs.getInt("lyric_offset", 0) + " ms"};
-    String[] names = {"歌词字号", "显示翻译", "时间偏移"};
+    String[] labels = {prefs.getInt("lyric_size", 36) + " sp", prefs.getBoolean("lyric_translation", true) ? "开启" : "关闭", prefs.getInt("lyric_offset", 0) + " ms", prefs.getBoolean("lyric_romanization", true) ? "开启" : "关闭", prefs.getBoolean("lyric_online", true) ? "开启" : "关闭"};
+    String[] names = {"歌词字号", "显示翻译", "时间偏移", "显示罗马字转写", "在线搜索歌词"};
     for (int i = 0; i < labels.length; i++) {
       setText(values.get(i), labels[i]);
       rows.get(i).setContentDescription(names[i] + "，" + labels[i]);
@@ -131,9 +132,9 @@ final class LyricsMenu {
     ArrayList<View> controls = new ArrayList<>();
     int height;
     int selected = 0;
-    if (index < 2) {
+    if (index != 2) {
       String[] options = index == 0 ? new String[] {"26", "30", "36", "42"} : new String[] {"开启", "关闭"};
-      selected = index == 0 ? Math.max(0, Arrays.asList(26, 30, 36, 42).indexOf(prefs.getInt("lyric_size",36))) : prefs.getBoolean("lyric_translation", true) ? 0 : 1;
+      selected = index == 0 ? Math.max(0, Arrays.asList(26, 30, 36, 42).indexOf(prefs.getInt("lyric_size",36))) : prefs.getBoolean(index == 1 ? "lyric_translation" : index == 3 ? "lyric_romanization" : "lyric_online", true) ? 0 : 1;
       for (int i = 0; i < options.length; i++) {
         final int at = i;
         LinearLayout option = row(host);
@@ -144,7 +145,11 @@ final class LyricsMenu {
         panel.addView(option, lp(-1,44)); controls.add(option);
         option.setOnClickListener(v -> {
           if (index == 0) { prefs.edit().putInt("lyric_size", new int[] {26,30,36,42}[at]).apply(); fontChanged.run(); }
-          else { prefs.edit().putBoolean("lyric_translation", at == 0).apply(); lyricsChanged.run(); }
+          else {
+            prefs.edit().putBoolean(index == 1 ? "lyric_translation" : index == 3 ? "lyric_romanization" : "lyric_online", at == 0).apply();
+            if (index == 4 && PlaybackService.instance != null) PlaybackService.instance.reloadLyrics();
+            lyricsChanged.run();
+          }
           current.dismiss();
         });
         option.setOnKeyListener((v,key,event) -> {

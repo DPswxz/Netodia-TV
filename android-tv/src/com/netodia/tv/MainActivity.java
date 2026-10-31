@@ -2402,13 +2402,23 @@ public class MainActivity extends Activity {
     settings.setPadding(0, 0, 0, 0);
     settings.setBackground(TvUi.focus(this, true));
     settings.setContentDescription("可视化设置");
-    tabs.addView(settings, lp(40, 40));
+    LinearLayout.LayoutParams visualControl = lp(40, 40); visualControl.leftMargin = d(10); visualControl.rightMargin = d(10);
+    tabs.addView(settings, visualControl);
     LinearLayout toggle = row(this);
     toggle.setPadding(d(8), 0, d(8), 0);
     android.graphics.drawable.GradientDrawable shape = fill(this, 0x24383838, 28);
     shape.setStroke(d(1), 0x66888888);
     toggle.setBackground(shape);
-    toggle.addView(TvUi.glyph(this, "lyrics", 22, TEXT), lp(28, 30));
+    Button lyricOptions = action("", () -> {
+      if (current.tab == 0) lyricSettings();
+      else { current.tab = 0; current.restoreFocus = "player:lyrics-settings"; render(); }
+    }, 0, 3, "player:lyrics-settings");
+    TvUi.icon(lyricOptions, "lyrics");
+    lyricOptions.setPadding(0, 0, 0, 0);
+    lyricOptions.setBackground(TvUi.focus(this, true));
+    lyricOptions.setContentDescription("歌词设置");
+    lyricOptions.setAlpha(current.tab == 0 ? 1f : .45f);
+    toggle.addView(lyricOptions, lp(36, 34));
     View state =
         new View(this) {
           private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -2422,11 +2432,17 @@ public class MainActivity extends Activity {
             canvas.drawCircle(current.tab == 0 ? w - r : r, r, r - d(3), paint);
           }
         };
-    toggle.addView(state, lp(38, 24));
+    LinearLayout switchButton = row(this);
+    switchButton.setGravity(Gravity.CENTER);
+    switchButton.setPadding(d(6), d(5), d(6), d(5));
+    switchButton.setBackground(TvUi.focus(this, true));
+    switchButton.addView(state, lp(34, 22));
+    LinearLayout.LayoutParams switchParams = lp(46, 34); switchParams.leftMargin = d(6);
+    toggle.addView(switchButton, switchParams);
     tabs.addView(toggle, lp(-2, 36));
-    focus.add(toggle, FocusRouter.CONTENT, 0, 3, "player:lyric-toggle");
-    toggle.setContentDescription(current.tab == 0 ? "显示播放队列" : "显示歌词");
-    toggle.setOnClickListener(
+    focus.add(switchButton, FocusRouter.CONTENT, 0, 4, "player:lyric-toggle");
+    switchButton.setContentDescription(current.tab == 0 ? "关闭歌词，显示播放队列" : "开启歌词");
+    switchButton.setOnClickListener(
         v -> {
           snapshot();
           current.tab = current.tab == 0 ? 1 : 0;
@@ -2618,8 +2634,9 @@ public class MainActivity extends Activity {
           text.setMaxLines(5);
           row.addView(text, lp(-1, -2));
           lyricTextViews.add(text);
-          if (prefs().getBoolean("lyric_translation", true)) {
-            String roman = lyrics.romanizations.get(i), translation = lyrics.translations.get(i);
+          {
+            String roman = prefs().getBoolean("lyric_romanization", true) ? lyrics.romanizations.get(i) : "";
+            String translation = prefs().getBoolean("lyric_translation", true) ? lyrics.translations.get(i) : "";
             for (String extra : new String[] {roman, translation})
               if (!extra.isEmpty() && !extra.equals(lyrics.lines.get(i))) {
                 TextView detail = label(extra, 17, MUTED);
@@ -4090,6 +4107,7 @@ public class MainActivity extends Activity {
         () -> choice("显示翻译", new String[] {"开启", "关闭"}, prefs().getBoolean("lyric_translation", true) ? 0 : 1, at -> {
           prefs().edit().putBoolean("lyric_translation", at == 0).apply();
           updateSettingValue("显示翻译", at == 0 ? "开启" : "关闭");
+          paintedLyrics = null;
           lastLyric = -2;
           updatePlayback();
         }));
@@ -4216,7 +4234,7 @@ public class MainActivity extends Activity {
       case "歌词字号":
         return "lyrics";
       case "显示翻译":
-        return "translate";
+        return "subtitles";
       case "歌词时间偏移":
         return "history";
       case "遥控器帮助":
@@ -4304,7 +4322,7 @@ public class MainActivity extends Activity {
   private void lyricSettings() {
     LyricsMenu menu = new LyricsMenu(this,
         () -> { current.restoreFocus = "player:lyrics-settings"; render(); },
-        () -> { lastLyric = -2; updatePlayback(); },
+        () -> { paintedLyrics = null; lastLyric = -2; updatePlayback(); },
         () -> { modal = null; if (!destroyed) focus.focus("player:lyrics-settings"); });
     modal = menu.dialog();
     menu.show();
