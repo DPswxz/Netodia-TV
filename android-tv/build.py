@@ -27,6 +27,9 @@ def main():
     llvm = ndk / 'toolchains' / 'llvm' / 'prebuilt' / host / 'bin'
     env = os.environ.copy()
     env['CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_STRIP'] = 'none'
+    # Keep build-machine paths out of Rust panic strings and release binaries.
+    remap = f'--remap-path-prefix={Path.home()}=/build --remap-path-prefix={ROOT}=/build/netodia'
+    env['RUSTFLAGS'] = (env.get('RUSTFLAGS', '') + ' ' + remap).strip()
     env['PATH'] = str(java) + os.pathsep + str(Path.home()/'.cargo/bin') + os.pathsep + env['PATH']
     env['CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER'] = str(llvm/'armv7a-linux-androideabi26-clang')
     env['CC_armv7_linux_androideabi'] = env['CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER']
