@@ -5478,9 +5478,9 @@ public class MainActivity extends Activity {
     heading(title);
     title.setPadding(d(8), 0, 0, d(16));
     panel.addView(title);
-    String[] icons = {"play_arrow", "home"};
-    String[] names = {"继续聆听", "返回电视桌面"};
-    String[] notes = {"关闭此菜单", "音乐继续在后台播放"};
+    String[] icons = {"play_arrow", "home", "stop"};
+    String[] names = {"继续聆听", "返回电视桌面", "停止播放并退出"};
+    String[] notes = {"关闭此菜单", "音乐继续在后台播放", "停止音乐并关闭应用"};
     ArrayList<View> actions = new ArrayList<>();
     for (int i = 0; i < names.length; i++) {
       final int at = i;
@@ -5501,6 +5501,10 @@ public class MainActivity extends Activity {
       action.setOnClickListener(v -> {
         dialog.dismiss();
         if (at == 1) finish();
+        else if (at == 2) {
+          stopService(new Intent(this, PlaybackService.class));
+          finish();
+        }
       });
     }
     for (int i = 0; i < actions.size(); i++) {
