@@ -4454,9 +4454,12 @@ public class MainActivity extends Activity {
   private void accountPanel() {
     accountPrimaryPanel();
     if (current.addAccount) return;
+    section("其他账号");
+    LinearLayout accounts = settingsCard();
+    accounts.setPadding(d(16), d(12), d(16), d(12));
     LinearLayout addRow = row(this);
-    addRow.setGravity(Gravity.RIGHT); addRow.setPadding(d(16), d(12), d(16), 0);
-    body.addView(addRow, lp(-1, 58));
+    addRow.setGravity(Gravity.RIGHT);
+    accounts.addView(addRow, lp(-1, 46));
     addRow.addView(accountAction("person_add", "添加账号", () -> {
       if (accountRestoring || loginBusy) return;
       Runnable open = () -> {
@@ -4468,7 +4471,6 @@ public class MainActivity extends Activity {
         if (error != null) message(error); else open.run();
       });
     }, contentRow++, 0, "account:add", false), lp(-2, 38));
-    section("其他账号");
     JSONArray saved = backend.savedAccounts();
     int others = 0;
     for (int i = 0; i < saved.length(); i++) {
@@ -4476,8 +4478,10 @@ public class MainActivity extends Activity {
       long id = account.optLong("id");
       if (id == accountId) continue;
       others++;
-      LinearLayout card = settingsCard(); card.setPadding(d(16), d(12), d(16), d(12));
-      LinearLayout line = row(this); card.addView(line, lp(-1, 46));
+      settingsDivider(accounts);
+      LinearLayout line = row(this);
+      line.setPadding(0, d(8), 0, d(8));
+      accounts.addView(line, lp(-1, 58));
       TextView name = label(account.optString("nickname", "网易云账号"), 18, TEXT);
       line.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
       line.addView(accountAction("swap_horiz", "切换", () -> switchSavedAccount(id), contentRow, 0, "account:switch:" + id, false), lp(-2, 38));
@@ -4488,7 +4492,7 @@ public class MainActivity extends Activity {
       LinearLayout.LayoutParams params = lp(-2, 38); params.leftMargin = d(10); line.addView(remove, params);
     }
     if (others == 0) {
-      TextView empty = label("暂无其他账号", 16, MUTED); empty.setPadding(d(16), d(8), d(16), d(14)); body.addView(empty);
+      TextView empty = label("暂无其他账号", 16, MUTED); empty.setPadding(d(16), d(8), d(16), d(14)); accounts.addView(empty);
     }
   }
 
