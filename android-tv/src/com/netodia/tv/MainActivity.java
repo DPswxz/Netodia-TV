@@ -104,7 +104,7 @@ public class MainActivity extends Activity {
     JSONArray items = new JSONArray();
     int tab, offset, visible = PAGE_SIZE, scrollY, generation;
     int page, pageSize, pendingPage = -1;
-    boolean reverse;
+    boolean reverse, addAccount;
     String pageOp = "";
     JSONObject pageArgs = new JSONObject();
     boolean loaded, loading, more;
@@ -210,6 +210,7 @@ public class MainActivity extends Activity {
               accountId = a.optLong("userId");
               syncFavorites();
               nickname = a.optString("nickname");
+              rememberCurrentAccount();
               TvUi.setText(accountLabel, nickname);
             }
             if (current != null
@@ -547,6 +548,7 @@ public class MainActivity extends Activity {
   }
 
   private void navigate(Page next, boolean rootPage) {
+    if (current != null && current != next && current.addAccount) backend.restoreSavedAccount(accountId);
     if (rootPage) {
       history.clear();
       snapshot();
@@ -4365,10 +4367,11 @@ public class MainActivity extends Activity {
   }
 
   private LinearLayout accountAction(String icon, String title, Runnable click, int row, int col, String key, boolean primary) {
-    LinearLayout control = iconAction(icon, title, click, row, col, key);
+    String iconName = icon.equals("call") ? "account_icon_phone" : icon.equals("mail") ? "account_icon_mail" : icon.equals("login") ? "account_icon_login" : icon.equals("person_add") ? "account_icon_add" : icon.equals("swap_horiz") ? "account_icon_switch" : icon;
+    LinearLayout control = iconAction(iconName, title, click, row, col, key);
     int foreground = primary ? MANTLE : TEXT;
     control.removeViewAt(0);
-    control.addView(TvUi.glyph(this, icon, 22, foreground), 0, lp(28, 28));
+    control.addView(TvUi.glyph(this, iconName, 22, foreground), 0, lp(28, 28));
     ((TextView) control.getChildAt(1)).setTextColor(foreground);
     android.graphics.drawable.StateListDrawable states = new android.graphics.drawable.StateListDrawable();
     android.graphics.drawable.GradientDrawable idle = fill(this, primary ? ACCENT : SURFACE1, 24);
@@ -4403,7 +4406,11 @@ public class MainActivity extends Activity {
     input.setInputType(type); input.setSingleLine();
     input.setHint(hint); input.setText(value);
     input.setPadding(d(14), 0, d(14), 0);
-    input.setBackground(TvUi.focus(this, false));
+    android.graphics.drawable.StateListDrawable inputStates = new android.graphics.drawable.StateListDrawable();
+    android.graphics.drawable.GradientDrawable idle = fill(this, SURFACE1, 8); idle.setStroke(d(1), BORDER);
+    android.graphics.drawable.GradientDrawable active = fill(this, SURFACE1, 8); active.setStroke(d(1), ACCENT);
+    inputStates.addState(new int[] {android.R.attr.state_focused}, active); inputStates.addState(new int[] {}, idle);
+    input.setBackground(inputStates);
     panel.addView(input, lp(-1, 44));
     focus.add(input, FocusRouter.CONTENT, contentRow++, 0, "login:field:" + title);
     input.setContentDescription(title);
@@ -4416,10 +4423,79 @@ public class MainActivity extends Activity {
     return input;
   }
 
+  private void rememberCurrentAccount() {
+    if (accountId != 0) backend.rememberAccount(accountId, nickname, (data, error) -> {
+      if (error != null) message(error);
+    });
+  }
+
+  private void switchSavedAccount(long id) {
+    if (accountRestoring || loginBusy) return;
+    accountRestoring = true;
+    message("正在切换账号…");
+    backend.switchAccount(id, (data, error) -> {
+      accountRestoring = false;
+      if (error != null) { message(error); return; }
+      JSONObject account = (JSONObject) data;
+      accountId = account.optLong("userId"); nickname = account.optString("nickname");
+      pageCache.clear();
+      for (Page page : history) {
+        if (page.type.equals("library") || page.type.equals("favorites") || page.type.equals("recent")) {
+          page.loaded = false; page.loading = false; page.generation++; page.items = new JSONArray();
+        }
+      }
+      syncingFavorites = false;
+      syncFavorites(); TvUi.setText(accountLabel, nickname);
+      current.restoreFocus = "login:logout";
+      render(); message("已切换账号");
+    });
+  }
+
   private void accountPanel() {
+    accountPrimaryPanel();
+    if (current.addAccount) return;
+    LinearLayout addRow = row(this);
+    addRow.setGravity(Gravity.RIGHT); addRow.setPadding(d(16), d(12), d(16), 0);
+    body.addView(addRow, lp(-1, 58));
+    addRow.addView(accountAction("person_add", "添加账号", () -> {
+      if (accountRestoring || loginBusy) return;
+      Runnable open = () -> {
+        Page page = new Page("login", "添加账号", "settings"); page.addAccount = true;
+        page.restoreFocus = "login:method:" + loginMethod; push(page);
+      };
+      if (accountId == 0) open.run();
+      else backend.rememberAccount(accountId, nickname, (data, error) -> {
+        if (error != null) message(error); else open.run();
+      });
+    }, contentRow++, 0, "account:add", false), lp(-2, 38));
+    section("其他账号");
+    JSONArray saved = backend.savedAccounts();
+    int others = 0;
+    for (int i = 0; i < saved.length(); i++) {
+      JSONObject account = saved.optJSONObject(i);
+      long id = account.optLong("id");
+      if (id == accountId) continue;
+      others++;
+      LinearLayout card = settingsCard(); card.setPadding(d(16), d(12), d(16), d(12));
+      LinearLayout line = row(this); card.addView(line, lp(-1, 46));
+      TextView name = label(account.optString("nickname", "网易云账号"), 18, TEXT);
+      line.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
+      line.addView(accountAction("swap_horiz", "切换", () -> switchSavedAccount(id), contentRow, 0, "account:switch:" + id, false), lp(-2, 38));
+      View remove = accountAction("logout", "退出", () -> {
+        if (accountRestoring || loginBusy) return;
+        backend.forgetAccount(id); current.restoreFocus = "account:add"; render(); message("已退出此账号");
+      }, contentRow++, 1, "account:remove:" + id, false);
+      LinearLayout.LayoutParams params = lp(-2, 38); params.leftMargin = d(10); line.addView(remove, params);
+    }
+    if (others == 0) {
+      TextView empty = label("暂无其他账号", 16, MUTED); empty.setPadding(d(16), d(8), d(16), d(14)); body.addView(empty);
+    }
+  }
+
+  private void accountPrimaryPanel() {
     LinearLayout card = settingsCard();
     card.setPadding(d(16), d(14), d(16), d(16));
-    if (accountId != 0) {
+    if (accountId != 0 && !current.addAccount) {
       TextView title = label("网易云音乐账号", 20, TEXT); heading(title); card.addView(title);
       TextView name = label(nickname, 17, MUTED); name.setPadding(0, d(8), 0, d(12)); card.addView(name);
       LinearLayout footer = row(this); footer.setGravity(Gravity.RIGHT); card.addView(footer, lp(-1, 46));
@@ -4440,6 +4516,7 @@ public class MainActivity extends Activity {
     for (int i = 0; i < labels.length; i++) {
       final int at = i;
       View choice = accountAction(icons[i], labels[i], () -> {
+        if (loginBusy) return;
         snapshot(); loginMethod = at; current.restoreFocus = "login:method:" + at; render();
       }, contentRow, i, "login:method:" + i, i == loginMethod);
       choice.setSelected(i == loginMethod);
@@ -4466,11 +4543,13 @@ public class MainActivity extends Activity {
       ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(password.getWindowToken(), 0);
       request(method == 0 ? "login_phone" : "login_email", args, (data, error) -> {
         loginBusy = false;
+        if (source.addAccount && current != source) { backend.restoreSavedAccount(accountId); return; }
         if (error != null) { message(error); return; }
         JSONObject result = (JSONObject) data;
         accountId = result.optLong("userId"); nickname = result.optString("nickname");
         prefs().edit().putLong("active_account", accountId).apply();
-        backend.saveSession(); pageCache.clear(); syncFavorites(); TvUi.setText(accountLabel, nickname);
+        rememberCurrentAccount(); pageCache.clear(); syncingFavorites = false; syncFavorites(); TvUi.setText(accountLabel, nickname);
+        source.addAccount = false;
         if (current == source) { current.restoreFocus = "login:logout"; render(); }
       });
     }, contentRow++, 0, "login:submit", true);
@@ -4532,7 +4611,10 @@ public class MainActivity extends Activity {
               "qr_check",
               Backend.json("key", key),
               (data, error) -> {
-                if (token != qrVersion || current != target) return;
+                if (token != qrVersion || current != target) {
+                  if (target.addAccount) backend.restoreSavedAccount(accountId);
+                  return;
+                }
                 if (error != null) {
                   TvUi.setText(state, error);
                   if (failures < 2) pollLogin(key, token, target, state, failures + 1);
@@ -4551,6 +4633,10 @@ public class MainActivity extends Activity {
                       "account",
                       Backend.json(),
                       (account, failure) -> {
+                        if (token != qrVersion || current != target) {
+                          if (target.addAccount) backend.restoreSavedAccount(accountId);
+                          return;
+                        }
                         if (failure != null) {
                           message(failure);
                           return;
@@ -4560,7 +4646,8 @@ public class MainActivity extends Activity {
                         syncFavorites();
                         nickname = a.optString("nickname");
                         TvUi.setText(accountLabel, nickname);
-                        backend.saveSession();
+                        rememberCurrentAccount();
+                        target.addAccount = false;
                         if (current == target) {
                           if (target.type.equals("settings")) { current.restoreFocus = "login:logout"; render(); }
                           else navigate(new Page("library", "我的音乐", "library"), true);

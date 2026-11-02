@@ -4,7 +4,13 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.39)
+## Current TV controls (0.5.40)
+
+- The current account card is retained. Add Account opens a separate login page; Other Accounts offers Switch and Exit.
+- Each account keeps its own local session; switches validate the saved session and restore the previous one on failure.
+  Removing another account only removes that saved session. Cancelling account addition restores the active session.
+- Session changes are synchronized against network requests; switching clears account-dependent page caches.
+  Only account ID/name are exposed to the UI; cookies remain in private on-device preferences and passwords are not saved.
 
 - Service settings use one account card with phone, email and QR login tabs, or account name and logout when signed in.
   Passwords stay in memory for the request and are cleared from the input; they are not saved to preferences or logs.
