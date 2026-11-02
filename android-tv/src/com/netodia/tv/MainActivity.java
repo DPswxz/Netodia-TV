@@ -2956,11 +2956,7 @@ public class MainActivity extends Activity {
       message(value ? "已加入本机收藏；登录后可收藏到网易云" : "已取消本机收藏");
       return;
     }
-    confirm(
-        value ? "喜欢这首歌？" : "取消喜欢？",
-        "将同步到当前网易云账号。",
-        () ->
-            request(
+    request(
                 "like",
                 Backend.json("id", song.optLong("id"), "value", value),
                 (data, error) -> {
@@ -2978,7 +2974,7 @@ public class MainActivity extends Activity {
                   }
                   message(value ? "已加入喜欢的歌曲" : "已取消喜欢");
                   updatePlayback();
-                }));
+                });
   }
 
   private void subscribe(String kind, JSONObject entity) {
@@ -3270,7 +3266,7 @@ public class MainActivity extends Activity {
                       target.loaded = true;
                       target.loading = false;
                       if (current == target) {
-                        snapshot();
+                        target.restoreFocus = entries.length() > 0 ? "file:" + entries.optJSONObject(0).optString("path") : "browse:home";
                         render();
                       }
                     });
@@ -3290,19 +3286,9 @@ public class MainActivity extends Activity {
       }
       return;
     }
+    if (current.restoreFocus.equals("browse:first"))
+      current.restoreFocus = current.items.length() > 0 ? "file:" + current.items.optJSONObject(0).optString("path") : "browse:home";
     scroll();
-    if (!current.path.isEmpty()) {
-      String parent = new File(current.path).getParent();
-      Button up =
-          action(
-              "↑ 上一级文件夹",
-              () -> openFolder(parent == null ? "" : parent, true),
-              contentRow++,
-              0,
-              "browse:up");
-      body.addView(up, lp(-1, 50));
-      margin(up, 0, 8);
-    }
     JSONArray songs = new JSONArray();
     for (int i = 0; i < current.items.length(); i++)
       if (!current.items.optJSONObject(i).optBoolean("directory"))
@@ -3380,6 +3366,7 @@ public class MainActivity extends Activity {
   private void openFolder(String path, boolean addHistory) {
     Page p = new Page("browse", "浏览文件", "browse");
     p.path = path;
+    p.restoreFocus = "browse:first";
     if (addHistory) push(p);
     else {
       snapshot();
@@ -3452,52 +3439,13 @@ public class MainActivity extends Activity {
                     if (service() != null) service().sleep(new int[] {0, 15, 30, 60, 90}[at]);
                     render();
                   }));
-      setting(
-          "停止播放并退出",
-          "停止后台播放服务",
-          () ->
-              confirm(
-                  "停止播放并退出？",
-                  "当前音乐将停止。",
-                  () -> {
-                    stopService(new Intent(this, PlaybackService.class));
-                    finish();
-                  }));
     } else if (current.tab == 2) {
       appearance();
     } else if (current.tab == 0) {
       librarySettings();
     } else if (current.tab == 3) {
       section("网易云账号");
-      setting(
-          "当前账号",
-          accountId == 0 ? "未登录" : nickname,
-          () -> push(new Page("login", "网易云账号", "settings")));
-      setting("扫码登录", "使用手机网易云音乐确认", () -> push(new Page("login", "网易云账号", "settings")));
-      if (accountId != 0)
-        setting(
-            "退出账号",
-            nickname,
-            () ->
-                confirm(
-                    "退出网易云账号？",
-                    "本机收藏和本地音乐会保留。",
-                    () ->
-                        request(
-                            "logout",
-                            Backend.json(),
-                            (data, error) -> {
-                              if (error != null) {
-                                message(error);
-                                return;
-                              }
-                              accountId = 0;
-                              prefs().edit().putLong("active_account", 0).apply();
-                              nickname = "未登录";
-                              backend.clearSession();
-                              TvUi.setText(accountLabel, nickname);
-                              render();
-                            })));
+      accountPanel();
     } else {
       aboutSettings();
     }
@@ -4416,42 +4364,136 @@ public class MainActivity extends Activity {
         });
   }
 
+  private LinearLayout accountAction(String icon, String title, Runnable click, int row, int col, String key, boolean primary) {
+    LinearLayout control = iconAction(icon, title, click, row, col, key);
+    int foreground = primary ? MANTLE : TEXT;
+    control.removeViewAt(0);
+    control.addView(TvUi.glyph(this, icon, 22, foreground), 0, lp(28, 28));
+    ((TextView) control.getChildAt(1)).setTextColor(foreground);
+    android.graphics.drawable.StateListDrawable states = new android.graphics.drawable.StateListDrawable();
+    android.graphics.drawable.GradientDrawable idle = fill(this, primary ? ACCENT : SURFACE1, 24);
+    idle.setStroke(d(1), primary ? ACCENT : BORDER);
+    android.graphics.drawable.GradientDrawable focused = fill(this, primary ? ACCENT : SURFACE1, 24);
+    focused.setStroke(d(1.5f), primary ? TEXT : ACCENT);
+    states.addState(new int[] {android.R.attr.state_focused}, focused);
+    states.addState(new int[] {}, idle);
+    control.setBackground(states);
+    return control;
+  }
+
+  private int loginMethod = 2;
+  private boolean loginBusy;
+
   private void login() {
-    tabs.setPadding(d(6), d(4), d(6), d(4));
-    tabs.setClipChildren(false);
-    tabs.setClipToPadding(false);
+    tabs.setVisibility(View.GONE);
+    header.setVisibility(View.GONE);
+    scroll();
+    section("网易云账号");
+    accountPanel();
+  }
+
+  private TvInput accountField(LinearLayout panel, String title, String hint, int type, String value) {
+    TextView caption = label(title, 16, MUTED);
+    caption.setPadding(0, d(10), 0, d(6));
+    panel.addView(caption);
+    TvInput input = new TvInput(this);
+    input.setTypeface(TvUi.font);
+    input.setTextSize(18 * TvUi.SCALE);
+    input.setTextColor(TEXT); input.setHintTextColor(MUTED);
+    input.setInputType(type); input.setSingleLine();
+    input.setHint(hint); input.setText(value);
+    input.setPadding(d(14), 0, d(14), 0);
+    input.setBackground(TvUi.focus(this, false));
+    panel.addView(input, lp(-1, 44));
+    focus.add(input, FocusRouter.CONTENT, contentRow++, 0, "login:field:" + title);
+    input.setContentDescription(title);
+    input.setOnKeyListener((v, key, event) -> {
+      if ((key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER) && event.getAction() == KeyEvent.ACTION_UP) {
+        input.openKeyboard(); return true;
+      }
+      return false;
+    });
+    return input;
+  }
+
+  private void accountPanel() {
+    LinearLayout card = settingsCard();
+    card.setPadding(d(16), d(14), d(16), d(16));
+    if (accountId != 0) {
+      TextView title = label("网易云音乐账号", 20, TEXT); heading(title); card.addView(title);
+      TextView name = label(nickname, 17, MUTED); name.setPadding(0, d(8), 0, d(12)); card.addView(name);
+      LinearLayout footer = row(this); footer.setGravity(Gravity.RIGHT); card.addView(footer, lp(-1, 46));
+      footer.addView(accountAction("logout", "退出登录", () -> confirm("退出网易云账号？", "本机收藏和本地音乐会保留。", () ->
+          request("logout", Backend.json(), (data, error) -> {
+            if (error != null) { message(error); return; }
+            accountId = 0; nickname = "未登录";
+            prefs().edit().putLong("active_account", 0).apply();
+            backend.clearSession(); pageCache.clear(); TvUi.setText(accountLabel, nickname);
+            current.restoreFocus = "login:method:" + loginMethod; render();
+          })), contentRow++, 0, "login:logout", false), lp(-2, 38));
+      return;
+    }
+    TextView intro = label("连接账号以使用个性化推荐、收藏和播放权限", 16, MUTED);
+    intro.setPadding(0, 0, 0, d(12)); card.addView(intro);
+    LinearLayout methods = row(this); card.addView(methods, lp(-1, 44));
+    String[] labels = {"手机号", "邮箱", "二维码"}, icons = {"call", "mail", "qr_code"};
+    for (int i = 0; i < labels.length; i++) {
+      final int at = i;
+      View choice = accountAction(icons[i], labels[i], () -> {
+        snapshot(); loginMethod = at; current.restoreFocus = "login:method:" + at; render();
+      }, contentRow, i, "login:method:" + i, i == loginMethod);
+      choice.setSelected(i == loginMethod);
+      LinearLayout.LayoutParams params = lp(-2, 36); params.rightMargin = d(10); methods.addView(choice, params);
+    }
+    contentRow++;
+    if (loginMethod == 2) { accountQr(card); return; }
+    final int method = loginMethod;
+    TvInput country = method == 0 ? accountField(card, "国家/地区代码", "86", android.text.InputType.TYPE_CLASS_PHONE, "86") : null;
+    TvInput identity = accountField(card, method == 0 ? "手机号" : "邮箱", method == 0 ? "输入手机号" : "输入邮箱地址",
+        method == 0 ? android.text.InputType.TYPE_CLASS_PHONE : android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS, "");
+    TvInput password = accountField(card, "密码", "输入密码", android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD, "");
+    LinearLayout footer = row(this); footer.setGravity(Gravity.RIGHT);
+    LinearLayout.LayoutParams footerParams = lp(-1, 52); footerParams.topMargin = d(8); card.addView(footer, footerParams);
+    Page source = current;
+    View submit = accountAction("login", "登录", () -> {
+      if (loginBusy) return;
+      String account = identity.getText().toString().trim();
+      String secret = password.getText().toString();
+      if (account.isEmpty() || secret.isEmpty()) { message("请输入账号和密码"); return; }
+      loginBusy = true;
+      JSONObject args = Backend.json("identity", account, "password", secret, "country", country == null ? "86" : country.getText().toString().trim());
+      password.setText("");
+      ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(password.getWindowToken(), 0);
+      request(method == 0 ? "login_phone" : "login_email", args, (data, error) -> {
+        loginBusy = false;
+        if (error != null) { message(error); return; }
+        JSONObject result = (JSONObject) data;
+        accountId = result.optLong("userId"); nickname = result.optString("nickname");
+        prefs().edit().putLong("active_account", accountId).apply();
+        backend.saveSession(); pageCache.clear(); syncFavorites(); TvUi.setText(accountLabel, nickname);
+        if (current == source) { current.restoreFocus = "login:logout"; render(); }
+      });
+    }, contentRow++, 0, "login:submit", true);
+    footer.addView(submit, lp(-2, 38));
+    identity.closed = password::requestFocus;
+    password.closed = submit::requestFocus;
+    password.submit = submit::performClick;
+    if (country != null) country.closed = identity::requestFocus;
+  }
+
+  private void accountQr(LinearLayout panel) {
     final int token = qrVersion;
     Page target = current;
-    Button refresh = action("刷新二维码", () -> render(), 0, 0, "login:refresh");
-    tabs.addView(refresh, lp(136, 36));
-    margin(refresh, 8, 0);
-    Button help =
-        action(
-            "登录帮助",
-            () -> info("扫码登录", "打开手机网易云音乐的扫一扫，扫描电视二维码，再在手机上确认。\n二维码过期时，选择「刷新二维码」。\n按返回键可取消本次登录。"),
-            0,
-            1,
-            "login:help");
-    tabs.addView(help, lp(114, 36));
-    LinearLayout panel = row(this);
-    panel.setGravity(Gravity.CENTER);
-    panel.setPadding(d(26), d(20), d(26), d(20));
-    stage.addView(panel, new FrameLayout.LayoutParams(-1, -1));
-    ImageView image = cover(this, 232);
-    panel.addView(image);
+    int available = stageHeightDp() - 178;
+    int qrSize = Math.max(100, Math.min(200, available));
+    ImageView image = cover(this, qrSize);
+    LinearLayout.LayoutParams qrParams = lp(qrSize, qrSize); qrParams.gravity = Gravity.CENTER_HORIZONTAL;
+    qrParams.topMargin = d(12); panel.addView(image, qrParams);
     image.setBackgroundColor(Color.WHITE);
-    image.setImageDrawable(null);
-    LinearLayout instructions = column(this);
-    instructions.setPadding(d(34), 0, 0, 0);
-    panel.addView(instructions, lp(390, -2));
-    TextView title = label(accountId == 0 ? "登录网易云音乐" : "切换网易云账号", 28, TEXT);
-    heading(title);
-    instructions.addView(title);
-    TextView how = label("1  打开手机网易云音乐的扫一扫\n\n2  扫描左侧二维码\n\n3  在手机上确认登录", 19, MUTED);
-    how.setPadding(0, d(24), 0, d(20));
-    instructions.addView(how);
-    TextView state = label("正在获取二维码…", 17, ACCENT);
-    instructions.addView(state);
+    TextView state = label("正在获取二维码…", 15, MUTED);
+    state.setGravity(Gravity.CENTER); state.setPadding(0, d(8), 0, d(8)); panel.addView(state);
+    LinearLayout footer = row(this); footer.setGravity(Gravity.CENTER); panel.addView(footer, lp(-1, 44));
+    footer.addView(accountAction("refresh", "刷新二维码", () -> { snapshot(); render(); }, contentRow++, 0, "login:refresh", true), lp(-2, 38));
     request(
         "qr",
         Backend.json(),
@@ -4520,7 +4562,8 @@ public class MainActivity extends Activity {
                         TvUi.setText(accountLabel, nickname);
                         backend.saveSession();
                         if (current == target) {
-                          navigate(new Page("library", "我的音乐", "library"), true);
+                          if (target.type.equals("settings")) { current.restoreFocus = "login:logout"; render(); }
+                          else navigate(new Page("library", "我的音乐", "library"), true);
                           message("欢迎回来，" + nickname);
                         }
                       });
@@ -5342,9 +5385,9 @@ public class MainActivity extends Activity {
     heading(title);
     title.setPadding(d(8), 0, 0, d(16));
     panel.addView(title);
-    String[] icons = {"play_arrow", "home", "stop"};
-    String[] names = {"继续聆听", "返回电视桌面", "停止播放并退出"};
-    String[] notes = {"关闭此菜单", "音乐继续在后台播放", "停止音乐并关闭应用"};
+    String[] icons = {"play_arrow", "home"};
+    String[] names = {"继续聆听", "返回电视桌面"};
+    String[] notes = {"关闭此菜单", "音乐继续在后台播放"};
     ArrayList<View> actions = new ArrayList<>();
     for (int i = 0; i < names.length; i++) {
       final int at = i;
@@ -5365,10 +5408,6 @@ public class MainActivity extends Activity {
       action.setOnClickListener(v -> {
         dialog.dismiss();
         if (at == 1) finish();
-        else if (at == 2) {
-          stopService(new Intent(this, PlaybackService.class));
-          finish();
-        }
       });
     }
     for (int i = 0; i < actions.size(); i++) {

@@ -70,6 +70,8 @@ fn dispatch(op: &str, input: &str) -> Result<Value, Box<dyn std::error::Error>> 
                 json!({"device": c.device_id()})
             }
             "account" => serde_json::to_value(c.account().await?)?,
+            "login_phone" => serde_json::to_value(c.login_phone(args["identity"].as_str().unwrap_or(""), args["country"].as_str().unwrap_or("86"), args["password"].as_str().unwrap_or("")).await?)?,
+            "login_email" => serde_json::to_value(c.login_email(args["identity"].as_str().unwrap_or(""), args["password"].as_str().unwrap_or("")).await?)?,
             "discover" => serde_json::to_value(c.discover().await?)?,
             "charts" => serde_json::to_value(c.charts().await?)?,
             "mine" => serde_json::to_value(c.user_playlists(id, 0).await?)?,

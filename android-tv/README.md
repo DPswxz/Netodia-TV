@@ -4,7 +4,13 @@ Native Android TV frontend reusing `netodia-net` and `netodia-core` through a Ru
 The desktop Slint frontend and desktop audio engine are unchanged. Android MediaPlayer,
 AudioFocus, MediaSession and a foreground service provide playback on ARMv7 TVs.
 
-## Current TV controls (0.5.38)
+## Current TV controls (0.5.39)
+
+- Service settings use one account card with phone, email and QR login tabs, or account name and logout when signed in.
+  Passwords stay in memory for the request and are cleared from the input; they are not saved to preferences or logs.
+- Song likes synchronize directly to the signed-in cloud account without a confirmation dialog.
+- Local browsing removes the large parent-folder button and initially focuses the first entry after loading.
+- Stop-and-exit is removed from settings and the home Back menu; returning home keeps background music.
 
 - Compact application viewports (up to 800 logical pixels high after UI scaling) use
   a single row of larger playlist covers, two-line titles and single-line metadata.
