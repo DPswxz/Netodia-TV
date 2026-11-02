@@ -4489,8 +4489,8 @@ public class MainActivity extends Activity {
       name.setSingleLine(); name.setEllipsize(TextUtils.TruncateAt.END);
       name.setPadding(0, 0, d(16), 0);
       line.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
-      line.addView(accountAction("swap_horiz", "切换", () -> switchSavedAccount(id), contentRow, 0, "account:switch:" + id, false), lp(-2, 38));
-      View remove = accountAction("logout", "退出", () -> {
+      line.addView(accountAction("swap_horiz", "切换到此账号", () -> switchSavedAccount(id), contentRow, 0, "account:switch:" + id, false), lp(-2, 38));
+      View remove = accountAction("logout", "退出此账号", () -> {
         if (accountRestoring || loginBusy) return;
         backend.forgetAccount(id); current.restoreFocus = "account:add"; render(); message("已退出此账号");
       }, contentRow++, 1, "account:remove:" + id, false);
