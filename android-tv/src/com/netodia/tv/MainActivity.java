@@ -4455,11 +4455,16 @@ public class MainActivity extends Activity {
     accountPrimaryPanel();
     if (current.addAccount) return;
     section("其他账号");
+    JSONArray saved = backend.savedAccounts();
+    int count = 0;
+    for (int i = 0; i < saved.length(); i++) if (saved.optJSONObject(i).optLong("id") != accountId) count++;
     LinearLayout accounts = settingsCard();
-    accounts.setPadding(d(16), d(12), d(16), d(12));
+    accounts.setPadding(d(16), d(8), d(16), d(8));
     LinearLayout addRow = row(this);
-    addRow.setGravity(Gravity.RIGHT);
-    accounts.addView(addRow, lp(-1, 46));
+    addRow.setGravity(Gravity.CENTER_VERTICAL);
+    TextView summary = label(count == 0 ? "暂无其他账号" : "已保存 " + count + " 个账号", 16, MUTED);
+    addRow.addView(summary, new LinearLayout.LayoutParams(0, -2, 1));
+    accounts.addView(addRow, lp(-1, 56));
     addRow.addView(accountAction("person_add", "添加账号", () -> {
       if (accountRestoring || loginBusy) return;
       Runnable open = () -> {
@@ -4471,18 +4476,18 @@ public class MainActivity extends Activity {
         if (error != null) message(error); else open.run();
       });
     }, contentRow++, 0, "account:add", false), lp(-2, 38));
-    JSONArray saved = backend.savedAccounts();
-    int others = 0;
+
     for (int i = 0; i < saved.length(); i++) {
       JSONObject account = saved.optJSONObject(i);
       long id = account.optLong("id");
       if (id == accountId) continue;
-      others++;
-      settingsDivider(accounts);
+      View divider = new View(this); divider.setBackgroundColor(BORDER); accounts.addView(divider, lp(-1, 1));
       LinearLayout line = row(this);
-      line.setPadding(0, d(8), 0, d(8));
-      accounts.addView(line, lp(-1, 58));
+      line.setPadding(0, d(12), 0, d(12));
+      accounts.addView(line, lp(-1, 64));
       TextView name = label(account.optString("nickname", "网易云账号"), 18, TEXT);
+      name.setSingleLine(); name.setEllipsize(TextUtils.TruncateAt.END);
+      name.setPadding(0, 0, d(16), 0);
       line.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
       line.addView(accountAction("swap_horiz", "切换", () -> switchSavedAccount(id), contentRow, 0, "account:switch:" + id, false), lp(-2, 38));
       View remove = accountAction("logout", "退出", () -> {
@@ -4490,9 +4495,6 @@ public class MainActivity extends Activity {
         backend.forgetAccount(id); current.restoreFocus = "account:add"; render(); message("已退出此账号");
       }, contentRow++, 1, "account:remove:" + id, false);
       LinearLayout.LayoutParams params = lp(-2, 38); params.leftMargin = d(10); line.addView(remove, params);
-    }
-    if (others == 0) {
-      TextView empty = label("暂无其他账号", 16, MUTED); empty.setPadding(d(16), d(8), d(16), d(14)); accounts.addView(empty);
     }
   }
 
