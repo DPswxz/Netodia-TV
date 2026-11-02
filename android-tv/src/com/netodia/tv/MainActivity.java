@@ -568,6 +568,18 @@ public class MainActivity extends Activity {
   }
 
   private void render() {
+    // Hold focus on the persistent viewport before removing the focused file row.
+    // Otherwise Android briefly assigns focus to the first sidebar item (Search).
+    final boolean holdBrowseFocus = current.type.equals("browse");
+    if (holdBrowseFocus) {
+      stage.setFocusableInTouchMode(true);
+      stage.setDefaultFocusHighlightEnabled(false);
+      stage.setDescendantFocusability(android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+      stage.requestFocus();
+    } else {
+      stage.setFocusableInTouchMode(false);
+      stage.setFocusable(false);
+    }
     LinearLayout.LayoutParams stageParams = (LinearLayout.LayoutParams) stage.getLayoutParams();
     stageParams.leftMargin = 0;
     stageParams.rightMargin = 0;
@@ -682,11 +694,13 @@ public class MainActivity extends Activity {
         songsPage();
         break;
     }
+    if (holdBrowseFocus) stage.setDescendantFocusability(android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS);
+    final boolean waitingForFolder = holdBrowseFocus && current.loading && !current.loaded;
     focus.selectTab(current.tab);
     View attached = getCurrentFocus();
-    final boolean restoreAfterLayout = !current.restoreFocus.isEmpty() && !focus.focus(current.restoreFocus);
+    final boolean restoreAfterLayout = !waitingForFolder && !current.restoreFocus.isEmpty() && !focus.focus(current.restoreFocus);
     if (!restoreAfterLayout && !current.restoreFocus.isEmpty()) {
-    } else if (attached == null || !attached.isAttachedToWindow()) {
+    } else if (!waitingForFolder && (attached == null || !attached.isAttachedToWindow())) {
       if (!focus.focus("tab:" + current.tab)) focus.focus("nav:" + current.section);
     }
     restoringScroll = true;
@@ -698,9 +712,14 @@ public class MainActivity extends Activity {
         boolean changed = scroller != null && scroller.getScrollY() != rendered.scrollY;
         if (scroller != null) scroller.scrollTo(0, rendered.scrollY);
         restoringScroll = false;
+        if (waitingForFolder) return !changed;
         View focused = getCurrentFocus();
         if (restoreAfterLayout || focused == null || !focused.isAttachedToWindow() || focus.key(focused).isEmpty()) {
           if (!focus.focus(rendered.restoreFocus)) focus.focusFirstContentItem();
+        }
+        if (holdBrowseFocus && getCurrentFocus() != stage) {
+          stage.setFocusableInTouchMode(false);
+          stage.setFocusable(false);
         }
         return !changed;
       }
